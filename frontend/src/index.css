@@ -1,0 +1,163 @@
+@import "tailwindcss";
+
+@theme {
+  --color-secondary-fixed-dim: #fbbc00;
+  --color-secondary: #795900;
+  --color-tertiary-fixed: #ffdbd0;
+  --color-on-surface-variant: #404940;
+  --color-tertiary-fixed-dim: #e7bdb1;
+  --color-inverse-on-surface: #f2f0f0;
+  --color-on-error-container: #93000a;
+  --color-primary-fixed: #a7f4b6;
+  --color-primary-container: #1f6b3a;
+  --color-primary-fixed-dim: #8cd79b;
+  --color-primary: #005226;
+  --color-surface-dim: #dbdada;
+  --color-surface-container-high: #e9e8e8;
+  --color-surface-container-low: #f5f3f3;
+  --color-inverse-primary: #8cd79b;
+  --color-on-background: #1b1c1c;
+  --color-on-primary-container: #9ce9ab;
+  --color-outline: #707a6f;
+  --color-error: #ba1a1a;
+  --color-on-secondary-container: #6d5000;
+  --color-background: #fbf9f9;
+  --color-on-tertiary-container: #f8cec1;
+  --color-on-secondary-fixed-variant: #5c4300;
+  --color-on-tertiary-fixed: #2c160e;
+  --color-on-surface: #1b1c1c;
+  --color-surface-tint: #206c3b;
+  --color-secondary-container: #ffbf00;
+  --color-surface-bright: #fbf9f9;
+  --color-on-error: #ffffff;
+  --color-outline-variant: #bfc9bd;
+  --color-secondary-fixed: #ffdfa0;
+  --color-on-primary-fixed-variant: #005226;
+  --color-on-tertiary: #ffffff;
+  --color-on-tertiary-fixed-variant: #5d4037;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-fixed: #261a00;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-variant: #e4e2e2;
+  --color-on-primary-fixed: #00210c;
+  --color-surface: #fbf9f9;
+  --color-tertiary: #5c3f36;
+  --color-tertiary-container: #76564c;
+  --color-surface-container-highest: #e4e2e2;
+  --color-surface-container: #efeded;
+  --color-inverse-surface: #303031;
+  --color-error-container: #ffdad6;
+  --color-on-primary: #ffffff;
+
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-headline-lg: "Montserrat", sans-serif;
+  --font-headline-md: "Montserrat", sans-serif;
+  --font-body-lg: "Inter", sans-serif;
+  --font-body-md: "Inter", sans-serif;
+  --font-label-md: "Inter", sans-serif;
+  --font-label-sm: "Inter", sans-serif;
+
+  --shadow-ambient: 0 4px 16px rgba(0, 82, 38, 0.08);
+  --shadow-ambient-hover: 0 8px 24px rgba(0, 82, 38, 0.12);
+  --shadow-soft: 0 4px 16px rgba(0, 82, 38, 0.05);
+  --shadow-card: 0 4px 16px rgba(31, 107, 58, 0.05);
+}
+
+/* Animations and Utilities from HTML files */
+.typewriter-effect {
+  overflow: hidden;
+  white-space: nowrap;
+  margin: 0 auto;
+  letter-spacing: .15em;
+  animation: typing 2.5s steps(30, end), blink-caret .75s step-end infinite;
+}
+
+@keyframes typing {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent }
+  50% { border-color: #1f6b3a }
+}
+
+.fade-in {
+  animation: fadeIn 1.5s ease-in-out forwards;
+  opacity: 0;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.carousel-container {
+  scroll-snap-type: x mandatory;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.carousel-container::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel-slide {
+  scroll-snap-align: start;
+}
+
+.soft-shadow {
+  box-shadow: var(--shadow-soft);
+}
+
+.card-shadow {
+  box-shadow: var(--shadow-card);
+}
+
+.interactive-shadow:hover {
+  box-shadow: 0 8px 24px rgba(31, 107, 58, 0.08);
+  transform: translateY(-2px);
+  transition: all 0.3s ease;
+}
+
+.radar-chart {
+  width: 100%;
+  height: 300px;
+  position: relative;
+}
+
+.radar-chart-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-surface-container-low);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-outline-variant);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-outline);
+}
+
+@keyframes slideDownToast {
+  from { transform: translate(-50%, -20px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.slide-down-toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: slideDownToast 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
