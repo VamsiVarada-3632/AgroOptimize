@@ -4,6 +4,22 @@ All code modifications made during the 2026-09-29 audit. All changes are submitt
 
 Verification after all changes: backend **205/205 tests pass** (was 165/165); output fingerprint over 48 endpoint/pipeline results is **identical to HEAD** apart from the new additive provenance fields; frontend `oxlint` 0 warnings (was 3 in `src` + noise), `vite build` succeeds; UI flows exercised in Chrome with no console errors.
 
+## [Unreleased] – Scenario Simulation & Decision Impact Analysis
+
+### Added
+- `app/services/simulation_service.py`; `POST /api/simulations/run`, `POST/GET /api/simulations`, `GET/DELETE /api/simulations/{id}`; `SimulationRequest`, `SimulationOut` and saved-simulation schemas.
+- Scenario Simulation page (sidebar, after District Intelligence): scenario controls, recommendation comparison, impact with paired-test verdicts, decision impact, trade-offs, optimisation difference, crop effects, historical comparison, saved scenarios, HTML report with charts, JSON export.
+- `GroupedBarChart`, `DeltaBarChart`, `RadarChart`.
+- `tests/test_simulation.py` (61) and 24 frontend tests; `SCENARIO_SIMULATION.md`.
+
+### Changed
+- `plan_service.run_pipeline` (with `PipelineAdjustments`) now runs stages 1–7; `generate_farm_plans` calls it.
+- Default-neutral hooks: rainfall factor and storage override (preprocessing), fertiliser price factor and `single_crop_metrics()` (problem), explicit weights (ranking), custom weights and price factor (explanations), `indicative_economics` extracted.
+- `scipy` listed in requirements (already installed transitively).
+
+### Verified
+- 387 backend tests and 55 frontend tests pass; 48 optimisation outputs identical to `main`; lint clean; build passes (main bundle +43 KB; report module loaded on demand).
+
 ## [Unreleased] – District Intelligence Center
 
 ### Added

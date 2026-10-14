@@ -1,6 +1,6 @@
 # Optimization Pipeline
 
-Step-by-step trace of `plan_service.generate_farm_plans` (used by `POST /api/farm-plans` and `run_demo.py`), with a worked example: **Salem, Kharif, latest year (2024), 5 ha, no budget, balanced** – values captured from a real run on 2026-09-29.
+Step-by-step trace of `plan_service.generate_farm_plans` (used by `POST /api/farm-plans` and `run_demo.py`; stages 1–7 live in `run_pipeline`, which Scenario Simulation also calls with adjustments — see [SCENARIO_SIMULATION.md](SCENARIO_SIMULATION.md)), with a worked example: **Salem, Kharif, latest year (2024), 5 ha, no budget, balanced** – values captured from a real run on 2026-09-29.
 
 ```mermaid
 flowchart TB
@@ -71,6 +71,8 @@ See [DATA_FLOW.md](DATA_FLOW.md) §5. `run_id = salem_kharif_2024_<UTC timestamp
 | filters | remove plans after optimisation |
 | `max_candidate_crops` | only matters if < number of crops (≤5 in the data) |
 | `pop_size`, `n_gen` | front density/convergence; same seed → reproducible |
+| seed | different seeds give noticeably different top plans for the same inputs (Salem Kharif: yield 50–70 t over seeds 42, 1–4); Scenario Simulation therefore compares five paired seeds per side |
+| scenario hooks | `rainfall_factor`, `storage_override_pct`, `fertilizer_price_factor`, explicit TOPSIS `weights` (all neutral by default) |
 
 ## Dashboard variant
 `dashboard_service._run_dashboard_pareto_front`: identical Stages 1–5 with population 100, current calendar season, 5 ha default, no filters, memoised; ranking done by the caller (balanced for `/api/plans`; three preferences for `/api/comparison`).

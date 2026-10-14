@@ -1,6 +1,6 @@
 # AgroOptimize — Complete Project Documentation (single file)
 
-All 29 handbook documents combined and grouped into 6 parts. Cross-references point to the section of the same name below.
+All 30 handbook documents combined and grouped into 6 parts. Cross-references point to the section of the same name below.
 
 ## Table of Contents
 
@@ -15,10 +15,11 @@ All 29 handbook documents combined and grouped into 6 parts. Cross-references po
   - [API_REFERENCE](#doc-api-reference)
   - [CONFIGURATION](#doc-configuration)
   - [DEPENDENCIES](#doc-dependencies)
-- **Part 3 — Data & District Intelligence**
+- **Part 3 — Data, District Intelligence & Scenario Simulation**
   - [DATASETS](#doc-datasets)
   - [DATA_VALIDATION](#doc-data-validation)
   - [DISTRICT_INTELLIGENCE](#doc-district-intelligence)
+  - [SCENARIO_SIMULATION](#doc-scenario-simulation)
 - **Part 4 — Algorithms, Explainability & Pipelines**
   - [ALGORITHMS](#doc-algorithms)
   - [EXPLAINABILITY](#doc-explainability)
@@ -152,6 +153,9 @@ Any recommended plan can be explained via `GET /api/results/{run_id}/explanation
 ### 7c. District Intelligence
 `GET /api/district-intelligence/{district}` and the District Intelligence page profile a district from observed rows only: overview, coverage, climate, soil, water, crop history, a crop suitability score (mean of climate & soil, rainfall fit, prominence, yield stability and resource efficiency; per-hectare values from the optimiser's own objective function), historical prices (not live), generated insights and a summary. Missing fields show "Data not available". See [DISTRICT_INTELLIGENCE.md](#doc-district-intelligence).
 
+### 7d. Scenario Simulation
+`POST /api/simulations/run` and the Scenario Simulation page optimise the original and a modified set of conditions (rainfall, water availability, fertiliser cost, market price, land, budget, preference or priority weights) through the full pipeline, five paired seeds per side, and report what changed and why: both recommendations, paired-test impact on yield, cost, water, environmental impact, profit and confidence, decision-impact statements, trade-offs, fuzzy and TOPSIS differences, crop effects and the historical comparison. Simulations can be saved and exported. See [SCENARIO_SIMULATION.md](#doc-scenario-simulation).
+
 ### 8. Configuration ([CONFIGURATION.md](#doc-configuration), [DEPENDENCIES.md](#doc-dependencies))
 Everything in `app/config.py`. Sourced constants: fertiliser ₹12.87/kg N, ₹58.70/kg P₂O₅, ₹56.67/kg K₂O (from bag prices); labour ₹319/day (MGNREGA TN 2024-25). Assumptions: rainfall utilisation 0.7, carbon proxies 0.15/0.01, dependency factors, multiplier bounds 0.7–1.3, all fuzzy breakpoints, TOPSIS weights. Paper-given: 200 generations, p_c 0.85, p_m 0.12. Env vars actually read: `CORS_ALLOW_ORIGINS` (backend), `VITE_API_BASE` (frontend build).
 
@@ -209,6 +213,7 @@ VVS Vamsi · Vennela Harshini · Garudammagari Sreenithya · Gaddam Jahnavi
 - Web app: dashboard (KPIs, weather via Open-Meteo), Pareto-front analytics with live filters and CSV export, three-plan comparison with radar chart, personalised runs with history and downloadable reports.
 - Every saved run persisted as JSON + CSV + convergence chart.
 - District Intelligence Center: one page per district with climate, soil, water, crop history, crop suitability, historical prices and generated insights ([DISTRICT_INTELLIGENCE.md](#doc-district-intelligence)).
+- Scenario Simulation: change rainfall, water, input costs, prices, land, budget or priorities and see how — and why — the optimised recommendation changes, with statistically tested impacts ([SCENARIO_SIMULATION.md](#doc-scenario-simulation)).
 - Explainable recommendations: why a plan was chosen, trade-offs, constraint checks, risks, historical context and a decomposed confidence score – all derived from the pipeline's own numbers ([EXPLAINABILITY.md](#doc-explainability)).
 
 ### Repository layout
@@ -269,7 +274,7 @@ Frontend on Vercel (`vercel.json`, `VITE_API_BASE` in `.env.production`); backen
 Irrigation/fertiliser multipliers currently have no yield benefit (optimiser keeps them at the minimum); the yield objective sums tonnes across crops; fuzzy output affects only expected yield; district-level data, single season; demo-only client-side authentication. Full list and roadmap: [RESEARCH_REVIEW.md](#doc-research-review), [TODO.md](#doc-todo).
 
 ### Documentation index
-[PROJECT_KNOWLEDGE](#doc-project-knowledge) · [ARCHITECTURE](#doc-architecture) · [FOLDER_STRUCTURE](#doc-folder-structure) · [FRONTEND](#doc-frontend) · [BACKEND](#doc-backend) · [DATASETS](#doc-datasets) · [ALGORITHMS](#doc-algorithms) · [API_REFERENCE](#doc-api-reference) · [DATA_FLOW](#doc-data-flow) · [USER_FLOW](#doc-user-flow) · [OPTIMIZATION_PIPELINE](#doc-optimization-pipeline) · [REPORT_PIPELINE](#doc-report-pipeline) · [HISTORY_PIPELINE](#doc-history-pipeline) · [SCORING_AND_RANKING](#doc-scoring-and-ranking) · [CONFIGURATION](#doc-configuration) · [DEPENDENCIES](#doc-dependencies) · [PROJECT_REVIEW](#doc-project-review) · [DATA_VALIDATION](#doc-data-validation) · [PERFORMANCE_REVIEW](#doc-performance-review) · [SECURITY_REVIEW](#doc-security-review) · [UI_UX_REVIEW](#doc-ui-ux-review) · [RESEARCH_REVIEW](#doc-research-review) · [TECHNICAL_DEBT](#doc-technical-debt) · [IMPROVEMENT_LOG](#doc-improvement-log) · [CHANGELOG](#doc-changelog) · [TODO](#doc-todo) · [EXPLAINABILITY](#doc-explainability) · [DISTRICT_INTELLIGENCE](#doc-district-intelligence)
+[PROJECT_KNOWLEDGE](#doc-project-knowledge) · [ARCHITECTURE](#doc-architecture) · [FOLDER_STRUCTURE](#doc-folder-structure) · [FRONTEND](#doc-frontend) · [BACKEND](#doc-backend) · [DATASETS](#doc-datasets) · [ALGORITHMS](#doc-algorithms) · [API_REFERENCE](#doc-api-reference) · [DATA_FLOW](#doc-data-flow) · [USER_FLOW](#doc-user-flow) · [OPTIMIZATION_PIPELINE](#doc-optimization-pipeline) · [REPORT_PIPELINE](#doc-report-pipeline) · [HISTORY_PIPELINE](#doc-history-pipeline) · [SCORING_AND_RANKING](#doc-scoring-and-ranking) · [CONFIGURATION](#doc-configuration) · [DEPENDENCIES](#doc-dependencies) · [PROJECT_REVIEW](#doc-project-review) · [DATA_VALIDATION](#doc-data-validation) · [PERFORMANCE_REVIEW](#doc-performance-review) · [SECURITY_REVIEW](#doc-security-review) · [UI_UX_REVIEW](#doc-ui-ux-review) · [RESEARCH_REVIEW](#doc-research-review) · [TECHNICAL_DEBT](#doc-technical-debt) · [IMPROVEMENT_LOG](#doc-improvement-log) · [CHANGELOG](#doc-changelog) · [TODO](#doc-todo) · [EXPLAINABILITY](#doc-explainability) · [DISTRICT_INTELLIGENCE](#doc-district-intelligence) · [SCENARIO_SIMULATION](#doc-scenario-simulation)
 
 <a id="doc-folder-structure"></a>
 
@@ -308,6 +313,8 @@ final_year_project/
 | `app/services/plan_service.py` | Active | Orchestrates the 5-stage pipeline for `POST /api/farm-plans` and the CLI |
 | `app/services/results_store.py` | Active | Persists runs to `results/` (JSON/CSV/PNG), lists and loads them |
 | `app/services/district_service.py` | Active | District Intelligence aggregation (cached) |
+| `app/services/simulation_service.py` | Active | Scenario Simulation and decision impact analysis |
+| `results/simulations/` | Generated | Saved simulations (git-ignored with the rest of `results/`) |
 | `app/services/dashboard_service.py` | Active | Logic for the 7 frontend-facing endpoints (weather, dashboard, history, soil, plans, comparison, fuzzy comparison) |
 | `data/raw/*.csv` | Active | **The** dataset: 4 districts × {crop, land, rainfall, water_availability}. See [DATASETS.md](#doc-datasets) |
 | `tests/test_api.py` | Active | 21 tests – core REST endpoints |
@@ -341,6 +348,8 @@ final_year_project/
 | `src/index.css` | Active | Tailwind v4 `@theme` design tokens (Material-3-style colour roles, typography scale) + keyframes |
 | `src/services/api.js` | Active | The only module that calls the backend; `ApiError`, `describeApiError`, per-browser `client_id` |
 | `src/views/DistrictIntelligenceView.jsx`, `src/components/district/` | Active | District Intelligence page and its sections |
+| `src/views/SimulationView.jsx`, `src/components/simulation/` | Active | Scenario Simulation page and its sections |
+| `src/utils/simulationView.js`, `src/utils/simulationReport.jsx` | Active | Simulation helpers and HTML report |
 | `src/components/charts/` | Active | Reusable LineChart, BarChart, ChartCard, chart theme |
 | `src/utils/districtView.js` | Active | District page selection/formatting helpers |
 | `src/**/*.test.js(x)`, `src/__fixtures__/` | Active | Vitest tests and a real API payload fixture |
@@ -421,6 +430,7 @@ flowchart TB
     ds[services/dashboard_service.py<br/>weather · dashboard · history · soil<br/>plans · comparison · compare-fuzzy]
     xs[services/explanation_service.py<br/>explain saved runs and comparison plans]
     dis[services/district_service.py<br/>district profile, suitability, insights]
+    sim[services/simulation_service.py<br/>scenario simulation, paired impact analysis]
     rs[services/results_store.py<br/>save / list / load runs]
     pre[data/preprocessing.py<br/>RegionSeasonProfile]
     load[data/loader.py<br/>CSV load + lru_cache]
@@ -442,6 +452,8 @@ flowchart TB
     xs --> ds & ps & rank & fz & load
     main --> dis
     dis --> pre & fz & prob & rank & load & xs
+    main --> sim
+    sim --> ps & xs & dis & fz & rank & rs
     ds --> load & pre & fz & prob & run & rank & rs
     pre --> load
     run --> ops & prob
@@ -506,6 +518,7 @@ flowchart TB
     Shell --> Cmp[ComparisonView]
     Shell --> Run[RunOptimizationView]
     Shell --> Dic[DistrictIntelligenceView]
+    Shell --> Sim[SimulationView]
     Shell --> Hist[HistoryView]
     Shell --> Rep[ReportsView]
     Shell --> Set[SettingsView]
@@ -525,6 +538,8 @@ flowchart TB
 | CSV dataset | Docker image `/app/data/raw` | 761 rows over 16 files | Immutable per deploy |
 | Loader cache | Process memory (`lru_cache`) | 4 concatenated DataFrames | Process lifetime |
 | District profile cache | Process memory (`lru_cache(8)`) | Full district-intelligence payload per district | Process lifetime |
+| Unsaved simulation results | Process memory (32 newest, by token) | Result awaiting "Save" — never reused as a computation cache | Process lifetime |
+| Saved simulations | `results/simulations/sim_*.json` | Inputs + full result, scoped by `client_id` | Until deleted |
 | Dashboard front cache | Process memory (`lru_cache(32)`) | Pareto fronts per (district, season, year, land, budget, history flag) | Process lifetime |
 | Saved runs | `/app/results` (Fly volume) | `<run_id>.json` (+ CSV, convergence CSV/PNG) | Unbounded – never pruned |
 | Run summary cache | Process memory | Parsed summaries keyed by file mtime/size | Process lifetime |
@@ -697,6 +712,18 @@ Supporting additions: `ranking.topsis_scores`, `ranking.preference_weights`, `ra
 
 Shared helpers added for it: `preprocessing.observed_rows`, `explanation_service.make_item`.
 
+#### `app/services/simulation_service.py`
+| Symbol | Behaviour |
+|---|---|
+| `simulate(request)` | baseline and scenario through `plan_service.run_pipeline` with `ENSEMBLE_SEEDS`; returns every analysis section |
+| `resolve(request)` | validation and control mapping (`WATER_LEVEL_STORAGE_PCT`, `market_price_step_pct`, priorities → weights) |
+| `_paired(...)` | means, ranges, paired t-test, verdict |
+| `_side`, `_run_metrics`, `_cheapest_plan`, `_evaluate_plan` | per-side payload, per-run outcomes, cost lower bound, plan re-evaluation |
+| `_conditions`, `_comparison`, `_share_tests`, `_impact`, `_crop_effects`, `_fuzzy_changes`, `_optimization`, `_constraints`, `_historical`, `_decision_impact`, `_trade_offs`, `_summary` | one section each (see SCENARIO_SIMULATION.md) |
+| `remember`, `pending` | in-memory results awaiting save |
+
+Supporting changes: `plan_service.run_pipeline` / `PipelineAdjustments` / `PipelineRun` (`generate_farm_plans` calls it); `preprocessing.get_region_season_profile(rainfall_factor, storage_override_pct)`; `FarmPlanProblem(fertilizer_price_factor)` and `single_crop_metrics()`; `ranking.rank_plans(weights)` and `normalise_weights`; `ExplanationContext.weights / price_factor` and `explanation_service.indicative_economics`; `results_store.save_simulation / list_simulations / load_simulation / delete_simulation`. All defaults leave existing outputs unchanged.
+
 ### 3. Error handling summary
 
 | Layer | Strategy |
@@ -723,6 +750,7 @@ Not handled: disk full during save (500), Open-Meteo slowness (up to 5 s per cal
 | test_hardening.py | run-id safety, cache, atomic save, validation, provenance, determinism, concurrency, run-id collisions, client_id redaction | 40 |
 | test_explanation.py | explanation structure, traceability, confidence, constraints, honesty rules, endpoints | 25 |
 | test_district.py | district aggregations vs raw CSVs, suitability, market, missing data, caching, endpoint | 96 |
+| test_simulation.py | pipeline hooks, validation, paired comparison, end-to-end scenarios vs CSV, history, statements, persistence, endpoints | 61 |
 
 Gaps: operators unit-tested only indirectly; no test pins numeric outputs (a golden-master test would catch unintended model drift – TODO T-13); weather tests call the real Open-Meteo API when network is available; no frontend tests at all.
 
@@ -805,6 +833,9 @@ Every recommended plan has a "Why?" entry point: Comparison (Explain per row, "W
 ### 3c. District Intelligence
 Sidebar item after Run Optimization. One request (`api.getDistrictIntelligence`) per district; sections render the payload; filters run in the browser. Quick actions: run optimization with the district preselected (`navigateTo(view, params)`), compare district, text report, analytics, CSV/JSON export. Details: [DISTRICT_INTELLIGENCE.md](#doc-district-intelligence).
 
+### 3d. Scenario Simulation
+Sidebar item after District Intelligence. Form for the original conditions and the scenario controls; `api.runSimulation` (~4 s, spinner) returns the full analysis; sections render it. Save (named), reopen and delete scenarios; export a self-contained HTML report with charts (lazy-loaded module) or JSON. Details: [SCENARIO_SIMULATION.md](#doc-scenario-simulation).
+
 ### 4. Shared components
 
 | Component | Used by | Notes |
@@ -816,6 +847,8 @@ Sidebar item after Run Optimization. One request (`api.getDistrictIntelligence`)
 | `SuccessCheckSvg` | ProfileSetup | animated check |
 | `charts/LineChart`, `charts/BarChart`, `charts/ChartCard`, `charts/chartTheme` | District Intelligence (reusable) | emphasis colouring, hover tooltips, reference lines, minimum y-span, chart/table toggle |
 | `district/DistrictSections` | District Intelligence | overview, climate, soil, water, crop performance, suitability, market, insights sections |
+| `charts/GroupedBarChart`, `charts/DeltaBarChart`, `charts/RadarChart` | Scenario Simulation (reusable) | two-series bars with run-range whiskers; % change around zero with written verdicts; two-profile radar |
+| `simulation/SimulationSections` | Scenario Simulation | recommendation, impact, decision impact, trade-offs, optimisation difference, crop effects, history, conditions |
 | `ExplanationPanel`, `ExplanationModal`, `ExplanationComparison` | Comparison, Run Optimization, History, Reports | render the backend explanation JSON (no reasoning in the UI); modal handles loading/errors/Escape; side-by-side A/B/C view |
 
 ### 5. Styling system
@@ -856,6 +889,11 @@ Base URL: local `http://localhost:8000`; production `https://agrooptimize-backen
 | GET | `/api/results/{run_id}/explanation?rank=` | Explanation of one plan in a saved run | Run Optimization, History, Reports | tens of ms |
 | GET | `/api/comparison/{district}/explanation?plan=` | Explanation of Plan A/B/C | Comparison | ~1 s cold, fast when the front is cached |
 | GET | `/api/district-intelligence/{district}` | Aggregated district profile | District Intelligence | 30–120 ms cold, ≈0 cached |
+| POST | `/api/simulations/run` | Run a scenario simulation (baseline + scenario, 5 seeds each) | Scenario Simulation | ~4 s, never cached |
+| POST | `/api/simulations` | Save a simulation result by token | Scenario Simulation | fast |
+| GET | `/api/simulations?client_id=` | This browser's saved simulations | Scenario Simulation | fast |
+| GET | `/api/simulations/{id}?client_id=` | One saved simulation | Scenario Simulation | fast |
+| DELETE | `/api/simulations/{id}?client_id=` | Delete a saved simulation | Scenario Simulation | fast |
 
 `{district}` is case-insensitive (`coimbatore`, `Salem`, ` ERODE `). Unknown → 404.
 
@@ -1036,6 +1074,10 @@ Errors: 404 unknown run/district, 400 rank beyond the run's plans, 422 invalid p
 
 One aggregated district profile (`DistrictIntelligenceOut`, ≈55 KB): `district, overview, coverage, climate, soil, water, crops, suitability, market, insights[], summary`. Built from observed rows only; fields the dataset lacks are `null` with a note; sections without data return `{"available": false, "note": "Data not available"}`. Case-insensitive district; 404 for unknown districts. Cached per district. Full field description and an example: [DISTRICT_INTELLIGENCE.md](#doc-district-intelligence).
 
+### Scenario Simulation
+
+`POST /api/simulations/run` takes `{base, scenario, client_id}` (`SimulationRequest`) and returns `SimulationOut`: `token, inputs, conditions, baseline, scenario, comparison, impact, crop_effects, fuzzy_changes, optimization, constraints, historical, decision_impact[], trade_offs, summary, meta`. Invalid controls, an unknown district or an infeasible baseline → 422. `POST /api/simulations {token, name, client_id}` saves a result computed in this process (201; 404 if the token expired or belongs to another browser). `GET /api/simulations`, `GET /api/simulations/{id}` and `DELETE /api/simulations/{id}` require `client_id` and only see that browser's simulations. Controls, validation and an example: [SCENARIO_SIMULATION.md](#doc-scenario-simulation).
+
 <a id="doc-configuration"></a>
 
 ## Configuration, Constants and Assumptions
@@ -1163,6 +1205,7 @@ Only lower bounds are pinned (`>=`); there is no lock file, so a fresh install t
 | numpy | ≥1.26 | 2.3.5 | vectorised objectives, operators, TOPSIS | `optimization/`, `decision/` |
 | pymoo | ≥0.6.1 | 0.6.2 | NSGA-II survival/selection, `Problem`, hypervolume `HV` | `optimization/` |
 | scikit-fuzzy | ≥0.4.2 | 0.5.0 | Mamdani `ControlSystem`, `trimf` | `fuzzy/engine.py` |
+| scipy | ≥1.10 | 1.16.3 | paired t-test (`stats.ttest_rel`); was already installed as a dependency of pymoo and scikit-fuzzy, now listed because it is imported directly | `services/simulation_service.py` |
 | networkx | ≥3.2 | (installed) | **indirect**: imported by `skfuzzy.control` (rule graph); not imported by app code | – |
 | matplotlib | ≥3.8 | 3.11.1 | convergence PNG (Agg backend) | `results_store._plot_convergence` |
 | requests | ≥2.31 | 2.32.5 | Open-Meteo call | `dashboard_service._get_weather_live` |
@@ -1209,7 +1252,7 @@ Recommendations: split `requirements-dev.txt` (pytest, httpx) from runtime; gene
 
 ---
 
-# Part 3 — Data & District Intelligence
+# Part 3 — Data, District Intelligence & Scenario Simulation
 
 <a id="doc-datasets"></a>
 
@@ -1645,6 +1688,136 @@ Quick actions: Run optimization (preselects this district), Compare district (si
 4. Map view of the four locations using `DISTRICT_COORDINATES`.
 5. Use the shared chart components on Analytics and Comparison to retire their inline SVG.
 6. Server-side PDF district report.
+
+<a id="doc-scenario-simulation"></a>
+
+## Scenario Simulation & Decision Impact Analysis
+
+Lets a user change farming conditions and see how the optimised recommendation responds, and why. Every simulation runs the real pipeline (preprocessing → fuzzy → NSGA-II → TOPSIS → explanation engine) for both the original and the modified conditions; nothing is approximated, cached or hard-coded. Backend: `app/services/simulation_service.py`. Frontend: `frontend/src/views/SimulationView.jsx`, `frontend/src/components/simulation/SimulationSections.jsx`.
+
+### 1. Where scenario inputs enter the pipeline
+
+The pipeline was reverse-engineered stage by stage; each control is applied at the single point where the corresponding quantity is used, through default-neutral hooks (defaults reproduce every existing result exactly — verified on 48 stored outputs).
+
+| Control | Values | Enters at | Hook |
+|---|---|---|---|
+| Rainfall | −30 … +30 % in 10 % steps | Stage 1: monthly rainfall scaled before the season is aggregated; each month's deviation recomputed against the dataset's own normal (the CSV's `Deviation_Percent` follows the same formula, max difference 0.05). Changes both the fuzzy rainfall input and the effective rainfall in the water objective | `get_region_season_profile(rainfall_factor=)` |
+| Water availability | Current, Very low … Very high | Stage 2: fuzzy water-storage input (seasonal storage %) | `get_region_season_profile(storage_override_pct=)` |
+| Fertiliser cost | −20 … +30 % | Stage 3: N/P/K prices in the cost objective | `FarmPlanProblem(fertilizer_price_factor=)` |
+| Land, budget | any | Stage 3: hectares allocated; budget constraint | existing request fields |
+| Preference / priority sliders | named preference or four 0–100 sliders | Stage 7: TOPSIS weights (sliders scaled to sum to 1). NSGA-II is Pareto-based and has no weights | `rank_plans(weights=)` |
+| Market price | Decrease / Stable / Increase | Indicative revenue and profit only. Price is not an optimiser objective, so on its own it cannot change the plan | `ExplanationContext.price_factor` |
+
+`plan_service.run_pipeline(request, adjustments, track_history, seed)` runs stages 1–7 with a `PipelineAdjustments` value; `generate_farm_plans` now calls it, so Run Optimization and the simulator share one code path.
+
+#### Value definitions
+* **Water levels → storage %** placed in distinct regions of the fuzzy model's own water-storage sets (low [0,0,35], medium [20,50,75], high [60,100,100]): Very low 10 (only *low*), Low 25 (overlap, *low* dominant), Medium 50 (peak of *medium*), High 70 (overlap, *high* dominant), Very high 90 (only *high*). A test checks each level's dominant set.
+* **Market step** = the largest one-year change in the district's price column over observed years (Salem 11.4 %, Coimbatore 12.9 %, Erode and Pollachi 11.4 %). The data contains no year-on-year price decline, so *Decrease* is labelled a stress test.
+
+### 2. Why each side runs five times
+
+NSGA-II is stochastic. With identical inputs and different seeds, the recommended plan differs markedly — for Salem Kharif, 5 ha, balanced, the top plan's yield ranged from 50.2 to 69.8 t and Tapioca's share from 65 % to 100 % across seeds 42, 1, 2, 3, 4. Comparing one baseline run with one scenario run would attribute that search variation to the scenario.
+
+Each side is therefore optimised with the same seeds `ENSEMBLE_SEEDS = (42, 1, 2, 3, 4)` (common random numbers), and every change is judged with a **paired t-test** over the five pairs:
+
+| Verdict | Rule |
+|---|---|
+| improved / worsened | p < 0.05 and |change of means| ≥ 1 % (direction by objective) |
+| unchanged | every pair identical, or |change| < 1 % |
+| within search variation | moved, but p ≥ 0.05 — not attributed to the scenario |
+
+The displayed recommendation of each side is the **first seed's run** (seed 42, the one Run Optimization uses, with convergence history tracked), so the original recommendation, its explanation and its confidence are exactly what Run Optimization shows for the same inputs (tested).
+
+### 3. Flow
+
+```mermaid
+flowchart LR
+    UI[SimulationView form] -->|POST /api/simulations/run| R[resolve: validate,<br/>map controls]
+    R --> B[baseline: run_pipeline × 5 seeds]
+    R --> S[scenario: run_pipeline × 5 seeds<br/>with PipelineAdjustments]
+    B & S --> SIDE[_side: explanation of seed-42 run,<br/>per-run metrics, single-crop metrics]
+    SIDE --> A[analysis: conditions · comparison · impact (paired) ·<br/>crop effects · fuzzy changes · optimisation difference ·<br/>constraints · historical · statements · trade-offs · summary]
+    A --> T[token kept in memory, 32 newest]
+    A --> UI2[sections + charts render the payload]
+    T -->|POST /api/simulations| SV[results/simulations/sim_*.json]
+```
+
+### 4. Result sections
+
+| Section | Content | Computed from |
+|---|---|---|
+| Conditions | every condition, original vs scenario, where it enters the pipeline | request, both region profiles |
+| Recommendation comparison | both recommended crop plans, TOPSIS closeness, recommendation strength, confidence and its components; per-crop mean shares over the runs with p-values | seed-42 runs, explanation engine, paired tests |
+| Impact summary | yield, cost, water, environmental impact (totals, or per hectare when land differs), indicative profit, confidence: means, seed ranges, recommended-plan values, change %, p, verdict; baseline run-to-run spread | per-run top plans; `explanation_service.indicative_economics` |
+| Decision impact | generated statements (§5) | all sections |
+| Trade-offs | improved / worsened / unchanged / within variation; constraints whose status became harder (explanation-engine constraint statuses, budget use ≥ 95 %, infeasibility) | impact, explanation constraints |
+| Optimization difference | Pareto sizes and per-hectare ranges, TOPSIS weights and dominant objective, whether the front is identical, weight × goodness contributions, both plans on a common 0–1 scale (min–max over the union of both fronts, the TOPSIS normalisation), fuzzy inputs/outputs, rules whose firing changed by ≥ 0.05 | fronts, `ranking.topsis_scores`, `fuzzy.fired_rules` |
+| Condition vs re-optimisation | each seed's baseline plan re-evaluated with the scenario's objective function: *same plan, new conditions* (deterministic) vs *re-optimising* (paired test) | `FarmPlanProblem.evaluate` |
+| Crop suitability changes | per crop, grown alone at baseline inputs per hectare (no search): fuzzy confidence, yield, cost, irrigation, impact under each side's conditions; mean land share | `FarmPlanProblem.single_crop_metrics` |
+| Historical comparison | recommended crops vs the district's observed cropping pattern and yields; alignment = Σ min(plan share, historical share) with historical shares rescaled over the candidate crops | `district_service` trends (observed years) |
+| Scenario summary | 3–7 sentences from the computed facts | all sections |
+
+An infeasible scenario (e.g. budget below the cheapest possible plan) returns `scenario.available = false` with the reason and the cheapest possible plan's cost (all land in the cheapest crop at the lowest fertiliser level — cost is linear in the allocation, so this is the true minimum). An infeasible baseline is a 422.
+
+### 5. Generated statements
+Rainfall (effective rainfall, deviation, fuzzy set, the crop whose irrigation need changed most); water availability (storage, fuzzy set, irrigation risk); crop suitability (most and least affected fuzzy confidence, with rainfall dependency); fertiliser (cost change per hectare by crop); priorities (dominant TOPSIS weight); market (profit only); land shifts — only for shifts that are ≥ 5 pp **and** p < 0.05, prefixed "With only X changed" when exactly one condition changed, with the crop's own per-hectare changes and how it compared with the crop that lost land; "within search variation" for large but unreliable shifts; no reliable change in the crop mix; carry-over of the baseline plan. Format `{id, title, detail, source, evidence}` (`explanation_service.make_item`).
+
+### 6. Example (Salem, Kharif, 5 ha, balanced; rainfall −20 %, water Low, priorities 30/20/40/10)
+4.1 s for 10 optimisations. Original Tapioca 91 % / Maize 3 % / Groundnut 5 % → simulated Tapioca 42 % / Maize 54 % / Groundnut 4 % (shift consistent for Tapioca and Maize). Means of 5 runs: yield −57.2 % (p 0.0004), cost −12.2 % (p 0.0003), irrigation water −17.9 % (p 0.006), environmental impact +15.5 % (p 0.0009), indicative profit −55.7 %; confidence 73.6 % → 68.4 %. Without the priority change (rainfall −20 % and water Low only) the same comparison gave cost −6.6 % (p 0.11) and irrigation water −6.7 % (p 0.47) — within search variation — while the yield (−48.0 %) and profit changes were reliable.
+
+### 7. API
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/api/simulations/run` | run a simulation (`SimulationRequest` → `SimulationOut` + `token`); 422 on invalid input |
+| POST | `/api/simulations` | save a result of this session by `token` (`SimulationSaveIn`) → 201 summary; 404 if expired or another browser's |
+| GET | `/api/simulations?client_id=` | this browser's saved simulations, newest first |
+| GET | `/api/simulations/{id}?client_id=` | full saved record (inputs + result) |
+| DELETE | `/api/simulations/{id}?client_id=` | delete one |
+
+Request:
+```json
+{"base": {"location": "Salem", "season": "Kharif", "year": null, "total_land_ha": 5, "budget_rs": null, "preference": "balanced"},
+ "scenario": {"rainfall_change_pct": -20, "water_availability": "low", "fertilizer_cost_change_pct": 0, "market_price": "stable",
+              "total_land_ha": null, "budget_rs": null, "preference": null,
+              "priorities": {"yield": 30, "cost": 20, "water": 40, "env": 10}},
+ "client_id": "…"}
+```
+Validation: rainfall ∈ {−30,−20,−10,0,10,20,30}; fertiliser ∈ {−20,−10,0,10,20,30}; water ∈ {current, very_low, low, medium, high, very_high}; market ∈ {decrease, stable, increase}; priorities 0–100, not all zero; land 0–100 000 ha. Saving uses a server-held token, so a stored result is exactly what was computed (the client cannot submit its own numbers). Saved ids are timestamped with a random suffix and scoped to the browser's `client_id`, like saved runs.
+
+### 8. Frontend
+
+| Piece | Role |
+|---|---|
+| `views/SimulationView.jsx` | form (original conditions + scenario controls + priority sliders), saved scenarios (open / delete), run, save with a name, export report (HTML) and JSON |
+| `components/simulation/SimulationSections.jsx` | `RecommendationSection`, `ImpactSection`, `DecisionImpactSection`, `TradeOffSection`, `OptimizationSection`, `CropEffectsSection`, `HistoricalSection`, `ConditionsSection`, `VerdictBadge` |
+| `components/charts/GroupedBarChart.jsx` | two series per category with min–max whiskers (crop plan, confidence components, objective contributions, indexed objective comparison) |
+| `components/charts/DeltaBarChart.jsx` | % change around zero, value and verdict written next to each bar |
+| `components/charts/RadarChart.jsx` | both plans on the common objective scale |
+| `utils/simulationView.js` | request building, reopening, formatting, chart data selection (no outcome is computed) |
+| `utils/simulationReport.jsx` | self-contained HTML report with the charts rendered to static SVG; loaded on demand so `react-dom/server` stays out of the main bundle |
+
+Charts reuse the validated accent/gray pair (simulated = accent green, original = gray; CVD ΔE 18.8). Both series are always named in a legend, verdicts carry text and an icon, and every chart has a table view. Yield, cost, water and impact have different units, so they share one chart **indexed to the original mean = 100**; absolute values are in the impact cards and the table view. Bar charts keep a 480 px minimum width and scroll inside their card on phones.
+
+### 9. Tests
+* Backend `tests/test_simulation.py` (61): hooks neutral by default and exact when used (rainfall and deviation recomputed from the CSV, storage, fertiliser cost recomputed from CSV rows and config prices, single-crop metrics, explicit weights = preference weights); `run_pipeline` = a normal run; water levels in their fuzzy sets; market step recomputed; parameter validation; paired comparison (identical, constant shift, noisy, missing runs; p-value equals `scipy.stats.ttest_rel`); end-to-end scenarios — unchanged (no change reported, same plan as Run Optimization, same confidence), drought (inputs reach the pipeline, crop water needs from the CSV, impact = paired means, seed runs reproduce independently, decomposition re-evaluation), market (profit only), priorities (identical front, weights), infeasible budget (cheapest plan recomputed from the CSV), land change (per-hectare basis); historical alignment recomputed; statements only attribute reliable shifts; trade-offs follow verdicts; explanation weights and price factor; persistence (scoping, path safety, delete); pending-result bound; all endpoints.
+* Frontend (Vitest, 24 new): request building and reopening, formatting, selection helpers, the three chart components, every section against real payloads (drought and infeasible), the exported report, the empty page.
+
+### 10. Limitations
+* Five seeds per side is a compromise between rigour and response time (~4 s); small effects can be reported as "within search variation" that more runs might resolve.
+* Market price changes cannot alter the plan because price is not an objective; prices are the dataset's unvalidated MSP column.
+* Water availability acts only through the fuzzy model (the optimiser has no water-availability constraint); irrigation water itself is driven by crop requirements and effective rainfall.
+* Rainfall scaling is uniform across the season's months; temperature, humidity and soil stay at the dataset values.
+* The default data year is 2024, which is estimated; the page says so.
+* Unsaved results are kept in process memory (32 newest) for saving; they are lost on restart.
+
+### 11. Future improvements
+1. Adaptive run count (add seeds until the confidence interval of the headline change is narrow enough).
+2. Optional water-availability constraint in `FarmPlanProblem` so scarce water can bind the plan directly.
+3. Month-level rainfall patterns (e.g. delayed onset) rather than a uniform factor.
+4. Profit as an optional fifth objective once prices are validated.
+5. Sensitivity sweeps (e.g. rainfall −30 → +30 in one request) with a response curve.
+6. Server-side PDF report.
 
 ---
 
@@ -2164,7 +2337,7 @@ Consolidating these (TODO T-11) would remove the most common source of examiner 
 
 ## Optimization Pipeline
 
-Step-by-step trace of `plan_service.generate_farm_plans` (used by `POST /api/farm-plans` and `run_demo.py`), with a worked example: **Salem, Kharif, latest year (2024), 5 ha, no budget, balanced** – values captured from a real run on 2026-09-29.
+Step-by-step trace of `plan_service.generate_farm_plans` (used by `POST /api/farm-plans` and `run_demo.py`; stages 1–7 live in `run_pipeline`, which Scenario Simulation also calls with adjustments — see [SCENARIO_SIMULATION.md](#doc-scenario-simulation)), with a worked example: **Salem, Kharif, latest year (2024), 5 ha, no budget, balanced** – values captured from a real run on 2026-09-29.
 
 ```mermaid
 flowchart TB
@@ -2235,6 +2408,8 @@ See [DATA_FLOW.md](#doc-data-flow) §5. `run_id = salem_kharif_2024_<UTC timesta
 | filters | remove plans after optimisation |
 | `max_candidate_crops` | only matters if < number of crops (≤5 in the data) |
 | `pop_size`, `n_gen` | front density/convergence; same seed → reproducible |
+| seed | different seeds give noticeably different top plans for the same inputs (Salem Kharif: yield 50–70 t over seeds 42, 1–4); Scenario Simulation therefore compares five paired seeds per side |
+| scenario hooks | `rainfall_factor`, `storage_override_pct`, `fertilizer_price_factor`, explicit TOPSIS `weights` (all neutral by default) |
 
 ### Dashboard variant
 `dashboard_service._run_dashboard_pareto_front`: identical Stages 1–5 with population 100, current calendar season, 5 ha default, no filters, memoised; ranking done by the caller (balanced for `/api/plans`; three preferences for `/api/comparison`).
@@ -2308,6 +2483,9 @@ The user's saved `landSize` is used only on the Run Optimization page.
 ### 3b. District Intelligence flow
 `GET /api/district-intelligence/{district}` → `district_service._build` (cached) → observed rows of all four CSVs → coverage, climate, soil, water, crop history → suitability (season profiles + fuzzy + `FarmPlanProblem.evaluate` on one-crop one-hectare plans + TOPSIS goodness) → market → insights → summary → `DistrictIntelligenceView` (filters in the browser). See [DISTRICT_INTELLIGENCE.md](#doc-district-intelligence).
 
+### 3c. Scenario Simulation flow
+`POST /api/simulations/run` → `simulation_service.resolve` (validate, map controls) → `plan_service.run_pipeline` × 5 seeds for the baseline and × 5 seeds for the scenario with `PipelineAdjustments` (rainfall factor and storage override in preprocessing, fertiliser price factor in the cost objective, explicit TOPSIS weights) → explanation engine on each side's seed-42 run (scenario price factor for profit) → paired analysis → response + token. Saving writes `results/simulations/<id>.json`. See [SCENARIO_SIMULATION.md](#doc-scenario-simulation).
+
 ### 4. Caching along the path
 
 | Cache | Key | Invalidation |
@@ -2362,7 +2540,7 @@ flowchart LR
     Settings -->|Logout| Onboarding
 ```
 
-Every shell page is reachable from the sidebar/top bar/drawer: Home, Analytics, Comparison, Run Optimization, History, Reports, Settings.
+Every shell page is reachable from the sidebar/top bar/drawer: Home, Analytics, Comparison, Run Optimization, District Intelligence, Scenario Simulation, History, Reports, Settings.
 
 ### 3. Core task: get and keep a personalised plan
 
@@ -2381,6 +2559,11 @@ Every shell page is reachable from the sidebar/top bar/drawer: Home, Analytics, 
 | Comparison | three representative plans (balanced / max-yield / min-cost), radar, re-weighting | profile district, 5 ha |
 
 `DataSourceNotice` on these pages states they are district-level and not saved.
+
+### 4b. What-if planning (Scenario Simulation)
+1. Set the original conditions (district, season, year, land, budget, preference) and change one or more scenario controls.
+2. *Run simulation* (~4 s) → summary, both recommendations side by side, impact cards with verdicts, decision-impact statements, trade-offs, optimisation difference, crop effects, historical comparison.
+3. *Save scenario* (named) → listed under Saved scenarios for this browser; reopen restores the form and result. *Export report* downloads an HTML report with charts (print to PDF from the browser); *Export JSON* downloads the raw result.
 
 ### 5. Returning visit
 
@@ -2925,6 +3108,22 @@ All code modifications made during the 2026-09-29 audit. All changes are submitt
 
 Verification after all changes: backend **205/205 tests pass** (was 165/165); output fingerprint over 48 endpoint/pipeline results is **identical to HEAD** apart from the new additive provenance fields; frontend `oxlint` 0 warnings (was 3 in `src` + noise), `vite build` succeeds; UI flows exercised in Chrome with no console errors.
 
+### [Unreleased] – Scenario Simulation & Decision Impact Analysis
+
+#### Added
+- `app/services/simulation_service.py`; `POST /api/simulations/run`, `POST/GET /api/simulations`, `GET/DELETE /api/simulations/{id}`; `SimulationRequest`, `SimulationOut` and saved-simulation schemas.
+- Scenario Simulation page (sidebar, after District Intelligence): scenario controls, recommendation comparison, impact with paired-test verdicts, decision impact, trade-offs, optimisation difference, crop effects, historical comparison, saved scenarios, HTML report with charts, JSON export.
+- `GroupedBarChart`, `DeltaBarChart`, `RadarChart`.
+- `tests/test_simulation.py` (61) and 24 frontend tests; `SCENARIO_SIMULATION.md`.
+
+#### Changed
+- `plan_service.run_pipeline` (with `PipelineAdjustments`) now runs stages 1–7; `generate_farm_plans` calls it.
+- Default-neutral hooks: rainfall factor and storage override (preprocessing), fertiliser price factor and `single_crop_metrics()` (problem), explicit weights (ranking), custom weights and price factor (explanations), `indicative_economics` extracted.
+- `scipy` listed in requirements (already installed transitively).
+
+#### Verified
+- 387 backend tests and 55 frontend tests pass; 48 optimisation outputs identical to `main`; lint clean; build passes (main bundle +43 KB; report module loaded on demand).
+
 ### [Unreleased] – District Intelligence Center
 
 #### Added
@@ -3077,6 +3276,14 @@ Ordered by priority. IDs are referenced from the other documents. "Decision" ite
 | T-33 | Sensitivity of the recommendation to fuzzy inputs (± rainfall deviation) |
 | T-34 | Calibrate confidence weights once observed outcomes exist |
 | T-35 | Promote economics once prices are validated (see T-10) |
+
+### Scenario Simulation follow-ups
+| ID | Task |
+|---|---|
+| T-40 | Adaptive number of seed runs per side |
+| T-41 | Optional water-availability constraint in `FarmPlanProblem` |
+| T-42 | Month-level rainfall scenarios (onset delay, dry spells) |
+| T-43 | Sensitivity sweeps with response curves; server-side PDF report |
 
 ### District Intelligence follow-ups
 | ID | Task |

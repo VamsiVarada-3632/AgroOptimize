@@ -104,6 +104,9 @@ Any recommended plan can be explained via `GET /api/results/{run_id}/explanation
 ## 7c. District Intelligence
 `GET /api/district-intelligence/{district}` and the District Intelligence page profile a district from observed rows only: overview, coverage, climate, soil, water, crop history, a crop suitability score (mean of climate & soil, rainfall fit, prominence, yield stability and resource efficiency; per-hectare values from the optimiser's own objective function), historical prices (not live), generated insights and a summary. Missing fields show "Data not available". See [DISTRICT_INTELLIGENCE.md](DISTRICT_INTELLIGENCE.md).
 
+## 7d. Scenario Simulation
+`POST /api/simulations/run` and the Scenario Simulation page optimise the original and a modified set of conditions (rainfall, water availability, fertiliser cost, market price, land, budget, preference or priority weights) through the full pipeline, five paired seeds per side, and report what changed and why: both recommendations, paired-test impact on yield, cost, water, environmental impact, profit and confidence, decision-impact statements, trade-offs, fuzzy and TOPSIS differences, crop effects and the historical comparison. Simulations can be saved and exported. See [SCENARIO_SIMULATION.md](SCENARIO_SIMULATION.md).
+
 ## 8. Configuration ([CONFIGURATION.md](CONFIGURATION.md), [DEPENDENCIES.md](DEPENDENCIES.md))
 Everything in `app/config.py`. Sourced constants: fertiliser ₹12.87/kg N, ₹58.70/kg P₂O₅, ₹56.67/kg K₂O (from bag prices); labour ₹319/day (MGNREGA TN 2024-25). Assumptions: rainfall utilisation 0.7, carbon proxies 0.15/0.01, dependency factors, multiplier bounds 0.7–1.3, all fuzzy breakpoints, TOPSIS weights. Paper-given: 200 generations, p_c 0.85, p_m 0.12. Env vars actually read: `CORS_ALLOW_ORIGINS` (backend), `VITE_API_BASE` (frontend build).
 
