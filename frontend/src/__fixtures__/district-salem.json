@@ -1,0 +1,3343 @@
+{
+ "district": "Salem",
+ "overview": {
+  "district": "Salem",
+  "coordinates": {
+   "lat": 11.6643,
+   "lon": 78.146
+  },
+  "agricultural_zone": null,
+  "agricultural_zone_note": "The dataset has no agro-climatic zone field.",
+  "agricultural_area_ha": 148513.0,
+  "total_area_ha": 292668.0,
+  "irrigated_pct": 57.9,
+  "land_year_basis": 2023,
+  "land_basis": "Mean of the season records for the latest observed year.",
+  "soil_types": [
+   "Red Loam"
+  ],
+  "average_annual_rainfall_mm": 692.7,
+  "stated_annual_normal_mm": 800.0,
+  "average_temperature_c": 29.0,
+  "average_humidity_pct": 64.6,
+  "primary_irrigation_sources": [
+   {
+    "source": "Mettur Dam",
+    "share_of_months_pct": 50.0
+   },
+   {
+    "source": "Thirumanimuttar River",
+    "share_of_months_pct": 25.0
+   },
+   {
+    "source": "Cauvery River",
+    "share_of_months_pct": 25.0
+   }
+  ],
+  "major_crops": [
+   {
+    "crop": "Paddy",
+    "season": "Kharif",
+    "mean_area_ha": 26940.0,
+    "mean_area_share_pct": 28.2
+   },
+   {
+    "crop": "Maize",
+    "season": "Kharif",
+    "mean_area_ha": 20740.0,
+    "mean_area_share_pct": 21.7
+   },
+   {
+    "crop": "Sugarcane",
+    "season": "Rabi",
+    "mean_area_ha": 20740.0,
+    "mean_area_share_pct": 45.3
+   },
+   {
+    "crop": "Tapioca",
+    "season": "Kharif",
+    "mean_area_ha": 18120.0,
+    "mean_area_share_pct": 18.9
+   },
+   {
+    "crop": "Groundnut",
+    "season": "Kharif",
+    "mean_area_ha": 15740.0,
+    "mean_area_share_pct": 16.5
+   }
+  ],
+  "seasons_available": {
+   "Kharif": [
+    2020,
+    2021,
+    2022,
+    2023
+   ],
+   "Rabi": [
+    2020,
+    2021,
+    2022,
+    2023
+   ],
+   "Summer": [
+    2020,
+    2021,
+    2022,
+    2023
+   ]
+  },
+  "observed_years": [
+   2020,
+   2021,
+   2022,
+   2023
+  ],
+  "estimated_years": [
+   2024
+  ],
+  "last_dataset_update": "2026-09-18"
+ },
+ "coverage": {
+  "observed_years": [
+   2020,
+   2021,
+   2022,
+   2023
+  ],
+  "estimated_years": [
+   2024
+  ],
+  "seasons_available": {
+   "Kharif": [
+    2020,
+    2021,
+    2022,
+    2023
+   ],
+   "Rabi": [
+    2020,
+    2021,
+    2022,
+    2023
+   ],
+   "Summer": [
+    2020,
+    2021,
+    2022,
+    2023
+   ]
+  },
+  "files": [
+   {
+    "kind": "crop",
+    "rows": 50,
+    "observed_rows": 40
+   },
+   {
+    "kind": "land",
+    "rows": 15,
+    "observed_rows": 12
+   },
+   {
+    "kind": "rainfall",
+    "rows": 60,
+    "observed_rows": 48
+   },
+   {
+    "kind": "water",
+    "rows": 60,
+    "observed_rows": 48
+   }
+  ],
+  "monthly_completeness_pct": {
+   "rainfall": 100.0,
+   "water": 100.0
+  },
+  "last_dataset_update": "2026-09-18",
+  "last_dataset_update_basis": "Most recent modification date of this district's CSV files.",
+  "provenance": [
+   "Estimated (2024) - live download attempted from data.gov.in API (403), CGWB gwdata portal (maintenance mode), data.gov.in catalog (robots.txt blocked), agmarknet.gov.in (403); all unreachable from this environment on 2026-09-17. Value = 2023 actual x ~1.061 growth factor (set in a prior session).",
+   "Project baseline dataset (2020-2023, course-provided)"
+  ]
+ },
+ "climate": {
+  "annual": [
+   {
+    "year": 2020,
+    "total_mm": 705.6,
+    "normal_mm": 800.0,
+    "deviation_pct": -11.8,
+    "rainy_days": 106,
+    "mean_temp_c": 28.99,
+    "max_temp_c": 40.8,
+    "min_temp_c": 18.4,
+    "humidity_pct": 64.4
+   },
+   {
+    "year": 2021,
+    "total_mm": 691.6,
+    "normal_mm": 800.0,
+    "deviation_pct": -13.5,
+    "rainy_days": 106,
+    "mean_temp_c": 28.95,
+    "max_temp_c": 41.0,
+    "min_temp_c": 18.2,
+    "humidity_pct": 64.9
+   },
+   {
+    "year": 2022,
+    "total_mm": 697.2,
+    "normal_mm": 800.0,
+    "deviation_pct": -12.8,
+    "rainy_days": 106,
+    "mean_temp_c": 28.93,
+    "max_temp_c": 40.6,
+    "min_temp_c": 18.6,
+    "humidity_pct": 64.5
+   },
+   {
+    "year": 2023,
+    "total_mm": 676.2,
+    "normal_mm": 800.0,
+    "deviation_pct": -15.5,
+    "rainy_days": 103,
+    "mean_temp_c": 28.95,
+    "max_temp_c": 40.9,
+    "min_temp_c": 18.3,
+    "humidity_pct": 64.5
+   }
+  ],
+  "monthly": [
+   {
+    "year": 2020,
+    "month": "January",
+    "month_index": 1,
+    "rainfall_mm": 7.8,
+    "normal_mm": 57.0,
+    "max_temp_c": 33.2,
+    "min_temp_c": 18.4,
+    "humidity_pct": 56.0,
+    "met_season": "Winter"
+   },
+   {
+    "year": 2020,
+    "month": "February",
+    "month_index": 2,
+    "rainfall_mm": 5.2,
+    "normal_mm": 57.0,
+    "max_temp_c": 35.0,
+    "min_temp_c": 19.4,
+    "humidity_pct": 52.0,
+    "met_season": "Winter"
+   },
+   {
+    "year": 2020,
+    "month": "March",
+    "month_index": 3,
+    "rainfall_mm": 22.4,
+    "normal_mm": 33.3,
+    "max_temp_c": 37.8,
+    "min_temp_c": 22.0,
+    "humidity_pct": 50.0,
+    "met_season": "Summer"
+   },
+   {
+    "year": 2020,
+    "month": "April",
+    "month_index": 4,
+    "rainfall_mm": 58.4,
+    "normal_mm": 33.3,
+    "max_temp_c": 39.6,
+    "min_temp_c": 24.2,
+    "humidity_pct": 56.0,
+    "met_season": "Summer"
+   },
+   {
+    "year": 2020,
+    "month": "May",
+    "month_index": 5,
+    "rainfall_mm": 74.6,
+    "normal_mm": 33.3,
+    "max_temp_c": 40.8,
+    "min_temp_c": 26.0,
+    "humidity_pct": 60.0,
+    "met_season": "Summer"
+   },
+   {
+    "year": 2020,
+    "month": "June",
+    "month_index": 6,
+    "rainfall_mm": 48.2,
+    "normal_mm": 80.0,
+    "max_temp_c": 37.0,
+    "min_temp_c": 25.2,
+    "humidity_pct": 66.0,
+    "met_season": "Southwest Monsoon"
+   },
+   {
+    "year": 2020,
+    "month": "July",
+    "month_index": 7,
+    "rainfall_mm": 62.4,
+    "normal_mm": 80.0,
+    "max_temp_c": 35.6,
+    "min_temp_c": 24.2,
+    "humidity_pct": 70.0,
+    "met_season": "Southwest Monsoon"
+   },
+   {
+    "year": 2020,
+    "month": "August",
+    "month_index": 8,
+    "rainfall_mm": 54.8,
+    "normal_mm": 80.0,
+    "max_temp_c": 35.2,
+    "min_temp_c": 23.8,
+    "humidity_pct": 72.0,
+    "met_season": "Southwest Monsoon"
+   },
+   {
+    "year": 2020,
+    "month": "September",
+    "month_index": 9,
+    "rainfall_mm": 96.4,
+    "normal_mm": 80.0,
+    "max_temp_c": 34.6,
+    "min_temp_c": 23.4,
+    "humidity_pct": 74.0,
+    "met_season": "Southwest Monsoon"
+   },
+   {
+    "year": 2020,
+    "month": "October",
+    "month_index": 10,
+    "rainfall_mm": 132.8,
+    "normal_mm": 88.7,
+    "max_temp_c": 33.4,
+    "min_temp_c": 22.6,
+    "humidity_pct": 78.0,
+    "met_season": "Northeast Monsoon"
+   },
+   {
+    "year": 2020,
+    "month": "November",
+    "month_index": 11,
+    "rainfall_mm": 104.2,
+    "normal_mm": 88.7,
+    "max_temp_c": 32.0,
+    "min_temp_c": 21.2,
+    "humidity_pct": 75.0,
+    "met_season": "Northeast Monsoon"
+   },
+   {
+    "year": 2020,
+    "month": "December",
+    "month_index": 12,
+    "rainfall_mm": 38.4,
+    "normal_mm": 88.7,
+    "max_temp_c": 31.4,
+    "min_temp_c": 19.8,
+    "humidity_pct": 64.0,
+    "met_season": "Northeast Monsoon"
+   },
+   {
+    "year": 2021,
+    "month": "January",
+    "month_index": 1,
+    "rainfall_mm": 6.4,
+    "normal_mm": 57.0,
+    "max_temp_c": 33.4,
+    "min_temp_c": 18.2,
+    "humidity_pct": 55.0,
+    "met_season": "Winter"
+   },
+   {
+    "year": 2021,
+    "month": "February",
+    "month_index": 2,
+    "rainfall_mm": 8.6,
+    "normal_mm": 57.0,
+    "max_temp_c": 35.2,
+    "min_temp_c": 19.6,
+    "humidity_pct": 53.0,
+    "met_season": "Winter"
+   },
+   {
+    "year": 2021,
+    "month": "March",
+    "month_index": 3,
+    "rainfall_mm": 26.8,
+    "normal_mm": 33.3,
+    "max_temp_c": 38.0,
+    "min_temp_c": 22.4,
+    "humidity_pct": 51.0,
+    "met_season": "Summer"
+   },
+   {
+    "year": 2021,
+    "month": "April",
+    "month_index": 4,
+    "rainfall_mm": 50.2,
+    "normal_mm": 33.3,
+    "max_temp_c": 39.8,
+    "min_temp_c": 24.4,
+    "humidity_pct": 57.0,
+    "met_season": "Summer"
+   },
+   {
+    "year": 2021,
+    "month": "May",
+    "month_index": 5,
+    "rainfall_mm": 80.4,
+    "normal_mm": 33.3,
+    "max_temp_c": 41.0,
+    "min_temp_c": 26.2,
+    "humidity_pct": 61.0,
+    "met_season": "Summer"
+   },
+   {
+    "year": 2021,
+    "month": "June",
+    "month_index": 6,
+    "rainfall_mm": 40.6,
+    "normal_mm": 80.0,
+    "max_temp_c": 36.8,
+    "min_temp_c": 25.0,
+    "humidity_pct": 65.0,
+    "met_season": "Southwest Monsoon"
+   },
+   {
+    "year": 2021,
+    "month": "July",
+    "month_index": 7,
+    "rainfall_mm": 66.8,
+    "normal_mm": 80.0,
+    "max_temp_c": 35.4,
+    "min_temp_c": 24.0,
+    "humidity_pct": 71.0,
+    "met_season": "Southwest Monsoon"
+   },
+   {
+    "year": 2021,
+    "month": "August",
+    "month_index": 8,
+    "rainfall_mm": 48.4,
+    "normal_mm": 80.0,
+    "max_temp_c": 35.0,
+    "min_temp_c": 23.6,
+    "humidity_pct": 73.0,
+    "met_season": "Southwest Monsoon"
+   },
+   {
+    "year": 2021,
+    "month": "September",
+    "month_index": 9,
+    "rainfall_mm": 100.2,
+    "normal_mm": 80.0,
+    "max_temp_c": 34.4,
+    "min_temp_c": 23.2,
+    "humidity_pct": 75.0,
+    "met_season": "Southwest Monsoon"
+   },
+   {
+    "year": 2021,
+    "month": "October",
+    "month_index": 10,
+    "rainfall_mm": 118.4,
+    "normal_mm": 88.7,
+    "max_temp_c": 33.2,
+    "min_temp_c": 22.4,
+    "humidity_pct": 79.0,
+    "met_season": "Northeast Monsoon"
+   },
+   {
+    "year": 2021,
+    "month": "November",
+    "month_index": 11,
+    "rainfall_mm": 112.6,
+    "normal_mm": 88.7,
+    "max_temp_c": 31.8,
+    "min_temp_c": 21.0,
+    "humidity_pct": 76.0,
+    "met_season": "Northeast Monsoon"
+   },
+   {
+    "year": 2021,
+    "month": "December",
+    "month_index": 12,
+    "rainfall_mm": 32.2,
+    "normal_mm": 88.7,
+    "max_temp_c": 31.2,
+    "min_temp_c": 19.6,
+    "humidity_pct": 63.0,
+    "met_season": "Northeast Monsoon"
+   },
+   {
+    "year": 2022,
+    "month": "January",
+    "month_index": 1,
+    "rainfall_mm": 10.4,
+    "normal_mm": 57.0,
+    "max_temp_c": 33.6,
+    "min_temp_c": 18.6,
+    "humidity_pct": 57.0,
+    "met_season": "Winter"
+   },
+   {
+    "year": 2022,
+    "month": "February",
+    "month_index": 2,
+    "rainfall_mm": 4.0,
+    "normal_mm": 57.0,
+    "max_temp_c": 34.8,
+    "min_temp_c": 19.2,
+    "humidity_pct": 51.0,
+    "met_season": "Winter"
+   },
+   {
+    "year": 2022,
+    "month": "March",
+    "month_index": 3,
+    "rainfall_mm": 20.2,
+    "normal_mm": 33.3,
+    "max_temp_c": 37.6,
+    "min_temp_c": 22.2,
+    "humidity_pct": 50.0,
+    "met_season": "Summer"
+   },
+   {
+    "year": 2022,
+    "month": "April",
+    "month_index": 4,
+    "rainfall_mm": 62.4,
+    "normal_mm": 33.3,
+    "max_temp_c": 39.4,
+    "min_temp_c": 24.0,
+    "humidity_pct": 58.0,
+    "met_season": "Summer"
+   },
+   {
+    "year": 2022,
+    "month": "May",
+    "month_index": 5,
+    "rainfall_mm": 66.8,
+    "normal_mm": 33.3,
+    "max_temp_c": 40.6,
+    "min_temp_c": 25.8,
+    "humidity_pct": 59.0,
+    "met_season": "Summer"
+   },
+   {
+    "year": 2022,
+    "month": "June",
+    "month_index": 6,
+    "rainfall_mm": 52.4,
+    "normal_mm": 80.0,
+    "max_temp_c": 36.9,
+    "min_temp_c": 25.1,
+    "humidity_pct": 67.0,
+    "met_season": "Southwest Monsoon"
+   },
+   {
+    "year": 2022,
+    "month": "July",
+    "month_index": 7,
+    "rainfall_mm": 58.4,
+    "normal_mm": 80.0,
+    "max_temp_c": 35.5,
+    "min_temp_c": 24.1,
+    "humidity_pct": 69.0,
+    "met_season": "Southwest Monsoon"
+   },
+   {
+    "year": 2022,
+    "month": "August",
+    "month_index": 8,
+    "rainfall_mm": 58.6,
+    "normal_mm": 80.0,
+    "max_temp_c": 35.1,
+    "min_temp_c": 23.7,
+    "humidity_pct": 71.0,
+    "met_season": "Southwest Monsoon"
+   },
+   {
+    "year": 2022,
+    "month": "September",
+    "month_index": 9,
+    "rainfall_mm": 86.4,
+    "normal_mm": 80.0,
+    "max_temp_c": 34.5,
+    "min_temp_c": 23.3,
+    "humidity_pct": 73.0,
+    "met_season": "Southwest Monsoon"
+   },
+   {
+    "year": 2022,
+    "month": "October",
+    "month_index": 10,
+    "rainfall_mm": 142.6,
+    "normal_mm": 88.7,
+    "max_temp_c": 33.3,
+    "min_temp_c": 22.5,
+    "humidity_pct": 80.0,
+    "met_season": "Northeast Monsoon"
+   },
+   {
+    "year": 2022,
+    "month": "November",
+    "month_index": 11,
+    "rainfall_mm": 92.4,
+    "normal_mm": 88.7,
+    "max_temp_c": 31.9,
+    "min_temp_c": 21.1,
+    "humidity_pct": 74.0,
+    "met_season": "Northeast Monsoon"
+   },
+   {
+    "year": 2022,
+    "month": "December",
+    "month_index": 12,
+    "rainfall_mm": 42.6,
+    "normal_mm": 88.7,
+    "max_temp_c": 31.5,
+    "min_temp_c": 19.9,
+    "humidity_pct": 65.0,
+    "met_season": "Northeast Monsoon"
+   },
+   {
+    "year": 2023,
+    "month": "January",
+    "month_index": 1,
+    "rainfall_mm": 7.2,
+    "normal_mm": 57.0,
+    "max_temp_c": 33.3,
+    "min_temp_c": 18.3,
+    "humidity_pct": 56.0,
+    "met_season": "Winter"
+   },
+   {
+    "year": 2023,
+    "month": "February",
+    "month_index": 2,
+    "rainfall_mm": 5.8,
+    "normal_mm": 57.0,
+    "max_temp_c": 35.1,
+    "min_temp_c": 19.5,
+    "humidity_pct": 52.0,
+    "met_season": "Winter"
+   },
+   {
+    "year": 2023,
+    "month": "March",
+    "month_index": 3,
+    "rainfall_mm": 19.4,
+    "normal_mm": 33.3,
+    "max_temp_c": 37.7,
+    "min_temp_c": 22.1,
+    "humidity_pct": 50.0,
+    "met_season": "Summer"
+   },
+   {
+    "year": 2023,
+    "month": "April",
+    "month_index": 4,
+    "rainfall_mm": 56.4,
+    "normal_mm": 33.3,
+    "max_temp_c": 39.5,
+    "min_temp_c": 24.1,
+    "humidity_pct": 57.0,
+    "met_season": "Summer"
+   },
+   {
+    "year": 2023,
+    "month": "May",
+    "month_index": 5,
+    "rainfall_mm": 70.4,
+    "normal_mm": 33.3,
+    "max_temp_c": 40.9,
+    "min_temp_c": 26.1,
+    "humidity_pct": 60.0,
+    "met_season": "Summer"
+   },
+   {
+    "year": 2023,
+    "month": "June",
+    "month_index": 6,
+    "rainfall_mm": 46.2,
+    "normal_mm": 80.0,
+    "max_temp_c": 36.9,
+    "min_temp_c": 25.1,
+    "humidity_pct": 66.0,
+    "met_season": "Southwest Monsoon"
+   },
+   {
+    "year": 2023,
+    "month": "July",
+    "month_index": 7,
+    "rainfall_mm": 60.4,
+    "normal_mm": 80.0,
+    "max_temp_c": 35.5,
+    "min_temp_c": 24.1,
+    "humidity_pct": 70.0,
+    "met_season": "Southwest Monsoon"
+   },
+   {
+    "year": 2023,
+    "month": "August",
+    "month_index": 8,
+    "rainfall_mm": 53.4,
+    "normal_mm": 80.0,
+    "max_temp_c": 35.1,
+    "min_temp_c": 23.7,
+    "humidity_pct": 72.0,
+    "met_season": "Southwest Monsoon"
+   },
+   {
+    "year": 2023,
+    "month": "September",
+    "month_index": 9,
+    "rainfall_mm": 92.4,
+    "normal_mm": 80.0,
+    "max_temp_c": 34.5,
+    "min_temp_c": 23.3,
+    "humidity_pct": 74.0,
+    "met_season": "Southwest Monsoon"
+   },
+   {
+    "year": 2023,
+    "month": "October",
+    "month_index": 10,
+    "rainfall_mm": 128.4,
+    "normal_mm": 88.7,
+    "max_temp_c": 33.3,
+    "min_temp_c": 22.5,
+    "humidity_pct": 78.0,
+    "met_season": "Northeast Monsoon"
+   },
+   {
+    "year": 2023,
+    "month": "November",
+    "month_index": 11,
+    "rainfall_mm": 100.4,
+    "normal_mm": 88.7,
+    "max_temp_c": 31.9,
+    "min_temp_c": 21.1,
+    "humidity_pct": 75.0,
+    "met_season": "Northeast Monsoon"
+   },
+   {
+    "year": 2023,
+    "month": "December",
+    "month_index": 12,
+    "rainfall_mm": 35.8,
+    "normal_mm": 88.7,
+    "max_temp_c": 31.4,
+    "min_temp_c": 19.8,
+    "humidity_pct": 64.0,
+    "met_season": "Northeast Monsoon"
+   }
+  ],
+  "met_season_share": [
+   {
+    "season": "Northeast Monsoon",
+    "share_pct": 39.0,
+    "mean_mm_per_year": 270.2
+   },
+   {
+    "season": "Southwest Monsoon",
+    "share_pct": 37.0,
+    "mean_mm_per_year": 256.5
+   },
+   {
+    "season": "Summer",
+    "share_pct": 22.0,
+    "mean_mm_per_year": 152.1
+   },
+   {
+    "season": "Winter",
+    "share_pct": 2.0,
+    "mean_mm_per_year": 13.8
+   }
+  ],
+  "agri_seasons": [
+   {
+    "season": "Kharif",
+    "months": [
+     "June",
+     "July",
+     "August",
+     "September"
+    ],
+    "mean_total_mm": 256.5,
+    "by_year": {
+     "2020": 261.8,
+     "2021": 256.0,
+     "2022": 255.8,
+     "2023": 252.4
+    },
+    "trend": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 261.8,
+     "last": 252.4,
+     "change_pct": -3.6,
+     "slope_per_year": -2.84,
+     "cv": 0.015,
+     "variability": "low",
+     "direction": "stable",
+     "n_years": 4
+    }
+   },
+   {
+    "season": "Rabi",
+    "months": [
+     "October",
+     "November",
+     "December",
+     "January",
+     "February",
+     "March"
+    ],
+    "mean_total_mm": 306.2,
+    "by_year": {
+     "2020": 310.8,
+     "2021": 305.0,
+     "2022": 312.2,
+     "2023": 297.0
+    },
+    "trend": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 310.8,
+     "last": 297.0,
+     "change_pct": -4.4,
+     "slope_per_year": -3.42,
+     "cv": 0.023,
+     "variability": "low",
+     "direction": "stable",
+     "n_years": 4
+    }
+   },
+   {
+    "season": "Summer",
+    "months": [
+     "February",
+     "March",
+     "April",
+     "May"
+    ],
+    "mean_total_mm": 158.0,
+    "by_year": {
+     "2020": 160.6,
+     "2021": 166.0,
+     "2022": 153.4,
+     "2023": 152.0
+    },
+    "trend": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 160.6,
+     "last": 152.0,
+     "change_pct": -5.4,
+     "slope_per_year": -3.84,
+     "cv": 0.041,
+     "variability": "low",
+     "direction": "decreasing",
+     "n_years": 4
+    }
+   }
+  ],
+  "stated_annual_normal_mm": 800.0,
+  "trends": {
+   "rainfall": {
+    "first_year": 2020,
+    "last_year": 2023,
+    "first": 705.6,
+    "last": 676.2,
+    "change_pct": -4.2,
+    "slope_per_year": -8.26,
+    "cv": 0.018,
+    "variability": "low",
+    "direction": "stable",
+    "n_years": 4
+   },
+   "temperature": {
+    "first_year": 2020,
+    "last_year": 2023,
+    "first": 28.992,
+    "last": 28.95,
+    "change_pct": -0.1,
+    "slope_per_year": -0.015,
+    "cv": 0.001,
+    "variability": "low",
+    "direction": "stable",
+    "n_years": 4
+   },
+   "humidity": {
+    "first_year": 2020,
+    "last_year": 2023,
+    "first": 64.417,
+    "last": 64.5,
+    "change_pct": 0.1,
+    "slope_per_year": -0.017,
+    "cv": 0.003,
+    "variability": "low",
+    "direction": "stable",
+    "n_years": 4
+   },
+   "rainy_days": {
+    "first_year": 2020,
+    "last_year": 2023,
+    "first": 106.0,
+    "last": 103.0,
+    "change_pct": -2.8,
+    "slope_per_year": -0.9,
+    "cv": 0.014,
+    "variability": "low",
+    "direction": "stable",
+    "n_years": 4
+   }
+  }
+ },
+ "soil": {
+  "available": true,
+  "soil_types": [
+   "Red Loam"
+  ],
+  "records": [
+   {
+    "year": 2020,
+    "season": "Kharif",
+    "soil_type": "Red Loam",
+    "ph": 6.5,
+    "organic_carbon_pct": 0.55,
+    "n_status": "Low",
+    "p_status": "Low",
+    "k_status": "Medium",
+    "fertility_index": 62.5
+   },
+   {
+    "year": 2020,
+    "season": "Rabi",
+    "soil_type": "Red Loam",
+    "ph": 6.5,
+    "organic_carbon_pct": 0.54,
+    "n_status": "Low",
+    "p_status": "Low",
+    "k_status": "Medium",
+    "fertility_index": 62.2
+   },
+   {
+    "year": 2020,
+    "season": "Summer",
+    "soil_type": "Red Loam",
+    "ph": 6.5,
+    "organic_carbon_pct": 0.53,
+    "n_status": "Low",
+    "p_status": "Low",
+    "k_status": "Medium",
+    "fertility_index": 61.9
+   },
+   {
+    "year": 2021,
+    "season": "Kharif",
+    "soil_type": "Red Loam",
+    "ph": 6.6,
+    "organic_carbon_pct": 0.56,
+    "n_status": "Low",
+    "p_status": "Low",
+    "k_status": "Medium",
+    "fertility_index": 61.6
+   },
+   {
+    "year": 2021,
+    "season": "Rabi",
+    "soil_type": "Red Loam",
+    "ph": 6.6,
+    "organic_carbon_pct": 0.55,
+    "n_status": "Low",
+    "p_status": "Low",
+    "k_status": "Medium",
+    "fertility_index": 61.3
+   },
+   {
+    "year": 2021,
+    "season": "Summer",
+    "soil_type": "Red Loam",
+    "ph": 6.6,
+    "organic_carbon_pct": 0.54,
+    "n_status": "Low",
+    "p_status": "Low",
+    "k_status": "Medium",
+    "fertility_index": 61.0
+   },
+   {
+    "year": 2022,
+    "season": "Kharif",
+    "soil_type": "Red Loam",
+    "ph": 6.7,
+    "organic_carbon_pct": 0.57,
+    "n_status": "Low",
+    "p_status": "Medium",
+    "k_status": "Medium",
+    "fertility_index": 64.7
+   },
+   {
+    "year": 2022,
+    "season": "Rabi",
+    "soil_type": "Red Loam",
+    "ph": 6.7,
+    "organic_carbon_pct": 0.56,
+    "n_status": "Low",
+    "p_status": "Medium",
+    "k_status": "Medium",
+    "fertility_index": 64.4
+   },
+   {
+    "year": 2022,
+    "season": "Summer",
+    "soil_type": "Red Loam",
+    "ph": 6.7,
+    "organic_carbon_pct": 0.55,
+    "n_status": "Low",
+    "p_status": "Medium",
+    "k_status": "Medium",
+    "fertility_index": 64.1
+   },
+   {
+    "year": 2023,
+    "season": "Kharif",
+    "soil_type": "Red Loam",
+    "ph": 6.8,
+    "organic_carbon_pct": 0.58,
+    "n_status": "Medium",
+    "p_status": "Medium",
+    "k_status": "Medium",
+    "fertility_index": 67.8
+   },
+   {
+    "year": 2023,
+    "season": "Rabi",
+    "soil_type": "Red Loam",
+    "ph": 6.8,
+    "organic_carbon_pct": 0.57,
+    "n_status": "Medium",
+    "p_status": "Medium",
+    "k_status": "Medium",
+    "fertility_index": 67.5
+   },
+   {
+    "year": 2023,
+    "season": "Summer",
+    "soil_type": "Red Loam",
+    "ph": 6.8,
+    "organic_carbon_pct": 0.56,
+    "n_status": "Medium",
+    "p_status": "Medium",
+    "k_status": "Medium",
+    "fertility_index": 67.2
+   }
+  ],
+  "latest_year": 2023,
+  "latest": {
+   "ph": 6.8,
+   "organic_carbon_pct": 0.58,
+   "n_status": "Medium",
+   "p_status": "Medium",
+   "k_status": "Medium",
+   "fertility_index_mean": 67.5,
+   "fuzzy_set": "medium",
+   "fuzzy_membership": {
+    "poor": 0.0,
+    "medium": 0.3,
+    "good": 0.188
+   }
+  },
+  "trends": {
+   "ph": {
+    "first_year": 2020,
+    "last_year": 2023,
+    "first": 6.5,
+    "last": 6.8,
+    "change_pct": 4.6,
+    "slope_per_year": 0.1,
+    "cv": 0.019,
+    "variability": "low",
+    "direction": "stable",
+    "n_years": 4
+   },
+   "organic_carbon": {
+    "first_year": 2020,
+    "last_year": 2023,
+    "first": 0.54,
+    "last": 0.57,
+    "change_pct": 5.6,
+    "slope_per_year": 0.01,
+    "cv": 0.023,
+    "variability": "low",
+    "direction": "increasing",
+    "n_years": 4
+   },
+   "fertility_index": {
+    "first_year": 2020,
+    "last_year": 2023,
+    "first": 62.2,
+    "last": 67.5,
+    "change_pct": 8.5,
+    "slope_per_year": 1.9,
+    "cv": 0.043,
+    "variability": "low",
+    "direction": "increasing",
+    "n_years": 4
+   }
+  },
+  "characteristics": [
+   {
+    "id": "soil-n_status",
+    "title": "Nitrogen status",
+    "detail": "Nitrogen status was Low in 2020 and Medium in 2023 (Kharif records).",
+    "source": "dataset",
+    "evidence": {
+     "first": "Low",
+     "latest": "Medium"
+    }
+   },
+   {
+    "id": "soil-p_status",
+    "title": "Phosphorus status",
+    "detail": "Phosphorus status was Low in 2020 and Medium in 2023 (Kharif records).",
+    "source": "dataset",
+    "evidence": {
+     "first": "Low",
+     "latest": "Medium"
+    }
+   },
+   {
+    "id": "soil-k_status",
+    "title": "Potassium status",
+    "detail": "Potassium status was Medium in 2020 and Medium in 2023 (Kharif records).",
+    "source": "dataset",
+    "evidence": {
+     "first": "Medium",
+     "latest": "Medium"
+    }
+   },
+   {
+    "id": "soil-ph",
+    "title": "Soil reaction (pH)",
+    "detail": "Average soil pH has remained stable: 6.50 in 2020 to 6.80 in 2023 (+4.6%), with low year-to-year variability (CV 0.019).",
+    "source": "dataset",
+    "evidence": {
+     "trend": {
+      "first_year": 2020,
+      "last_year": 2023,
+      "first": 6.5,
+      "last": 6.8,
+      "change_pct": 4.6,
+      "slope_per_year": 0.1,
+      "cv": 0.019,
+      "variability": "low",
+      "direction": "stable",
+      "n_years": 4
+     }
+    }
+   },
+   {
+    "id": "soil-oc",
+    "title": "Organic carbon",
+    "detail": "Organic carbon has increased: 0.54% in 2020 to 0.57% in 2023 (+5.6%), with low year-to-year variability (CV 0.023).",
+    "source": "dataset",
+    "evidence": {
+     "trend": {
+      "first_year": 2020,
+      "last_year": 2023,
+      "first": 0.54,
+      "last": 0.57,
+      "change_pct": 5.6,
+      "slope_per_year": 0.01,
+      "cv": 0.023,
+      "variability": "low",
+      "direction": "increasing",
+      "n_years": 4
+     }
+    }
+   }
+  ],
+  "limitations": [
+   {
+    "id": "limit-oc",
+    "title": "Organic carbon below 1%",
+    "detail": "Organic carbon is 0.58% in 2023; the fertility index treats 1.0% as the level that earns a full organic-carbon score.",
+    "source": "dataset + fertility index",
+    "evidence": {
+     "organic_carbon_pct": 0.58
+    }
+   }
+  ],
+  "crop_categories_grown": [
+   {
+    "crop_type": "Cereal",
+    "crops": [
+     "Maize",
+     "Paddy"
+    ]
+   },
+   {
+    "crop_type": "Commercial",
+    "crops": [
+     "Sugarcane"
+    ]
+   },
+   {
+    "crop_type": "Fiber",
+    "crops": [
+     "Cotton"
+    ]
+   },
+   {
+    "crop_type": "Fruit",
+    "crops": [
+     "Banana",
+     "Mango"
+    ]
+   },
+   {
+    "crop_type": "Horticulture",
+    "crops": [
+     "Vegetables"
+    ]
+   },
+   {
+    "crop_type": "Oilseed",
+    "crops": [
+     "Groundnut",
+     "Sunflower"
+    ]
+   },
+   {
+    "crop_type": "Root Crop",
+    "crops": [
+     "Tapioca"
+    ]
+   }
+  ],
+  "crop_categories_basis": "Crop types recorded for this district in crop.csv (observed years). The dataset has no soil-to-crop suitability table, so categories are what is grown here, not an agronomic recommendation; see Crop suitability for the computed ranking."
+ },
+ "water": {
+  "available": true,
+  "yearly": [
+   {
+    "year": 2020,
+    "irrigation_mcm": 194.2,
+    "drinking_mcm": 51.6,
+    "industrial_mcm": 17.2,
+    "total_demand_mcm": 263.0,
+    "inflow_mcm": 550.0,
+    "storage_pct": 49.4,
+    "groundwater_mbgl": 30.0,
+    "irrigation_share_pct": 73.8
+   },
+   {
+    "year": 2021,
+    "irrigation_mcm": 215.2,
+    "drinking_mcm": 56.2,
+    "industrial_mcm": 17.8,
+    "total_demand_mcm": 289.2,
+    "inflow_mcm": 543.2,
+    "storage_pct": 49.4,
+    "groundwater_mbgl": 30.0,
+    "irrigation_share_pct": 74.4
+   },
+   {
+    "year": 2022,
+    "irrigation_mcm": 214.4,
+    "drinking_mcm": 56.2,
+    "industrial_mcm": 18.0,
+    "total_demand_mcm": 288.6,
+    "inflow_mcm": 558.8,
+    "storage_pct": 49.4,
+    "groundwater_mbgl": 30.0,
+    "irrigation_share_pct": 74.3
+   },
+   {
+    "year": 2023,
+    "irrigation_mcm": 214.4,
+    "drinking_mcm": 56.0,
+    "industrial_mcm": 18.0,
+    "total_demand_mcm": 288.4,
+    "inflow_mcm": 546.6,
+    "storage_pct": 49.4,
+    "groundwater_mbgl": 30.0,
+    "irrigation_share_pct": 74.3
+   }
+  ],
+  "storage_by_month": [
+   {
+    "month": "January",
+    "storage_pct": 48.0,
+    "varies_between_years": false
+   },
+   {
+    "month": "February",
+    "storage_pct": 48.0,
+    "varies_between_years": false
+   },
+   {
+    "month": "March",
+    "storage_pct": 35.0,
+    "varies_between_years": false
+   },
+   {
+    "month": "April",
+    "storage_pct": 35.0,
+    "varies_between_years": false
+   },
+   {
+    "month": "May",
+    "storage_pct": 35.0,
+    "varies_between_years": false
+   },
+   {
+    "month": "June",
+    "storage_pct": 62.0,
+    "varies_between_years": false
+   },
+   {
+    "month": "July",
+    "storage_pct": 62.0,
+    "varies_between_years": false
+   },
+   {
+    "month": "August",
+    "storage_pct": 62.0,
+    "varies_between_years": false
+   },
+   {
+    "month": "September",
+    "storage_pct": 62.0,
+    "varies_between_years": false
+   },
+   {
+    "month": "October",
+    "storage_pct": 48.0,
+    "varies_between_years": false
+   },
+   {
+    "month": "November",
+    "storage_pct": 48.0,
+    "varies_between_years": false
+   },
+   {
+    "month": "December",
+    "storage_pct": 48.0,
+    "varies_between_years": false
+   }
+  ],
+  "storage_identical_every_year": true,
+  "storage_by_season": [
+   {
+    "season": "Kharif",
+    "storage_pct": 62.0,
+    "fuzzy_set": "medium",
+    "below_action_threshold": false
+   },
+   {
+    "season": "Rabi",
+    "storage_pct": 45.8,
+    "fuzzy_set": "medium",
+    "below_action_threshold": false
+   },
+   {
+    "season": "Summer",
+    "storage_pct": 38.2,
+    "fuzzy_set": "medium",
+    "below_action_threshold": true
+   }
+  ],
+  "reservoir_capacity_mcm": 312.8,
+  "primary_sources": [
+   {
+    "source": "Mettur Dam",
+    "share_of_months_pct": 50.0
+   },
+   {
+    "source": "Thirumanimuttar River",
+    "share_of_months_pct": 25.0
+   },
+   {
+    "source": "Cauvery River",
+    "share_of_months_pct": 25.0
+   }
+  ],
+  "groundwater": {
+   "level_mbgl_by_year": {
+    "2020": 30.0,
+    "2021": 30.0,
+    "2022": 30.0,
+    "2023": 30.0
+   },
+   "level_varies": true,
+   "status_distribution": [
+    {
+     "status": "Normal",
+     "months": 16,
+     "share_pct": 33.3
+    },
+    {
+     "status": "Very High",
+     "months": 16,
+     "share_pct": 33.3
+    },
+    {
+     "status": "High",
+     "months": 8,
+     "share_pct": 16.7
+    },
+    {
+     "status": "Above Normal",
+     "months": 4,
+     "share_pct": 8.3
+    },
+    {
+     "status": "Low",
+     "months": 2,
+     "share_pct": 4.2
+    },
+    {
+     "status": "Below Normal",
+     "months": 1,
+     "share_pct": 2.1
+    },
+    {
+     "status": "Very Low",
+     "months": 1,
+     "share_pct": 2.1
+    }
+   ],
+   "most_common_status": "Normal"
+  },
+  "irrigation_dependency": {
+   "irrigated_pct_by_year": {
+    "2020": 55.8,
+    "2021": 56.6,
+    "2022": 57.4,
+    "2023": 57.9
+   },
+   "trend": {
+    "first_year": 2020,
+    "last_year": 2023,
+    "first": 55.771,
+    "last": 57.885,
+    "change_pct": 3.8,
+    "slope_per_year": 0.714,
+    "cv": 0.016,
+    "variability": "low",
+    "direction": "stable",
+    "n_years": 4
+   }
+  },
+  "trends": {
+   "inflow": {
+    "first_year": 2020,
+    "last_year": 2023,
+    "first": 550.0,
+    "last": 546.6,
+    "change_pct": -0.6,
+    "slope_per_year": 0.54,
+    "cv": 0.012,
+    "variability": "low",
+    "direction": "stable",
+    "n_years": 4
+   },
+   "irrigation_demand": {
+    "first_year": 2020,
+    "last_year": 2023,
+    "first": 194.2,
+    "last": 214.4,
+    "change_pct": 10.4,
+    "slope_per_year": 5.98,
+    "cv": 0.049,
+    "variability": "low",
+    "direction": "increasing",
+    "n_years": 4
+   },
+   "irrigation_share": {
+    "first_year": 2020,
+    "last_year": 2023,
+    "first": 73.84,
+    "last": 74.341,
+    "change_pct": 0.7,
+    "slope_per_year": 0.138,
+    "cv": 0.003,
+    "variability": "low",
+    "direction": "stable",
+    "n_years": 4
+   }
+  },
+  "stress_indicators": [
+   {
+    "id": "storage-low-season",
+    "title": "Seasonal storage",
+    "detail": "Mean reservoir storage falls below 40% in Summer.",
+    "source": "dataset",
+    "evidence": {
+     "by_season": [
+      {
+       "season": "Kharif",
+       "storage_pct": 62.0,
+       "fuzzy_set": "medium",
+       "below_action_threshold": false
+      },
+      {
+       "season": "Rabi",
+       "storage_pct": 45.8,
+       "fuzzy_set": "medium",
+       "below_action_threshold": false
+      },
+      {
+       "season": "Summer",
+       "storage_pct": 38.2,
+       "fuzzy_set": "medium",
+       "below_action_threshold": true
+      }
+     ],
+     "threshold_pct": 40.0
+    }
+   },
+   {
+    "id": "irrigation-share",
+    "title": "Irrigation share of water demand",
+    "detail": "Irrigation's share of total water demand has remained stable: 73.8% in 2020 to 74.3% in 2023 (+0.7%), with low year-to-year variability (CV 0.003).",
+    "source": "dataset",
+    "evidence": {
+     "trend": {
+      "first_year": 2020,
+      "last_year": 2023,
+      "first": 73.84,
+      "last": 74.341,
+      "change_pct": 0.7,
+      "slope_per_year": 0.138,
+      "cv": 0.003,
+      "variability": "low",
+      "direction": "stable",
+      "n_years": 4
+     }
+    }
+   },
+   {
+    "id": "deficit-zero",
+    "title": "Supply-demand balance",
+    "detail": "Deficit/surplus is recorded as 0 MCM in every month: the dataset sets demand equal to canal release, so it carries no shortage signal.",
+    "source": "dataset",
+    "evidence": {
+     "deficit_mcm_total": 0.0
+    }
+   }
+  ],
+  "glossary": {
+   "storage_pct": "Reservoir storage as % of capacity; the fuzzy model's water input.",
+   "irrigation_share_pct": "Irrigation's share of total water demand (irrigation + drinking + industrial).",
+   "groundwater_mbgl": "Groundwater depth in metres below ground level (deeper = scarcer).",
+   "irrigated_pct": "Irrigated land as % of agricultural land.",
+   "inflow_mcm": "River inflow summed over the year, million cubic metres."
+  }
+ },
+ "crops": {
+  "available": true,
+  "records": [
+   {
+    "year": 2020,
+    "season": "Kharif",
+    "crop": "Cotton",
+    "crop_type": "Fiber",
+    "area_ha": 12640.0,
+    "area_share_pct": 14.6,
+    "production_t": 18660.0,
+    "yield_t_ha": 1.5,
+    "price_rs_qtl": 6080.0,
+    "revenue_rs_lakh": 11345.0
+   },
+   {
+    "year": 2021,
+    "season": "Kharif",
+    "crop": "Cotton",
+    "crop_type": "Fiber",
+    "area_ha": 13840.0,
+    "area_share_pct": 14.8,
+    "production_t": 20460.0,
+    "yield_t_ha": 1.5,
+    "price_rs_qtl": 6080.0,
+    "revenue_rs_lakh": 12440.0
+   },
+   {
+    "year": 2022,
+    "season": "Kharif",
+    "crop": "Cotton",
+    "crop_type": "Fiber",
+    "area_ha": 14640.0,
+    "area_share_pct": 14.8,
+    "production_t": 21660.0,
+    "yield_t_ha": 1.5,
+    "price_rs_qtl": 6380.0,
+    "revenue_rs_lakh": 13818.0
+   },
+   {
+    "year": 2023,
+    "season": "Kharif",
+    "crop": "Cotton",
+    "crop_type": "Fiber",
+    "area_ha": 15240.0,
+    "area_share_pct": 14.7,
+    "production_t": 22560.0,
+    "yield_t_ha": 1.5,
+    "price_rs_qtl": 6620.0,
+    "revenue_rs_lakh": 14931.0
+   },
+   {
+    "year": 2020,
+    "season": "Kharif",
+    "crop": "Groundnut",
+    "crop_type": "Oilseed",
+    "area_ha": 14240.0,
+    "area_share_pct": 16.4,
+    "production_t": 28080.0,
+    "yield_t_ha": 2.0,
+    "price_rs_qtl": 5550.0,
+    "revenue_rs_lakh": 15584.0
+   },
+   {
+    "year": 2021,
+    "season": "Kharif",
+    "crop": "Groundnut",
+    "crop_type": "Oilseed",
+    "area_ha": 15440.0,
+    "area_share_pct": 16.5,
+    "production_t": 30784.0,
+    "yield_t_ha": 2.02,
+    "price_rs_qtl": 5550.0,
+    "revenue_rs_lakh": 17085.0
+   },
+   {
+    "year": 2022,
+    "season": "Kharif",
+    "crop": "Groundnut",
+    "crop_type": "Oilseed",
+    "area_ha": 16240.0,
+    "area_share_pct": 16.4,
+    "production_t": 33684.0,
+    "yield_t_ha": 2.1,
+    "price_rs_qtl": 5850.0,
+    "revenue_rs_lakh": 19705.0
+   },
+   {
+    "year": 2023,
+    "season": "Kharif",
+    "crop": "Groundnut",
+    "crop_type": "Oilseed",
+    "area_ha": 17040.0,
+    "area_share_pct": 16.5,
+    "production_t": 35364.0,
+    "yield_t_ha": 2.1,
+    "price_rs_qtl": 6377.0,
+    "revenue_rs_lakh": 22560.0
+   },
+   {
+    "year": 2020,
+    "season": "Kharif",
+    "crop": "Maize",
+    "crop_type": "Cereal",
+    "area_ha": 18840.0,
+    "area_share_pct": 21.7,
+    "production_t": 119168.0,
+    "yield_t_ha": 6.4,
+    "price_rs_qtl": 1870.0,
+    "revenue_rs_lakh": 22285.0
+   },
+   {
+    "year": 2021,
+    "season": "Kharif",
+    "crop": "Maize",
+    "crop_type": "Cereal",
+    "area_ha": 20240.0,
+    "area_share_pct": 21.7,
+    "production_t": 128128.0,
+    "yield_t_ha": 6.4,
+    "price_rs_qtl": 1870.0,
+    "revenue_rs_lakh": 23960.0
+   },
+   {
+    "year": 2022,
+    "season": "Kharif",
+    "crop": "Maize",
+    "crop_type": "Cereal",
+    "area_ha": 21440.0,
+    "area_share_pct": 21.7,
+    "production_t": 141827.0,
+    "yield_t_ha": 6.684,
+    "price_rs_qtl": 1962.0,
+    "revenue_rs_lakh": 27827.0
+   },
+   {
+    "year": 2023,
+    "season": "Kharif",
+    "crop": "Maize",
+    "crop_type": "Cereal",
+    "area_ha": 22440.0,
+    "area_share_pct": 21.7,
+    "production_t": 149618.0,
+    "yield_t_ha": 6.734,
+    "price_rs_qtl": 1962.0,
+    "revenue_rs_lakh": 29351.0
+   },
+   {
+    "year": 2020,
+    "season": "Kharif",
+    "crop": "Paddy",
+    "crop_type": "Cereal",
+    "area_ha": 24640.0,
+    "area_share_pct": 28.4,
+    "production_t": 131868.0,
+    "yield_t_ha": 5.4,
+    "price_rs_qtl": 1868.0,
+    "revenue_rs_lakh": 24612.0
+   },
+   {
+    "year": 2021,
+    "season": "Kharif",
+    "crop": "Paddy",
+    "crop_type": "Cereal",
+    "area_ha": 26240.0,
+    "area_share_pct": 28.1,
+    "production_t": 143110.0,
+    "yield_t_ha": 5.5,
+    "price_rs_qtl": 1868.0,
+    "revenue_rs_lakh": 26733.0
+   },
+   {
+    "year": 2022,
+    "season": "Kharif",
+    "crop": "Paddy",
+    "crop_type": "Cereal",
+    "area_ha": 27840.0,
+    "area_share_pct": 28.1,
+    "production_t": 154672.0,
+    "yield_t_ha": 5.6,
+    "price_rs_qtl": 1960.0,
+    "revenue_rs_lakh": 30332.0
+   },
+   {
+    "year": 2023,
+    "season": "Kharif",
+    "crop": "Paddy",
+    "crop_type": "Cereal",
+    "area_ha": 29040.0,
+    "area_share_pct": 28.1,
+    "production_t": 164274.0,
+    "yield_t_ha": 5.7,
+    "price_rs_qtl": 2183.0,
+    "revenue_rs_lakh": 35884.0
+   },
+   {
+    "year": 2020,
+    "season": "Kharif",
+    "crop": "Tapioca",
+    "crop_type": "Root Crop",
+    "area_ha": 16420.0,
+    "area_share_pct": 18.9,
+    "production_t": 421720.0,
+    "yield_t_ha": 26.0,
+    "price_rs_qtl": 650.0,
+    "revenue_rs_lakh": 27412.0
+   },
+   {
+    "year": 2021,
+    "season": "Kharif",
+    "crop": "Tapioca",
+    "crop_type": "Root Crop",
+    "area_ha": 17620.0,
+    "area_share_pct": 18.9,
+    "production_t": 453920.0,
+    "yield_t_ha": 26.05,
+    "price_rs_qtl": 650.0,
+    "revenue_rs_lakh": 29505.0
+   },
+   {
+    "year": 2022,
+    "season": "Kharif",
+    "crop": "Tapioca",
+    "crop_type": "Root Crop",
+    "area_ha": 18820.0,
+    "area_share_pct": 19.0,
+    "production_t": 487022.0,
+    "yield_t_ha": 26.156,
+    "price_rs_qtl": 680.0,
+    "revenue_rs_lakh": 33117.0
+   },
+   {
+    "year": 2023,
+    "season": "Kharif",
+    "crop": "Tapioca",
+    "crop_type": "Root Crop",
+    "area_ha": 19620.0,
+    "area_share_pct": 19.0,
+    "production_t": 508383.0,
+    "yield_t_ha": 26.179,
+    "price_rs_qtl": 700.0,
+    "revenue_rs_lakh": 35587.0
+   },
+   {
+    "year": 2020,
+    "season": "Rabi",
+    "crop": "Banana",
+    "crop_type": "Fruit",
+    "area_ha": 12420.0,
+    "area_share_pct": 29.9,
+    "production_t": 248000.0,
+    "yield_t_ha": 20.0,
+    "price_rs_qtl": 2200.0,
+    "revenue_rs_lakh": 54560.0
+   },
+   {
+    "year": 2021,
+    "season": "Rabi",
+    "crop": "Banana",
+    "crop_type": "Fruit",
+    "area_ha": 13420.0,
+    "area_share_pct": 30.0,
+    "production_t": 268000.0,
+    "yield_t_ha": 20.0,
+    "price_rs_qtl": 2200.0,
+    "revenue_rs_lakh": 58960.0
+   },
+   {
+    "year": 2022,
+    "season": "Rabi",
+    "crop": "Banana",
+    "crop_type": "Fruit",
+    "area_ha": 14420.0,
+    "area_share_pct": 30.4,
+    "production_t": 288000.0,
+    "yield_t_ha": 20.0,
+    "price_rs_qtl": 2300.0,
+    "revenue_rs_lakh": 66240.0
+   },
+   {
+    "year": 2023,
+    "season": "Rabi",
+    "crop": "Banana",
+    "crop_type": "Fruit",
+    "area_ha": 15020.0,
+    "area_share_pct": 30.3,
+    "production_t": 300000.0,
+    "yield_t_ha": 20.0,
+    "price_rs_qtl": 2400.0,
+    "revenue_rs_lakh": 72000.0
+   },
+   {
+    "year": 2020,
+    "season": "Rabi",
+    "crop": "Sugarcane",
+    "crop_type": "Commercial",
+    "area_ha": 18840.0,
+    "area_share_pct": 45.4,
+    "production_t": 1694240.0,
+    "yield_t_ha": 90.89,
+    "price_rs_qtl": 2900.0,
+    "revenue_rs_lakh": 491330.0
+   },
+   {
+    "year": 2021,
+    "season": "Rabi",
+    "crop": "Sugarcane",
+    "crop_type": "Commercial",
+    "area_ha": 20240.0,
+    "area_share_pct": 45.3,
+    "production_t": 1827640.0,
+    "yield_t_ha": 91.2,
+    "price_rs_qtl": 2900.0,
+    "revenue_rs_lakh": 530016.0
+   },
+   {
+    "year": 2022,
+    "season": "Rabi",
+    "crop": "Sugarcane",
+    "crop_type": "Commercial",
+    "area_ha": 21440.0,
+    "area_share_pct": 45.1,
+    "production_t": 2010792.0,
+    "yield_t_ha": 94.668,
+    "price_rs_qtl": 3050.0,
+    "revenue_rs_lakh": 612892.0
+   },
+   {
+    "year": 2023,
+    "season": "Rabi",
+    "crop": "Sugarcane",
+    "crop_type": "Commercial",
+    "area_ha": 22440.0,
+    "area_share_pct": 45.3,
+    "production_t": 2125920.0,
+    "yield_t_ha": 95.582,
+    "price_rs_qtl": 3050.0,
+    "revenue_rs_lakh": 648256.0
+   },
+   {
+    "year": 2020,
+    "season": "Rabi",
+    "crop": "Sunflower",
+    "crop_type": "Oilseed",
+    "area_ha": 10240.0,
+    "area_share_pct": 24.7,
+    "production_t": 25350.0,
+    "yield_t_ha": 2.5,
+    "price_rs_qtl": 5650.0,
+    "revenue_rs_lakh": 14323.0
+   },
+   {
+    "year": 2021,
+    "season": "Rabi",
+    "crop": "Sunflower",
+    "crop_type": "Oilseed",
+    "area_ha": 11040.0,
+    "area_share_pct": 24.7,
+    "production_t": 27350.0,
+    "yield_t_ha": 2.5,
+    "price_rs_qtl": 5650.0,
+    "revenue_rs_lakh": 15453.0
+   },
+   {
+    "year": 2022,
+    "season": "Rabi",
+    "crop": "Sunflower",
+    "crop_type": "Oilseed",
+    "area_ha": 11640.0,
+    "area_share_pct": 24.5,
+    "production_t": 28850.0,
+    "yield_t_ha": 2.5,
+    "price_rs_qtl": 5850.0,
+    "revenue_rs_lakh": 16877.0
+   },
+   {
+    "year": 2023,
+    "season": "Rabi",
+    "crop": "Sunflower",
+    "crop_type": "Oilseed",
+    "area_ha": 12040.0,
+    "area_share_pct": 24.3,
+    "production_t": 29850.0,
+    "yield_t_ha": 2.5,
+    "price_rs_qtl": 6015.0,
+    "revenue_rs_lakh": 17970.0
+   },
+   {
+    "year": 2020,
+    "season": "Summer",
+    "crop": "Mango",
+    "crop_type": "Fruit",
+    "area_ha": 6420.0,
+    "area_share_pct": 42.6,
+    "production_t": 96000.0,
+    "yield_t_ha": 15.0,
+    "price_rs_qtl": 5000.0,
+    "revenue_rs_lakh": 48000.0
+   },
+   {
+    "year": 2021,
+    "season": "Summer",
+    "crop": "Mango",
+    "crop_type": "Fruit",
+    "area_ha": 7020.0,
+    "area_share_pct": 43.2,
+    "production_t": 105000.0,
+    "yield_t_ha": 15.0,
+    "price_rs_qtl": 5200.0,
+    "revenue_rs_lakh": 54600.0
+   },
+   {
+    "year": 2022,
+    "season": "Summer",
+    "crop": "Mango",
+    "crop_type": "Fruit",
+    "area_ha": 7620.0,
+    "area_share_pct": 43.6,
+    "production_t": 114000.0,
+    "yield_t_ha": 15.0,
+    "price_rs_qtl": 5400.0,
+    "revenue_rs_lakh": 61560.0
+   },
+   {
+    "year": 2023,
+    "season": "Summer",
+    "crop": "Mango",
+    "crop_type": "Fruit",
+    "area_ha": 8020.0,
+    "area_share_pct": 43.4,
+    "production_t": 120000.0,
+    "yield_t_ha": 15.0,
+    "price_rs_qtl": 5500.0,
+    "revenue_rs_lakh": 66000.0
+   },
+   {
+    "year": 2020,
+    "season": "Summer",
+    "crop": "Vegetables",
+    "crop_type": "Horticulture",
+    "area_ha": 8640.0,
+    "area_share_pct": 57.4,
+    "production_t": 86000.0,
+    "yield_t_ha": 10.0,
+    "price_rs_qtl": 2500.0,
+    "revenue_rs_lakh": 21500.0
+   },
+   {
+    "year": 2021,
+    "season": "Summer",
+    "crop": "Vegetables",
+    "crop_type": "Horticulture",
+    "area_ha": 9240.0,
+    "area_share_pct": 56.8,
+    "production_t": 92460.0,
+    "yield_t_ha": 10.05,
+    "price_rs_qtl": 2500.0,
+    "revenue_rs_lakh": 23115.0
+   },
+   {
+    "year": 2022,
+    "season": "Summer",
+    "crop": "Vegetables",
+    "crop_type": "Horticulture",
+    "area_ha": 9840.0,
+    "area_share_pct": 56.4,
+    "production_t": 98490.0,
+    "yield_t_ha": 10.05,
+    "price_rs_qtl": 2600.0,
+    "revenue_rs_lakh": 25607.0
+   },
+   {
+    "year": 2023,
+    "season": "Summer",
+    "crop": "Vegetables",
+    "crop_type": "Horticulture",
+    "area_ha": 10440.0,
+    "area_share_pct": 56.6,
+    "production_t": 104520.0,
+    "yield_t_ha": 10.05,
+    "price_rs_qtl": 2700.0,
+    "revenue_rs_lakh": 28220.0
+   }
+  ],
+  "trends": [
+   {
+    "season": "Kharif",
+    "crop": "Paddy",
+    "mean_area_ha": 26940.0,
+    "mean_area_share_pct": 28.2,
+    "mean_yield_t_ha": 5.55,
+    "production": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 131868.0,
+     "last": 164274.0,
+     "change_pct": 24.6,
+     "slope_per_year": 10878.0,
+     "cv": 0.095,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "area": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 24640.0,
+     "last": 29040.0,
+     "change_pct": 17.9,
+     "slope_per_year": 1480.0,
+     "cv": 0.071,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "yield": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 5.4,
+     "last": 5.7,
+     "change_pct": 5.6,
+     "slope_per_year": 0.1,
+     "cv": 0.023,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    }
+   },
+   {
+    "season": "Kharif",
+    "crop": "Maize",
+    "mean_area_ha": 20740.0,
+    "mean_area_share_pct": 21.7,
+    "mean_yield_t_ha": 6.554,
+    "production": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 119168.0,
+     "last": 149618.0,
+     "change_pct": 25.6,
+     "slope_per_year": 10504.9,
+     "cv": 0.101,
+     "variability": "moderate",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "area": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 18840.0,
+     "last": 22440.0,
+     "change_pct": 19.1,
+     "slope_per_year": 1200.0,
+     "cv": 0.075,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "yield": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 6.4,
+     "last": 6.734,
+     "change_pct": 5.2,
+     "slope_per_year": 0.129,
+     "cv": 0.027,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    }
+   },
+   {
+    "season": "Rabi",
+    "crop": "Sugarcane",
+    "mean_area_ha": 20740.0,
+    "mean_area_share_pct": 45.3,
+    "mean_yield_t_ha": 93.085,
+    "production": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 1694240.0,
+     "last": 2125920.0,
+     "change_pct": 25.5,
+     "slope_per_year": 147819.2,
+     "cv": 0.1,
+     "variability": "moderate",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "area": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 18840.0,
+     "last": 22440.0,
+     "change_pct": 19.1,
+     "slope_per_year": 1200.0,
+     "cv": 0.075,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "yield": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 90.89,
+     "last": 95.582,
+     "change_pct": 5.2,
+     "slope_per_year": 1.754,
+     "cv": 0.026,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    }
+   },
+   {
+    "season": "Kharif",
+    "crop": "Tapioca",
+    "mean_area_ha": 18120.0,
+    "mean_area_share_pct": 18.9,
+    "mean_yield_t_ha": 26.096,
+    "production": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 421720.0,
+     "last": 508383.0,
+     "change_pct": 20.5,
+     "slope_per_year": 29309.1,
+     "cv": 0.081,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "area": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 16420.0,
+     "last": 19620.0,
+     "change_pct": 19.5,
+     "slope_per_year": 1080.0,
+     "cv": 0.077,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "yield": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 26.0,
+     "last": 26.179,
+     "change_pct": 0.7,
+     "slope_per_year": 0.064,
+     "cv": 0.003,
+     "variability": "low",
+     "direction": "stable",
+     "n_years": 4
+    }
+   },
+   {
+    "season": "Kharif",
+    "crop": "Groundnut",
+    "mean_area_ha": 15740.0,
+    "mean_area_share_pct": 16.5,
+    "mean_yield_t_ha": 2.055,
+    "production": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 28080.0,
+     "last": 35364.0,
+     "change_pct": 25.9,
+     "slope_per_year": 2475.2,
+     "cv": 0.101,
+     "variability": "moderate",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "area": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 14240.0,
+     "last": 17040.0,
+     "change_pct": 19.7,
+     "slope_per_year": 920.0,
+     "cv": 0.076,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "yield": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 2.0,
+     "last": 2.1,
+     "change_pct": 5.0,
+     "slope_per_year": 0.038,
+     "cv": 0.026,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    }
+   },
+   {
+    "season": "Kharif",
+    "crop": "Cotton",
+    "mean_area_ha": 14090.0,
+    "mean_area_share_pct": 14.7,
+    "mean_yield_t_ha": 1.5,
+    "production": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 18660.0,
+     "last": 22560.0,
+     "change_pct": 20.9,
+     "slope_per_year": 1290.0,
+     "cv": 0.081,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "area": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 12640.0,
+     "last": 15240.0,
+     "change_pct": 20.6,
+     "slope_per_year": 860.0,
+     "cv": 0.08,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "yield": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 1.5,
+     "last": 1.5,
+     "change_pct": 0.0,
+     "slope_per_year": -0.0,
+     "cv": 0.0,
+     "variability": "low",
+     "direction": "unchanged",
+     "n_years": 4
+    }
+   },
+   {
+    "season": "Rabi",
+    "crop": "Banana",
+    "mean_area_ha": 13820.0,
+    "mean_area_share_pct": 30.2,
+    "mean_yield_t_ha": 20.0,
+    "production": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 248000.0,
+     "last": 300000.0,
+     "change_pct": 21.0,
+     "slope_per_year": 17600.0,
+     "cv": 0.083,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "area": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 12420.0,
+     "last": 15020.0,
+     "change_pct": 20.9,
+     "slope_per_year": 880.0,
+     "cv": 0.083,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "yield": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 20.0,
+     "last": 20.0,
+     "change_pct": 0.0,
+     "slope_per_year": -0.0,
+     "cv": 0.0,
+     "variability": "low",
+     "direction": "unchanged",
+     "n_years": 4
+    }
+   },
+   {
+    "season": "Rabi",
+    "crop": "Sunflower",
+    "mean_area_ha": 11240.0,
+    "mean_area_share_pct": 24.6,
+    "mean_yield_t_ha": 2.5,
+    "production": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 25350.0,
+     "last": 29850.0,
+     "change_pct": 17.8,
+     "slope_per_year": 1500.0,
+     "cv": 0.07,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "area": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 10240.0,
+     "last": 12040.0,
+     "change_pct": 17.6,
+     "slope_per_year": 600.0,
+     "cv": 0.07,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "yield": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 2.5,
+     "last": 2.5,
+     "change_pct": 0.0,
+     "slope_per_year": -0.0,
+     "cv": 0.0,
+     "variability": "low",
+     "direction": "unchanged",
+     "n_years": 4
+    }
+   },
+   {
+    "season": "Summer",
+    "crop": "Vegetables",
+    "mean_area_ha": 9540.0,
+    "mean_area_share_pct": 56.8,
+    "mean_yield_t_ha": 10.037,
+    "production": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 86000.0,
+     "last": 104520.0,
+     "change_pct": 21.5,
+     "slope_per_year": 6159.0,
+     "cv": 0.083,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "area": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 8640.0,
+     "last": 10440.0,
+     "change_pct": 20.8,
+     "slope_per_year": 600.0,
+     "cv": 0.081,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "yield": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 10.0,
+     "last": 10.05,
+     "change_pct": 0.5,
+     "slope_per_year": 0.015,
+     "cv": 0.002,
+     "variability": "low",
+     "direction": "stable",
+     "n_years": 4
+    }
+   },
+   {
+    "season": "Summer",
+    "crop": "Mango",
+    "mean_area_ha": 7270.0,
+    "mean_area_share_pct": 43.2,
+    "mean_yield_t_ha": 15.0,
+    "production": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 96000.0,
+     "last": 120000.0,
+     "change_pct": 25.0,
+     "slope_per_year": 8100.0,
+     "cv": 0.097,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "area": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 6420.0,
+     "last": 8020.0,
+     "change_pct": 24.9,
+     "slope_per_year": 540.0,
+     "cv": 0.096,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "yield": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 15.0,
+     "last": 15.0,
+     "change_pct": 0.0,
+     "slope_per_year": 0.0,
+     "cv": 0.0,
+     "variability": "low",
+     "direction": "unchanged",
+     "n_years": 4
+    }
+   }
+  ],
+  "filters": {
+   "seasons": [
+    "Kharif",
+    "Rabi",
+    "Summer"
+   ],
+   "crops": [
+    "Banana",
+    "Cotton",
+    "Groundnut",
+    "Maize",
+    "Mango",
+    "Paddy",
+    "Sugarcane",
+    "Sunflower",
+    "Tapioca",
+    "Vegetables"
+   ],
+   "years": [
+    2020,
+    2021,
+    2022,
+    2023
+   ]
+  }
+ },
+ "suitability": {
+  "available": true,
+  "year_basis": 2023,
+  "rankings": [
+   {
+    "crop": "Sunflower",
+    "season": "Rabi",
+    "crop_type": "Oilseed",
+    "year_basis": 2023,
+    "score": 73.4,
+    "components": {
+     "climate_soil": 0.531,
+     "rainfall_fit": 0.594,
+     "prominence": 0.543,
+     "yield_stability": 1.0,
+     "resource_efficiency": 1.0
+    },
+    "expected_yield_t_ha": 1.33,
+    "historical_mean_yield_t_ha": 2.5,
+    "water_req_mm": 350.0,
+    "irrigation_need_l_ha": 1421000.0,
+    "cost_rs_ha": 28580.0,
+    "env_impact_per_ha": 37.15,
+    "rainfall_dependency": "Medium",
+    "duration_days": 95,
+    "mean_area_share_pct": 24.6,
+    "production_trend": "increasing",
+    "rank": 1,
+    "season_rank": 1
+   },
+   {
+    "crop": "Groundnut",
+    "season": "Kharif",
+    "crop_type": "Oilseed",
+    "year_basis": 2023,
+    "score": 69.3,
+    "components": {
+     "climate_soil": 0.518,
+     "rainfall_fit": 0.442,
+     "prominence": 0.585,
+     "yield_stability": 0.974,
+     "resource_efficiency": 0.944
+    },
+    "expected_yield_t_ha": 1.09,
+    "historical_mean_yield_t_ha": 2.055,
+    "water_req_mm": 400.0,
+    "irrigation_need_l_ha": 2233200.0,
+    "cost_rs_ha": 34539.0,
+    "env_impact_per_ha": 23.05,
+    "rainfall_dependency": "High",
+    "duration_days": 120,
+    "mean_area_share_pct": 16.5,
+    "production_trend": "increasing",
+    "rank": 2,
+    "season_rank": 1
+   },
+   {
+    "crop": "Maize",
+    "season": "Kharif",
+    "crop_type": "Cereal",
+    "year_basis": 2023,
+    "score": 68.0,
+    "components": {
+     "climate_soil": 0.601,
+     "rainfall_fit": 0.368,
+     "prominence": 0.77,
+     "yield_stability": 0.973,
+     "resource_efficiency": 0.687
+    },
+    "expected_yield_t_ha": 4.05,
+    "historical_mean_yield_t_ha": 6.554,
+    "water_req_mm": 480.0,
+    "irrigation_need_l_ha": 3033200.0,
+    "cost_rs_ha": 31525.0,
+    "env_impact_per_ha": 67.35,
+    "rainfall_dependency": "Low",
+    "duration_days": 100,
+    "mean_area_share_pct": 21.7,
+    "production_trend": "increasing",
+    "rank": 3,
+    "season_rank": 2
+   },
+   {
+    "crop": "Mango",
+    "season": "Summer",
+    "crop_type": "Fruit",
+    "year_basis": 2023,
+    "score": 63.9,
+    "components": {
+     "climate_soil": 0.633,
+     "rainfall_fit": 0.133,
+     "prominence": 0.761,
+     "yield_stability": 1.0,
+     "resource_efficiency": 0.667
+    },
+    "expected_yield_t_ha": 9.5,
+    "historical_mean_yield_t_ha": 15.0,
+    "water_req_mm": 800.0,
+    "irrigation_need_l_ha": 6936000.0,
+    "cost_rs_ha": 33998.0,
+    "env_impact_per_ha": 52.92,
+    "rainfall_dependency": "Low",
+    "duration_days": 365,
+    "mean_area_share_pct": 43.2,
+    "production_trend": "increasing",
+    "rank": 4,
+    "season_rank": 1
+   },
+   {
+    "crop": "Vegetables",
+    "season": "Summer",
+    "crop_type": "Horticulture",
+    "year_basis": 2023,
+    "score": 62.8,
+    "components": {
+     "climate_soil": 0.633,
+     "rainfall_fit": 0.177,
+     "prominence": 1.0,
+     "yield_stability": 0.998,
+     "resource_efficiency": 0.333
+    },
+    "expected_yield_t_ha": 6.36,
+    "historical_mean_yield_t_ha": 10.037,
+    "water_req_mm": 600.0,
+    "irrigation_need_l_ha": 4936000.0,
+    "cost_rs_ha": 52097.0,
+    "env_impact_per_ha": 67.08,
+    "rainfall_dependency": "Low",
+    "duration_days": 90,
+    "mean_area_share_pct": 56.8,
+    "production_trend": "increasing",
+    "rank": 5,
+    "season_rank": 2
+   },
+   {
+    "crop": "Paddy",
+    "season": "Kharif",
+    "crop_type": "Cereal",
+    "year_basis": 2023,
+    "score": 57.1,
+    "components": {
+     "climate_soil": 0.601,
+     "rainfall_fit": 0.147,
+     "prominence": 1.0,
+     "yield_stability": 0.977,
+     "resource_efficiency": 0.129
+    },
+    "expected_yield_t_ha": 3.43,
+    "historical_mean_yield_t_ha": 5.55,
+    "water_req_mm": 1200.0,
+    "irrigation_need_l_ha": 10233200.0,
+    "cost_rs_ha": 42467.0,
+    "env_impact_per_ha": 75.89,
+    "rainfall_dependency": "Low",
+    "duration_days": 145,
+    "mean_area_share_pct": 28.2,
+    "production_trend": "increasing",
+    "rank": 6,
+    "season_rank": 3
+   },
+   {
+    "crop": "Tapioca",
+    "season": "Kharif",
+    "crop_type": "Root Crop",
+    "year_basis": 2023,
+    "score": 57.0,
+    "components": {
+     "climate_soil": 0.518,
+     "rainfall_fit": 0.221,
+     "prominence": 0.67,
+     "yield_stability": 0.997,
+     "resource_efficiency": 0.446
+    },
+    "expected_yield_t_ha": 13.56,
+    "historical_mean_yield_t_ha": 26.096,
+    "water_req_mm": 800.0,
+    "irrigation_need_l_ha": 6233200.0,
+    "cost_rs_ha": 41461.0,
+    "env_impact_per_ha": 55.14,
+    "rainfall_dependency": "High",
+    "duration_days": 300,
+    "mean_area_share_pct": 18.9,
+    "production_trend": "increasing",
+    "rank": 7,
+    "season_rank": 4
+   },
+   {
+    "crop": "Cotton",
+    "season": "Kharif",
+    "crop_type": "Fiber",
+    "year_basis": 2023,
+    "score": 53.6,
+    "components": {
+     "climate_soil": 0.565,
+     "rainfall_fit": 0.294,
+     "prominence": 0.521,
+     "yield_stability": 1.0,
+     "resource_efficiency": 0.297
+    },
+    "expected_yield_t_ha": 0.85,
+    "historical_mean_yield_t_ha": 1.5,
+    "water_req_mm": 600.0,
+    "irrigation_need_l_ha": 4233200.0,
+    "cost_rs_ha": 49413.0,
+    "env_impact_per_ha": 68.41,
+    "rainfall_dependency": "Medium",
+    "duration_days": 180,
+    "mean_area_share_pct": 14.7,
+    "production_trend": "increasing",
+    "rank": 8,
+    "season_rank": 5
+   },
+   {
+    "crop": "Sugarcane",
+    "season": "Rabi",
+    "crop_type": "Commercial",
+    "year_basis": 2023,
+    "score": 53.6,
+    "components": {
+     "climate_soil": 0.591,
+     "rainfall_fit": 0.116,
+     "prominence": 1.0,
+     "yield_stability": 0.974,
+     "resource_efficiency": 0.0
+    },
+    "expected_yield_t_ha": 56.49,
+    "historical_mean_yield_t_ha": 93.085,
+    "water_req_mm": 1800.0,
+    "irrigation_need_l_ha": 15921000.0,
+    "cost_rs_ha": 75534.0,
+    "env_impact_per_ha": 146.2,
+    "rainfall_dependency": "Very Low",
+    "duration_days": 365,
+    "mean_area_share_pct": 45.3,
+    "production_trend": "increasing",
+    "rank": 9,
+    "season_rank": 2
+   },
+   {
+    "crop": "Banana",
+    "season": "Rabi",
+    "crop_type": "Fruit",
+    "year_basis": 2023,
+    "score": 52.0,
+    "components": {
+     "climate_soil": 0.591,
+     "rainfall_fit": 0.148,
+     "prominence": 0.667,
+     "yield_stability": 1.0,
+     "resource_efficiency": 0.192
+    },
+    "expected_yield_t_ha": 11.82,
+    "historical_mean_yield_t_ha": 20.0,
+    "water_req_mm": 1400.0,
+    "irrigation_need_l_ha": 11921000.0,
+    "cost_rs_ha": 69877.0,
+    "env_impact_per_ha": 126.49,
+    "rainfall_dependency": "Very Low",
+    "duration_days": 365,
+    "mean_area_share_pct": 30.2,
+    "production_trend": "increasing",
+    "rank": 10,
+    "season_rank": 3
+   }
+  ],
+  "method": "Score = mean of five 0–1 components, ×100: climate & soil (fuzzy crop confidence for the season), rainfall fit (effective rainfall ÷ crop water requirement, capped at 1), prominence (mean share of the season's sown area, relative to the most widely grown crop), yield stability (1 − coefficient of variation of observed yields) and resource efficiency (mean min–max goodness of cost, irrigation and environmental impact per hectare among the season's crops). Yield, cost, water and impact per hectare come from the optimiser's objective function for a one-crop, one-hectare plan at baseline input levels. Tonnage is shown but not scored, because tonnes of different crops are not comparable."
+ },
+ "market": {
+  "available": true,
+  "is_live": false,
+  "note": "Historical prices from the dataset's MSP_Rs_Qtl column (observed years only), not live market data. Several crops listed have no government-notified MSP and the values have not been validated.",
+  "crops": [
+   {
+    "crop": "Banana",
+    "prices_by_year": {
+     "2020": 2200.0,
+     "2021": 2200.0,
+     "2022": 2300.0,
+     "2023": 2400.0
+    },
+    "mean_rs_qtl": 2275.0,
+    "trend": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 2200.0,
+     "last": 2400.0,
+     "change_pct": 9.1,
+     "slope_per_year": 70.0,
+     "cv": 0.042,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    }
+   },
+   {
+    "crop": "Cotton",
+    "prices_by_year": {
+     "2020": 6080.0,
+     "2021": 6080.0,
+     "2022": 6380.0,
+     "2023": 6620.0
+    },
+    "mean_rs_qtl": 6290.0,
+    "trend": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 6080.0,
+     "last": 6620.0,
+     "change_pct": 8.9,
+     "slope_per_year": 192.0,
+     "cv": 0.042,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    }
+   },
+   {
+    "crop": "Groundnut",
+    "prices_by_year": {
+     "2020": 5550.0,
+     "2021": 5550.0,
+     "2022": 5850.0,
+     "2023": 6377.0
+    },
+    "mean_rs_qtl": 5831.8,
+    "trend": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 5550.0,
+     "last": 6377.0,
+     "change_pct": 14.9,
+     "slope_per_year": 278.1,
+     "cv": 0.067,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    }
+   },
+   {
+    "crop": "Maize",
+    "prices_by_year": {
+     "2020": 1870.0,
+     "2021": 1870.0,
+     "2022": 1962.0,
+     "2023": 1962.0
+    },
+    "mean_rs_qtl": 1916.0,
+    "trend": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 1870.0,
+     "last": 1962.0,
+     "change_pct": 4.9,
+     "slope_per_year": 36.8,
+     "cv": 0.028,
+     "variability": "low",
+     "direction": "stable",
+     "n_years": 4
+    }
+   },
+   {
+    "crop": "Mango",
+    "prices_by_year": {
+     "2020": 5000.0,
+     "2021": 5200.0,
+     "2022": 5400.0,
+     "2023": 5500.0
+    },
+    "mean_rs_qtl": 5275.0,
+    "trend": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 5000.0,
+     "last": 5500.0,
+     "change_pct": 10.0,
+     "slope_per_year": 170.0,
+     "cv": 0.042,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    }
+   },
+   {
+    "crop": "Paddy",
+    "prices_by_year": {
+     "2020": 1868.0,
+     "2021": 1868.0,
+     "2022": 1960.0,
+     "2023": 2183.0
+    },
+    "mean_rs_qtl": 1969.8,
+    "trend": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 1868.0,
+     "last": 2183.0,
+     "change_pct": 16.9,
+     "slope_per_year": 103.7,
+     "cv": 0.075,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    }
+   },
+   {
+    "crop": "Sugarcane",
+    "prices_by_year": {
+     "2020": 2900.0,
+     "2021": 2900.0,
+     "2022": 3050.0,
+     "2023": 3050.0
+    },
+    "mean_rs_qtl": 2975.0,
+    "trend": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 2900.0,
+     "last": 3050.0,
+     "change_pct": 5.2,
+     "slope_per_year": 60.0,
+     "cv": 0.029,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    }
+   },
+   {
+    "crop": "Sunflower",
+    "prices_by_year": {
+     "2020": 5650.0,
+     "2021": 5650.0,
+     "2022": 5850.0,
+     "2023": 6015.0
+    },
+    "mean_rs_qtl": 5791.2,
+    "trend": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 5650.0,
+     "last": 6015.0,
+     "change_pct": 6.5,
+     "slope_per_year": 129.5,
+     "cv": 0.03,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    }
+   },
+   {
+    "crop": "Tapioca",
+    "prices_by_year": {
+     "2020": 650.0,
+     "2021": 650.0,
+     "2022": 680.0,
+     "2023": 700.0
+    },
+    "mean_rs_qtl": 670.0,
+    "trend": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 650.0,
+     "last": 700.0,
+     "change_pct": 7.7,
+     "slope_per_year": 18.0,
+     "cv": 0.037,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    }
+   },
+   {
+    "crop": "Vegetables",
+    "prices_by_year": {
+     "2020": 2500.0,
+     "2021": 2500.0,
+     "2022": 2600.0,
+     "2023": 2700.0
+    },
+    "mean_rs_qtl": 2575.0,
+    "trend": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 2500.0,
+     "last": 2700.0,
+     "change_pct": 8.0,
+     "slope_per_year": 70.0,
+     "cv": 0.037,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    }
+   }
+  ],
+  "strongest_price_growth": [
+   {
+    "crop": "Paddy",
+    "change_pct": 16.9
+   },
+   {
+    "crop": "Groundnut",
+    "change_pct": 14.9
+   },
+   {
+    "crop": "Mango",
+    "change_pct": 10.0
+   }
+  ],
+  "weakest_price_growth": [
+   {
+    "crop": "Maize",
+    "change_pct": 4.9
+   },
+   {
+    "crop": "Sugarcane",
+    "change_pct": 5.2
+   },
+   {
+    "crop": "Sunflower",
+    "change_pct": 6.5
+   }
+  ]
+ },
+ "insights": [
+  {
+   "id": "rainfall-trend",
+   "title": "Annual rainfall",
+   "detail": "Annual rainfall has remained stable: 706 mm in 2020 to 676 mm in 2023 (-4.2%), with low year-to-year variability (CV 0.018).",
+   "source": "dataset",
+   "evidence": {
+    "trend": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 705.6,
+     "last": 676.2,
+     "change_pct": -4.2,
+     "slope_per_year": -8.26,
+     "cv": 0.018,
+     "variability": "low",
+     "direction": "stable",
+     "n_years": 4
+    }
+   },
+   "status": null,
+   "severity": null
+  },
+  {
+   "id": "rainfall-normal",
+   "title": "Rainfall against the stated normal",
+   "detail": "Observed annual rainfall averages 693 mm, 13% below the 800 mm annual normal recorded in the dataset.",
+   "source": "dataset",
+   "evidence": {
+    "mean_annual_mm": 692.7,
+    "stated_normal_mm": 800.0,
+    "difference_pct": -13.4
+   },
+   "status": null,
+   "severity": null
+  },
+  {
+   "id": "rainfall-season",
+   "title": "When the rain falls",
+   "detail": "The Northeast Monsoon brings 39% of annual rainfall (≈270 mm a year); Southwest Monsoon 37%, Summer 22%, Winter 2%.",
+   "source": "dataset",
+   "evidence": {
+    "shares": [
+     {
+      "season": "Northeast Monsoon",
+      "share_pct": 39.0,
+      "mean_mm_per_year": 270.2
+     },
+     {
+      "season": "Southwest Monsoon",
+      "share_pct": 37.0,
+      "mean_mm_per_year": 256.5
+     },
+     {
+      "season": "Summer",
+      "share_pct": 22.0,
+      "mean_mm_per_year": 152.1
+     },
+     {
+      "season": "Winter",
+      "share_pct": 2.0,
+      "mean_mm_per_year": 13.8
+     }
+    ]
+   },
+   "status": null,
+   "severity": null
+  },
+  {
+   "id": "temperature",
+   "title": "Temperature",
+   "detail": "Mean annual temperature has remained stable: 29.0 °C in 2020 to 28.9 °C in 2023 (-0.1%), with low year-to-year variability (CV 0.001).",
+   "source": "dataset",
+   "evidence": {
+    "trend": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 28.992,
+     "last": 28.95,
+     "change_pct": -0.1,
+     "slope_per_year": -0.015,
+     "cv": 0.001,
+     "variability": "low",
+     "direction": "stable",
+     "n_years": 4
+    }
+   },
+   "status": null,
+   "severity": null
+  },
+  {
+   "id": "production-fastest",
+   "title": "Fastest production growth",
+   "detail": "Groundnut (Kharif) production changed +25.9% between 2020 and 2023 — area +19.7%, yield +5.0%.",
+   "source": "dataset",
+   "evidence": {
+    "production": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 28080.0,
+     "last": 35364.0,
+     "change_pct": 25.9,
+     "slope_per_year": 2475.2,
+     "cv": 0.101,
+     "variability": "moderate",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "area": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 14240.0,
+     "last": 17040.0,
+     "change_pct": 19.7,
+     "slope_per_year": 920.0,
+     "cv": 0.076,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "yield": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 2.0,
+     "last": 2.1,
+     "change_pct": 5.0,
+     "slope_per_year": 0.038,
+     "cv": 0.026,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    }
+   },
+   "status": null,
+   "severity": null
+  },
+  {
+   "id": "production-slowest",
+   "title": "Slowest production growth",
+   "detail": "Sunflower (Rabi) production changed +17.8% between 2020 and 2023 — almost entirely from more area, with yield per hectare essentially flat.",
+   "source": "dataset",
+   "evidence": {
+    "production": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 25350.0,
+     "last": 29850.0,
+     "change_pct": 17.8,
+     "slope_per_year": 1500.0,
+     "cv": 0.07,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "area": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 10240.0,
+     "last": 12040.0,
+     "change_pct": 17.6,
+     "slope_per_year": 600.0,
+     "cv": 0.07,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    },
+    "yield": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 2.5,
+     "last": 2.5,
+     "change_pct": 0.0,
+     "slope_per_year": -0.0,
+     "cv": 0.0,
+     "variability": "low",
+     "direction": "unchanged",
+     "n_years": 4
+    }
+   },
+   "status": null,
+   "severity": null
+  },
+  {
+   "id": "yield-variability",
+   "title": "Yield consistency",
+   "detail": "Most consistent yield: Cotton (Kharif, CV 0.000); most variable: Maize (Kharif, CV 0.027).",
+   "source": "dataset",
+   "evidence": {
+    "most_consistent": "Cotton",
+    "most_variable": "Maize"
+   },
+   "status": null,
+   "severity": null
+  },
+  {
+   "id": "concentration-Kharif",
+   "title": "Kharif cropping pattern",
+   "detail": "Paddy holds the largest share of Kharif sown area (28%) among 5 crops — a diversified pattern.",
+   "source": "dataset",
+   "evidence": {
+    "crop": "Paddy",
+    "share_pct": 28.2,
+    "crops": 5
+   },
+   "status": null,
+   "severity": null
+  },
+  {
+   "id": "concentration-Rabi",
+   "title": "Rabi cropping pattern",
+   "detail": "Sugarcane holds the largest share of Rabi sown area (45%) among 3 crops — a diversified pattern.",
+   "source": "dataset",
+   "evidence": {
+    "crop": "Sugarcane",
+    "share_pct": 45.3,
+    "crops": 3
+   },
+   "status": null,
+   "severity": null
+  },
+  {
+   "id": "concentration-Summer",
+   "title": "Summer cropping pattern",
+   "detail": "Vegetables holds the largest share of Summer sown area (57%) among 2 crops — a concentrated pattern.",
+   "source": "dataset",
+   "evidence": {
+    "crop": "Vegetables",
+    "share_pct": 56.8,
+    "crops": 2
+   },
+   "status": null,
+   "severity": null
+  },
+  {
+   "id": "irrigation-dependency",
+   "title": "Irrigation dependency",
+   "detail": "Irrigated share of agricultural land has remained stable: 55.8% in 2020 to 57.9% in 2023 (+3.8%), with low year-to-year variability (CV 0.016).",
+   "source": "dataset",
+   "evidence": {
+    "trend": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 55.771,
+     "last": 57.885,
+     "change_pct": 3.8,
+     "slope_per_year": 0.714,
+     "cv": 0.016,
+     "variability": "low",
+     "direction": "stable",
+     "n_years": 4
+    }
+   },
+   "status": null,
+   "severity": null
+  },
+  {
+   "id": "storage-static",
+   "title": "Reservoir records",
+   "detail": "Reservoir storage percentages are identical in every observed year for each month, so the data shows a seasonal pattern but no year-to-year change.",
+   "source": "dataset",
+   "evidence": {},
+   "status": null,
+   "severity": null
+  },
+  {
+   "id": "soil-fertility",
+   "title": "Soil fertility index",
+   "detail": "Soil fertility index has increased: 62.2 in 2020 to 67.5 in 2023 (+8.5%), with low year-to-year variability (CV 0.043).",
+   "source": "dataset + fertility index",
+   "evidence": {
+    "trend": {
+     "first_year": 2020,
+     "last_year": 2023,
+     "first": 62.2,
+     "last": 67.5,
+     "change_pct": 8.5,
+     "slope_per_year": 1.9,
+     "cv": 0.043,
+     "variability": "low",
+     "direction": "increasing",
+     "n_years": 4
+    }
+   },
+   "status": null,
+   "severity": null
+  },
+  {
+   "id": "price-growth",
+   "title": "Historical price growth",
+   "detail": "Paddy recorded the largest historical price rise in the dataset (+16.9%, unvalidated prices, not live market data).",
+   "source": "dataset",
+   "evidence": {
+    "top": [
+     {
+      "crop": "Paddy",
+      "change_pct": 16.9
+     },
+     {
+      "crop": "Groundnut",
+      "change_pct": 14.9
+     },
+     {
+      "crop": "Mango",
+      "change_pct": 10.0
+     }
+    ]
+   },
+   "status": null,
+   "severity": null
+  },
+  {
+   "id": "suitability-top",
+   "title": "Highest suitability score",
+   "detail": "Sunflower (Rabi) has the highest suitability score, 73/100.",
+   "source": "fuzzy + nsga2 objectives + dataset",
+   "evidence": {
+    "crop": "Sunflower",
+    "score": 73.4
+   },
+   "status": null,
+   "severity": null
+  }
+ ],
+ "summary": {
+  "sentences": [
+   "Salem grows 10 crops across 3 seasons; the largest by sown area are Paddy (Kharif), Maize (Kharif), Sugarcane (Rabi) (observed 2020–2023).",
+   "The highest crop-suitability scores are Sunflower in Rabi (73), Groundnut in Kharif (69), Maize in Kharif (68).",
+   "Annual rainfall averaged 693 mm and was stable over the observed years, with low variability; the Northeast Monsoon brings 39% of it.",
+   "Reservoir storage is lowest in Summer (38%, fuzzy set 'medium'); groundwater status is most often 'Normal'.",
+   "Soils are Red Loam with pH 6.8 and a fertility index of 67.5 (fuzzy set 'medium') in 2023.",
+   "Figures exclude 2024, whose rows are estimates."
+  ],
+  "text": "Salem grows 10 crops across 3 seasons; the largest by sown area are Paddy (Kharif), Maize (Kharif), Sugarcane (Rabi) (observed 2020–2023). The highest crop-suitability scores are Sunflower in Rabi (73), Groundnut in Kharif (69), Maize in Kharif (68). Annual rainfall averaged 693 mm and was stable over the observed years, with low variability; the Northeast Monsoon brings 39% of it. Reservoir storage is lowest in Summer (38%, fuzzy set 'medium'); groundwater status is most often 'Normal'. Soils are Red Loam with pH 6.8 and a fertility index of 67.5 (fuzzy set 'medium') in 2023. Figures exclude 2024, whose rows are estimates."
+ }
+}
