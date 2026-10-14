@@ -193,7 +193,10 @@ def _better_than_share(values: List[float], value: float, higher_is_better: bool
     return round(100.0 * at_least / others, 1)
 
 
-def _item(id_: str, title: str, detail: str, source: str, evidence: dict, **extra) -> dict:
+def make_item(id_: str, title: str, detail: str, source: str, evidence: dict, **extra) -> dict:
+    """One traceable statement: generated `detail` text plus the `evidence`
+    it was built from and the pipeline stage (`source`) that produced it.
+    Shared by the explanation and district-intelligence services."""
     out = {"id": id_, "title": title, "detail": detail, "source": source, "evidence": evidence}
     out.update(extra)
     return out
@@ -203,10 +206,6 @@ def _season_months(season: str) -> List[str]:
     return list(config.SEASON_MONTH_MAP[season])
 
 
-def _observed(df):
-    if "data_source" not in df.columns:
-        return df
-    return df[~df["data_source"].astype(str).str.startswith(pp.ESTIMATED_SOURCE_PREFIX)]
 
 
 # ---------------------------------------------------------------------------
@@ -342,7 +341,7 @@ def _trade_offs(ctx: ExplanationContext, plan: dict) -> dict:
                   + (f" ({abs(pct):.0f}%)" if pct is not None else "")
                   + (", but it would change " + ", ".join(costs) + "." if costs
                      else ", and is no worse on the other objectives -- it ranked lower only because of the preference weights."))
-        items.append(_item(f"tradeoff-{k}", f"Giving up some {OBJECTIVE_META[k]['label'].lower()}", detail, "nsga2+topsis",
+        items.append(make_item(f"tradeoff-{k}", f"Giving up some {OBJECTIVE_META[k]['label'].lower()}", detail, "nsga2+topsis",
                            {"alternative_rank": other["rank"], "deltas_per_ha": deltas}))
 
     rates = []
@@ -366,23 +365,23 @@ def _constraints(ctx: ExplanationContext, plan: dict, crops: dict) -> dict:
     land = ctx.total_land_ha or area
     alloc = sum(plan["allocation_percent"])
     ok = abs(area - land) <= max(0.01, 0.002 * land)
-    items.append(_item("land", "Land", f"{area:.2f} ha allocated of {land:.2f} ha available (shares sum to {alloc:.2f}%).",
+    items.append(make_item("land", "Land", f"{area:.2f} ha allocated of {land:.2f} ha available (shares sum to {alloc:.2f}%).",
                        "nsga2 repair", {"allocated_ha": round(area, 3), "available_ha": land, "share_sum_pct": round(alloc, 2)},
                        status="satisfied" if ok else "violated"))
 
     cost = plan["cost_rs"]
     if not ctx.budget_recorded:
-        items.append(_item("budget", "Budget", "This run was saved before budgets were recorded, so the budget check cannot be shown.",
+        items.append(make_item("budget", "Budget", "This run was saved before budgets were recorded, so the budget check cannot be shown.",
                            "run metadata", {"cost_rs": cost}, status="unknown"))
     elif ctx.budget_rs:
         head = (ctx.budget_rs - cost) / ctx.budget_rs * 100
-        items.append(_item("budget", "Budget",
+        items.append(make_item("budget", "Budget",
                            f"Cost ₹{cost:,.0f} is {'within' if cost <= ctx.budget_rs else 'over'} the ₹{ctx.budget_rs:,.0f} budget "
                            f"({abs(head):.1f}% {'headroom' if head >= 0 else 'over'}).", "nsga2 constraint",
                            {"cost_rs": cost, "budget_rs": ctx.budget_rs, "headroom_pct": round(head, 1)},
                            status="satisfied" if cost <= ctx.budget_rs + 1e-6 else "violated"))
     else:
-        items.append(_item("budget", "Budget", f"No budget limit was set; the plan costs ₹{cost:,.0f}.", "request",
+        items.append(make_item("budget", "Budget", f"No budget limit was set; the plan costs ₹{cost:,.0f}.", "request",
                            {"cost_rs": cost, "budget_rs": None}, status="not_applicable"))
 
     dev = rp["rainfall"]["avg_deviation_percent"]
@@ -390,7 +389,7 @@ def _constraints(ctx: ExplanationContext, plan: dict, crops: dict) -> dict:
     weighted_req = sum(d["share_pct"] / 100 * d["water_req_mm"] for d in crops["crops"])
     eff = rp["rainfall"]["effective_rainfall_mm"]
     coverage = min(100.0, eff / weighted_req * 100) if weighted_req else None
-    items.append(_item("rainfall", "Rainfall",
+    items.append(make_item("rainfall", "Rainfall",
                        f"Season rainfall is {dev:+.1f}% vs normal (fuzzy set: {rain_label}); effective rainfall of {eff:.0f} mm"
                        + (f" covers {coverage:.0f}% of this plan's land-weighted crop water need ({weighted_req:.0f} mm)."
                           if coverage is not None else "."),
@@ -401,19 +400,19 @@ def _constraints(ctx: ExplanationContext, plan: dict, crops: dict) -> dict:
 
     fert = rp["soil"]["fertility_index"]
     soil_label = fzd["soil_label"]
-    items.append(_item("soil", "Soil", f"{rp['soil']['soil_type']}, pH {rp['soil']['avg_ph']}, fertility index {fert}/100 (fuzzy set: {soil_label}).",
+    items.append(make_item("soil", "Soil", f"{rp['soil']['soil_type']}, pH {rp['soil']['avg_ph']}, fertility index {fert}/100 (fuzzy set: {soil_label}).",
                        "dataset + fuzzy", {"fertility_index": fert, "fuzzy_label": soil_label, "ph": rp["soil"]["avg_ph"],
                                            "npk": [rp["soil"]["n_status"], rp["soil"]["p_status"], rp["soil"]["k_status"]]},
                        status={"good": "satisfied", "medium": "moderate", "poor": "risk"}.get(soil_label, "unknown")))
 
     risk = fzd["irrigation_risk"]
     term, degrees = fz.output_term("irrigation_risk", risk)
-    items.append(_item("water", "Water / irrigation", f"Irrigation risk {risk:.3f} falls in the '{term}' output set; reservoir storage "
+    items.append(make_item("water", "Water / irrigation", f"Irrigation risk {risk:.3f} falls in the '{term}' output set; reservoir storage "
                        f"{rp['water']['avg_storage_percent']}% (fuzzy set: {fzd['water_label']}).", "fuzzy",
                        {"irrigation_risk": risk, "risk_set": term, "membership": degrees,
                         "storage_pct": rp["water"]["avg_storage_percent"]},
                        status={"low": "satisfied", "medium": "moderate", "high": "risk"}[term]))
-    items.append(_item("feasible", "Optimiser feasibility", "The plan satisfies every constraint given to NSGA-II." if plan["feasible"]
+    items.append(make_item("feasible", "Optimiser feasibility", "The plan satisfies every constraint given to NSGA-II." if plan["feasible"]
                        else "The plan violates at least one optimiser constraint.", "nsga2", {"feasible": plan["feasible"]},
                        status="satisfied" if plan["feasible"] else "violated"))
     return {"items": items}
@@ -422,7 +421,7 @@ def _constraints(ctx: ExplanationContext, plan: dict, crops: dict) -> dict:
 def _historical(ctx: ExplanationContext, crops: dict) -> dict:
     rp = ctx.region_profile
     data = load_all()
-    crop_df = _observed(data["crop"])
+    crop_df = pp.observed_rows(data["crop"])
     sl = crop_df[(crop_df["Location"] == rp["location"]) & (crop_df["Season"] == rp["season"])]
     years = sorted(int(y) for y in sl["Year"].unique())
     ranks = {}
@@ -451,7 +450,7 @@ def _historical(ctx: ExplanationContext, crops: dict) -> dict:
                        f"expected here" + (f" ({_signed_pct(diff)}, the fuzzy confidence adjustment)." if diff is not None else ".")),
         })
 
-    rain = _observed(data["rainfall"])
+    rain = pp.observed_rows(data["rainfall"])
     months = _season_months(rp["season"])
     rs = rain[(rain["Location"] == rp["location"]) & (rain["Month"].isin(months))]
     totals = rs.groupby("Year")["Monthly_Rainfall_mm"].sum()
@@ -553,21 +552,21 @@ def _risks(ctx, plan, crops, constraints, objectives, history, economics) -> Lis
     by_id = {c["id"]: c for c in constraints["items"]}
     water = by_id["water"]
     if water["status"] != "satisfied":
-        out.append(_item("irrigation-risk", "Irrigation pressure", water["detail"], "fuzzy", water["evidence"],
+        out.append(make_item("irrigation-risk", "Irrigation pressure", water["detail"], "fuzzy", water["evidence"],
                          severity="high" if water["status"] == "risk" else "medium"))
     rain = by_id["rainfall"]
     if rain["status"] == "risk":
-        out.append(_item("rainfall-deficit", "Rainfall below normal", rain["detail"], "dataset + fuzzy", rain["evidence"], severity="high"))
+        out.append(make_item("rainfall-deficit", "Rainfall below normal", rain["detail"], "dataset + fuzzy", rain["evidence"], severity="high"))
     cov = rain["evidence"]["rainfall_coverage_pct"]
     if cov is not None and cov < 50:
-        out.append(_item("irrigation-dependence", "Depends on irrigation",
+        out.append(make_item("irrigation-dependence", "Depends on irrigation",
                          f"Rainfall covers only {cov:.0f}% of crop water need; the plan needs "
                          f"{_per_ha(plan, 'water'):.2f} ML/ha of irrigation.", "dataset + nsga2",
                          {"rainfall_coverage_pct": cov, "irrigation_ml_per_ha": round(_per_ha(plan, "water"), 3)},
                          severity="medium"))
     exposed = sum(d["share_pct"] for d in crops["shown"] if d["rainfall_dependency"] in ("High", "Medium"))
     if exposed > 0 and fzd["irrigation_risk"] > 0:
-        out.append(_item("rain-dependent-crops", "Rain-dependent crops",
+        out.append(make_item("rain-dependent-crops", "Rain-dependent crops",
                          f"{exposed:.0f}% of the land is in crops with Medium/High rainfall dependency "
                          f"({', '.join(d['crop'] for d in crops['shown'] if d['rainfall_dependency'] in ('High', 'Medium'))}), "
                          f"the crops the fuzzy model penalises most at irrigation risk {fzd['irrigation_risk']}.",
@@ -576,36 +575,36 @@ def _risks(ctx, plan, crops, constraints, objectives, history, economics) -> Lis
     hhi = sum((d["share_pct"] / 100) ** 2 for d in crops["crops"])
     if hhi >= CONCENTRATION_HHI:
         top = max(crops["shown"], key=lambda d: d["share_pct"])
-        out.append(_item("concentration", "Concentrated crop mix",
+        out.append(make_item("concentration", "Concentrated crop mix",
                          f"{top['share_pct']:.0f}% of the land is in {top['crop']} (Herfindahl index {hhi:.2f}); a crop-specific "
                          f"pest, price or water shock would affect most of the farm.", "nsga2", {"hhi": round(hhi, 3)},
                          severity="medium"))
     perennial = [d for d in crops["shown"] if d["duration_days"] >= PERENNIAL_DAYS]
     if perennial:
-        out.append(_item("perennial", "Long-duration crops in a single-season plan",
+        out.append(make_item("perennial", "Long-duration crops in a single-season plan",
                          f"{', '.join(d['crop'] for d in perennial)} ({', '.join(str(d['duration_days']) + ' days' for d in perennial)}) "
                          f"take up {sum(d['share_pct'] for d in perennial):.0f}% of the land and run beyond this season.", "dataset",
                          {"crops": [d["crop"] for d in perennial]}, severity="medium"))
     for o in objectives["objectives"]:
         if o["goodness"] < WEAK_GOODNESS:
-            out.append(_item(f"weak-{o['objective']}", f"Weak on {o['label'].lower()}",
+            out.append(make_item(f"weak-{o['objective']}", f"Weak on {o['label'].lower()}",
                              f"{o['label']} {_fmt(o['objective'], o['value_per_ha'])} is better than only "
                              f"{o['better_than_pct_of_plans']:.0f}% of the plans (best in set {_fmt(o['objective'], o['set_best'])}).",
                              "nsga2+topsis", {"goodness": o["goodness"]}, severity="low"))
     if rp.get("data_year_estimated"):
-        out.append(_item("estimated-data", "Estimated input data",
+        out.append(make_item("estimated-data", "Estimated input data",
                          f"{rp['year']} inputs are estimates carried forward from the previous year, not observed records.",
                          "dataset", {"year": rp["year"]}, severity="high"))
     cv = history["rainfall"]["seasonal_total_mm_cv"]
     if cv is not None and cv > 0.10:
-        out.append(_item("rainfall-variability", "Year-to-year rainfall variability",
+        out.append(make_item("rainfall-variability", "Year-to-year rainfall variability",
                          f"{rp['season']} rainfall varied with a coefficient of variation of {cv:.2f} across observed years.",
                          "dataset", {"cv": cv}, severity="low"))
     floor_i = config.IRRIGATION_MULT_MIN + INPUT_FLOOR_TOLERANCE
     floor_f = config.FERTILIZER_MULT_MIN + INPUT_FLOOR_TOLERANCE
     at_floor = [d["crop"] for d in crops["shown"] if d["irrigation_multiplier"] <= floor_i and d["fertilizer_multiplier"] <= floor_f]
     if at_floor:
-        out.append(_item("input-floor", "Input levels at the model minimum",
+        out.append(make_item("input-floor", "Input levels at the model minimum",
                          f"Irrigation and fertiliser for {', '.join(at_floor)} are at 70% of the baseline dose. The current yield "
                          f"model does not reward higher inputs, so treat these as the cheapest modelled levels, not agronomic advice.",
                          "model limitation", {"crops": at_floor}, severity="medium"))
@@ -658,36 +657,36 @@ def explain(ctx: ExplanationContext) -> dict:
     n = len(ctx.plans)
     nxt = ctx.plans[ctx.plan_index + 1] if ctx.plan_index + 1 < n else None
     margin = plan["composite_score"] - nxt["composite_score"] if nxt else None
-    reasons = [_item("topsis", "Best balance for the chosen preference",
+    reasons = [make_item("topsis", "Best balance for the chosen preference",
                      f"Ranked #{rank} of {n} plans under the '{ctx.preference}' preference with TOPSIS closeness "
                      f"{plan['composite_score']:.4f}" + (f" ({margin:+.4f} ahead of the next plan)." if margin is not None else "."),
                      "topsis", {"rank": rank, "closeness": plan["composite_score"], "margin_to_next": None if margin is None else round(margin, 4),
                                 "plans_compared": n})]
     for o in objectives["objectives"]:
         if o["goodness"] >= STRONG_GOODNESS:
-            reasons.append(_item(f"strong-{o['objective']}", OBJECTIVE_META[o["objective"]]["strength"],
+            reasons.append(make_item(f"strong-{o['objective']}", OBJECTIVE_META[o["objective"]]["strength"],
                                  f"{o['label']} {_fmt(o['objective'], o['value_per_ha'])} is better than {o['better_than_pct_of_plans']:.0f}% "
                                  f"of the {n} plans (set median {_fmt(o['objective'], o['set_median'])}).", "nsga2",
                                  {k: o[k] for k in ("value_per_ha", "goodness", "better_than_pct_of_plans", "set_median", "set_best")}))
     by_id = {c["id"]: c for c in constraints["items"]}
     if by_id["soil"]["status"] in ("satisfied", "moderate"):
-        reasons.append(_item("soil", "Soil supports the crops", by_id["soil"]["detail"], "dataset + fuzzy", by_id["soil"]["evidence"]))
+        reasons.append(make_item("soil", "Soil supports the crops", by_id["soil"]["detail"], "dataset + fuzzy", by_id["soil"]["evidence"]))
     resilient = sum(d["share_pct"] for d in crops["shown"] if d["rainfall_dependency"] in ("Low", "Very Low"))
     if resilient >= 50:
-        reasons.append(_item("resilience", "Mostly rain-resilient crops",
+        reasons.append(make_item("resilience", "Mostly rain-resilient crops",
                              f"{resilient:.0f}% of the land is in crops with Low/Very Low rainfall dependency, which the fuzzy model "
                              f"penalises least at irrigation risk {fzd['irrigation_risk']}.", "dataset + fuzzy",
                              {"resilient_land_pct": round(resilient, 1)}))
     if by_id["budget"]["status"] == "satisfied":
-        reasons.append(_item("budget", "Fits the budget", by_id["budget"]["detail"], "constraint", by_id["budget"]["evidence"]))
+        reasons.append(make_item("budget", "Fits the budget", by_id["budget"]["detail"], "constraint", by_id["budget"]["evidence"]))
     if history["established_land_pct"] >= 50:
-        reasons.append(_item("historical", "Historically established crops",
+        reasons.append(make_item("historical", "Historically established crops",
                              f"{history['established_land_pct']:.0f}% of the land goes to crops that were among the district's top "
                              f"{HISTORICAL_TOP_N} {rp['season']} crops by revenue in at least {HISTORICAL_HIT_RATE:.0%} of observed years.",
                              "dataset", {"established_land_pct": history["established_land_pct"]}))
     first_place = [p for p, r in ranks.items() if r == 1]
     if len(first_place) > 1:
-        reasons.append(_item("robust", "Robust to the preference choice",
+        reasons.append(make_item("robust", "Robust to the preference choice",
                              f"This plan is also ranked #1 under: {', '.join(p for p in first_place if p != ctx.preference)}.",
                              "topsis", {"rank_by_preference": ranks}))
 
@@ -696,7 +695,7 @@ def explain(ctx: ExplanationContext) -> dict:
         hib = o["better"] == "higher"
         d = _pct_diff(o["value_per_ha"], o["set_median"])
         if d is not None and ((d > 0) if hib else (d < 0)):
-            benefits.append(_item(f"benefit-{o['objective']}", f"{'Higher' if hib else 'Lower'} {o['label'].lower()} than typical",
+            benefits.append(make_item(f"benefit-{o['objective']}", f"{'Higher' if hib else 'Lower'} {o['label'].lower()} than typical",
                                   f"{o['label']} {_fmt(o['objective'], o['value_per_ha'])} is {abs(d):.0f}% "
                                   f"{'above' if hib else 'below'} the median of the {n} plans.", "nsga2",
                                   {"value_per_ha": o["value_per_ha"], "set_median": o["set_median"], "difference_pct": round(d, 1)}))
@@ -705,34 +704,34 @@ def explain(ctx: ExplanationContext) -> dict:
     hhi = sum((d["share_pct"] / 100) ** 2 for d in crops["crops"])
     footprint = np.mean([obj[k]["goodness"] for k in ("cost", "water", "env")])
     lean = obj["yield"]["goodness"] - footprint
-    insights = [_item("position", "Where the plan sits on the trade-off",
+    insights = [make_item("position", "Where the plan sits on the trade-off",
                       ("It favours output over input savings" if lean > 0.2 else
                        "It favours lower cost, water and impact over maximum yield" if lean < -0.2 else
                        "It sits near the middle of the trade-off between output and resource use")
                       + f": yield goodness {obj['yield']['goodness']:.2f} vs average resource goodness {footprint:.2f}.",
                       "topsis", {"yield_goodness": obj["yield"]["goodness"], "resource_goodness_mean": round(float(footprint), 3)})]
-    insights.append(_item("diversification", "Crop diversification",
+    insights.append(make_item("diversification", "Crop diversification",
                           f"{len(diversified)} crop(s) hold at least {DIVERSIFIED_SHARE_PCT:.0f}% of the land each "
                           f"(Herfindahl index {hhi:.2f}; 1.0 = single crop).", "nsga2",
                           {"crops_over_threshold": [d["crop"] for d in diversified], "hhi": round(hhi, 3)}))
     if crops["shown"]:
         lead = max(crops["shown"], key=lambda d: d["tonnage_share_pct"])
-        insights.append(_item("yield-driver", "Main source of yield",
+        insights.append(make_item("yield-driver", "Main source of yield",
                               f"{lead['crop']} provides {lead['tonnage_share_pct']:.0f}% of the expected tonnage on "
                               f"{lead['share_pct']:.0f}% of the land.", "nsga2", {"crop": lead["crop"],
                               "tonnage_share_pct": lead["tonnage_share_pct"], "land_share_pct": lead["share_pct"]}))
     cov = by_id["rainfall"]["evidence"]["rainfall_coverage_pct"]
     if cov is not None:
-        insights.append(_item("rain-reliance", "Reliance on rainfall",
+        insights.append(make_item("rain-reliance", "Reliance on rainfall",
                               f"Effective rainfall meets {cov:.0f}% of the plan's crop water need; the rest is irrigation.",
                               "dataset", {"rainfall_coverage_pct": cov}))
-    insights.append(_item("preference-ranks", "Rank under each preference",
+    insights.append(make_item("preference-ranks", "Rank under each preference",
                           ", ".join(f"{p}: #{r}" for p, r in ranks.items()) + f" (of {n}).", "topsis", {"rank_by_preference": ranks}))
 
     alternatives = []
     if nxt is not None:
         deltas = {k: round(_per_ha(nxt, k) - _per_ha(plan, k), 4) for k in ranking.OBJECTIVES}
-        alternatives.append(_item("runner-up", f"Versus the runner-up (rank #{nxt['rank']})",
+        alternatives.append(make_item("runner-up", f"Versus the runner-up (rank #{nxt['rank']})",
                                   "Runner-up per hectare: " + ", ".join(
                                       f"{OBJECTIVE_META[k]['label'].lower()} {'+' if v >= 0 else '−'}{_fmt(k, abs(v))}" for k, v in deltas.items())
                                   + f"; TOPSIS closeness {nxt['composite_score']:.4f} vs {plan['composite_score']:.4f}.",
@@ -742,22 +741,22 @@ def explain(ctx: ExplanationContext) -> dict:
     meta = ctx.meta
     fired = fz.fired_rules(rp["rainfall"]["avg_deviation_percent"], rp["water"]["avg_storage_percent"], rp["soil"]["fertility_index"])
     timeline = [
-        _item("data", "1 · District data", f"{rp['location']} {rp['season']} {rp['year']}: months {', '.join(rp['rainfall']['months_used'])}; "
+        make_item("data", "1 · District data", f"{rp['location']} {rp['season']} {rp['year']}: months {', '.join(rp['rainfall']['months_used'])}; "
               f"{len(rp['candidate_crops'])} candidate crops ranked by historical revenue.", "dataset",
               {"year_estimated": bool(rp.get("data_year_estimated")), "candidate_crops": [c["name"] for c in rp["candidate_crops"]]}),
-        _item("fuzzy", "2 · Fuzzy uncertainty", f"Inputs: rainfall deviation {rp['rainfall']['avg_deviation_percent']}%, storage "
+        make_item("fuzzy", "2 · Fuzzy uncertainty", f"Inputs: rainfall deviation {rp['rainfall']['avg_deviation_percent']}%, storage "
               f"{rp['water']['avg_storage_percent']}%, soil fertility {rp['soil']['fertility_index']} → yield confidence "
               f"{fzd['yield_confidence']}, irrigation risk {fzd['irrigation_risk']} ({len(fired)} rules fired).", "fuzzy",
               {"memberships": fz.input_memberships(rp["rainfall"]["avg_deviation_percent"], rp["water"]["avg_storage_percent"],
                                                    rp["soil"]["fertility_index"]), "fired_rules": fired[:5]}),
-        _item("nsga2", "3 · NSGA-II search", f"Population {meta.get('pop_size')}, {meta.get('n_gen')} generations → "
+        make_item("nsga2", "3 · NSGA-II search", f"Population {meta.get('pop_size')}, {meta.get('n_gen')} generations → "
               f"{meta.get('n_pareto_solutions_found')} non-dominated plans"
               + (f"; hypervolume {hv[0]['hypervolume']:.3f} → {hv[-1]['hypervolume']:.3f}." if hv else "."), "nsga2",
               {k: meta.get(k) for k in ("pop_size", "n_gen", "crossover_prob", "mutation_prob", "n_pareto_solutions_found")}),
-        _item("topsis", "4 · TOPSIS ranking", f"'{ctx.preference}' weights (yield/cost/water/impact = "
+        make_item("topsis", "4 · TOPSIS ranking", f"'{ctx.preference}' weights (yield/cost/water/impact = "
               + "/".join(f"{x:.2f}" for x in ranking.preference_weights(ctx.preference))
               + f") → rank #{rank}, closeness {plan['composite_score']:.3f}.", "topsis", {"plans_ranked": n}),
-        _item("checks", "5 · Constraint checks", f"{sum(1 for c in constraints['items'] if c['status'] == 'satisfied')} of "
+        make_item("checks", "5 · Constraint checks", f"{sum(1 for c in constraints['items'] if c['status'] == 'satisfied')} of "
               f"{len(constraints['items'])} checks fully satisfied.", "constraints",
               {c["id"]: c["status"] for c in constraints["items"]}),
     ]
