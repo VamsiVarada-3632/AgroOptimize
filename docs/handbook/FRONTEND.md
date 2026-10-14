@@ -75,6 +75,9 @@ Every recommended plan has a "Why?" entry point: Comparison (Explain per row, "W
 ## 3c. District Intelligence
 Sidebar item after Run Optimization. One request (`api.getDistrictIntelligence`) per district; sections render the payload; filters run in the browser. Quick actions: run optimization with the district preselected (`navigateTo(view, params)`), compare district, text report, analytics, CSV/JSON export. Details: [DISTRICT_INTELLIGENCE.md](DISTRICT_INTELLIGENCE.md).
 
+## 3d. Scenario Simulation
+Sidebar item after District Intelligence. Form for the original conditions and the scenario controls; `api.runSimulation` (~4 s, spinner) returns the full analysis; sections render it. Save (named), reopen and delete scenarios; export a self-contained HTML report with charts (lazy-loaded module) or JSON. Details: [SCENARIO_SIMULATION.md](SCENARIO_SIMULATION.md).
+
 ## 4. Shared components
 
 | Component | Used by | Notes |
@@ -86,6 +89,8 @@ Sidebar item after Run Optimization. One request (`api.getDistrictIntelligence`)
 | `SuccessCheckSvg` | ProfileSetup | animated check |
 | `charts/LineChart`, `charts/BarChart`, `charts/ChartCard`, `charts/chartTheme` | District Intelligence (reusable) | emphasis colouring, hover tooltips, reference lines, minimum y-span, chart/table toggle |
 | `district/DistrictSections` | District Intelligence | overview, climate, soil, water, crop performance, suitability, market, insights sections |
+| `charts/GroupedBarChart`, `charts/DeltaBarChart`, `charts/RadarChart` | Scenario Simulation (reusable) | two-series bars with run-range whiskers; % change around zero with written verdicts; two-profile radar |
+| `simulation/SimulationSections` | Scenario Simulation | recommendation, impact, decision impact, trade-offs, optimisation difference, crop effects, history, conditions |
 | `ExplanationPanel`, `ExplanationModal`, `ExplanationComparison` | Comparison, Run Optimization, History, Reports | render the backend explanation JSON (no reasoning in the UI); modal handles loading/errors/Escape; side-by-side A/B/C view |
 
 ## 5. Styling system

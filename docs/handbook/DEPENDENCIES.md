@@ -13,6 +13,7 @@ Only lower bounds are pinned (`>=`); there is no lock file, so a fresh install t
 | numpy | ≥1.26 | 2.3.5 | vectorised objectives, operators, TOPSIS | `optimization/`, `decision/` |
 | pymoo | ≥0.6.1 | 0.6.2 | NSGA-II survival/selection, `Problem`, hypervolume `HV` | `optimization/` |
 | scikit-fuzzy | ≥0.4.2 | 0.5.0 | Mamdani `ControlSystem`, `trimf` | `fuzzy/engine.py` |
+| scipy | ≥1.10 | 1.16.3 | paired t-test (`stats.ttest_rel`); was already installed as a dependency of pymoo and scikit-fuzzy, now listed because it is imported directly | `services/simulation_service.py` |
 | networkx | ≥3.2 | (installed) | **indirect**: imported by `skfuzzy.control` (rule graph); not imported by app code | – |
 | matplotlib | ≥3.8 | 3.11.1 | convergence PNG (Agg backend) | `results_store._plot_convergence` |
 | requests | ≥2.31 | 2.32.5 | Open-Meteo call | `dashboard_service._get_weather_live` |

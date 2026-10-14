@@ -36,6 +36,7 @@ flowchart TB
     ds[services/dashboard_service.py<br/>weather · dashboard · history · soil<br/>plans · comparison · compare-fuzzy]
     xs[services/explanation_service.py<br/>explain saved runs and comparison plans]
     dis[services/district_service.py<br/>district profile, suitability, insights]
+    sim[services/simulation_service.py<br/>scenario simulation, paired impact analysis]
     rs[services/results_store.py<br/>save / list / load runs]
     pre[data/preprocessing.py<br/>RegionSeasonProfile]
     load[data/loader.py<br/>CSV load + lru_cache]
@@ -57,6 +58,8 @@ flowchart TB
     xs --> ds & ps & rank & fz & load
     main --> dis
     dis --> pre & fz & prob & rank & load & xs
+    main --> sim
+    sim --> ps & xs & dis & fz & rank & rs
     ds --> load & pre & fz & prob & run & rank & rs
     pre --> load
     run --> ops & prob
@@ -121,6 +124,7 @@ flowchart TB
     Shell --> Cmp[ComparisonView]
     Shell --> Run[RunOptimizationView]
     Shell --> Dic[DistrictIntelligenceView]
+    Shell --> Sim[SimulationView]
     Shell --> Hist[HistoryView]
     Shell --> Rep[ReportsView]
     Shell --> Set[SettingsView]
@@ -140,6 +144,8 @@ flowchart TB
 | CSV dataset | Docker image `/app/data/raw` | 761 rows over 16 files | Immutable per deploy |
 | Loader cache | Process memory (`lru_cache`) | 4 concatenated DataFrames | Process lifetime |
 | District profile cache | Process memory (`lru_cache(8)`) | Full district-intelligence payload per district | Process lifetime |
+| Unsaved simulation results | Process memory (32 newest, by token) | Result awaiting "Save" — never reused as a computation cache | Process lifetime |
+| Saved simulations | `results/simulations/sim_*.json` | Inputs + full result, scoped by `client_id` | Until deleted |
 | Dashboard front cache | Process memory (`lru_cache(32)`) | Pareto fronts per (district, season, year, land, budget, history flag) | Process lifetime |
 | Saved runs | `/app/results` (Fly volume) | `<run_id>.json` (+ CSV, convergence CSV/PNG) | Unbounded – never pruned |
 | Run summary cache | Process memory | Parsed summaries keyed by file mtime/size | Process lifetime |

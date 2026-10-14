@@ -35,7 +35,7 @@ flowchart LR
     Settings -->|Logout| Onboarding
 ```
 
-Every shell page is reachable from the sidebar/top bar/drawer: Home, Analytics, Comparison, Run Optimization, History, Reports, Settings.
+Every shell page is reachable from the sidebar/top bar/drawer: Home, Analytics, Comparison, Run Optimization, District Intelligence, Scenario Simulation, History, Reports, Settings.
 
 ## 3. Core task: get and keep a personalised plan
 
@@ -54,6 +54,11 @@ Every shell page is reachable from the sidebar/top bar/drawer: Home, Analytics, 
 | Comparison | three representative plans (balanced / max-yield / min-cost), radar, re-weighting | profile district, 5 ha |
 
 `DataSourceNotice` on these pages states they are district-level and not saved.
+
+## 4b. What-if planning (Scenario Simulation)
+1. Set the original conditions (district, season, year, land, budget, preference) and change one or more scenario controls.
+2. *Run simulation* (~4 s) → summary, both recommendations side by side, impact cards with verdicts, decision-impact statements, trade-offs, optimisation difference, crop effects, historical comparison.
+3. *Save scenario* (named) → listed under Saved scenarios for this browser; reopen restores the form and result. *Export report* downloads an HTML report with charts (print to PDF from the browser); *Export JSON* downloads the raw result.
 
 ## 5. Returning visit
 

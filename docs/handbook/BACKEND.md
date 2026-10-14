@@ -137,6 +137,18 @@ Supporting additions: `ranking.topsis_scores`, `ranking.preference_weights`, `ra
 
 Shared helpers added for it: `preprocessing.observed_rows`, `explanation_service.make_item`.
 
+### `app/services/simulation_service.py`
+| Symbol | Behaviour |
+|---|---|
+| `simulate(request)` | baseline and scenario through `plan_service.run_pipeline` with `ENSEMBLE_SEEDS`; returns every analysis section |
+| `resolve(request)` | validation and control mapping (`WATER_LEVEL_STORAGE_PCT`, `market_price_step_pct`, priorities → weights) |
+| `_paired(...)` | means, ranges, paired t-test, verdict |
+| `_side`, `_run_metrics`, `_cheapest_plan`, `_evaluate_plan` | per-side payload, per-run outcomes, cost lower bound, plan re-evaluation |
+| `_conditions`, `_comparison`, `_share_tests`, `_impact`, `_crop_effects`, `_fuzzy_changes`, `_optimization`, `_constraints`, `_historical`, `_decision_impact`, `_trade_offs`, `_summary` | one section each (see SCENARIO_SIMULATION.md) |
+| `remember`, `pending` | in-memory results awaiting save |
+
+Supporting changes: `plan_service.run_pipeline` / `PipelineAdjustments` / `PipelineRun` (`generate_farm_plans` calls it); `preprocessing.get_region_season_profile(rainfall_factor, storage_override_pct)`; `FarmPlanProblem(fertilizer_price_factor)` and `single_crop_metrics()`; `ranking.rank_plans(weights)` and `normalise_weights`; `ExplanationContext.weights / price_factor` and `explanation_service.indicative_economics`; `results_store.save_simulation / list_simulations / load_simulation / delete_simulation`. All defaults leave existing outputs unchanged.
+
 ## 3. Error handling summary
 
 | Layer | Strategy |
@@ -163,5 +175,6 @@ Not handled: disk full during save (500), Open-Meteo slowness (up to 5 s per cal
 | test_hardening.py | run-id safety, cache, atomic save, validation, provenance, determinism, concurrency, run-id collisions, client_id redaction | 40 |
 | test_explanation.py | explanation structure, traceability, confidence, constraints, honesty rules, endpoints | 25 |
 | test_district.py | district aggregations vs raw CSVs, suitability, market, missing data, caching, endpoint | 96 |
+| test_simulation.py | pipeline hooks, validation, paired comparison, end-to-end scenarios vs CSV, history, statements, persistence, endpoints | 61 |
 
 Gaps: operators unit-tested only indirectly; no test pins numeric outputs (a golden-master test would catch unintended model drift – TODO T-13); weather tests call the real Open-Meteo API when network is available; no frontend tests at all.

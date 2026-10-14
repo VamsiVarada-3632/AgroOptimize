@@ -28,6 +28,11 @@ from app.schemas import (
     FarmPlanRequest,
     FarmPlanResponse,
     SavedRunSummaryOut,
+    SavedSimulationOut,
+    SavedSimulationSummaryOut,
+    SimulationOut,
+    SimulationRequest,
+    SimulationSaveIn,
 )
 
 # Shared query-parameter validation for the dashboard endpoints. Land must
@@ -340,3 +345,67 @@ def get_district_intelligence(location: str):
         return district_service.get_district_intelligence(location)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+# ---------------------------------------------------------------------------
+# Scenario Simulation
+# ---------------------------------------------------------------------------
+
+_REQUIRED_CLIENT_ID = Query(..., min_length=1, max_length=128, description="Opaque per-browser id.")
+
+
+@app.post("/api/simulations/run", response_model=SimulationOut)
+def run_simulation(request: SimulationRequest):
+    """Run the baseline and the modified scenario through the full pipeline
+    (preprocessing -> fuzzy -> NSGA-II -> TOPSIS -> explanation) over the
+    same seeds and return the decision impact analysis. Never cached. The
+    returned `token` lets this browser save exactly this result."""
+    from app.services import simulation_service as sim
+
+    try:
+        result = sim.simulate(request.as_payload())
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return {**result, "token": sim.remember(result, request.client_id)}
+
+
+@app.post("/api/simulations", response_model=SavedSimulationSummaryOut, status_code=201)
+def save_simulation(body: SimulationSaveIn):
+    """Save a result returned by POST /api/simulations/run in this session."""
+    from app.services import results_store
+    from app.services import simulation_service as sim
+
+    result = sim.pending(body.token, body.client_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="That simulation result has expired; run it again to save it.")
+    stored = results_store.save_simulation(result, client_id=body.client_id, name=body.name)
+    summary = next(s for s in results_store.list_simulations(body.client_id) if s["simulation_id"] == stored["simulation_id"])
+    return summary
+
+
+@app.get("/api/simulations", response_model=list[SavedSimulationSummaryOut])
+def list_simulations(client_id: str = _REQUIRED_CLIENT_ID):
+    """This browser's saved simulations, newest first."""
+    from app.services import results_store
+
+    return results_store.list_simulations(client_id)
+
+
+@app.get("/api/simulations/{simulation_id}", response_model=SavedSimulationOut)
+def get_simulation(simulation_id: str, client_id: str = _REQUIRED_CLIENT_ID):
+    from app.services import results_store
+
+    record = results_store.load_simulation(simulation_id, client_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail=f"No saved simulation with id '{simulation_id}'.")
+    return record
+
+
+@app.delete("/api/simulations/{simulation_id}")
+def delete_simulation(simulation_id: str, client_id: str = _REQUIRED_CLIENT_ID):
+    from app.services import results_store
+
+    if not results_store.delete_simulation(simulation_id, client_id):
+        raise HTTPException(status_code=404, detail=f"No saved simulation with id '{simulation_id}'.")
+    return {"deleted": simulation_id}
+

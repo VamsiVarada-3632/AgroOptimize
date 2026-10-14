@@ -48,6 +48,14 @@ Ordered by priority. IDs are referenced from the other documents. "Decision" ite
 | T-34 | Calibrate confidence weights once observed outcomes exist |
 | T-35 | Promote economics once prices are validated (see T-10) |
 
+## Scenario Simulation follow-ups
+| ID | Task |
+|---|---|
+| T-40 | Adaptive number of seed runs per side |
+| T-41 | Optional water-availability constraint in `FarmPlanProblem` |
+| T-42 | Month-level rainfall scenarios (onset delay, dry spells) |
+| T-43 | Sensitivity sweeps with response curves; server-side PDF report |
+
 ## District Intelligence follow-ups
 | ID | Task |
 |---|---|

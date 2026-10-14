@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 Preference = Literal["balanced", "max_yield", "min_cost", "min_water", "min_env_impact"]
 
@@ -288,3 +288,102 @@ class DistrictIntelligenceOut(BaseModel):
     market: Dict[str, Any]
     insights: List[ExplanationItemOut]
     summary: DistrictSummaryOut
+
+
+# ---------------------------------------------------------------------------
+# Scenario Simulation
+# ---------------------------------------------------------------------------
+
+class SimulationBaseIn(BaseModel):
+    location: str = Field(..., examples=["Salem"])
+    season: str = Field(..., examples=["Kharif"])
+    year: Optional[int] = Field(None, description="Defaults to the latest year in the dataset.")
+    total_land_ha: float = Field(..., gt=0, le=100_000, examples=[5.0])
+    budget_rs: Optional[float] = Field(None, gt=0)
+    preference: Preference = "balanced"
+
+
+class PrioritiesIn(BaseModel):
+    """Relative importance (0-100) of each objective; normalised into TOPSIS weights."""
+    yield_: float = Field(..., ge=0, le=100, alias="yield")
+    cost: float = Field(..., ge=0, le=100)
+    water: float = Field(..., ge=0, le=100)
+    env: float = Field(..., ge=0, le=100)
+
+    model_config = {"populate_by_name": True}
+
+    @model_validator(mode="after")
+    def _not_all_zero(self):
+        if self.yield_ + self.cost + self.water + self.env <= 0:
+            raise ValueError("At least one priority must be above zero.")
+        return self
+
+    def as_dict(self) -> dict:
+        return {"yield": self.yield_, "cost": self.cost, "water": self.water, "env": self.env}
+
+
+class ScenarioIn(BaseModel):
+    rainfall_change_pct: Literal[-30, -20, -10, 0, 10, 20, 30] = 0
+    water_availability: Literal["current", "very_low", "low", "medium", "high", "very_high"] = "current"
+    fertilizer_cost_change_pct: Literal[-20, -10, 0, 10, 20, 30] = 0
+    market_price: Literal["decrease", "stable", "increase"] = "stable"
+    total_land_ha: Optional[float] = Field(None, gt=0, le=100_000, description="Defaults to the baseline land.")
+    budget_rs: Optional[float] = Field(None, gt=0, description="Defaults to the baseline budget.")
+    preference: Optional[Preference] = Field(None, description="Defaults to the baseline preference.")
+    priorities: Optional[PrioritiesIn] = Field(None, description="Overrides the preference's TOPSIS weights.")
+
+
+class SimulationRequest(BaseModel):
+    base: SimulationBaseIn
+    scenario: ScenarioIn = ScenarioIn()
+    client_id: Optional[str] = Field(None, max_length=128)
+
+    def as_payload(self) -> dict:
+        scenario = self.scenario.model_dump(exclude={"priorities"})
+        scenario["priorities"] = self.scenario.priorities.as_dict() if self.scenario.priorities else None
+        return {"base": self.base.model_dump(), "scenario": scenario}
+
+
+class SimulationOut(BaseModel):
+    """Scenario simulation result; see docs/handbook/SCENARIO_SIMULATION.md."""
+    token: Optional[str] = None
+    inputs: Dict[str, Any]
+    conditions: List[Dict[str, Any]]
+    baseline: Dict[str, Any]
+    scenario: Dict[str, Any]
+    comparison: Optional[Dict[str, Any]] = None
+    impact: Optional[Dict[str, Any]] = None
+    crop_effects: List[Dict[str, Any]]
+    fuzzy_changes: Dict[str, Any]
+    optimization: Dict[str, Any]
+    constraints: List[Dict[str, Any]]
+    historical: Dict[str, Any]
+    decision_impact: List[ExplanationItemOut]
+    trade_offs: Dict[str, Any]
+    summary: Dict[str, Any]
+    meta: Dict[str, Any]
+
+
+class SimulationSaveIn(BaseModel):
+    token: str = Field(..., min_length=8, max_length=64)
+    name: Optional[str] = Field(None, max_length=80)
+    client_id: str = Field(..., min_length=1, max_length=128)
+
+
+class SavedSimulationSummaryOut(BaseModel):
+    simulation_id: str
+    name: Optional[str] = None
+    saved_at: Optional[str] = None
+    location: str
+    season: str
+    year: Optional[int] = None
+    changes: List[str]
+    headline: Dict[str, Any]
+
+
+class SavedSimulationOut(BaseModel):
+    simulation_id: str
+    name: Optional[str] = None
+    saved_at: Optional[str] = None
+    inputs: Dict[str, Any]
+    result: SimulationOut

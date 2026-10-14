@@ -20,6 +20,11 @@ Base URL: local `http://localhost:8000`; production `https://agrooptimize-backen
 | GET | `/api/results/{run_id}/explanation?rank=` | Explanation of one plan in a saved run | Run Optimization, History, Reports | tens of ms |
 | GET | `/api/comparison/{district}/explanation?plan=` | Explanation of Plan A/B/C | Comparison | ~1 s cold, fast when the front is cached |
 | GET | `/api/district-intelligence/{district}` | Aggregated district profile | District Intelligence | 30–120 ms cold, ≈0 cached |
+| POST | `/api/simulations/run` | Run a scenario simulation (baseline + scenario, 5 seeds each) | Scenario Simulation | ~4 s, never cached |
+| POST | `/api/simulations` | Save a simulation result by token | Scenario Simulation | fast |
+| GET | `/api/simulations?client_id=` | This browser's saved simulations | Scenario Simulation | fast |
+| GET | `/api/simulations/{id}?client_id=` | One saved simulation | Scenario Simulation | fast |
+| DELETE | `/api/simulations/{id}?client_id=` | Delete a saved simulation | Scenario Simulation | fast |
 
 `{district}` is case-insensitive (`coimbatore`, `Salem`, ` ERODE `). Unknown → 404.
 
@@ -199,3 +204,7 @@ Errors: 404 unknown run/district, 400 rank beyond the run's plans, 422 invalid p
 ## GET /api/district-intelligence/{district}
 
 One aggregated district profile (`DistrictIntelligenceOut`, ≈55 KB): `district, overview, coverage, climate, soil, water, crops, suitability, market, insights[], summary`. Built from observed rows only; fields the dataset lacks are `null` with a note; sections without data return `{"available": false, "note": "Data not available"}`. Case-insensitive district; 404 for unknown districts. Cached per district. Full field description and an example: [DISTRICT_INTELLIGENCE.md](DISTRICT_INTELLIGENCE.md).
+
+## Scenario Simulation
+
+`POST /api/simulations/run` takes `{base, scenario, client_id}` (`SimulationRequest`) and returns `SimulationOut`: `token, inputs, conditions, baseline, scenario, comparison, impact, crop_effects, fuzzy_changes, optimization, constraints, historical, decision_impact[], trade_offs, summary, meta`. Invalid controls, an unknown district or an infeasible baseline → 422. `POST /api/simulations {token, name, client_id}` saves a result computed in this process (201; 404 if the token expired or belongs to another browser). `GET /api/simulations`, `GET /api/simulations/{id}` and `DELETE /api/simulations/{id}` require `client_id` and only see that browser's simulations. Controls, validation and an example: [SCENARIO_SIMULATION.md](SCENARIO_SIMULATION.md).
