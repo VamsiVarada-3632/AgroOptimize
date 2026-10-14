@@ -40,6 +40,14 @@ Ordered by priority. IDs are referenced from the other documents. "Decision" ite
 | T-22 | Return relative file names instead of absolute `saved_files` paths |
 | T-23 | Split `dashboard_service.py`; typed response models for all endpoints |
 
+## Explainability follow-ups
+| ID | Task |
+|---|---|
+| T-32 | Counterfactual explanations ("what would make Plan B win?") using `ranking.topsis_scores` |
+| T-33 | Sensitivity of the recommendation to fuzzy inputs (± rainfall deviation) |
+| T-34 | Calibrate confidence weights once observed outcomes exist |
+| T-35 | Promote economics once prices are validated (see T-10) |
+
 ## P3 – UX
 
 | ID | Task |

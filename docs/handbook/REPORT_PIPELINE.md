@@ -35,15 +35,16 @@ sequenceDiagram
     R->>U: clipboard: title + subtitle
 ```
 
-### Report text structure (`buildReportText`, ~50 lines)
+### Report text structure (`buildReportText`; ~50 lines plus the explanation section)
 1. Header – generated time, run id, district/season/year; NOTE line if `data_year_estimated`.
 2. Region snapshot – soil type, pH, organic carbon, fertility index; rainfall mean, months, deviation; storage %, groundwater status.
 3. Uncertainty assessment – yield confidence with labels; irrigation risk.
 4. Optimisation – algorithm, population, generations, feasible plans found, preference.
 5. Top 3 plans – TOPSIS closeness, crop mix (share and ha, ≥1 %), yield total and t/ha, cost total and ₹/ha (with the scope note "fertilizer, pesticide and labour only"), irrigation litres, impact score, confidence, trade-off sentence.
-6. Limitations – district-level averages and documented assumptions; decision support, not agronomic advice.
+6. Why plan #1 was recommended – from `GET /api/results/{run_id}/explanation`: recommendation and rule, confidence, then Reasons → Trade-offs (+ marginal rates) → Benefits → Risks (with severity) → Confidence breakdown. If the explanation cannot be loaded the report says so.
+7. Limitations – district-level averages and documented assumptions; decision support, not agronomic advice.
 
-Every value comes from the saved record; nothing is recomputed or invented. Verified in a browser on 2026-09-29: 50 lines, no `undefined`/`NaN`.
+Every value comes from the saved record or its explanation; nothing is invented.
 
 ### Card on screen
 Title `"<District> <Season> <Year> -- <crop mix>"`, subtitle `"Yield x t/ha · Cost ₹y/ha · <confidence>"`, date, NEW tag. Cards live in component state only (disappear when leaving the page).

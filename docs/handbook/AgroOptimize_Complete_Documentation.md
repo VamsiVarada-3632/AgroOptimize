@@ -1,6 +1,6 @@
 # AgroOptimize — Complete Project Documentation (single file)
 
-All 27 handbook documents combined and grouped into 6 parts. Cross-references point to the section of the same name below.
+All 28 handbook documents combined and grouped into 6 parts. Cross-references point to the section of the same name below.
 
 ## Table of Contents
 
@@ -18,8 +18,9 @@ All 27 handbook documents combined and grouped into 6 parts. Cross-references po
 - **Part 3 — Data**
   - [DATASETS](#doc-datasets)
   - [DATA_VALIDATION](#doc-data-validation)
-- **Part 4 — Algorithms & Pipelines**
+- **Part 4 — Algorithms, Explainability & Pipelines**
   - [ALGORITHMS](#doc-algorithms)
+  - [EXPLAINABILITY](#doc-explainability)
   - [SCORING_AND_RANKING](#doc-scoring-and-ranking)
   - [OPTIMIZATION_PIPELINE](#doc-optimization-pipeline)
   - [DATA_FLOW](#doc-data-flow)
@@ -144,6 +145,9 @@ Single-page app with a `currentView` state machine (no router). Flow: Onboarding
 ### 7. Scores and labels ([SCORING_AND_RANKING.md](#doc-scoring-and-ranking))
 Radar axes: yield/cost_eff/water/land = min–max over the three compared plans ×100; risk = (1 − irrigation_risk)×100 (same for all plans); market = (1 − mean rainfall-dependency factor)×100 (no market data). Dashboard: estimated_yield = mean Yield_Kg_Ha of all crops/1000; yield_trend = year-over-year % (+3.0 % for 2024 is the estimation factor); water_utilization = Σ irrigation / Σ demand; soil status 70/45 thresholds. "Recommended" means different things on different pages (TOPSIS, cheapest compliant, weighted radar badge).
 
+### 7b. Explainability
+Any recommended plan can be explained via `GET /api/results/{run_id}/explanation` or `GET /api/comparison/{district}/explanation`: reasons, objective balance (goodness, weights, share of gap to the TOPSIS ideal), trade-offs vs the best plan per objective, constraint checks, benefits, risks, historical context from observed years, a confidence % (unweighted mean of climate/soil, data quality, convergence, constraints, historical consistency, weather consistency, ranking robustness), insights, and a pipeline trace with fired fuzzy rules. All derived from pipeline values and CSVs; profit from the unvalidated MSP column is shown for reference only. See [EXPLAINABILITY.md](#doc-explainability).
+
 ### 8. Configuration ([CONFIGURATION.md](#doc-configuration), [DEPENDENCIES.md](#doc-dependencies))
 Everything in `app/config.py`. Sourced constants: fertiliser ₹12.87/kg N, ₹58.70/kg P₂O₅, ₹56.67/kg K₂O (from bag prices); labour ₹319/day (MGNREGA TN 2024-25). Assumptions: rainfall utilisation 0.7, carbon proxies 0.15/0.01, dependency factors, multiplier bounds 0.7–1.3, all fuzzy breakpoints, TOPSIS weights. Paper-given: 200 generations, p_c 0.85, p_m 0.12. Env vars actually read: `CORS_ALLOW_ORIGINS` (backend), `VITE_API_BASE` (frontend build).
 
@@ -200,6 +204,7 @@ VVS Vamsi · Vennela Harshini · Garudammagari Sreenithya · Gaddam Jahnavi
 - TOPSIS ranking under five preferences; plain-language trade-off summaries; hard-limit filters.
 - Web app: dashboard (KPIs, weather via Open-Meteo), Pareto-front analytics with live filters and CSV export, three-plan comparison with radar chart, personalised runs with history and downloadable reports.
 - Every saved run persisted as JSON + CSV + convergence chart.
+- Explainable recommendations: why a plan was chosen, trade-offs, constraint checks, risks, historical context and a decomposed confidence score – all derived from the pipeline's own numbers ([EXPLAINABILITY.md](#doc-explainability)).
 
 ### Repository layout
 ```
@@ -257,7 +262,7 @@ Frontend on Vercel (`vercel.json`, `VITE_API_BASE` in `.env.production`); backen
 Irrigation/fertiliser multipliers currently have no yield benefit (optimiser keeps them at the minimum); the yield objective sums tonnes across crops; fuzzy output affects only expected yield; district-level data, single season; demo-only client-side authentication. Full list and roadmap: [RESEARCH_REVIEW.md](#doc-research-review), [TODO.md](#doc-todo).
 
 ### Documentation index
-[PROJECT_KNOWLEDGE](#doc-project-knowledge) · [ARCHITECTURE](#doc-architecture) · [FOLDER_STRUCTURE](#doc-folder-structure) · [FRONTEND](#doc-frontend) · [BACKEND](#doc-backend) · [DATASETS](#doc-datasets) · [ALGORITHMS](#doc-algorithms) · [API_REFERENCE](#doc-api-reference) · [DATA_FLOW](#doc-data-flow) · [USER_FLOW](#doc-user-flow) · [OPTIMIZATION_PIPELINE](#doc-optimization-pipeline) · [REPORT_PIPELINE](#doc-report-pipeline) · [HISTORY_PIPELINE](#doc-history-pipeline) · [SCORING_AND_RANKING](#doc-scoring-and-ranking) · [CONFIGURATION](#doc-configuration) · [DEPENDENCIES](#doc-dependencies) · [PROJECT_REVIEW](#doc-project-review) · [DATA_VALIDATION](#doc-data-validation) · [PERFORMANCE_REVIEW](#doc-performance-review) · [SECURITY_REVIEW](#doc-security-review) · [UI_UX_REVIEW](#doc-ui-ux-review) · [RESEARCH_REVIEW](#doc-research-review) · [TECHNICAL_DEBT](#doc-technical-debt) · [IMPROVEMENT_LOG](#doc-improvement-log) · [CHANGELOG](#doc-changelog) · [TODO](#doc-todo)
+[PROJECT_KNOWLEDGE](#doc-project-knowledge) · [ARCHITECTURE](#doc-architecture) · [FOLDER_STRUCTURE](#doc-folder-structure) · [FRONTEND](#doc-frontend) · [BACKEND](#doc-backend) · [DATASETS](#doc-datasets) · [ALGORITHMS](#doc-algorithms) · [API_REFERENCE](#doc-api-reference) · [DATA_FLOW](#doc-data-flow) · [USER_FLOW](#doc-user-flow) · [OPTIMIZATION_PIPELINE](#doc-optimization-pipeline) · [REPORT_PIPELINE](#doc-report-pipeline) · [HISTORY_PIPELINE](#doc-history-pipeline) · [SCORING_AND_RANKING](#doc-scoring-and-ranking) · [CONFIGURATION](#doc-configuration) · [DEPENDENCIES](#doc-dependencies) · [PROJECT_REVIEW](#doc-project-review) · [DATA_VALIDATION](#doc-data-validation) · [PERFORMANCE_REVIEW](#doc-performance-review) · [SECURITY_REVIEW](#doc-security-review) · [UI_UX_REVIEW](#doc-ui-ux-review) · [RESEARCH_REVIEW](#doc-research-review) · [TECHNICAL_DEBT](#doc-technical-debt) · [IMPROVEMENT_LOG](#doc-improvement-log) · [CHANGELOG](#doc-changelog) · [TODO](#doc-todo) · [EXPLAINABILITY](#doc-explainability)
 
 <a id="doc-folder-structure"></a>
 
@@ -402,6 +407,7 @@ flowchart TB
     schemas[app/schemas.py<br/>Pydantic models]
     ps[services/plan_service.py<br/>generate_farm_plans]
     ds[services/dashboard_service.py<br/>weather · dashboard · history · soil<br/>plans · comparison · compare-fuzzy]
+    xs[services/explanation_service.py<br/>explain saved runs and comparison plans]
     rs[services/results_store.py<br/>save / list / load runs]
     pre[data/preprocessing.py<br/>RegionSeasonProfile]
     load[data/loader.py<br/>CSV load + lru_cache]
@@ -419,6 +425,8 @@ flowchart TB
     main --> pre
     main --> fz
     ps --> pre & fz & prob & run & rank & rs
+    main --> xs
+    xs --> ds & ps & rank & fz & load
     ds --> load & pre & fz & prob & run & rank & rs
     pre --> load
     run --> ops & prob
@@ -431,6 +439,7 @@ Design properties:
 
 * **Layered and acyclic.** Data → fuzzy → optimisation → decision → services → HTTP. Lower layers never import upward (`ranking.py` imports only the `FarmPlan` dataclass from the runner).
 * **Two orchestrators.** `plan_service.generate_farm_plans` serves `POST /api/farm-plans` and the CLI (≤50 plans, persistence, filters, user preference). `dashboard_service._run_dashboard_pareto_front` serves the dashboard endpoints (population 100, up to 100 plans, no persistence, memoised). They deliberately share the same lower-level modules.
+* **Explanations are a separate read-only layer.** `explanation_service` consumes a saved run or the memoised comparison front and never runs its own optimisation; see [EXPLAINABILITY.md](#doc-explainability).
 * **Deferred imports in `main.py`.** Route handlers import services inside the function body; it only affects import order, not behaviour.
 
 ### 3. Request lifecycle – `POST /api/farm-plans`
@@ -650,6 +659,17 @@ Creates `FastAPI(title="AgroOptimize API", version="0.1.0")`, adds CORS (localho
 | `get_plans` | ≤100 ranked plans per hectare + HV history |
 | `_radar_scores`, `_PLOT_LABELS` (deprecated), `get_comparison` | Plans A/B/C |
 
+#### `app/services/explanation_service.py`
+| Symbol | Behaviour |
+|---|---|
+| `ExplanationContext` | everything needed to explain one plan: region profile, fuzzy, ranked set, index, preference, land, budget (+ whether recorded), convergence history, meta, subject |
+| `context_from_saved_run(record, rank)` | from a stored run (budget "not recorded" for older runs) |
+| `context_from_comparison(location, plan, land, budget)` | from the memoised dashboard front ranked under A/B/C's preference |
+| `explain(ctx)` | builds all sections (see EXPLAINABILITY.md); helpers `_crop_breakdown`, `_objective_analysis`, `_rank_under_all_preferences`, `_trade_offs`, `_constraints`, `_historical`, `_confidence`, `_risks` |
+| `explain_saved_run`, `explain_comparison_plan` | convenience wrappers used by `main.py` |
+
+Supporting additions: `ranking.topsis_scores`, `ranking.preference_weights`, `ranking.OBJECTIVES`; `fuzzy.engine.input_memberships`, `fired_rules`, `output_term`; `plan_service.region_profile_payload`; `RunMeta.total_land_ha / budget_rs`.
+
 ### 3. Error handling summary
 
 | Layer | Strategy |
@@ -674,6 +694,7 @@ Not handled: disk full during save (500), Open-Meteo slowness (up to 5 s per cal
 | test_fuzzy.py | output ranges, rule directionality, per-crop penalty | 22 |
 | test_pipeline.py | end-to-end, NSGA-II invariants, persistence, convergence | 34 |
 | test_hardening.py | run-id safety, cache, atomic save, validation, provenance, determinism, concurrency, run-id collisions, client_id redaction | 40 |
+| test_explanation.py | explanation structure, traceability, confidence, constraints, honesty rules, endpoints | 25 |
 
 Gaps: operators unit-tested only indirectly; no test pins numeric outputs (a golden-master test would catch unintended model drift – TODO T-13); weather tests call the real Open-Meteo API when network is available; no frontend tests at all.
 
@@ -749,6 +770,9 @@ Calls `getHistory`; lists this browser's saved runs; "Generate Report" fetches `
 #### SettingsView
 Profile (name, email, phone, avatar, district dropdown, land size, primary crop) → `onUpdateUser` (localStorage only) with an inline "saved on this device" status; language buttons; notification toggles (local state only, nothing is sent); mock Google-link section now labelled "Demo only"; logout.
 
+### 3b. Explanations
+Every recommended plan has a "Why?" entry point: Comparison (Explain per row, "Why this plan?", "Compare explanations"), Run Optimization ("Why this plan?"), History ("Explain top plan"), Reports ("Why?" and the explanation inside the downloaded report). API calls: `api.getResultExplanation(runId, rank)`, `api.getComparisonExplanation(location, plan)`. Details: [EXPLAINABILITY.md](#doc-explainability).
+
 ### 4. Shared components
 
 | Component | Used by | Notes |
@@ -758,6 +782,7 @@ Profile (name, email, phone, avatar, district dropdown, land size, primary crop)
 | `AccountAuthOverlay` | SettingsView | mock consent dialog |
 | `ParticleBackground` | Onboarding | canvas animation |
 | `SuccessCheckSvg` | ProfileSetup | animated check |
+| `ExplanationPanel`, `ExplanationModal`, `ExplanationComparison` | Comparison, Run Optimization, History, Reports | render the backend explanation JSON (no reasoning in the UI); modal handles loading/errors/Escape; side-by-side A/B/C view |
 
 ### 5. Styling system
 
@@ -794,6 +819,8 @@ Base URL: local `http://localhost:8000`; production `https://agrooptimize-backen
 | GET | `/api/plans/{district}` | ≤100 Pareto plans + HV history | Analytics | 966 ms cold / 3 ms cached |
 | GET | `/api/comparison/{district}` | Plans A/B/C + radar | Comparison | 369 ms cold / 3 ms cached |
 | GET | `/api/compare-fuzzy/{district}` | Fuzzy vs non-fuzzy study | Analytics | 746 ms (2 runs, not cached) |
+| GET | `/api/results/{run_id}/explanation?rank=` | Explanation of one plan in a saved run | Run Optimization, History, Reports | tens of ms |
+| GET | `/api/comparison/{district}/explanation?plan=` | Explanation of Plan A/B/C | Comparison | ~1 s cold, fast when the front is cached |
 
 `{district}` is case-insensitive (`coimbatore`, `Salem`, ` ERODE `). Unknown → 404.
 
@@ -953,6 +980,22 @@ Cost/water/impact minima are identical by construction (fuzzy only scales yield)
 
 ### CORS
 Allowed origins: `http://localhost:5173`, `http://localhost:5174`, `http://localhost:3000` plus comma-separated `CORS_ALLOW_ORIGINS` (production: `https://agrooptimize.vercel.app`). All methods and headers; `allow_credentials=True` (not needed – no cookies are used).
+
+### GET /api/results/{run_id}/explanation  and  GET /api/comparison/{district}/explanation
+
+Structured, data-derived explanation of one recommended plan (`ExplanationOut`, ≈19 KB). Query: `rank` (saved runs, 1–500, default 1) or `plan` = A | B | C plus `total_land_ha`, `budget_rs` (comparison). Top-level keys: `subject, summary, reasons, objectives, trade_offs, constraints, benefits, risks, historical_context, confidence, insights, alternatives, economics, crop_breakdown, consistency_checks, timeline, fuzzy_reasoning`. Every list item has `id, title, detail, source, evidence` (+ `status` for constraints, `severity` for risks). Abbreviated example (Salem Plan A):
+
+```json
+{"summary": {"location": "Salem", "season": "Rabi", "year": 2024, "data_year_estimated": true, "preference": "balanced",
+             "rank": 1, "plans_compared": 100, "closeness": 0.6152, "recommendation": "Recommended", "confidence_pct": 74.9,
+             "crop_mix": [{"crop": "Sugarcane", "share_pct": 53.03, "area_ha": 2.652}, {"crop": "Sunflower", "share_pct": 46.96, "area_ha": 2.348}]},
+ "risks": [{"id": "rainfall-deficit", "title": "Rainfall below normal", "severity": "high", "source": "dataset + fuzzy",
+            "detail": "Season rainfall is -36.8% vs normal (fuzzy set: deficit); effective rainfall of 208 mm covers 18% of this plan's land-weighted crop water need (1153 mm).",
+            "evidence": {"deviation_pct": -36.75, "rainfall_coverage_pct": 18.0}}],
+ "confidence": {"overall_pct": 74.9, "method": "Unweighted mean of the available components ...",
+                "components": [{"id": "data_quality", "score": 50.0, "detail": "... 2024 values are estimates ... (×0.5)."}]}}
+```
+Errors: 404 unknown run/district, 400 rank beyond the run's plans, 422 invalid parameters. Full description: [EXPLAINABILITY.md](#doc-explainability).
 
 <a id="doc-configuration"></a>
 
@@ -1415,7 +1458,7 @@ Only file existence (`loader._read_kind`) and the presence of rows for the reque
 
 ---
 
-# Part 4 — Algorithms & Pipelines
+# Part 4 — Algorithms, Explainability & Pipelines
 
 <a id="doc-algorithms"></a>
 
@@ -1665,6 +1708,162 @@ The "balanced" 0.30 was tuned empirically (documented in `ranking.py`) because c
 | Dashboard KPIs | `get_dashboard` | mean yield, year-over-year %, fertility index, irrigation share of demand, rule-based actions |
 | Current season | `_current_season` | today's month → first season in `SEASON_MONTH_MAP` containing it (Feb/Mar → Rabi) |
 | History rows | `get_history` | per saved run: top plan yield/cost ÷ its area |
+
+<a id="doc-explainability"></a>
+
+## Explainable Recommendation Engine
+
+Every recommended plan can be explained: why it was chosen, how the four objectives were balanced, what was traded away, which constraints hold, benefits, risks, historical context, a decomposed confidence score and a trace of the pipeline. Code: `app/services/explanation_service.py`. UI: `frontend/src/components/ExplanationPanel.jsx`.
+
+### 1. Where the recommendation is created (before this feature)
+
+| Step | Input | Processing | Output | Code |
+|---|---|---|---|---|
+| Profile | location, season, year | CSV slice → soil, rainfall, water, candidate crops | `RegionSeasonProfile` | `app/data/preprocessing.py` |
+| Fuzzy | rain deviation, storage, fertility | Mamdani FIS, 26 rules | yield confidence, irrigation risk | `app/fuzzy/engine.py` |
+| Search | profile + fuzzy + land + budget | NSGA-II, 4 objectives | feasible Pareto set | `app/optimization/` |
+| **Decision** | Pareto set + preference | **TOPSIS closeness → rank 1 = recommendation** | ranked plans | `app/decision/ranking.py::rank_plans` |
+| Delivery | ranked plans | saved run / per-ha dashboard payloads | API responses | `plan_service.py`, `dashboard_service.py` |
+
+The recommendation is TOPSIS rank 1 under the active preference: `POST /api/farm-plans` (user preference), Comparison Plan A/B/C (balanced / max_yield / min_cost).
+
+### 2. Architecture
+
+```mermaid
+flowchart LR
+    subgraph Inputs
+        SR[(Saved run JSON<br/>results/run_id.json)]
+        CF[Memoised comparison front<br/>dashboard_service]
+        CSV[(data/raw CSVs)]
+    end
+    SR --> C1[context_from_saved_run]
+    CF --> C2[context_from_comparison]
+    C1 & C2 --> CTX[ExplanationContext<br/>region profile · fuzzy · ranked plans ·<br/>plan index · preference · land · budget ·<br/>convergence history · meta]
+    CTX --> EX[explain]
+    CSV --> EX
+    EX --> TOP[ranking.topsis_scores<br/>preference_weights]
+    EX --> FZ[fuzzy.fired_rules<br/>input_memberships · output_term]
+    EX --> JSON[(Explanation JSON)]
+    JSON --> API1[GET /api/results/run_id/explanation]
+    JSON --> API2[GET /api/comparison/district/explanation]
+    API1 & API2 --> UI[ExplanationPanel / ExplanationComparison<br/>render only]
+    API1 --> REP[Report text file]
+```
+
+**Design decisions**
+
+| Decision | Why |
+|---|---|
+| A backend service, not React logic | One source of truth for wording and numbers; reused by four pages and the report; testable |
+| Dedicated endpoints instead of extending optimisation responses | Optimisation responses stay lean (~33 KB); explanations (~19 KB) are fetched only when asked for; saved runs explain retroactively, including runs saved before this feature |
+| One `ExplanationContext` for saved runs and live comparison plans | Same analysis code path for both |
+| Re-use, not re-implement | TOPSIS maths moved into `ranking.topsis_scores` and used by both `rank_plans` and the explainer (48 pipeline outputs verified identical to `main`); fuzzy helpers use the model's own sets and rules |
+| Comparison explanations use the history-tracked front | Verified identical to the front the page shows (all 4 districts), so convergence evidence is available without describing a different plan |
+| Saved runs now store `meta.total_land_ha`, `meta.budget_rs` | Needed for the budget check; older runs report "not recorded" rather than guessing |
+
+### 3. Sources of every statement
+
+Each item is `{id, title, detail, source, evidence, status?, severity?}`. `detail` is built from `evidence`; `source` is one of: `dataset`, `fuzzy`, `nsga2`, `topsis`, combinations of these, `constraint(s)`, `request`, `run metadata`, `model limitation`. In the UI, hovering any item shows its source and evidence.
+
+| Section | Built from |
+|---|---|
+| Summary | ranked plan (rank, closeness, shares, area, objective totals), confidence, recommendation rule |
+| Reasons | TOPSIS rank and margin; objectives with goodness ≥ 0.60; soil fuzzy set; land share of Low/Very-Low rainfall-dependency crops; budget headroom; historical top-3 share; ranks under other preferences |
+| Objectives | stored `normalized_scores` (goodness), preference weights, per-ha values vs the set (best / median / worst), share of the TOPSIS gap to the ideal |
+| Trade-offs | best plan in the set per objective vs this plan (per-ha deltas); least-squares slope and correlation of cost and water against yield across the set |
+| Constraints | land allocation, budget (if recorded), rainfall (fuzzy set + rainfall coverage), soil (fuzzy set), irrigation risk (fuzzy output set), optimiser feasibility |
+| Benefits | objectives better than the set median (percent difference) |
+| Risks | irrigation-risk output set, rainfall deficit, rainfall coverage < 50 %, rain-dependent crops, concentration (HHI), perennial crops, weak objectives (goodness < 0.30), estimated data year, year-to-year rainfall variability, inputs at the model minimum |
+| Historical context | observed (non-estimated) years in crop.csv and rainfall.csv for the district/season |
+| Confidence | see §4 |
+| Insights | trade-off position, diversification, main yield driver, rainfall reliance, rank under each preference |
+| Alternatives | runner-up per-ha deltas and closeness |
+| Timeline | data slice, fuzzy inputs/outputs + fired rules, NSGA-II settings and hypervolume, TOPSIS weights and rank, constraint summary |
+| Crop breakdown + consistency | per-crop confidence, expected yield, net irrigation recomputed exactly as `FarmPlanProblem._evaluate`; recomputed totals vs reported totals |
+
+### 4. Formulas
+
+Notation: plan *p* in a ranked set *S* (all feasible plans for comparison explanations; the stored top 50 for saved runs), crops *i*, land share *sᵢ*, area *aᵢ*, multipliers *irrᵢ*, *fertᵢ*.
+
+| Quantity | Formula |
+|---|---|
+| Per-hectare value | objective total ÷ Σ aᵢ (water in ML = L × 10⁻⁶) |
+| Goodness gⱼ | stored TOPSIS min–max score (1 = best in the ranked front) |
+| Better-than share | % of other plans in *S* that *p* is at least as good as, on objective *j* |
+| Gap share | (wⱼ(1−gⱼ))² / Σₖ (wₖ(1−gₖ))² — objective's share of the squared distance to the TOPSIS ideal; the largest = "main compromise" |
+| Strongest objective | argmax gⱼ (ties → larger weight) |
+| Crop confidence | `crop_yield_confidence(yield_conf, irrigation_risk, dependency)` (engine) |
+| Expected tonnes | aᵢ · Yieldᵢ/1000 · confᵢ |
+| Net irrigation | max(WaterReqᵢ − effective rain, 0) · irrᵢ |
+| Rainfall coverage | min(100, effective rain ÷ Σ sᵢ·WaterReqᵢ × 100) |
+| Concentration | HHI = Σ sᵢ² (1 = one crop) |
+| Marginal rate | least-squares slope of cost/ha (or water/ha) on yield/ha over *S*, with Pearson r |
+| Historical top-N rate | land-weighted (years crop in district top-3 by Revenue_Rs_Lakh ÷ observed years) |
+| Rainfall CV | std/mean of seasonal rainfall totals over observed years |
+| Fired rule strength | min of its antecedent membership degrees (Mamdani AND) |
+| Indicative revenue (reference only) | Σ tonnesᵢ × 10 × MSP_Rs_Qtlᵢ; profit = revenue − cost |
+
+#### Confidence score
+Unweighted mean of the components that can be computed (each 0–100); components that cannot be computed are excluded, not guessed.
+
+| Component | Score | Source |
+|---|---|---|
+| Climate & soil suitability | 100 × land-weighted crop confidence | fuzzy |
+| Data quality | 100 × (season months present ÷ expected, rainfall + water) × (0.5 if the year is estimated, else 1) | dataset |
+| Optimisation convergence | 100 × (1 − hypervolume gain in the last 20 % of generations ÷ total gain); excluded without history | NSGA-II |
+| Constraint satisfaction | 100 if no constraint is violated, else 0 | constraints |
+| Historical consistency | 100 × historical top-N rate | dataset |
+| Weather consistency | 100 × (1 − min(1, rainfall CV)) | dataset |
+| Ranking robustness | 100 × (preferences under which the plan is within the top 10 % of *S*) ÷ 5 | TOPSIS |
+
+Equal weights are a deliberate, untuned choice: no outcome data exists to calibrate weights, so any other split would be arbitrary.
+
+#### Recommendation label
+Highly recommended: rank 1 and confidence ≥ 75 %. Recommended: rank ≤ 5 and confidence ≥ 60 %. Otherwise: Use with caution. (The rule is returned in the payload and shown as a tooltip.)
+
+#### Wording thresholds (constants at the top of the service)
+`STRONG_GOODNESS 0.60`, `WEAK_GOODNESS 0.30`, `MIN_SHARE_PCT 1`, `DIVERSIFIED_SHARE_PCT 5`, `CONCENTRATION_HHI 0.50`, `PERENNIAL_DAYS 300`, `INPUT_FLOOR_TOLERANCE 0.02`, `HISTORICAL_TOP_N 3`, `HISTORICAL_HIT_RATE 0.75`, `ROBUST_TOP_FRACTION 0.10`, `CONSISTENCY_TOLERANCE 1 %`. They decide which facts are worth stating; they never alter a number.
+
+### 5. What is deliberately *not* claimed
+
+* **Profit.** The dataset's `MSP_Rs_Qtl` column is not validated (several crops have no government MSP; some values look implausibly high — e.g. sugarcane yields an indicative margin of roughly ₹9.6 lakh/ha for Salem Rabi). Profit is not an optimiser objective. It is therefore shown only in a collapsed "Indicative economics (unvalidated prices)" box, with `validated: false`, and is excluded from reasons, benefits, risks and confidence. A test enforces this.
+* **Input advice.** When irrigation and fertiliser multipliers sit at the 0.7 floor, a risk item states that the yield model does not reward higher inputs, instead of presenting the floor as an optimised dose.
+* **Budget for old runs.** Shown as "not recorded".
+* **Convergence without history.** Excluded from confidence with an explanation.
+
+### 6. API
+
+| Endpoint | Parameters | Errors |
+|---|---|---|
+| `GET /api/results/{run_id}/explanation` | `rank` 1–500 (default 1) | 404 unknown run, 400 rank beyond the run's plans, 422 invalid rank |
+| `GET /api/comparison/{district}/explanation` | `plan` A/B/C (default A), `total_land_ha` > 0, `budget_rs` > 0 | 404 unknown district, 422 invalid plan/land/budget |
+
+Response model: `ExplanationOut` (`app/schemas.py`); JSDoc `Explanation` typedef in `frontend/src/services/api.js`.
+
+### 7. Frontend
+
+| Place | Entry point |
+|---|---|
+| Comparison | "Explain" on each plan row; "Why this plan?" on the plan detail card; "Compare explanations" (side-by-side A/B/C) |
+| Run Optimization | "Why this plan?" on the saved result |
+| History | "Explain top plan" in the run details dialog |
+| Reports | "Why?" on each report card; the downloaded report includes Recommendation → Reasons → Trade-offs → Benefits → Risks → Confidence breakdown |
+
+`ExplanationPanel` sections: summary (recommendation badge, confidence %, crop-mix bars, per-ha metrics), why recommended, objective balance (goodness bars, STRONGEST / MAIN COMPROMISE badges), trade-offs, constraint checks (status chips), benefits, risks (severity badges), confidence (component bars), historical context, insights, runner-up comparison, pipeline timeline, fired fuzzy rules (collapsible), indicative economics (collapsible, flagged), consistency note. `ExplanationModal` handles loading, errors and Escape-to-close; it is an ARIA dialog.
+
+### 8. Worked example — Salem, Rabi 2024 (estimated year), Plan A (balanced)
+Rank #1 of 100, closeness 0.6152, confidence 74.9 % → "Recommended". Sugarcane 53 % / Sunflower 47 %; 31.49 t/ha, ₹51,970/ha, 6.61 ML/ha, impact 68.49/ha. Strongest objective: environmental impact; main compromise: yield. Best-yield alternative: +26.69 t/ha but +41 % cost and +74 % water. Risks include rainfall −36.8 % (deficit), rainfall covering 18 % of crop water need, estimated input year, sugarcane as a 365-day crop in a one-season plan, and inputs at the model minimum. Confidence components: climate/soil 56.3, data quality 50 (estimated year), convergence 100, constraints 100, historical 100, weather 97.7, robustness 20. Recomputed yield and water match reported totals within 0.03 %.
+
+### 9. Testing
+`tests/test_explanation.py` (25 tests): structure and serialisation, determinism, summary ↔ plan traceability, recomputation consistency, goodness and weights from TOPSIS, gap shares sum to 100, fired rules equal the engine's, comparison Plan A equals the page's Plan A, confidence = mean of available components, missing history excluded, estimated year lowers data quality and adds a risk, budget reporting incl. old runs, unvalidated prices never used, endpoint success and errors. Full backend suite: 230 passing. Frontend: oxlint clean, build passes, every section server-rendered against real API payloads with no undefined/NaN.
+
+### 10. Future improvements
+1. Counterfactuals: "what would make Plan B the recommendation?" (minimal weight change, via `topsis_scores`).
+2. Sensitivity of the recommendation to fuzzy inputs (± rainfall deviation) by re-running the memoised pipeline.
+3. Calibrate confidence components against observed outcomes once farm results exist; replace equal weights.
+4. Validated price data → promote economics from reference to a first-class objective and explanation.
+5. Localised wording (English/Tamil) generated from the same evidence.
+6. Store the explanation snapshot in the saved run for audit, alongside a version number of the explainer.
 
 <a id="doc-scoring-and-ranking"></a>
 
@@ -2042,15 +2241,16 @@ sequenceDiagram
     R->>U: clipboard: title + subtitle
 ```
 
-#### Report text structure (`buildReportText`, ~50 lines)
+#### Report text structure (`buildReportText`; ~50 lines plus the explanation section)
 1. Header – generated time, run id, district/season/year; NOTE line if `data_year_estimated`.
 2. Region snapshot – soil type, pH, organic carbon, fertility index; rainfall mean, months, deviation; storage %, groundwater status.
 3. Uncertainty assessment – yield confidence with labels; irrigation risk.
 4. Optimisation – algorithm, population, generations, feasible plans found, preference.
 5. Top 3 plans – TOPSIS closeness, crop mix (share and ha, ≥1 %), yield total and t/ha, cost total and ₹/ha (with the scope note "fertilizer, pesticide and labour only"), irrigation litres, impact score, confidence, trade-off sentence.
-6. Limitations – district-level averages and documented assumptions; decision support, not agronomic advice.
+6. Why plan #1 was recommended – from `GET /api/results/{run_id}/explanation`: recommendation and rule, confidence, then Reasons → Trade-offs (+ marginal rates) → Benefits → Risks (with severity) → Confidence breakdown. If the explanation cannot be loaded the report says so.
+7. Limitations – district-level averages and documented assumptions; decision support, not agronomic advice.
 
-Every value comes from the saved record; nothing is recomputed or invented. Verified in a browser on 2026-09-29: 50 lines, no `undefined`/`NaN`.
+Every value comes from the saved record or its explanation; nothing is invented.
 
 #### Card on screen
 Title `"<District> <Season> <Year> -- <crop mix>"`, subtitle `"Yield x t/ha · Cost ₹y/ha · <confidence>"`, date, NEW tag. Cards live in component state only (disappear when leaving the page).
@@ -2531,6 +2731,18 @@ All code modifications made during the 2026-09-29 audit. All changes are submitt
 
 Verification after all changes: backend **205/205 tests pass** (was 165/165); output fingerprint over 48 endpoint/pipeline results is **identical to HEAD** apart from the new additive provenance fields; frontend `oxlint` 0 warnings (was 3 in `src` + noise), `vite build` succeeds; UI flows exercised in Chrome with no console errors.
 
+### [Unreleased] – Explainable recommendations
+
+#### Added
+- `app/services/explanation_service.py` and endpoints `GET /api/results/{run_id}/explanation`, `GET /api/comparison/{district}/explanation` (typed `ExplanationOut`).
+- `ranking.topsis_scores` / `preference_weights` (shared TOPSIS maths), fuzzy `input_memberships` / `fired_rules` / `output_term`, `plan_service.region_profile_payload`.
+- Saved runs record `meta.total_land_ha` and `meta.budget_rs`.
+- Frontend `ExplanationPanel`, `ExplanationModal`, `ExplanationComparison`; explanation entry points on Comparison, Run Optimization, History and Reports; explanation section in downloaded reports.
+- `tests/test_explanation.py` (25 tests); `docs/handbook/EXPLAINABILITY.md`.
+
+#### Verified
+- 230 backend tests pass; 48 optimisation outputs identical to `main`; frontend lint clean and build passes; all explanation sections render against real API payloads.
+
 ### [Unreleased] – 2026-09-29
 
 #### Fixed
@@ -2649,6 +2861,14 @@ Ordered by priority. IDs are referenced from the other documents. "Decision" ite
 | T-21 | Rate limiting + per-client quota + retention policy for `results/`; require `client_id` on `GET /api/results/{id}` |
 | T-22 | Return relative file names instead of absolute `saved_files` paths |
 | T-23 | Split `dashboard_service.py`; typed response models for all endpoints |
+
+### Explainability follow-ups
+| ID | Task |
+|---|---|
+| T-32 | Counterfactual explanations ("what would make Plan B win?") using `ranking.topsis_scores` |
+| T-33 | Sensitivity of the recommendation to fuzzy inputs (± rainfall deviation) |
+| T-34 | Calibrate confidence weights once observed outcomes exist |
+| T-35 | Promote economics once prices are validated (see T-10) |
 
 ### P3 – UX
 
