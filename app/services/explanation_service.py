@@ -80,13 +80,21 @@ class ExplanationContext:
     convergence_history: List[dict] = field(default_factory=list)
     meta: dict = field(default_factory=dict)
     subject: dict = field(default_factory=dict)   # what is being explained (run id / plan key)
+    weights: Optional[List[float]] = None         # explicit TOPSIS weights used for the ranking, if any
+    price_factor: float = 1.0                     # scenario market-price factor for the indicative economics
+
+    def topsis_weights(self) -> np.ndarray:
+        return ranking.normalise_weights(self.weights) if self.weights is not None else ranking.preference_weights(self.preference)
+
+    def weights_label(self) -> str:
+        return "custom priority weights" if self.weights is not None else f"the '{self.preference}' preference"
 
 
 # ---------------------------------------------------------------------------
 # Context builders
 # ---------------------------------------------------------------------------
 
-def context_from_saved_run(record: dict, rank: int = 1) -> ExplanationContext:
+def context_from_saved_run(record: dict, rank: int = 1, price_factor: float = 1.0) -> ExplanationContext:
     plans = record.get("plans") or []
     if not plans:
         raise ValueError("This run has no feasible plans to explain.")
@@ -107,6 +115,8 @@ def context_from_saved_run(record: dict, rank: int = 1) -> ExplanationContext:
         convergence_history=record.get("convergence_history") or [],
         meta=meta,
         subject={"kind": "saved_run", "run_id": record.get("run_id"), "rank": rank},
+        weights=meta.get("topsis_weights") if (meta.get("adjustments") or {}).get("custom_weights") else None,
+        price_factor=price_factor,
     )
 
 
@@ -271,7 +281,7 @@ def _crop_breakdown(ctx: ExplanationContext, plan: dict) -> dict:
 
 def _objective_analysis(ctx: ExplanationContext, plan: dict) -> dict:
     plans = ctx.plans
-    w = ranking.preference_weights(ctx.preference)
+    w = ctx.topsis_weights()
     goodness = plan["normalized_scores"]
     gaps = {k: (w[i] * (1 - goodness[k])) ** 2 for i, k in enumerate(ranking.OBJECTIVES)}
     gap_total = sum(gaps.values()) or 1.0
@@ -294,7 +304,7 @@ def _objective_analysis(ctx: ExplanationContext, plan: dict) -> dict:
     strongest = max(rows, key=lambda r: (r["goodness"], r["weight"]))
     compromise = max(rows, key=lambda r: r["share_of_gap_to_ideal_pct"])
     return {"objectives": rows, "strongest": strongest["objective"], "compromise": compromise["objective"],
-            "weights_source": f"TOPSIS weights for the '{ctx.preference}' preference (app/decision/ranking.py)"}
+            "weights_source": f"TOPSIS weights for {ctx.weights_label()} (app/decision/ranking.py)"}
 
 
 def _rank_under_all_preferences(ctx: ExplanationContext) -> Dict[str, int]:
@@ -616,18 +626,15 @@ def _risks(ctx, plan, crops, constraints, objectives, history, economics) -> Lis
 # Public entry point
 # ---------------------------------------------------------------------------
 
-def explain(ctx: ExplanationContext) -> dict:
-    plan = ctx.plans[ctx.plan_index]
-    rp, fzd = ctx.region_profile, ctx.fuzzy
-    crops = _crop_breakdown(ctx, plan)
-    objectives = _objective_analysis(ctx, plan)
-    ranks = _rank_under_all_preferences(ctx)
-    trade = _trade_offs(ctx, plan)
-    constraints = _constraints(ctx, plan, crops)
-    history = _historical(ctx, crops)
-    obj = {o["objective"]: o for o in objectives["objectives"]}
-
+def indicative_economics(ctx: ExplanationContext, plan: dict, crops: Optional[dict] = None) -> dict:
+    """Indicative revenue and profit for a plan: expected tonnes per crop x
+    the dataset's price column (x the context's scenario price factor),
+    minus the plan's production cost. Reference only -- not an objective."""
+    if crops is None:
+        crops = _crop_breakdown(ctx, plan)
     revenue = crops["revenue_rs"]
+    if revenue is not None and ctx.price_factor != 1.0:
+        revenue = round(revenue * ctx.price_factor, 0)
     economics = {"available": revenue is not None}
     if revenue is not None:
         profit = revenue - plan["cost_rs"]
@@ -643,6 +650,21 @@ def explain(ctx: ExplanationContext) -> dict:
         })
     else:
         economics["reason"] = "No price is recorded in the dataset for at least one crop in this plan."
+    return economics
+
+
+def explain(ctx: ExplanationContext) -> dict:
+    plan = ctx.plans[ctx.plan_index]
+    rp, fzd = ctx.region_profile, ctx.fuzzy
+    crops = _crop_breakdown(ctx, plan)
+    objectives = _objective_analysis(ctx, plan)
+    ranks = _rank_under_all_preferences(ctx)
+    trade = _trade_offs(ctx, plan)
+    constraints = _constraints(ctx, plan, crops)
+    history = _historical(ctx, crops)
+    obj = {o["objective"]: o for o in objectives["objectives"]}
+
+    economics = indicative_economics(ctx, plan, crops)
 
     confidence = _confidence(ctx, plan, crops, constraints, history, ranks)
     rank = plan["rank"]
@@ -658,7 +680,7 @@ def explain(ctx: ExplanationContext) -> dict:
     nxt = ctx.plans[ctx.plan_index + 1] if ctx.plan_index + 1 < n else None
     margin = plan["composite_score"] - nxt["composite_score"] if nxt else None
     reasons = [make_item("topsis", "Best balance for the chosen preference",
-                     f"Ranked #{rank} of {n} plans under the '{ctx.preference}' preference with TOPSIS closeness "
+                     f"Ranked #{rank} of {n} plans under {ctx.weights_label()} with TOPSIS closeness "
                      f"{plan['composite_score']:.4f}" + (f" ({margin:+.4f} ahead of the next plan)." if margin is not None else "."),
                      "topsis", {"rank": rank, "closeness": plan["composite_score"], "margin_to_next": None if margin is None else round(margin, 4),
                                 "plans_compared": n})]
@@ -753,8 +775,8 @@ def explain(ctx: ExplanationContext) -> dict:
               f"{meta.get('n_pareto_solutions_found')} non-dominated plans"
               + (f"; hypervolume {hv[0]['hypervolume']:.3f} → {hv[-1]['hypervolume']:.3f}." if hv else "."), "nsga2",
               {k: meta.get(k) for k in ("pop_size", "n_gen", "crossover_prob", "mutation_prob", "n_pareto_solutions_found")}),
-        make_item("topsis", "4 · TOPSIS ranking", f"'{ctx.preference}' weights (yield/cost/water/impact = "
-              + "/".join(f"{x:.2f}" for x in ranking.preference_weights(ctx.preference))
+        make_item("topsis", "4 · TOPSIS ranking", f"Weights for {ctx.weights_label()} (yield/cost/water/impact = "
+              + "/".join(f"{x:.2f}" for x in ctx.topsis_weights())
               + f") → rank #{rank}, closeness {plan['composite_score']:.3f}.", "topsis", {"plans_ranked": n}),
         make_item("checks", "5 · Constraint checks", f"{sum(1 for c in constraints['items'] if c['status'] == 'satisfied')} of "
               f"{len(constraints['items'])} checks fully satisfied.", "constraints",
