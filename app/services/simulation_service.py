@@ -838,12 +838,15 @@ def simulate(request: dict) -> dict:
     """Run baseline and scenario through the full pipeline and analyse them."""
     t0 = time.time()
     ctx = resolve(request)
-    base_runs = [run_pipeline(ctx["base_request"], PipelineAdjustments(), track_history=False, seed=seed)
-                 for seed in ENSEMBLE_SEEDS]
+    # The first seed's run is the displayed recommendation: it tracks the
+    # convergence history like a saved Run Optimization run, so its
+    # explanation (including the convergence confidence component) matches.
+    base_runs = [run_pipeline(ctx["base_request"], PipelineAdjustments(), track_history=(i == 0), seed=seed)
+                 for i, seed in enumerate(ENSEMBLE_SEEDS)]
     if not base_runs[0].response["plans"]:
         raise SimulationError("The baseline conditions have no feasible plan; increase the baseline budget or land.")
-    scen_runs = [run_pipeline(ctx["scenario_request"], ctx["adjustments"], track_history=False, seed=seed)
-                 for seed in ENSEMBLE_SEEDS]
+    scen_runs = [run_pipeline(ctx["scenario_request"], ctx["adjustments"], track_history=(i == 0), seed=seed)
+                 for i, seed in enumerate(ENSEMBLE_SEEDS)]
     base = _side(base_runs, 1.0)
     scen = _side(scen_runs, ctx["price_factor"])
     shares = _share_tests(base, scen)

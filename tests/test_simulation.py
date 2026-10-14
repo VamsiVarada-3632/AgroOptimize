@@ -279,6 +279,12 @@ def test_baseline_is_exactly_the_run_optimization_result(unchanged):
     normal = ps.generate_farm_plans(FarmPlanRequest(**BASE, save_results=False))
     assert unchanged["baseline"]["top_plan"] == normal["plans"][0]
     assert unchanged["baseline"]["fuzzy_assessment"] == normal["fuzzy_assessment"]
+    # Same explanation as the saved run (which tracks convergence history).
+    saved_like = ps.run_pipeline(FarmPlanRequest(**BASE, save_results=False), track_history=True).response
+    expected = es.explain(es.context_from_saved_run(saved_like, 1))["confidence"]
+    assert unchanged["baseline"]["explanation"]["confidence"]["overall_pct"] == expected["overall_pct"]
+    assert all(c["score"] is not None for c in unchanged["baseline"]["explanation"]["confidence"]["components"]
+               if c["id"] == "convergence")
 
 
 def test_unchanged_scenario_reports_no_change(unchanged):
