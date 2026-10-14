@@ -17,12 +17,13 @@ from __future__ import annotations
 import json
 import os
 import re
+import secrets
 import tempfile
 import threading
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -188,33 +189,36 @@ def _plot_convergence(conv_df: pd.DataFrame, out_path: Path, run_id: str, profil
 # 200-generation convergence history, so re-parsing every JSON on every
 # request grows linearly with the number of saved runs. A file is only
 # re-parsed when it actually changes on disk.
-_SUMMARY_CACHE: Dict[str, Tuple[Tuple[int, int], dict]] = {}
+_SUMMARY_CACHE: Dict[Tuple[str, str], Tuple[Tuple[int, int], dict]] = {}
 _SUMMARY_CACHE_LOCK = threading.Lock()
 
 
-def _summarise(json_path: Path) -> Optional[dict]:
+def _run_summary(json_path: Path, record: dict) -> dict:
+    return {
+        "run_id": record.get("run_id", json_path.stem),
+        "location": record["region_profile"]["location"],
+        "season": record["region_profile"]["season"],
+        "year": record["region_profile"]["year"],
+        "preference": record.get("meta", {}).get("preference"),
+        "saved_at": record.get("saved_at"),
+        "n_plans": len(record.get("plans", [])),
+        "client_id": record.get("client_id"),
+    }
+
+
+def _summarise(json_path: Path, builder: Callable[[Path, dict], dict] = _run_summary) -> Optional[dict]:
     try:
         stat = json_path.stat()
     except OSError:
         return None
-    key = str(json_path)
+    key = (str(json_path), builder.__name__)
     stamp = (stat.st_mtime_ns, stat.st_size)
     with _SUMMARY_CACHE_LOCK:
         cached = _SUMMARY_CACHE.get(key)
     if cached is not None and cached[0] == stamp:
         return cached[1]
     try:
-        record = json.loads(json_path.read_text())
-        summary = {
-            "run_id": record.get("run_id", json_path.stem),
-            "location": record["region_profile"]["location"],
-            "season": record["region_profile"]["season"],
-            "year": record["region_profile"]["year"],
-            "preference": record.get("meta", {}).get("preference"),
-            "saved_at": record.get("saved_at"),
-            "n_plans": len(record.get("plans", [])),
-            "client_id": record.get("client_id"),
-        }
+        summary = builder(json_path, json.loads(json_path.read_text()))
     except (json.JSONDecodeError, OSError, KeyError, TypeError):
         return None
     with _SUMMARY_CACHE_LOCK:
@@ -245,3 +249,87 @@ def load_run(run_id: str, out_dir: Path = config.RESULTS_DIR) -> Optional[dict]:
         return json.loads(path.read_text())
     except (json.JSONDecodeError, OSError):
         return None
+
+
+# ---------------------------------------------------------------------------
+# Saved scenario simulations (results/simulations/<simulation_id>.json)
+# ---------------------------------------------------------------------------
+
+SIMULATIONS_DIR_NAME = "simulations"
+
+
+def _simulations_dir(out_dir: Optional[Path]) -> Path:
+    return Path(out_dir if out_dir is not None else config.RESULTS_DIR) / SIMULATIONS_DIR_NAME
+
+
+def make_simulation_id(location: str) -> str:
+    """Timestamped and with a random suffix, so ids are not guessable."""
+    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    return f"sim_{_slugify(location)}_{ts}_{secrets.token_hex(4)}"
+
+
+def _simulation_summary(json_path: Path, record: dict) -> dict:
+    return {
+        "simulation_id": record["simulation_id"],
+        "name": record.get("name"),
+        "saved_at": record.get("saved_at"),
+        "client_id": record.get("client_id"),
+        "location": record["inputs"]["base"]["location"],
+        "season": record["inputs"]["base"]["season"],
+        "year": record["result"]["summary"].get("year"),
+        "changes": [c["id"] for c in record["inputs"].get("changes", [])],
+        "headline": (record["result"].get("impact") or {}).get("headline", {}),
+    }
+
+
+def save_simulation(record: dict, client_id: str, name: Optional[str], out_dir: Optional[Path] = None) -> dict:
+    """Persist a simulation result for one browser. Returns the stored record."""
+    folder = _simulations_dir(out_dir)
+    folder.mkdir(parents=True, exist_ok=True)
+    sim_id = make_simulation_id(record["inputs"]["base"]["location"])
+    stored = {
+        "simulation_id": sim_id,
+        "name": name or f"{record['inputs']['base']['location']} {record['inputs']['base']['season']} scenario",
+        "saved_at": datetime.now(timezone.utc).isoformat(),
+        "client_id": client_id,
+        "inputs": record["inputs"],
+        "result": {k: v for k, v in record.items() if k != "token"},
+    }
+    _atomic_write_text(folder / f"{sim_id}.json", json.dumps(stored, indent=1))
+    return stored
+
+
+def list_simulations(client_id: str, out_dir: Optional[Path] = None) -> List[dict]:
+    folder = _simulations_dir(out_dir)
+    if not client_id or not folder.exists():
+        return []
+    out = []
+    for path in folder.glob("*.json"):
+        summary = _summarise(path, _simulation_summary)
+        if summary is not None and summary.get("client_id") == client_id:
+            out.append({k: v for k, v in summary.items() if k != "client_id"})
+    return sorted(out, key=lambda r: r.get("saved_at") or "", reverse=True)
+
+
+_SIMULATION_ID_PATTERN = re.compile(r"sim_[a-z0-9-]+_\d{8}T\d{6}Z_[0-9a-f]{8}")
+
+
+def load_simulation(simulation_id: str, client_id: str, out_dir: Optional[Path] = None) -> Optional[dict]:
+    """The stored record, or None if it does not exist or belongs to another browser."""
+    if not client_id or not _SIMULATION_ID_PATTERN.fullmatch(str(simulation_id)):
+        return None
+    path = _simulations_dir(out_dir) / f"{simulation_id}.json"
+    if not path.exists():
+        return None
+    try:
+        record = json.loads(path.read_text())
+    except (json.JSONDecodeError, OSError):
+        return None
+    return record if record.get("client_id") == client_id else None
+
+
+def delete_simulation(simulation_id: str, client_id: str, out_dir: Optional[Path] = None) -> bool:
+    if load_simulation(simulation_id, client_id, out_dir) is None:
+        return False
+    (_simulations_dir(out_dir) / f"{simulation_id}.json").unlink()
+    return True
