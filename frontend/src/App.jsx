@@ -8,6 +8,7 @@ import ComparisonView from './views/ComparisonView';
 import RunOptimizationView from './views/RunOptimizationView';
 import HistoryView from './views/HistoryView';
 import ReportsView from './views/ReportsView';
+import DistrictIntelligenceView from './views/DistrictIntelligenceView';
 import SettingsView from './views/SettingsView';
 import { api, DISTRICTS } from './services/api';
 
@@ -44,6 +45,9 @@ export default function App() {
   }, [user]);
 
   const [activePlanId, setActivePlanId] = useState('A');
+  // Optional parameters passed with a navigation (e.g. the district chosen on
+  // District Intelligence when jumping to Run Optimization).
+  const [navParams, setNavParams] = useState({});
 
   // A "complete" profile means we actually have a real district on file --
   // every dashboard-shell view depends on this to call the backend. Full
@@ -100,6 +104,7 @@ export default function App() {
     'analytics',
     'comparison',
     'run-optimization',
+    'district-intelligence',
     'history',
     'reports',
     'settings'
@@ -115,7 +120,8 @@ export default function App() {
     }
   }, [isDashboardShell, hasCompleteProfile, user]);
 
-  const navigateTo = (view) => {
+  const navigateTo = (view, params = {}) => {
+    setNavParams(params);
     setCurrentView(view);
     setMobileMenuOpen(false);
   };
@@ -126,6 +132,7 @@ export default function App() {
     { id: 'analytics', label: 'Analytics', icon: 'analytics' },
     { id: 'comparison', label: 'Comparison', icon: 'compare' },
     { id: 'run-optimization', label: 'Run Optimization', icon: 'model_training' },
+    { id: 'district-intelligence', label: 'District Intelligence', icon: 'travel_explore' },
     { id: 'history', label: 'History', icon: 'history' },
     { id: 'reports', label: 'Reports', icon: 'description' },
     { id: 'settings', label: 'Settings', icon: 'settings' },
@@ -406,10 +413,16 @@ export default function App() {
 
               {currentView === 'run-optimization' && (
                 <RunOptimizationView
+                  key={navParams.district || 'profile'}
                   userLocation={user.location}
+                  initialDistrict={navParams.district}
                   landSizeHa={Number(user.landSize) || 5}
                   onNavigate={navigateTo}
                 />
+              )}
+
+              {currentView === 'district-intelligence' && (
+                <DistrictIntelligenceView userLocation={user.location} onNavigate={navigateTo} />
               )}
 
               {currentView === 'history' && (

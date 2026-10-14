@@ -1,6 +1,6 @@
 # AgroOptimize — Complete Project Documentation (single file)
 
-All 28 handbook documents combined and grouped into 6 parts. Cross-references point to the section of the same name below.
+All 29 handbook documents combined and grouped into 6 parts. Cross-references point to the section of the same name below.
 
 ## Table of Contents
 
@@ -15,9 +15,10 @@ All 28 handbook documents combined and grouped into 6 parts. Cross-references po
   - [API_REFERENCE](#doc-api-reference)
   - [CONFIGURATION](#doc-configuration)
   - [DEPENDENCIES](#doc-dependencies)
-- **Part 3 — Data**
+- **Part 3 — Data & District Intelligence**
   - [DATASETS](#doc-datasets)
   - [DATA_VALIDATION](#doc-data-validation)
+  - [DISTRICT_INTELLIGENCE](#doc-district-intelligence)
 - **Part 4 — Algorithms, Explainability & Pipelines**
   - [ALGORITHMS](#doc-algorithms)
   - [EXPLAINABILITY](#doc-explainability)
@@ -148,6 +149,9 @@ Radar axes: yield/cost_eff/water/land = min–max over the three compared plans 
 ### 7b. Explainability
 Any recommended plan can be explained via `GET /api/results/{run_id}/explanation` or `GET /api/comparison/{district}/explanation`: reasons, objective balance (goodness, weights, share of gap to the TOPSIS ideal), trade-offs vs the best plan per objective, constraint checks, benefits, risks, historical context from observed years, a confidence % (unweighted mean of climate/soil, data quality, convergence, constraints, historical consistency, weather consistency, ranking robustness), insights, and a pipeline trace with fired fuzzy rules. All derived from pipeline values and CSVs; profit from the unvalidated MSP column is shown for reference only. See [EXPLAINABILITY.md](#doc-explainability).
 
+### 7c. District Intelligence
+`GET /api/district-intelligence/{district}` and the District Intelligence page profile a district from observed rows only: overview, coverage, climate, soil, water, crop history, a crop suitability score (mean of climate & soil, rainfall fit, prominence, yield stability and resource efficiency; per-hectare values from the optimiser's own objective function), historical prices (not live), generated insights and a summary. Missing fields show "Data not available". See [DISTRICT_INTELLIGENCE.md](#doc-district-intelligence).
+
 ### 8. Configuration ([CONFIGURATION.md](#doc-configuration), [DEPENDENCIES.md](#doc-dependencies))
 Everything in `app/config.py`. Sourced constants: fertiliser ₹12.87/kg N, ₹58.70/kg P₂O₅, ₹56.67/kg K₂O (from bag prices); labour ₹319/day (MGNREGA TN 2024-25). Assumptions: rainfall utilisation 0.7, carbon proxies 0.15/0.01, dependency factors, multiplier bounds 0.7–1.3, all fuzzy breakpoints, TOPSIS weights. Paper-given: 200 generations, p_c 0.85, p_m 0.12. Env vars actually read: `CORS_ALLOW_ORIGINS` (backend), `VITE_API_BASE` (frontend build).
 
@@ -204,6 +208,7 @@ VVS Vamsi · Vennela Harshini · Garudammagari Sreenithya · Gaddam Jahnavi
 - TOPSIS ranking under five preferences; plain-language trade-off summaries; hard-limit filters.
 - Web app: dashboard (KPIs, weather via Open-Meteo), Pareto-front analytics with live filters and CSV export, three-plan comparison with radar chart, personalised runs with history and downloadable reports.
 - Every saved run persisted as JSON + CSV + convergence chart.
+- District Intelligence Center: one page per district with climate, soil, water, crop history, crop suitability, historical prices and generated insights ([DISTRICT_INTELLIGENCE.md](#doc-district-intelligence)).
 - Explainable recommendations: why a plan was chosen, trade-offs, constraint checks, risks, historical context and a decomposed confidence score – all derived from the pipeline's own numbers ([EXPLAINABILITY.md](#doc-explainability)).
 
 ### Repository layout
@@ -229,6 +234,8 @@ uvicorn app.main:app --reload --port 8000        # API docs: http://localhost:80
 python3 run_demo.py --location Salem --season Kharif --year 2023 --land 5 --budget 250000
 python3 -m pytest -q
 ```
+
+Frontend tests: `cd frontend && npm test`.
 
 Frontend
 ```bash
@@ -262,7 +269,7 @@ Frontend on Vercel (`vercel.json`, `VITE_API_BASE` in `.env.production`); backen
 Irrigation/fertiliser multipliers currently have no yield benefit (optimiser keeps them at the minimum); the yield objective sums tonnes across crops; fuzzy output affects only expected yield; district-level data, single season; demo-only client-side authentication. Full list and roadmap: [RESEARCH_REVIEW.md](#doc-research-review), [TODO.md](#doc-todo).
 
 ### Documentation index
-[PROJECT_KNOWLEDGE](#doc-project-knowledge) · [ARCHITECTURE](#doc-architecture) · [FOLDER_STRUCTURE](#doc-folder-structure) · [FRONTEND](#doc-frontend) · [BACKEND](#doc-backend) · [DATASETS](#doc-datasets) · [ALGORITHMS](#doc-algorithms) · [API_REFERENCE](#doc-api-reference) · [DATA_FLOW](#doc-data-flow) · [USER_FLOW](#doc-user-flow) · [OPTIMIZATION_PIPELINE](#doc-optimization-pipeline) · [REPORT_PIPELINE](#doc-report-pipeline) · [HISTORY_PIPELINE](#doc-history-pipeline) · [SCORING_AND_RANKING](#doc-scoring-and-ranking) · [CONFIGURATION](#doc-configuration) · [DEPENDENCIES](#doc-dependencies) · [PROJECT_REVIEW](#doc-project-review) · [DATA_VALIDATION](#doc-data-validation) · [PERFORMANCE_REVIEW](#doc-performance-review) · [SECURITY_REVIEW](#doc-security-review) · [UI_UX_REVIEW](#doc-ui-ux-review) · [RESEARCH_REVIEW](#doc-research-review) · [TECHNICAL_DEBT](#doc-technical-debt) · [IMPROVEMENT_LOG](#doc-improvement-log) · [CHANGELOG](#doc-changelog) · [TODO](#doc-todo) · [EXPLAINABILITY](#doc-explainability)
+[PROJECT_KNOWLEDGE](#doc-project-knowledge) · [ARCHITECTURE](#doc-architecture) · [FOLDER_STRUCTURE](#doc-folder-structure) · [FRONTEND](#doc-frontend) · [BACKEND](#doc-backend) · [DATASETS](#doc-datasets) · [ALGORITHMS](#doc-algorithms) · [API_REFERENCE](#doc-api-reference) · [DATA_FLOW](#doc-data-flow) · [USER_FLOW](#doc-user-flow) · [OPTIMIZATION_PIPELINE](#doc-optimization-pipeline) · [REPORT_PIPELINE](#doc-report-pipeline) · [HISTORY_PIPELINE](#doc-history-pipeline) · [SCORING_AND_RANKING](#doc-scoring-and-ranking) · [CONFIGURATION](#doc-configuration) · [DEPENDENCIES](#doc-dependencies) · [PROJECT_REVIEW](#doc-project-review) · [DATA_VALIDATION](#doc-data-validation) · [PERFORMANCE_REVIEW](#doc-performance-review) · [SECURITY_REVIEW](#doc-security-review) · [UI_UX_REVIEW](#doc-ui-ux-review) · [RESEARCH_REVIEW](#doc-research-review) · [TECHNICAL_DEBT](#doc-technical-debt) · [IMPROVEMENT_LOG](#doc-improvement-log) · [CHANGELOG](#doc-changelog) · [TODO](#doc-todo) · [EXPLAINABILITY](#doc-explainability) · [DISTRICT_INTELLIGENCE](#doc-district-intelligence)
 
 <a id="doc-folder-structure"></a>
 
@@ -300,6 +307,7 @@ final_year_project/
 | `app/decision/ranking.py` | Active | Hard-limit filters, TOPSIS ranking, trade-off wording, confidence labels |
 | `app/services/plan_service.py` | Active | Orchestrates the 5-stage pipeline for `POST /api/farm-plans` and the CLI |
 | `app/services/results_store.py` | Active | Persists runs to `results/` (JSON/CSV/PNG), lists and loads them |
+| `app/services/district_service.py` | Active | District Intelligence aggregation (cached) |
 | `app/services/dashboard_service.py` | Active | Logic for the 7 frontend-facing endpoints (weather, dashboard, history, soil, plans, comparison, fuzzy comparison) |
 | `data/raw/*.csv` | Active | **The** dataset: 4 districts × {crop, land, rainfall, water_availability}. See [DATASETS.md](#doc-datasets) |
 | `tests/test_api.py` | Active | 21 tests – core REST endpoints |
@@ -332,6 +340,10 @@ final_year_project/
 | `src/App.jsx` | Active | State-machine router (`currentView` string), user state in `localStorage`, layout shell (sidebar/top bar/mobile drawer), health check |
 | `src/index.css` | Active | Tailwind v4 `@theme` design tokens (Material-3-style colour roles, typography scale) + keyframes |
 | `src/services/api.js` | Active | The only module that calls the backend; `ApiError`, `describeApiError`, per-browser `client_id` |
+| `src/views/DistrictIntelligenceView.jsx`, `src/components/district/` | Active | District Intelligence page and its sections |
+| `src/components/charts/` | Active | Reusable LineChart, BarChart, ChartCard, chart theme |
+| `src/utils/districtView.js` | Active | District page selection/formatting helpers |
+| `src/**/*.test.js(x)`, `src/__fixtures__/` | Active | Vitest tests and a real API payload fixture |
 | `src/utils/download.js` | Active (new) | `downloadFile`, `toCsv` (with CSV-injection guard), `slug` |
 | `src/views/*.jsx` | Active | 10 page components – see [FRONTEND.md](#doc-frontend) |
 | `src/components/DataSourceNotice.jsx` | Active | "historical vs live vs personalised" banner |
@@ -408,6 +420,7 @@ flowchart TB
     ps[services/plan_service.py<br/>generate_farm_plans]
     ds[services/dashboard_service.py<br/>weather · dashboard · history · soil<br/>plans · comparison · compare-fuzzy]
     xs[services/explanation_service.py<br/>explain saved runs and comparison plans]
+    dis[services/district_service.py<br/>district profile, suitability, insights]
     rs[services/results_store.py<br/>save / list / load runs]
     pre[data/preprocessing.py<br/>RegionSeasonProfile]
     load[data/loader.py<br/>CSV load + lru_cache]
@@ -427,6 +440,8 @@ flowchart TB
     ps --> pre & fz & prob & run & rank & rs
     main --> xs
     xs --> ds & ps & rank & fz & load
+    main --> dis
+    dis --> pre & fz & prob & rank & load & xs
     ds --> load & pre & fz & prob & run & rank & rs
     pre --> load
     run --> ops & prob
@@ -490,6 +505,7 @@ flowchart TB
     Shell --> Ana[AnalyticsView]
     Shell --> Cmp[ComparisonView]
     Shell --> Run[RunOptimizationView]
+    Shell --> Dic[DistrictIntelligenceView]
     Shell --> Hist[HistoryView]
     Shell --> Rep[ReportsView]
     Shell --> Set[SettingsView]
@@ -508,6 +524,7 @@ flowchart TB
 |---|---|---|---|
 | CSV dataset | Docker image `/app/data/raw` | 761 rows over 16 files | Immutable per deploy |
 | Loader cache | Process memory (`lru_cache`) | 4 concatenated DataFrames | Process lifetime |
+| District profile cache | Process memory (`lru_cache(8)`) | Full district-intelligence payload per district | Process lifetime |
 | Dashboard front cache | Process memory (`lru_cache(32)`) | Pareto fronts per (district, season, year, land, budget, history flag) | Process lifetime |
 | Saved runs | `/app/results` (Fly volume) | `<run_id>.json` (+ CSV, convergence CSV/PNG) | Unbounded – never pruned |
 | Run summary cache | Process memory | Parsed summaries keyed by file mtime/size | Process lifetime |
@@ -670,6 +687,16 @@ Creates `FastAPI(title="AgroOptimize API", version="0.1.0")`, adds CORS (localho
 
 Supporting additions: `ranking.topsis_scores`, `ranking.preference_weights`, `ranking.OBJECTIVES`; `fuzzy.engine.input_memberships`, `fired_rules`, `output_term`; `plan_service.region_profile_payload`; `RunMeta.total_land_ha / budget_rs`.
 
+#### `app/services/district_service.py`
+| Symbol | Behaviour |
+|---|---|
+| `get_district_intelligence(location)` | canonical district → cached `_build` payload |
+| `_coverage`, `_climate`, `_soil`, `_water`, `_crops`, `_suitability`, `_market`, `_overview`, `_insights`, `_summary` | one section each (see DISTRICT_INTELLIGENCE.md) |
+| `trend(years, values)`, `variability_label(cv)` | first-to-last change, slope, CV, direction and variability labels |
+| `clear_cache()` | drop cached payloads |
+
+Shared helpers added for it: `preprocessing.observed_rows`, `explanation_service.make_item`.
+
 ### 3. Error handling summary
 
 | Layer | Strategy |
@@ -695,6 +722,7 @@ Not handled: disk full during save (500), Open-Meteo slowness (up to 5 s per cal
 | test_pipeline.py | end-to-end, NSGA-II invariants, persistence, convergence | 34 |
 | test_hardening.py | run-id safety, cache, atomic save, validation, provenance, determinism, concurrency, run-id collisions, client_id redaction | 40 |
 | test_explanation.py | explanation structure, traceability, confidence, constraints, honesty rules, endpoints | 25 |
+| test_district.py | district aggregations vs raw CSVs, suitability, market, missing data, caching, endpoint | 96 |
 
 Gaps: operators unit-tested only indirectly; no test pins numeric outputs (a golden-master test would catch unintended model drift – TODO T-13); weather tests call the real Open-Meteo API when network is available; no frontend tests at all.
 
@@ -710,6 +738,7 @@ npm install
 npm run dev                                   # http://localhost:5173, talks to http://localhost:8000
 VITE_API_BASE=http://localhost:8010 npm run dev   # point at another backend
 npm run lint && npm run build                 # oxlint (0 warnings) + production build to dist/
+npm test                                      # Vitest: charts, district helpers and sections
 ```
 
 ### 1. Application shell (`src/App.jsx`)
@@ -773,6 +802,9 @@ Profile (name, email, phone, avatar, district dropdown, land size, primary crop)
 ### 3b. Explanations
 Every recommended plan has a "Why?" entry point: Comparison (Explain per row, "Why this plan?", "Compare explanations"), Run Optimization ("Why this plan?"), History ("Explain top plan"), Reports ("Why?" and the explanation inside the downloaded report). API calls: `api.getResultExplanation(runId, rank)`, `api.getComparisonExplanation(location, plan)`. Details: [EXPLAINABILITY.md](#doc-explainability).
 
+### 3c. District Intelligence
+Sidebar item after Run Optimization. One request (`api.getDistrictIntelligence`) per district; sections render the payload; filters run in the browser. Quick actions: run optimization with the district preselected (`navigateTo(view, params)`), compare district, text report, analytics, CSV/JSON export. Details: [DISTRICT_INTELLIGENCE.md](#doc-district-intelligence).
+
 ### 4. Shared components
 
 | Component | Used by | Notes |
@@ -782,6 +814,8 @@ Every recommended plan has a "Why?" entry point: Comparison (Explain per row, "W
 | `AccountAuthOverlay` | SettingsView | mock consent dialog |
 | `ParticleBackground` | Onboarding | canvas animation |
 | `SuccessCheckSvg` | ProfileSetup | animated check |
+| `charts/LineChart`, `charts/BarChart`, `charts/ChartCard`, `charts/chartTheme` | District Intelligence (reusable) | emphasis colouring, hover tooltips, reference lines, minimum y-span, chart/table toggle |
+| `district/DistrictSections` | District Intelligence | overview, climate, soil, water, crop performance, suitability, market, insights sections |
 | `ExplanationPanel`, `ExplanationModal`, `ExplanationComparison` | Comparison, Run Optimization, History, Reports | render the backend explanation JSON (no reasoning in the UI); modal handles loading/errors/Escape; side-by-side A/B/C view |
 
 ### 5. Styling system
@@ -821,6 +855,7 @@ Base URL: local `http://localhost:8000`; production `https://agrooptimize-backen
 | GET | `/api/compare-fuzzy/{district}` | Fuzzy vs non-fuzzy study | Analytics | 746 ms (2 runs, not cached) |
 | GET | `/api/results/{run_id}/explanation?rank=` | Explanation of one plan in a saved run | Run Optimization, History, Reports | tens of ms |
 | GET | `/api/comparison/{district}/explanation?plan=` | Explanation of Plan A/B/C | Comparison | ~1 s cold, fast when the front is cached |
+| GET | `/api/district-intelligence/{district}` | Aggregated district profile | District Intelligence | 30–120 ms cold, ≈0 cached |
 
 `{district}` is case-insensitive (`coimbatore`, `Salem`, ` ERODE `). Unknown → 404.
 
@@ -997,6 +1032,10 @@ Structured, data-derived explanation of one recommended plan (`ExplanationOut`, 
 ```
 Errors: 404 unknown run/district, 400 rank beyond the run's plans, 422 invalid parameters. Full description: [EXPLAINABILITY.md](#doc-explainability).
 
+### GET /api/district-intelligence/{district}
+
+One aggregated district profile (`DistrictIntelligenceOut`, ≈55 KB): `district, overview, coverage, climate, soil, water, crops, suitability, market, insights[], summary`. Built from observed rows only; fields the dataset lacks are `null` with a note; sections without data return `{"available": false, "note": "Data not available"}`. Case-insensitive district; 404 for unknown districts. Cached per district. Full field description and an example: [DISTRICT_INTELLIGENCE.md](#doc-district-intelligence).
+
 <a id="doc-configuration"></a>
 
 ## Configuration, Constants and Assumptions
@@ -1143,6 +1182,7 @@ Recommendations: split `requirements-dev.txt` (pytest, httpx) from runtime; gene
 | @vitejs/plugin-react | ^6.0.4 | 6.0.5 | JSX transform, fast refresh | dev |
 | oxlint | ^1.75.0 | 1.78.0 | lint (`react`, `oxc` plugins) | dev |
 | @types/react, @types/react-dom | ^19 | 19.2.18 / 19.2.4 | editor type hints only (project is JS, not TS) | dev |
+| vitest | ^5.0.4 | 5.0.4 | frontend unit/render tests (`npm test`); components rendered with react-dom/server | dev |
 
 `package-lock.json` is committed → reproducible installs. Tailwind is listed under `dependencies` though it is build-time only (harmless for a static build).
 
@@ -1169,7 +1209,7 @@ Recommendations: split `requirements-dev.txt` (pytest, httpx) from runtime; gene
 
 ---
 
-# Part 3 — Data
+# Part 3 — Data & District Intelligence
 
 <a id="doc-datasets"></a>
 
@@ -1455,6 +1495,156 @@ Only file existence (`loader._read_kind`) and the presence of rows for the reque
 4. Compute seasonal deviation from totals and make Rabi span Oct(Y)–Mar(Y+1) (D5, D6).
 5. Add a schema/range validation step (pandera or explicit asserts) at load time.
 6. Delete or clearly archive `datasets/` (D11) and regenerate the results write-ups (D12).
+
+<a id="doc-district-intelligence"></a>
+
+## District Intelligence Center
+
+A single page that profiles a district before any optimisation is run: overview, data coverage, climate, soil, water, crop history, crop suitability, historical prices, generated insights and an executive summary. Backend: `app/services/district_service.py`. Frontend: `frontend/src/views/DistrictIntelligenceView.jsx` and `frontend/src/components/district/DistrictSections.jsx`.
+
+### 1. Where district information lived before
+
+| Information | Previously exposed by | Reused here |
+|---|---|---|
+| Soil fertility index | `preprocessing.compute_soil_fertility_index` (dashboard, profiles) | yes |
+| Season profiles (rainfall deviation, storage, candidate crops) | `preprocessing.get_region_season_profile` | yes (suitability) |
+| Fuzzy assessment / sets | `fuzzy.engine` | yes (`evaluate_uncertainty`, `input_memberships`, crop confidence) |
+| Per-crop yield, cost, irrigation, impact | `FarmPlanProblem` objective function | yes – evaluated for one-crop, one-hectare plans |
+| Min–max goodness | `ranking.topsis_scores` | yes (resource efficiency) |
+| Observed vs estimated rows | `explanation_service._observed` | moved to `preprocessing.observed_rows`, shared |
+| Statement format with evidence | `explanation_service._item` | made public as `make_item`, shared |
+| Dashboard KPIs, weather, soil snapshot | `dashboard_service` | not duplicated; the dashboard stays the "today" view, this page is the historical profile |
+| District names, coordinates, season months | `config` | yes |
+
+### 2. Architecture and flow
+
+```mermaid
+flowchart LR
+    CSV[(data/raw CSVs<br/>observed rows only)] --> DS[district_service._build<br/>lru_cache per district]
+    DS --> CV[_coverage]
+    DS --> CL[_climate]
+    DS --> SO[_soil]
+    DS --> WA[_water]
+    DS --> CR[_crops]
+    CR --> SU[_suitability]
+    CR --> MK[_market]
+    CV & CL & SO & WA & CR --> OV[_overview]
+    CL & SO & WA & CR & MK & SU --> IN[_insights]
+    OV & CL & SO & WA & CR & SU & CV --> SM[_summary]
+    SU --> PP[preprocessing profile] & FZ[fuzzy engine] & FP[FarmPlanProblem.evaluate] & TP[ranking.topsis_scores]
+    DS --> API[GET /api/district-intelligence/district]
+    API --> V[DistrictIntelligenceView<br/>one request per district]
+    V --> SEC[DistrictSections + charts<br/>render only]
+    V --> EXP[CSV / JSON / text report<br/>built from the payload]
+```
+
+* One aggregate endpoint instead of many small ones: the page needs everything at once, and the payload is ≈55 KB.
+* The payload is a pure function of the CSVs → `lru_cache(maxsize=8)`; cold build 30–120 ms, cached ≈1 µs.
+* Filtering (season, crop, year, metric) happens in the browser over the returned records; no extra requests.
+
+### 3. Data rules
+* **Observed rows only** feed every statistic and trend. Rows whose `data_source` starts with "Estimated" (2024) appear only in `coverage.estimated_years`, and the summary says they were excluded.
+* **No estimates.** Fields the dataset lacks are `null` with a note (e.g. `agricultural_zone`), shown as "Data not available". Whole sections return `{"available": false, "note": "Data not available"}` when their rows are missing.
+* **Data artefacts are stated, not hidden**: identical reservoir storage every year, constant groundwater depth with a varying status label, and deficit/surplus always 0.
+
+### 4. Sections: content and sources
+
+| Section | Content | Source |
+|---|---|---|
+| Overview | agricultural area, total area, irrigated %, soil types, mean annual rainfall vs stated normal, mean temperature and humidity, primary irrigation sources (share of monthly records), major crops (mean sown area), seasons and years, last dataset update (CSV modification date) | land, rainfall, water, crop CSVs; file metadata |
+| Coverage | observed and estimated years, rows per file, monthly completeness, provenance strings | all CSVs |
+| Climate | annual totals vs normals, monthly series, meteorological-season shares, agricultural-season totals, trends (rainfall, temperature, humidity, rainy days) | rainfall CSV |
+| Soil | per-season records with fertility index, latest values and fuzzy soil set, trends, N/P/K characteristics, limitations (Low nutrient, OC < 1 %), crop categories grown | land CSV, fertility index, fuzzy sets |
+| Water | yearly demand/inflow/storage/groundwater, storage by month and by season (with fuzzy water set and the 40 % action threshold), groundwater status distribution, irrigation dependency, stress indicators, glossary | water and land CSVs, fuzzy sets |
+| Crop history | every observed record (area, share of season area, production, yield, price, revenue) and per crop-season trends | crop CSV |
+| Suitability | ranked crops per season and overall (§5) | profile, fuzzy, optimiser objectives, crop CSV |
+| Market | price by year, mean, trend, strongest/weakest growth; flagged historical, not live, unvalidated | crop CSV `MSP_Rs_Qtl` |
+| Insights | generated statements with evidence (§6) | all of the above |
+| Summary | 4–6 sentences assembled from the computed facts | all of the above |
+
+### 5. Calculations
+
+| Quantity | Formula |
+|---|---|
+| Trend | first vs last observed value: change % = (last − first)/|first| × 100; least-squares slope per year; CV = sample SD ÷ mean |
+| Direction | `unchanged` if all values equal; `stable` if |change| < 5 %; otherwise increasing / decreasing |
+| Variability | CV < 0.10 low, < 0.25 moderate, otherwise high |
+| Annual rainfall / normal | Σ monthly rainfall / Σ monthly normal for the year; deviation % |
+| Season share | Σ rainfall in a meteorological season ÷ Σ all rainfall (observed years) |
+| Mean temperature | mean of (max + min)/2 over observed months |
+| Irrigated % | Σ irrigated ha ÷ Σ agricultural ha (season records of a year) |
+| Irrigation share of demand | Σ irrigation MCM ÷ Σ total demand MCM per year |
+| Area share | crop sown area ÷ season's total sown area, per year |
+| Storage fuzzy set | `fuzzy.input_memberships` on the seasonal mean storage |
+
+#### Crop suitability score
+For each season, the latest observed year's profile is built (all crops), the fuzzy assessment is computed, and `FarmPlanProblem.evaluate` is called with one row per crop: the whole hectare on that crop, irrigation and fertiliser multipliers at 1.0. This returns the optimiser's own per-hectare yield (fuzzy-adjusted), cost, irrigation and impact. Five components (0–1), equal weights, score = mean × 100:
+
+| Component | Definition |
+|---|---|
+| Climate & soil | fuzzy crop confidence for the season |
+| Rainfall fit | min(1, effective rainfall ÷ crop water requirement) |
+| Prominence | crop's mean share of the season's sown area ÷ the largest such share in the season |
+| Yield stability | 1 − min(1, CV of observed yields) |
+| Resource efficiency | mean min–max goodness of cost, irrigation and impact per hectare among the season's crops (`ranking.topsis_scores`) |
+
+Tonnage is displayed but not scored: tonnes of sugarcane and of sunflower are not comparable. Equal weights are deliberate (no outcome data to calibrate against). With only two crops in Summer, min–max goodness is 0 or 1 for each; that is stated in the method text.
+
+#### Thresholds (constants in `district_service.py`)
+`STABLE_CHANGE_PCT 5`, `LOW_CV 0.10`, `HIGH_CV 0.25`, `MAJOR_CROPS 5`, `LOW_STORAGE_PCT 40` (same as the dashboard's irrigation action), `CONCENTRATED_SHARE_PCT 50`.
+
+### 6. Insights generated
+Annual rainfall trend; rainfall against the stated normal; seasonal composition; temperature trend; fastest and slowest production growth with an area-vs-yield attribution; yield consistency (lowest/highest CV); "yields flat" when every series is stable; cropping pattern per season (largest share, concentrated vs diversified); irrigation-dependency trend; static reservoir records; static groundwater depth; soil fertility trend; largest historical price rise (flagged unvalidated); highest suitability score. Each insight is `{id, title, detail, source, evidence}`.
+
+### 7. API
+
+`GET /api/district-intelligence/{district}` – case-insensitive; 404 for unknown districts. Response model `DistrictIntelligenceOut` (`app/schemas.py`): `district, overview, coverage, climate, soil, water, crops, suitability, market, insights[], summary{sentences[], text}`. Abbreviated example (Salem):
+
+```json
+{"district": "Salem",
+ "overview": {"agricultural_area_ha": 148513.0, "irrigated_pct": 57.9, "soil_types": ["Red Loam"],
+              "average_annual_rainfall_mm": 692.7, "stated_annual_normal_mm": 800.0, "average_temperature_c": 29.0,
+              "agricultural_zone": null, "agricultural_zone_note": "The dataset has no agro-climatic zone field.",
+              "last_dataset_update": "2026-09-18"},
+ "coverage": {"observed_years": [2020, 2021, 2022, 2023], "estimated_years": [2024]},
+ "suitability": {"year_basis": 2023, "rankings": [{"rank": 1, "crop": "Sunflower", "season": "Rabi", "score": 73.4,
+   "components": {"climate_soil": 0.531, "rainfall_fit": 0.594, "prominence": 0.543, "yield_stability": 1.0, "resource_efficiency": 1.0},
+   "expected_yield_t_ha": 1.33, "cost_rs_ha": 28580.0, "water_req_mm": 350.0}]},
+ "summary": {"text": "Salem grows 10 crops across 3 seasons; ..."}}
+```
+
+### 8. Frontend
+
+| Piece | Role |
+|---|---|
+| `views/DistrictIntelligenceView.jsx` | district selector, loading skeleton, error state, summary, quick actions, compare panel, sections |
+| `components/district/DistrictSections.jsx` | `OverviewSection`, `ClimateSection`, `SoilSection`, `WaterSection`, `CropPerformanceSection` (season/crop/year/metric filters), `SuitabilitySection`, `MarketSection`, `InsightsSection`, `StatTile` |
+| `components/charts/LineChart.jsx`, `BarChart.jsx`, `ChartCard.jsx`, `chartTheme.js` | reusable charts: emphasis colouring, hover tooltips, reference lines, minimum y-span, chart/table toggle |
+| `utils/districtView.js` | selection and formatting only: filters, series, distribution bars, CSV, text report, compare rows |
+| `App.jsx` | nav item "District Intelligence" (after Run Optimization); `navigateTo(view, params)` lets Run Optimization open with the district preselected |
+
+Chart design: the selected series is in the accent green `#1f6b3a`, others in gray `#8f998e` (validated: CVD ΔE 18.8, normal ΔE 22.1; gray contrast 2.95:1, hence the table view on every chart). One y-axis per chart. `minSpan` keeps near-constant series (temperature, fertility index, prices) from looking volatile.
+
+Quick actions: Run optimization (preselects this district), Compare district (side-by-side table of nine indicators, loaded on demand), Generate report (text file from the payload), View analytics, Export data (crop records CSV), Export all (JSON).
+
+### 9. Tests
+* Backend `tests/test_district.py` (96, parametrised over the four districts): trend helper, structure and serialisation, nulls with notes, values checked against independent pandas calculations on the CSVs (annual rainfall, temperature, season shares, crop records, area shares, water demand, sources, storage flag), fertility formula reuse, suitability (contiguous ranks, score = mean of components, per-hectare cost/irrigation/yield recomputed directly from the CSV row and config prices), market trend, missing water/soil data, caching, endpoint.
+* Frontend (Vitest, 31): charts, filters and series helpers, exports, compare rows, every section rendered against a real Salem payload, and "Data not available" for missing sections.
+
+### 10. Limitations
+* Four observed years (2020–2023): trends are descriptive first-to-last changes, not statistically significant trends.
+* The dataset lacks an agro-climatic zone, live prices, and soil-to-crop suitability tables; these are reported as unavailable.
+* Water storage and groundwater depth do not vary between years in the data; the page says so.
+* Prices are the dataset's unvalidated MSP column.
+* Suitability weights are equal by design; Summer has only two crops.
+
+### 11. Future improvements
+1. Replace rainfall/water with IMD and CWC/India-WRIS series to obtain real inter-annual variation.
+2. Add an agro-climatic zone and soil-to-crop suitability reference table (e.g. from TNAU) as a separate, cited dataset.
+3. Live market prices (e.g. from a mandi price feed) clearly separated from historical values.
+4. Map view of the four locations using `DISTRICT_COORDINATES`.
+5. Use the shared chart components on Analytics and Comparison to retire their inline SVG.
+6. Server-side PDF district report.
 
 ---
 
@@ -2115,6 +2305,9 @@ flowchart LR
 
 The user's saved `landSize` is used only on the Run Optimization page.
 
+### 3b. District Intelligence flow
+`GET /api/district-intelligence/{district}` → `district_service._build` (cached) → observed rows of all four CSVs → coverage, climate, soil, water, crop history → suitability (season profiles + fuzzy + `FarmPlanProblem.evaluate` on one-crop one-hectare plans + TOPSIS goodness) → market → insights → summary → `DistrictIntelligenceView` (filters in the browser). See [DISTRICT_INTELLIGENCE.md](#doc-district-intelligence).
+
 ### 4. Caching along the path
 
 | Cache | Key | Invalidation |
@@ -2123,6 +2316,7 @@ The user's saved `landSize` is used only on the Run Optimization page.
 | `fuzzy._build_system` | – | process restart |
 | `dashboard_service._cached_pareto_front` (32 entries) | location, season, year, land, budget, track_history | process restart / `clear_pareto_cache()` |
 | `results_store._SUMMARY_CACHE` | file path + (mtime, size) | automatic on file change |
+| `district_service._build` (8 entries) | district | process restart / `clear_cache()` |
 | Browser | none (every page visit refetches) | – |
 
 ### 5. Persistence flow
@@ -2731,6 +2925,20 @@ All code modifications made during the 2026-09-29 audit. All changes are submitt
 
 Verification after all changes: backend **205/205 tests pass** (was 165/165); output fingerprint over 48 endpoint/pipeline results is **identical to HEAD** apart from the new additive provenance fields; frontend `oxlint` 0 warnings (was 3 in `src` + noise), `vite build` succeeds; UI flows exercised in Chrome with no console errors.
 
+### [Unreleased] – District Intelligence Center
+
+#### Added
+- `app/services/district_service.py` and `GET /api/district-intelligence/{district}` (`DistrictIntelligenceOut`).
+- District Intelligence page with overview, coverage, climate, soil, water, crop history (filters), suitability ranking, historical prices, insights, summary and quick actions (run optimization preselected, compare, report, analytics, CSV/JSON export).
+- Reusable `LineChart`, `BarChart`, `ChartCard`; `navigateTo(view, params)`; Run Optimization `initialDistrict`.
+- Vitest with 31 frontend tests; `tests/test_district.py` (96 tests); `DISTRICT_INTELLIGENCE.md`.
+
+#### Changed
+- `preprocessing.observed_rows` and `explanation_service.make_item` are now shared helpers (no behaviour change).
+
+#### Verified
+- 326 backend tests and 31 frontend tests pass; 48 optimisation outputs identical to `main`; lint clean; build passes.
+
 ### [Unreleased] – Explainable recommendations
 
 #### Added
@@ -2869,6 +3077,14 @@ Ordered by priority. IDs are referenced from the other documents. "Decision" ite
 | T-33 | Sensitivity of the recommendation to fuzzy inputs (± rainfall deviation) |
 | T-34 | Calibrate confidence weights once observed outcomes exist |
 | T-35 | Promote economics once prices are validated (see T-10) |
+
+### District Intelligence follow-ups
+| ID | Task |
+|---|---|
+| T-36 | Cited agro-climatic zone and soil-to-crop suitability reference data |
+| T-37 | Live market prices kept separate from historical values |
+| T-38 | Move Analytics and Comparison charts onto the shared chart components |
+| T-39 | Map of the four locations; server-side PDF district report |
 
 ### P3 – UX
 

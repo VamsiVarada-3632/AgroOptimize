@@ -21,7 +21,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.data import preprocessing as pp
 from typing import Literal
 
-from app.schemas import CatalogOut, ExplanationOut, FarmPlanRequest, FarmPlanResponse, SavedRunSummaryOut
+from app.schemas import (
+    CatalogOut,
+    DistrictIntelligenceOut,
+    ExplanationOut,
+    FarmPlanRequest,
+    FarmPlanResponse,
+    SavedRunSummaryOut,
+)
 
 # Shared query-parameter validation for the dashboard endpoints. Land must
 # be positive (it is a divisor in every per-hectare figure); the upper
@@ -316,5 +323,20 @@ def get_comparison_explanation(
 
     try:
         return explanation_service.explain_comparison_plan(location, plan, total_land_ha=total_land_ha, budget_rs=budget_rs)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.get("/api/district-intelligence/{location}", response_model=DistrictIntelligenceOut)
+def get_district_intelligence(location: str):
+    """Everything the project knows about one district in one response:
+    overview, data coverage, climate, soil, water, crop history, crop
+    suitability ranking, historical prices, generated insights and a
+    summary. Built only from observed dataset rows and existing pipeline
+    calculations; cached per district."""
+    from app.services import district_service
+
+    try:
+        return district_service.get_district_intelligence(location)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc

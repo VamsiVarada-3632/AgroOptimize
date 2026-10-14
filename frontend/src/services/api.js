@@ -243,6 +243,14 @@ export const api = {
     }),
 
   /**
+   * GET /api/district-intelligence/{district} -- aggregated district profile
+   * (overview, coverage, climate, soil, water, crop history, suitability,
+   * historical prices, insights, summary). Values the dataset lacks are null.
+   */
+  getDistrictIntelligence: (location) =>
+    fetchAPI(`/api/district-intelligence/${extractDistrict(location).toLowerCase()}`),
+
+  /**
    * GET /api/results/{run_id}/explanation -- structured explanation of one
    * plan in a saved run (rank 1 = the recommended plan).
    * @param {string} runId

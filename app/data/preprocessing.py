@@ -139,6 +139,15 @@ def canonical_choice(value: str, options: List[str], kind: str) -> str:
 ESTIMATED_SOURCE_PREFIX = "Estimated"
 
 
+def observed_rows(df: pd.DataFrame) -> pd.DataFrame:
+    """Rows recorded as observations, i.e. without the "Estimated" prefix in
+    `data_source`. Used wherever a trend or historical statistic must not be
+    influenced by carried-forward estimates."""
+    if "data_source" not in df.columns:
+        return df
+    return df[~df["data_source"].astype(str).str.startswith(ESTIMATED_SOURCE_PREFIX)]
+
+
 def is_estimated_year(location: str, year: int) -> bool:
     """True if crop.csv's rows for (location, year) are flagged as
     estimated rather than observed in their data_source column."""

@@ -19,8 +19,9 @@ const stages = [
  * creates a saved, personalized result should be obvious and deliberate,
  * not a side effect of clicking something else.
  */
-export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNavigate }) {
-  const initialDistrict = userLocation && DISTRICTS.includes(userLocation) ? userLocation : DISTRICTS[0];
+export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNavigate, initialDistrict: requestedDistrict }) {
+  const initialDistrict = DISTRICTS.includes(requestedDistrict) ? requestedDistrict
+    : userLocation && DISTRICTS.includes(userLocation) ? userLocation : DISTRICTS[0];
 
   const [district, setDistrict] = useState(initialDistrict);
   const [season, setSeason] = useState('Kharif');

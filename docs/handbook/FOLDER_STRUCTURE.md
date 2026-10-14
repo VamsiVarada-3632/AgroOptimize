@@ -32,6 +32,7 @@ final_year_project/
 | `app/decision/ranking.py` | Active | Hard-limit filters, TOPSIS ranking, trade-off wording, confidence labels |
 | `app/services/plan_service.py` | Active | Orchestrates the 5-stage pipeline for `POST /api/farm-plans` and the CLI |
 | `app/services/results_store.py` | Active | Persists runs to `results/` (JSON/CSV/PNG), lists and loads them |
+| `app/services/district_service.py` | Active | District Intelligence aggregation (cached) |
 | `app/services/dashboard_service.py` | Active | Logic for the 7 frontend-facing endpoints (weather, dashboard, history, soil, plans, comparison, fuzzy comparison) |
 | `data/raw/*.csv` | Active | **The** dataset: 4 districts × {crop, land, rainfall, water_availability}. See [DATASETS.md](DATASETS.md) |
 | `tests/test_api.py` | Active | 21 tests – core REST endpoints |
@@ -64,6 +65,10 @@ final_year_project/
 | `src/App.jsx` | Active | State-machine router (`currentView` string), user state in `localStorage`, layout shell (sidebar/top bar/mobile drawer), health check |
 | `src/index.css` | Active | Tailwind v4 `@theme` design tokens (Material-3-style colour roles, typography scale) + keyframes |
 | `src/services/api.js` | Active | The only module that calls the backend; `ApiError`, `describeApiError`, per-browser `client_id` |
+| `src/views/DistrictIntelligenceView.jsx`, `src/components/district/` | Active | District Intelligence page and its sections |
+| `src/components/charts/` | Active | Reusable LineChart, BarChart, ChartCard, chart theme |
+| `src/utils/districtView.js` | Active | District page selection/formatting helpers |
+| `src/**/*.test.js(x)`, `src/__fixtures__/` | Active | Vitest tests and a real API payload fixture |
 | `src/utils/download.js` | Active (new) | `downloadFile`, `toCsv` (with CSV-injection guard), `slug` |
 | `src/views/*.jsx` | Active | 10 page components – see [FRONTEND.md](FRONTEND.md) |
 | `src/components/DataSourceNotice.jsx` | Active | "historical vs live vs personalised" banner |

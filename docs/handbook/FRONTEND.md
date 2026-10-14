@@ -8,6 +8,7 @@ npm install
 npm run dev                                   # http://localhost:5173, talks to http://localhost:8000
 VITE_API_BASE=http://localhost:8010 npm run dev   # point at another backend
 npm run lint && npm run build                 # oxlint (0 warnings) + production build to dist/
+npm test                                      # Vitest: charts, district helpers and sections
 ```
 
 ## 1. Application shell (`src/App.jsx`)
@@ -71,6 +72,9 @@ Profile (name, email, phone, avatar, district dropdown, land size, primary crop)
 ## 3b. Explanations
 Every recommended plan has a "Why?" entry point: Comparison (Explain per row, "Why this plan?", "Compare explanations"), Run Optimization ("Why this plan?"), History ("Explain top plan"), Reports ("Why?" and the explanation inside the downloaded report). API calls: `api.getResultExplanation(runId, rank)`, `api.getComparisonExplanation(location, plan)`. Details: [EXPLAINABILITY.md](EXPLAINABILITY.md).
 
+## 3c. District Intelligence
+Sidebar item after Run Optimization. One request (`api.getDistrictIntelligence`) per district; sections render the payload; filters run in the browser. Quick actions: run optimization with the district preselected (`navigateTo(view, params)`), compare district, text report, analytics, CSV/JSON export. Details: [DISTRICT_INTELLIGENCE.md](DISTRICT_INTELLIGENCE.md).
+
 ## 4. Shared components
 
 | Component | Used by | Notes |
@@ -80,6 +84,8 @@ Every recommended plan has a "Why?" entry point: Comparison (Explain per row, "W
 | `AccountAuthOverlay` | SettingsView | mock consent dialog |
 | `ParticleBackground` | Onboarding | canvas animation |
 | `SuccessCheckSvg` | ProfileSetup | animated check |
+| `charts/LineChart`, `charts/BarChart`, `charts/ChartCard`, `charts/chartTheme` | District Intelligence (reusable) | emphasis colouring, hover tooltips, reference lines, minimum y-span, chart/table toggle |
+| `district/DistrictSections` | District Intelligence | overview, climate, soil, water, crop performance, suitability, market, insights sections |
 | `ExplanationPanel`, `ExplanationModal`, `ExplanationComparison` | Comparison, Run Optimization, History, Reports | render the backend explanation JSON (no reasoning in the UI); modal handles loading/errors/Escape; side-by-side A/B/C view |
 
 ## 5. Styling system

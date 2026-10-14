@@ -14,6 +14,7 @@ VVS Vamsi · Vennela Harshini · Garudammagari Sreenithya · Gaddam Jahnavi
 - TOPSIS ranking under five preferences; plain-language trade-off summaries; hard-limit filters.
 - Web app: dashboard (KPIs, weather via Open-Meteo), Pareto-front analytics with live filters and CSV export, three-plan comparison with radar chart, personalised runs with history and downloadable reports.
 - Every saved run persisted as JSON + CSV + convergence chart.
+- District Intelligence Center: one page per district with climate, soil, water, crop history, crop suitability, historical prices and generated insights ([DISTRICT_INTELLIGENCE.md](DISTRICT_INTELLIGENCE.md)).
 - Explainable recommendations: why a plan was chosen, trade-offs, constraint checks, risks, historical context and a decomposed confidence score – all derived from the pipeline's own numbers ([EXPLAINABILITY.md](EXPLAINABILITY.md)).
 
 ## Repository layout
@@ -39,6 +40,8 @@ uvicorn app.main:app --reload --port 8000        # API docs: http://localhost:80
 python3 run_demo.py --location Salem --season Kharif --year 2023 --land 5 --budget 250000
 python3 -m pytest -q
 ```
+
+Frontend tests: `cd frontend && npm test`.
 
 Frontend
 ```bash
@@ -72,4 +75,4 @@ Frontend on Vercel (`vercel.json`, `VITE_API_BASE` in `.env.production`); backen
 Irrigation/fertiliser multipliers currently have no yield benefit (optimiser keeps them at the minimum); the yield objective sums tonnes across crops; fuzzy output affects only expected yield; district-level data, single season; demo-only client-side authentication. Full list and roadmap: [RESEARCH_REVIEW.md](RESEARCH_REVIEW.md), [TODO.md](TODO.md).
 
 ## Documentation index
-[PROJECT_KNOWLEDGE](PROJECT_KNOWLEDGE.md) · [ARCHITECTURE](ARCHITECTURE.md) · [FOLDER_STRUCTURE](FOLDER_STRUCTURE.md) · [FRONTEND](FRONTEND.md) · [BACKEND](BACKEND.md) · [DATASETS](DATASETS.md) · [ALGORITHMS](ALGORITHMS.md) · [API_REFERENCE](API_REFERENCE.md) · [DATA_FLOW](DATA_FLOW.md) · [USER_FLOW](USER_FLOW.md) · [OPTIMIZATION_PIPELINE](OPTIMIZATION_PIPELINE.md) · [REPORT_PIPELINE](REPORT_PIPELINE.md) · [HISTORY_PIPELINE](HISTORY_PIPELINE.md) · [SCORING_AND_RANKING](SCORING_AND_RANKING.md) · [CONFIGURATION](CONFIGURATION.md) · [DEPENDENCIES](DEPENDENCIES.md) · [PROJECT_REVIEW](PROJECT_REVIEW.md) · [DATA_VALIDATION](DATA_VALIDATION.md) · [PERFORMANCE_REVIEW](PERFORMANCE_REVIEW.md) · [SECURITY_REVIEW](SECURITY_REVIEW.md) · [UI_UX_REVIEW](UI_UX_REVIEW.md) · [RESEARCH_REVIEW](RESEARCH_REVIEW.md) · [TECHNICAL_DEBT](TECHNICAL_DEBT.md) · [IMPROVEMENT_LOG](IMPROVEMENT_LOG.md) · [CHANGELOG](CHANGELOG.md) · [TODO](TODO.md) · [EXPLAINABILITY](EXPLAINABILITY.md)
+[PROJECT_KNOWLEDGE](PROJECT_KNOWLEDGE.md) · [ARCHITECTURE](ARCHITECTURE.md) · [FOLDER_STRUCTURE](FOLDER_STRUCTURE.md) · [FRONTEND](FRONTEND.md) · [BACKEND](BACKEND.md) · [DATASETS](DATASETS.md) · [ALGORITHMS](ALGORITHMS.md) · [API_REFERENCE](API_REFERENCE.md) · [DATA_FLOW](DATA_FLOW.md) · [USER_FLOW](USER_FLOW.md) · [OPTIMIZATION_PIPELINE](OPTIMIZATION_PIPELINE.md) · [REPORT_PIPELINE](REPORT_PIPELINE.md) · [HISTORY_PIPELINE](HISTORY_PIPELINE.md) · [SCORING_AND_RANKING](SCORING_AND_RANKING.md) · [CONFIGURATION](CONFIGURATION.md) · [DEPENDENCIES](DEPENDENCIES.md) · [PROJECT_REVIEW](PROJECT_REVIEW.md) · [DATA_VALIDATION](DATA_VALIDATION.md) · [PERFORMANCE_REVIEW](PERFORMANCE_REVIEW.md) · [SECURITY_REVIEW](SECURITY_REVIEW.md) · [UI_UX_REVIEW](UI_UX_REVIEW.md) · [RESEARCH_REVIEW](RESEARCH_REVIEW.md) · [TECHNICAL_DEBT](TECHNICAL_DEBT.md) · [IMPROVEMENT_LOG](IMPROVEMENT_LOG.md) · [CHANGELOG](CHANGELOG.md) · [TODO](TODO.md) · [EXPLAINABILITY](EXPLAINABILITY.md) · [DISTRICT_INTELLIGENCE](DISTRICT_INTELLIGENCE.md)

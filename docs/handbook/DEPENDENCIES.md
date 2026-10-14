@@ -32,6 +32,7 @@ Recommendations: split `requirements-dev.txt` (pytest, httpx) from runtime; gene
 | @vitejs/plugin-react | ^6.0.4 | 6.0.5 | JSX transform, fast refresh | dev |
 | oxlint | ^1.75.0 | 1.78.0 | lint (`react`, `oxc` plugins) | dev |
 | @types/react, @types/react-dom | ^19 | 19.2.18 / 19.2.4 | editor type hints only (project is JS, not TS) | dev |
+| vitest | ^5.0.4 | 5.0.4 | frontend unit/render tests (`npm test`); components rendered with react-dom/server | dev |
 
 `package-lock.json` is committed → reproducible installs. Tailwind is listed under `dependencies` though it is build-time only (harmless for a static build).
 
