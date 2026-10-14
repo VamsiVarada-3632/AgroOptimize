@@ -133,6 +133,15 @@ def preference_weights(preference: Preference) -> np.ndarray:
     return np.array([weights[k] for k in OBJECTIVES])
 
 
+def normalise_weights(weights) -> np.ndarray:
+    """[yield, cost, water, env] weights scaled to sum to 1; all must be >= 0
+    and at least one > 0."""
+    w = np.asarray(weights, dtype=float)
+    if w.shape != (4,) or (w < 0).any() or w.sum() <= 0:
+        raise ValueError("weights must be four non-negative numbers with a positive sum.")
+    return w / w.sum()
+
+
 def topsis_scores(yields, costs, waters, envs, w: np.ndarray):
     """TOPSIS closeness for a plan set, plus the per-objective 0-1
     "goodness" columns it was computed from (1 = best in the set).
@@ -183,6 +192,7 @@ def rank_plans(
     crop_confidence_map: Dict[str, float],
     preference: Preference = "balanced",
     max_plans: int = config.MAX_RETURNED_PLANS,
+    weights: Optional[List[float]] = None,
 ) -> List[RankedPlan]:
     """Rank the Pareto front with TOPSIS (Technique for Order Preference by
     Similarity to Ideal Solution).
@@ -199,7 +209,9 @@ def rank_plans(
     if not plans:
         return []
 
-    w = preference_weights(preference)
+    # Explicit [yield, cost, water, env] weights (Scenario Simulation priority
+    # sliders) override the named preference; they are normalised to sum to 1.
+    w = normalise_weights(weights) if weights is not None else preference_weights(preference)
 
     yields = [p.yield_tonnes for p in plans]
     costs = [p.cost_rs for p in plans]

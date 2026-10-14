@@ -83,12 +83,15 @@ class FarmPlanProblem(Problem):
         total_land_ha: float,
         budget_rs: Optional[float] = None,
         use_fuzzy: bool = True,
+        fertilizer_price_factor: float = 1.0,
     ):
         self.profile = profile
         self.assessment = assessment
         self.total_land_ha = float(total_land_ha)
         self.budget_rs = budget_rs
         self.use_fuzzy = use_fuzzy
+        # Scenario hook: scales the fertiliser prices in the cost objective (1.0 = config prices).
+        self.fertilizer_price_factor = float(fertilizer_price_factor)
 
         self.crop_vec = CropVector.from_candidates(profile.candidate_crops, assessment, use_fuzzy=use_fuzzy)
         self.n_crops = len(profile.candidate_crops)
@@ -135,7 +138,7 @@ class FarmPlanProblem(Problem):
         f1 = -total_yield
 
         # --- f2: total production cost (Rs) ---
-        prices = config.FERTILIZER_PRICE_RS_PER_KG_NUTRIENT
+        prices = {k: v * self.fertilizer_price_factor for k, v in config.FERTILIZER_PRICE_RS_PER_KG_NUTRIENT.items()}
         fert_cost_per_ha = (
             cv.fert_n_kg_ha * prices["N"] + cv.fert_p_kg_ha * prices["P"] + cv.fert_k_kg_ha * prices["K"]
         )
@@ -168,6 +171,27 @@ class FarmPlanProblem(Problem):
 
         if self.budget_rs:
             out["G"] = (total_cost - self.budget_rs).reshape(-1, 1)
+
+    def single_crop_metrics(self) -> List[dict]:
+        """Objective values for each candidate crop grown alone at baseline
+        input levels (irrigation and fertiliser multipliers 1.0), scaled to
+        one hectare. Evaluated through _evaluate itself, so the numbers are
+        exactly what the optimiser would compute for such a plan."""
+        n = self.n_crops
+        X = np.hstack([np.eye(n), np.ones((n, n)), np.ones((n, n))])
+        F = self.evaluate(X, return_as_dictionary=True)["F"]
+        land = self.total_land_ha or 1.0
+        return [
+            {
+                "crop": name,
+                "crop_confidence": float(self.crop_vec.crop_yield_confidence[i]),
+                "yield_t_ha": float(-F[i, 0] / land),
+                "cost_rs_ha": float(F[i, 1] / land),
+                "water_l_ha": float(F[i, 2] / land),
+                "env_per_ha": float(F[i, 3] / land),
+            }
+            for i, name in enumerate(self.crop_vec.names)
+        ]
 
     def decode(self, x: np.ndarray) -> dict:
         """Decode a single chromosome (1D array) into farmer-readable fields."""

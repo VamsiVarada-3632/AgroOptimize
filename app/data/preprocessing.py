@@ -203,7 +203,19 @@ def get_region_season_profile(
     season: str,
     year: Optional[int] = None,
     max_candidate_crops: Optional[int] = None,
+    rainfall_factor: float = 1.0,
+    storage_override_pct: Optional[float] = None,
 ) -> RegionSeasonProfile:
+    """Build the profile for one location/season/year.
+
+    Scenario hooks (Scenario Simulation; defaults leave the result unchanged):
+    * `rainfall_factor` scales every monthly rainfall record before
+      aggregation. Each month's deviation from normal is then recomputed
+      against the dataset's own normal, so both the fuzzy rainfall input
+      and the effective rainfall follow the same arithmetic as observed data.
+    * `storage_override_pct` replaces the season's mean reservoir storage %
+      (the fuzzy model's water input).
+    """
     location = canonical_choice(location, config.LOCATIONS, "location")
     season = canonical_choice(season, config.AG_SEASONS, "season")
 
@@ -250,6 +262,12 @@ def get_region_season_profile(
     ]
     if rain_rows.empty:
         raise ValueError(f"No rainfall data for {location}/{resolved_year}/season={season}.")
+    if rainfall_factor != 1.0:
+        rain_rows = rain_rows.copy()
+        rain_rows["Monthly_Rainfall_mm"] = rain_rows["Monthly_Rainfall_mm"] * rainfall_factor
+        rain_rows["Deviation_Percent"] = (
+            (rain_rows["Monthly_Rainfall_mm"] - rain_rows["Normal_Rainfall_mm"]) / rain_rows["Normal_Rainfall_mm"] * 100
+        )
     avg_monthly_rainfall = float(rain_rows["Monthly_Rainfall_mm"].mean())
     effective_rainfall = avg_monthly_rainfall * len(months) * config.RAINFALL_UTILIZATION_FACTOR
     rainfall = RainfallProfile(
@@ -271,7 +289,9 @@ def get_region_season_profile(
     if water_rows.empty:
         raise ValueError(f"No water availability data for {location}/{resolved_year}/season={season}.")
     water = WaterProfile(
-        avg_storage_percent=round(float(water_rows["Storage_Percent"].mean()), 2),
+        avg_storage_percent=round(
+            float(storage_override_pct) if storage_override_pct is not None else float(water_rows["Storage_Percent"].mean()), 2
+        ),
         groundwater_status=_mode_or_first(water_rows["Groundwater_Status"]),
         avg_deficit_surplus_mcm=round(float(water_rows["Deficit_Surplus_MCM"].mean()), 2),
     )

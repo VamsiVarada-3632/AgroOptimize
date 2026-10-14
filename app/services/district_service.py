@@ -371,10 +371,11 @@ def _suitability(location: str, crops: dict) -> dict:
         assessment = fz.evaluate_uncertainty(profile.rainfall.avg_deviation_percent,
                                              profile.water.avg_storage_percent, profile.soil.fertility_index)
         problem = FarmPlanProblem(profile, assessment, total_land_ha=1.0)
-        n = problem.n_crops
-        X = np.hstack([np.eye(n), np.ones((n, n)), np.ones((n, n))])   # one crop, full land, baseline inputs
-        F = problem.evaluate(X, return_as_dictionary=True)["F"]
-        yields, costs, waters, envs = -F[:, 0], F[:, 1], F[:, 2], F[:, 3]
+        metrics = problem.single_crop_metrics()   # one crop, one hectare, baseline inputs
+        yields = np.array([m["yield_t_ha"] for m in metrics])
+        costs = np.array([m["cost_rs_ha"] for m in metrics])
+        waters = np.array([m["water_l_ha"] for m in metrics])
+        envs = np.array([m["env_per_ha"] for m in metrics])
         _, goodness = ranking.topsis_scores(yields, costs, waters, envs, ranking.preference_weights("balanced"))
         max_share = max((trend_by.get((season, c.name), {}).get("mean_area_share_pct") or 0) for c in profile.candidate_crops) or 1.0
         eff = profile.rainfall.effective_rainfall_mm
