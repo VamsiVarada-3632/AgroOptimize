@@ -13,14 +13,15 @@ call into.
 from __future__ import annotations
 
 import time
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional, Tuple
 
 from app import config
 from app.data import preprocessing as pp
 from app.decision import ranking
 from app.fuzzy import engine as fz
-from app.optimization.nsga2_runner import extract_convergence_history, extract_pareto_plans, run_nsga2
+from app.optimization.nsga2_runner import FarmPlan, extract_convergence_history, extract_pareto_plans, run_nsga2
 from app.optimization.problem import FarmPlanProblem
 from app.schemas import FarmPlanRequest
 from app.services import results_store
@@ -56,16 +57,51 @@ def region_profile_payload(profile: pp.RegionSeasonProfile) -> dict:
     }
 
 
-def generate_farm_plans(
+@dataclass(frozen=True)
+class PipelineAdjustments:
+    """Scenario modifications applied inside the normal pipeline (Scenario
+    Simulation). Every default reproduces an ordinary run exactly.
+
+    rainfall_factor          multiplies monthly rainfall before aggregation
+    storage_override_pct     replaces seasonal reservoir storage % (fuzzy water input)
+    fertilizer_price_factor  multiplies fertiliser prices in the cost objective
+    topsis_weights           explicit [yield, cost, water, env] TOPSIS weights
+    """
+    rainfall_factor: float = 1.0
+    storage_override_pct: Optional[float] = None
+    fertilizer_price_factor: float = 1.0
+    topsis_weights: Optional[Tuple[float, float, float, float]] = None
+
+
+@dataclass
+class PipelineRun:
+    """A pipeline result plus the internals a caller may need beyond the
+    response: the full feasible Pareto set (before filtering/truncation)
+    and the FarmPlanProblem (for evaluating single-crop plans)."""
+    response: dict
+    feasible_plans: List[FarmPlan]
+    problem: FarmPlanProblem
+
+
+def run_pipeline(
     request: FarmPlanRequest,
-    results_dir: Optional[Path] = None,
-) -> dict:
+    adjustments: Optional[PipelineAdjustments] = None,
+    track_history: Optional[bool] = None,
+    seed: Optional[int] = None,
+) -> PipelineRun:
+    """Stages 1-4 (preprocessing -> fuzzy -> NSGA-II -> TOPSIS) for one
+    request. Used by generate_farm_plans and by the scenario simulator, so a
+    simulated plan is produced by exactly the same code as a normal run."""
+    adj = adjustments or PipelineAdjustments()
+
     # ---- Stage 1: data collection & preprocessing ----
     profile = pp.get_region_season_profile(
         location=request.location,
         season=request.season,
         year=request.year,
         max_candidate_crops=request.max_candidate_crops,
+        rainfall_factor=adj.rainfall_factor,
+        storage_override_pct=adj.storage_override_pct,
     )
 
     # ---- Stage 2: fuzzy uncertainty modelling ----
@@ -81,6 +117,7 @@ def generate_farm_plans(
         assessment=assessment,
         total_land_ha=request.total_land_ha,
         budget_rs=request.budget_rs,
+        fertilizer_price_factor=adj.fertilizer_price_factor,
     )
 
     pop_size = request.pop_size or config.NSGA2_POP_SIZE
@@ -88,10 +125,12 @@ def generate_farm_plans(
 
     # Only pay the extra history-tracking cost (~2-3x slower) when we're
     # actually going to persist the convergence curve.
-    track_history = bool(request.save_results)
+    if track_history is None:
+        track_history = bool(request.save_results)
 
     t0 = time.time()
-    result = run_nsga2(problem, pop_size=pop_size, n_gen=n_gen, track_history=track_history)
+    seed_kwargs = {} if seed is None else {"seed": seed}
+    result = run_nsga2(problem, pop_size=pop_size, n_gen=n_gen, track_history=track_history, **seed_kwargs)
     optimize_seconds = round(time.time() - t0, 3)
 
     convergence_history = extract_convergence_history(result) if track_history else []
@@ -113,27 +152,50 @@ def generate_farm_plans(
         filtered_plans,
         crop_confidence_map=crop_confidence_map,
         preference=request.preference,
+        weights=list(adj.topsis_weights) if adj.topsis_weights is not None else None,
     )
+
+    meta = {
+        "algorithm": "NSGA-II",
+        "pop_size": pop_size,
+        "n_gen": n_gen,
+        "crossover_prob": config.NSGA2_CROSSOVER_PROB,
+        "mutation_prob": config.NSGA2_MUTATION_PROB,
+        "preference": request.preference,
+        "n_pareto_solutions_found": len(raw_plans),
+        "n_plans_returned": len(ranked),
+        "optimize_seconds": optimize_seconds,
+        "total_land_ha": request.total_land_ha,
+        "budget_rs": request.budget_rs,
+    }
+    if adjustments is not None:
+        meta["topsis_weights"] = (
+            ranking.normalise_weights(adj.topsis_weights) if adj.topsis_weights is not None
+            else ranking.preference_weights(request.preference)
+        ).tolist()   # full precision: explanations re-rank with these exact weights
+        meta["adjustments"] = {
+            "rainfall_factor": adj.rainfall_factor,
+            "storage_override_pct": adj.storage_override_pct,
+            "fertilizer_price_factor": adj.fertilizer_price_factor,
+            "custom_weights": adj.topsis_weights is not None,
+        }
 
     response = {
         "region_profile": region_profile_payload(profile),
         "fuzzy_assessment": vars(assessment),
         "plans": ranking.to_dict_list(ranked),
         "convergence_history": convergence_history,
-        "meta": {
-            "algorithm": "NSGA-II",
-            "pop_size": pop_size,
-            "n_gen": n_gen,
-            "crossover_prob": config.NSGA2_CROSSOVER_PROB,
-            "mutation_prob": config.NSGA2_MUTATION_PROB,
-            "preference": request.preference,
-            "n_pareto_solutions_found": len(raw_plans),
-            "n_plans_returned": len(ranked),
-            "optimize_seconds": optimize_seconds,
-            "total_land_ha": request.total_land_ha,
-            "budget_rs": request.budget_rs,
-        },
+        "meta": meta,
     }
+    return PipelineRun(response=response, feasible_plans=raw_plans, problem=problem)
+
+
+def generate_farm_plans(
+    request: FarmPlanRequest,
+    results_dir: Optional[Path] = None,
+) -> dict:
+    response = run_pipeline(request).response
+    convergence_history = response["convergence_history"]
 
     # ---- Stage 5: persist results to disk ----
     if request.save_results:
