@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { api, DISTRICTS } from '../services/api';
+import { api, DISTRICTS, BACKEND_UNREACHABLE_MSG } from '../services/api';
 import DataSourceNotice from '../components/DataSourceNotice';
 
 const ACTION_ICONS = {
@@ -18,6 +18,13 @@ const ACTION_ICON_STYLES = {
   monitor: 'bg-tertiary-fixed/30 text-tertiary',
 };
 
+function timeOfDayGreeting(date = new Date()) {
+  const hour = date.getHours();
+  if (hour < 12) return 'Good Morning';
+  if (hour < 17) return 'Good Afternoon';
+  return 'Good Evening';
+}
+
 function waterLabel(pct) {
   if (pct >= 70) return 'Optimal';
   if (pct >= 40) return 'Moderate';
@@ -30,7 +37,6 @@ export default function DashboardView({ user, onNavigate, layout = 'sidebar', on
 
   const [weather, setWeather] = useState(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
-  const [weatherFailed, setWeatherFailed] = useState(false);
 
   const [dashboardData, setDashboardData] = useState(null);
   const [dashboardLoading, setDashboardLoading] = useState(true);
@@ -56,12 +62,10 @@ export default function DashboardView({ user, onNavigate, layout = 'sidebar', on
       .then((data) => {
         if (cancelled) return;
         setWeather(data);
-        setWeatherFailed(false);
       })
       .catch(() => {
         if (cancelled) return;
         setWeather(null);
-        setWeatherFailed(true);
       })
       .finally(() => { if (!cancelled) setWeatherLoading(false); });
     return () => { cancelled = true; };
@@ -109,7 +113,7 @@ export default function DashboardView({ user, onNavigate, layout = 'sidebar', on
       <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
           <h1 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-1">
-            Good Morning{user.fullName ? `, ${user.fullName.split(' ')[0]}` : ''}
+            {timeOfDayGreeting()}{user.fullName ? `, ${user.fullName.split(' ')[0]}` : ''}
           </h1>
           <p className="font-body-md text-on-surface-variant">
             Here is the latest overview of your farm's performance in {user.location}.
@@ -129,6 +133,16 @@ export default function DashboardView({ user, onNavigate, layout = 'sidebar', on
         variant="historical"
         onRunOptimization={() => onNavigate('run-optimization')}
       />
+
+      {dashboardData?.data_year_estimated && (
+        <div className="mb-6 -mt-3 font-label-sm text-label-sm bg-secondary-fixed/30 text-on-surface px-4 py-2.5 rounded-lg flex items-start gap-2">
+          <span className="material-symbols-outlined text-[16px] mt-0.5 flex-shrink-0">warning</span>
+          <span>
+            Figures below use {dashboardData.data_year} data, which is an estimate carried forward from the previous year rather than
+            an observed record. The yield trend therefore reflects that estimate, not a measured change.
+          </span>
+        </div>
+      )}
 
       {/* Key Metric Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -238,7 +252,7 @@ export default function DashboardView({ user, onNavigate, layout = 'sidebar', on
       {dashboardFailed && (
         <div className="mb-8 -mt-4 font-label-sm text-label-sm bg-error-container/40 text-on-error-container px-3 py-2 rounded-lg flex items-center gap-2 w-fit">
           <span className="material-symbols-outlined text-[16px]">cloud_off</span>
-          Couldn't reach the backend for dashboard data. Confirm uvicorn is running on port 8000.
+          {BACKEND_UNREACHABLE_MSG}
         </div>
       )}
 
@@ -396,7 +410,7 @@ export default function DashboardView({ user, onNavigate, layout = 'sidebar', on
                   ) : (
                     <div className="py-10 text-center">
                       <span className="material-symbols-outlined text-4xl text-outline mb-2">cloud_off</span>
-                      <p className="text-sm text-on-surface-variant">Weather unavailable -- couldn't reach the backend.</p>
+                      <p className="text-sm text-on-surface-variant">Weather unavailable right now.</p>
                     </div>
                   )}
                 </div>

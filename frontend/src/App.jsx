@@ -438,7 +438,7 @@ export default function App() {
                 <span className="font-label-sm text-label-sm text-on-surface-variant">© 2026 AgroOptimize. Digital Stewardship for Modern Farming.</span>
                 <span className="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1.5 justify-center md:justify-start mt-1">
                   <span className={`inline-block w-1.5 h-1.5 rounded-full ${backendOnline ? 'bg-primary' : 'bg-error'}`}></span>
-                  {backendOnline ? 'Live data connected' : 'Offline — showing cached data'}
+                  {backendOnline ? 'Live data connected' : 'Server unreachable — live data unavailable'}
                 </span>
               </div>
               <div className="flex gap-4">

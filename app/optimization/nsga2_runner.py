@@ -11,6 +11,7 @@ crossover/mutation/repair operators to match the paper's stated parameters.
 
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -25,6 +26,15 @@ from app.data.preprocessing import RegionSeasonProfile
 from app.fuzzy.engine import UncertaintyAssessment
 from app.optimization.operators import AllocationRepair, GaussianMutation, SinglePointCrossover
 from app.optimization.problem import FarmPlanProblem
+
+# The custom operators draw from NumPy's *process-global* RNG, which
+# run_nsga2 reseeds before every run. FastAPI executes sync endpoints in a
+# thread pool, so two overlapping requests could otherwise reseed / consume
+# the same global RNG mid-run -- silently breaking the "same inputs + seed
+# -> same Pareto front" guarantee. Serialising runs keeps every result
+# bit-identical to a single-threaded run (each run takes well under a
+# second, so the lock costs little in practice).
+_NSGA2_RUN_LOCK = threading.Lock()
 
 
 @dataclass
@@ -61,13 +71,6 @@ def run_nsga2(
     pop_size = pop_size or config.NSGA2_POP_SIZE
     n_gen = n_gen or config.NSGA2_N_GEN
 
-    # Our custom operators (operators.py) draw from the plain numpy global
-    # RNG (np.random.*), not from whatever internal RNG object pymoo wires
-    # up for `seed=`. Seed it explicitly here so a given (problem, seed)
-    # pair is fully reproducible end to end, independent of call history
-    # elsewhere in the process.
-    np.random.seed(seed)
-
     algorithm = NSGA2(
         pop_size=pop_size,
         sampling=FloatRandomSampling(),
@@ -77,14 +80,21 @@ def run_nsga2(
         eliminate_duplicates=True,
     )
 
-    result = minimize(
-        problem,
-        algorithm,
-        ("n_gen", n_gen),
-        seed=seed,
-        verbose=verbose,
-        save_history=track_history,
-    )
+    with _NSGA2_RUN_LOCK:
+        # Our custom operators (operators.py) draw from the plain numpy global
+        # RNG (np.random.*), not from whatever internal RNG object pymoo wires
+        # up for `seed=`. Seed it explicitly here so a given (problem, seed)
+        # pair is fully reproducible end to end, independent of call history
+        # elsewhere in the process.
+        np.random.seed(seed)
+        result = minimize(
+            problem,
+            algorithm,
+            ("n_gen", n_gen),
+            seed=seed,
+            verbose=verbose,
+            save_history=track_history,
+        )
     return result
 
 

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { api } from '../services/api';
+import { api, BACKEND_UNREACHABLE_MSG } from '../services/api';
 import DataSourceNotice from '../components/DataSourceNotice';
+import { downloadFile, toCsv, slug } from '../utils/download';
 
 const PLAN_COLORS = ['bg-primary-fixed text-on-primary-fixed', 'bg-secondary-fixed text-on-secondary-fixed', 'bg-tertiary-fixed text-on-tertiary-fixed'];
 
@@ -19,23 +20,25 @@ function adaptComparisonPlans(apiPlans) {
       crops: p.crops,
       yieldVal: p.yield_val,
       cost: p.cost,
-      impact: `${Math.max(1, Math.round(p.radar_scores.land / 5))}/20`,
+      // Real per-hectare environmental-impact score (NSGA-II objective f4,
+      // lower is better). The old "n/20" figure was derived from the radar
+      // *goodness* score, so the gentlest plan displayed the biggest impact.
+      envImpact: p.env_impact,
       water: p.water === 'High usage' ? 'High' : p.water,
       recommended: p.recommended,
       allocations: (p.allocations || []).map((a, i) => ({
         crop: a.crop,
         letter: a.crop.charAt(0).toUpperCase(),
         color: PLAN_COLORS[i % PLAN_COLORS.length],
-        plots: a.plots,
         pct: a.pct,
         ha: a.ha,
       })),
       // The optimizer doesn't model a day-by-day irrigation calendar, so
-      // this stays a generic 2-step template -- but it's keyed off this
-      // plan's real top crop rather than fabricated crop-specific detail.
+      // this stays a generic 2-step template (labelled as such in the UI) --
+      // keyed off this plan's real top crop rather than invented detail.
       schedule: [
-        { time: 'Week 1-2 (Upcoming)', desc: `Land preparation & ${topCrop} sowing`, details: 'Based on this plan’s optimized crop mix', active: true },
-        { time: 'Week 3-4', desc: 'First irrigation & fertilizer application', details: 'Per this plan’s irrigation/fertilizer multipliers', active: false },
+        { time: 'Step 1', desc: `Land preparation & ${topCrop} sowing`, details: 'Generic starting step for this plan’s largest crop', active: true },
+        { time: 'Step 2', desc: 'First irrigation & fertilizer application', details: 'Timing depends on your local crop calendar', active: false },
       ],
       radarScores: {
         yield: p.radar_scores.yield,
@@ -95,6 +98,27 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
     return scores.sort((a, b) => b.score - a.score)[0].id;
   }, [weights, plans, hasData]);
 
+  const maxEnvImpact = hasData ? Math.max(...Object.values(plans).map((p) => p.envImpact || 0), 1e-9) : 1;
+
+  const exportComparisonCsv = () => {
+    const rows = Object.entries(plans).map(([id, p]) => ({ id, ...p }));
+    const csv = toCsv(rows, [
+      { label: 'plan', value: 'id' },
+      { label: 'name', value: 'name' },
+      { label: 'recommended_by_topsis', value: (r) => (r.recommended ? 'yes' : 'no') },
+      { label: 'crops', value: (r) => r.allocations.map((a) => `${a.crop} ${a.pct} (${a.ha})`).join('; ') },
+      { label: 'yield_t_per_ha', value: 'yieldVal' },
+      { label: 'cost_rs_per_ha', value: 'cost' },
+      { label: 'env_impact_per_ha', value: 'envImpact' },
+      { label: 'water_use_relative', value: 'water' },
+      ...['yield', 'costEff', 'water', 'land', 'risk', 'market'].map((k) => ({
+        label: `radar_${k}_0_100`,
+        value: (r) => r.radarScores[k],
+      })),
+    ]);
+    downloadFile(`agrooptimize-plan-comparison-${slug(apiComparison?.location || userLocation)}.csv`, csv, 'text/csv;charset=utf-8');
+  };
+
   const getRadarPolygonPoints = (scores) => {
     const points = [];
     const keys = ['yield', 'costEff', 'water', 'land', 'risk', 'market'];
@@ -132,12 +156,12 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
             Adjust Weights
           </button>
           <button
-            onClick={() => alert("Downloading multi-objective reports...")}
+            onClick={exportComparisonCsv}
             disabled={!hasData}
             className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-full font-label-md text-label-md hover:opacity-90 transition-opacity shadow-ambient min-h-[48px] cursor-pointer font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <span className="material-symbols-outlined">download</span>
-            Export Report
+            Export CSV
           </button>
         </div>
       </div>
@@ -159,7 +183,7 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
         <div className="text-center py-20 bg-surface-container-lowest rounded-xl border border-dashed border-outline-variant/30">
           <span className="material-symbols-outlined text-5xl text-outline mb-2">compare</span>
           <p className="font-body-lg text-on-surface-variant">
-            {fetchFailed ? "Couldn't reach the backend. Confirm uvicorn is running on port 8000." : 'No comparison data available for this district yet.'}
+            {fetchFailed ? BACKEND_UNREACHABLE_MSG : 'No comparison data available for this district yet.'}
           </p>
         </div>
       ) : (
@@ -244,7 +268,7 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
                   <th className="p-4 font-semibold">Main Crops</th>
                   <th className="p-4 font-semibold">Yield (t/ha)</th>
                   <th className="p-4 font-semibold">Cost/ha</th>
-                  <th className="p-4 font-semibold">Land Impact</th>
+                  <th className="p-4 font-semibold" title="Environmental-impact score per hectare (NSGA-II objective f4). Lower is better.">Env. Impact/ha</th>
                   <th className="p-4 font-semibold">Water Usg.</th>
                 </tr>
               </thead>
@@ -275,16 +299,16 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
                       </td>
                       <td className="p-4 text-sm">{plan.crops}</td>
                       <td className="p-4">{plan.yieldVal}</td>
-                      <td className={`p-4 ${plan.cost > 50000 ? 'text-error font-medium' : ''}`}>₹{plan.cost.toLocaleString()}</td>
+                      <td className="p-4">₹{plan.cost.toLocaleString()}</td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
-                          <div className="flex-1 h-2 bg-surface-variant rounded-full w-16 overflow-hidden">
+                          <div className="flex-1 h-2 bg-surface-variant rounded-full w-16 overflow-hidden" aria-hidden="true">
                             <div
-                              className={`h-full rounded-full ${plan.cost > 50000 ? 'bg-secondary' : 'bg-primary'}`}
-                              style={{ width: `${(parseInt(plan.impact) / 20) * 100}%` }}
+                              className="h-full rounded-full bg-secondary"
+                              style={{ width: `${((plan.envImpact || 0) / maxEnvImpact) * 100}%` }}
                             ></div>
                           </div>
-                          <span className="text-sm font-semibold">{plan.impact}</span>
+                          <span className="text-sm font-semibold">{plan.envImpact}</span>
                         </div>
                       </td>
                       <td className="p-4">
@@ -319,14 +343,11 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
                 </span>
               )}
             </div>
-            <p className="text-on-surface-variant font-body-md">Optimal crop schedules and custom multi-objective irrigation planning.</p>
+            <p className="text-on-surface-variant font-body-md">Crop areas chosen by NSGA-II and ranked by TOPSIS for your district.</p>
           </div>
 
           <button
-            onClick={() => {
-              onSelectPlan(selectedPlanId);
-              alert(`Activated Plan ${selectedPlanId}! It is now the primary optimization plan.`);
-            }}
+            onClick={() => onSelectPlan(selectedPlanId)}
             className={`w-full md:w-auto px-8 py-3 rounded-full font-label-md text-label-md hover:opacity-90 active:scale-95 transition-all shadow-ambient-hover min-h-[48px] flex justify-center items-center gap-2 cursor-pointer font-bold ${
               activePlanId === selectedPlanId
                 ? 'bg-outline-variant text-on-surface-variant hover:bg-surface-container-high'
@@ -340,7 +361,7 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
-            <h4 className="font-headline-md text-headline-md font-bold mb-4">Plot Crop Allocations</h4>
+            <h4 className="font-headline-md text-headline-md font-bold mb-4">Crop Allocations</h4>
             <div className="space-y-4">
               {selectedPlan.allocations.map((alloc, idx) => (
                 <div key={idx} className="flex justify-between items-center p-3 bg-surface-container-low rounded-lg border border-outline-variant/30 hover:border-primary transition-all">
@@ -350,7 +371,6 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
                     </div>
                     <div>
                       <p className="font-semibold text-on-surface font-body-md">{alloc.crop}</p>
-                      <p className="text-xs text-on-surface-variant">{alloc.plots}</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -363,15 +383,10 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
           </div>
 
           <div>
-            <h4 className="font-headline-md text-headline-md font-bold mb-4 flex justify-between items-end">
-              Irrigation Schedule
-              <button
-                onClick={() => alert("Calendar details generated for selected plan.")}
-                className="font-label-sm text-label-sm text-primary cursor-pointer hover:underline font-semibold"
-              >
-                View Full Calendar
-              </button>
-            </h4>
+            <h4 className="font-headline-md text-headline-md font-bold mb-1">Getting Started</h4>
+            <p className="text-xs text-on-surface-variant mb-4">
+              Generic template -- the optimizer chooses crop areas and input levels, not a day-by-day calendar.
+            </p>
             <div className="relative pl-6 border-l-2 border-surface-variant space-y-6">
               {selectedPlan.schedule.map((sch, idx) => (
                 <div key={idx} className="relative">

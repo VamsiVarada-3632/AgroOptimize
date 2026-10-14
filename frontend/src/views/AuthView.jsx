@@ -6,7 +6,47 @@ import { api, DISTRICTS } from '../services/api';
 // kept in sync with the same fallback in SettingsView.jsx / ProfileSetupView.jsx.
 const FALLBACK_CROPS = ['Sugarcane', 'Wheat', 'Paddy', 'Maize', 'Cotton', 'Groundnut', 'Sorghum', 'Tapioca'];
 
-export default function AuthView({ initialMode = 'login', onSuccess, selectedLanguage }) {
+// Demo-only, device-local "account": there is no auth backend, so the
+// credential never leaves this browser. We keep a SHA-256 digest rather
+// than the plaintext password so a reused password isn't readable from
+// localStorage. Older builds stored plaintext under LEGACY_PASSWORD_KEY;
+// those are accepted once and migrated to a digest on the next login.
+const PASSWORD_HASH_KEY = 'agro_register_password_sha256';
+const LEGACY_PASSWORD_KEY = 'agro_register_password';
+
+async function sha256Hex(text) {
+  // crypto.subtle only exists in secure contexts (https or localhost).
+  if (!globalThis.crypto?.subtle) return null;
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function storePassword(password) {
+  const hash = await sha256Hex(password);
+  if (hash) {
+    localStorage.setItem(PASSWORD_HASH_KEY, hash);
+    localStorage.removeItem(LEGACY_PASSWORD_KEY);
+  } else {
+    localStorage.setItem(LEGACY_PASSWORD_KEY, password);
+  }
+}
+
+// Returns 'ok' | 'no-account' | 'mismatch'.
+async function checkPassword(password) {
+  const storedHash = localStorage.getItem(PASSWORD_HASH_KEY);
+  const legacy = localStorage.getItem(LEGACY_PASSWORD_KEY);
+  if (storedHash) {
+    return (await sha256Hex(password)) === storedHash ? 'ok' : 'mismatch';
+  }
+  if (legacy !== null) {
+    if (password !== legacy) return 'mismatch';
+    await storePassword(password); // migrate plaintext -> digest
+    return 'ok';
+  }
+  return 'no-account';
+}
+
+export default function AuthView({ initialMode = 'login', onSuccess }) {
   const [subView, setSubView] = useState(initialMode === 'register' ? 'register-1' : initialMode); // 'login' | 'register-1' | 'register-2' | 'otp'
   const [loginTab, setLoginTab] = useState('phone'); // 'phone' | 'email'
 
@@ -143,19 +183,19 @@ export default function AuthView({ initialMode = 'login', onSuccess, selectedLan
     }, 50);
   };
 
-  const submitLogin = (e) => {
+  const submitLogin = async (e) => {
     e.preventDefault();
 
     // This app has no real backend auth -- credentials only ever live in
     // this browser's localStorage from a prior "Create Account" on this
     // device. If nothing was ever registered here, there is no account to
     // log into, so we say so rather than silently accepting any password.
-    const registeredPassword = localStorage.getItem('agro_register_password');
-    if (!registeredPassword) {
+    const outcome = await checkPassword(password);
+    if (outcome === 'no-account') {
       setLoginError("No account found on this device yet. Please create an account first.");
       return;
     }
-    if (password !== registeredPassword) {
+    if (outcome === 'mismatch') {
       setLoginError('Incorrect password. Please try again.');
       return;
     }
@@ -165,9 +205,9 @@ export default function AuthView({ initialMode = 'login', onSuccess, selectedLan
     setSubView('otp');
   };
 
-  const submitRegister1 = (e) => {
+  const submitRegister1 = async (e) => {
     e.preventDefault();
-    localStorage.setItem('agro_register_password', password);
+    await storePassword(password);
     localStorage.setItem('agro_register_phone', phoneNumber);
     if (emailAddress) localStorage.setItem('agro_register_email', emailAddress);
     setSubView('register-2');
@@ -432,6 +472,8 @@ export default function AuthView({ initialMode = 'login', onSuccess, selectedLan
                       onChange={(e) => setPassword(e.target.value)}
                       className="w-full min-h-[48px] pl-3 pr-12 rounded-lg border border-outline-variant bg-surface text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none"
                       placeholder="At least 8 characters"
+                      minLength={8}
+                      autoComplete="new-password"
                       required
                       type={showPassword ? "text" : "password"}
                     />

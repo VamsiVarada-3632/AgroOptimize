@@ -15,11 +15,18 @@ from __future__ import annotations
 
 import os
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.data import preprocessing as pp
 from app.schemas import CatalogOut, FarmPlanRequest, FarmPlanResponse, SavedRunSummaryOut
+
+# Shared query-parameter validation for the dashboard endpoints. Land must
+# be positive (it is a divisor in every per-hectare figure); the upper
+# bounds only reject absurd inputs, not realistic farms.
+_LAND_HA_QUERY = Query(5.0, gt=0, le=100_000, description="Farm size in hectares.")
+_BUDGET_QUERY = Query(None, gt=0, description="Optional hard budget cap (Rs).")
+_CLIENT_ID_QUERY = Query(None, max_length=128, description="Opaque per-browser id.")
 
 app = FastAPI(
     title="AgroOptimize API",
@@ -96,6 +103,7 @@ def get_region_profile(location: str, season: str, year: int | None = None):
         "water": vars(profile.water),
         "candidate_crops": [c.name for c in profile.candidate_crops],
         "normalized_snapshot": pp.normalized_snapshot(profile),
+        "data_year_estimated": profile.data_year_estimated,
         "fuzzy_assessment": vars(assessment),
     }
 
@@ -118,10 +126,14 @@ def post_farm_plans(request: FarmPlanRequest):
 
 @app.get("/api/results", response_model=list[SavedRunSummaryOut])
 def list_results():
-    """Every run that has been saved to disk so far (most recent first)."""
+    """Every run that has been saved to disk so far (most recent first).
+
+    `client_id` is always null here: it is the only thing scoping
+    GET /api/history/{location} to one browser, so publishing every run's
+    id would let any caller read any other visitor's history."""
     from app.services import results_store
 
-    return results_store.list_saved_runs()
+    return [{**run, "client_id": None} for run in results_store.list_saved_runs()]
 
 
 @app.get("/api/results/{run_id}", response_model=FarmPlanResponse)
@@ -150,9 +162,11 @@ def get_result(run_id: str):
 
 @app.get("/api/weather/{location}")
 def get_weather(location: str):
-    """Weather proxy derived from historical rainfall.csv (no live weather
-    API in this project) -- current month's average rainfall/temperature/
-    humidity, plus a 5-value seasonal-trend forecast."""
+    """Current conditions + 5-day forecast from the live Open-Meteo API.
+    If that call fails (no network, API down) it falls back to this
+    district's historical rainfall.csv averages for the current and next
+    five calendar months; the `source` field says which path produced the
+    response."""
     from app.services import dashboard_service as ds
 
     try:
@@ -162,7 +176,7 @@ def get_weather(location: str):
 
 
 @app.get("/api/dashboard/{location}")
-def get_dashboard(location: str, client_id: str | None = None):
+def get_dashboard(location: str, client_id: str | None = _CLIENT_ID_QUERY):
     """Dashboard KPI summary: yield/trend, active plans, soil health, water
     utilisation, recommended actions (from N/P/K status), and top-3
     crop allocation -- all derived from crop.csv/land.csv/water_availability.csv.
@@ -178,7 +192,7 @@ def get_dashboard(location: str, client_id: str | None = None):
 
 
 @app.get("/api/history/{location}")
-def get_history(location: str, client_id: str | None = None):
+def get_history(location: str, client_id: str | None = _CLIENT_ID_QUERY):
     """Past optimisation runs for a district: ONLY this browser's own real
     saved runs from results/ (matched by `client_id` -- there are no user
     accounts here, so a run only shows for the client that generated it).
@@ -205,7 +219,9 @@ def get_soil_profile_by_district(location: str):
 
 
 @app.get("/api/plans/{location}")
-def get_plans_by_district(location: str, total_land_ha: float = 5.0, budget_rs: float | None = None):
+def get_plans_by_district(
+    location: str, total_land_ha: float = _LAND_HA_QUERY, budget_rs: float | None = _BUDGET_QUERY
+):
     """Up to ~100 Pareto-optimal plans for AnalyticsView's scatter plot, from
     a live NSGA-II run. If that run fails there is no saved-run or
     CSV-estimate fallback (removed -- see dashboard_service.PlanGenerationError):
@@ -229,7 +245,9 @@ def get_plans_by_district(location: str, total_land_ha: float = 5.0, budget_rs: 
 
 
 @app.get("/api/comparison/{location}")
-def get_comparison_by_district(location: str, total_land_ha: float = 5.0, budget_rs: float | None = None):
+def get_comparison_by_district(
+    location: str, total_land_ha: float = _LAND_HA_QUERY, budget_rs: float | None = _BUDGET_QUERY
+):
     """Plan A (balanced) / B (max yield) / C (lowest cost) for
     ComparisonView -- each the #1 pick of a real TOPSIS ranking over the
     same live Pareto front, not hand-picked."""
@@ -246,8 +264,8 @@ def get_fuzzy_comparison_by_district(
     location: str,
     season: str | None = None,
     year: int | None = None,
-    total_land_ha: float = 5.0,
-    budget_rs: float | None = None,
+    total_land_ha: float = _LAND_HA_QUERY,
+    budget_rs: float | None = _BUDGET_QUERY,
 ):
     """Fuzzy-vs-non-fuzzy comparison study (Task 4): runs NSGA-II twice
     over the same region/season/fuzzy-assessment -- once with the Mamdani

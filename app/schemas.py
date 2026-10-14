@@ -18,11 +18,13 @@ class FarmPlanRequest(BaseModel):
     preference: Preference = "balanced"
     max_candidate_crops: Optional[int] = Field(None, ge=2, le=12)
 
-    # Preference filters applied to the Pareto front before ranking.
-    max_cost_rs: Optional[float] = None
-    max_water_liters: Optional[float] = None
-    min_yield_tonnes: Optional[float] = None
-    max_env_impact: Optional[float] = None
+    # Preference filters applied to the Pareto front before ranking. All
+    # four quantities are non-negative by construction, so a negative
+    # limit could only ever filter out every plan.
+    max_cost_rs: Optional[float] = Field(None, ge=0)
+    max_water_liters: Optional[float] = Field(None, ge=0)
+    min_yield_tonnes: Optional[float] = Field(None, ge=0)
+    max_env_impact: Optional[float] = Field(None, ge=0)
 
     # Advanced / demo knobs. Capped server-side so a client can't request an
     # absurdly expensive run.
@@ -39,7 +41,8 @@ class FarmPlanRequest(BaseModel):
     # client that actually generated it -- there are no real user accounts
     # in this project, so this is what keeps one visitor's saved runs from
     # appearing as another (or a brand-new) visitor's "completed" history.
-    client_id: Optional[str] = None
+    # Bounded because it is persisted verbatim into results/<run_id>.json.
+    client_id: Optional[str] = Field(None, max_length=128)
 
 
 class SoilOut(BaseModel):
@@ -90,6 +93,10 @@ class RegionProfileOut(BaseModel):
     water: WaterOut
     candidate_crops: List[CropCandidateOut]
     normalized_snapshot: Dict[str, float]
+    # True when this year's CSV rows are flagged "Estimated" (carried
+    # forward / scaled from 2023) rather than observed. Defaults to False
+    # so records saved before this field existed still validate.
+    data_year_estimated: bool = False
 
 
 class FuzzyAssessmentOut(BaseModel):

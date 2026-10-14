@@ -317,7 +317,7 @@ export default function ProfileSetupView({ onComplete, initialProfile }) {
                   type="submit"
                   className="w-full md:w-auto min-h-[48px] px-8 py-3 bg-primary text-on-primary font-label-md text-label-md rounded-lg hover:bg-surface-tint active:scale-95 transition-all shadow-sm flex items-center justify-center cursor-pointer font-semibold"
                 >
-                  Continue to Verification
+                  Save Profile
                 </button>
               </div>
             </form>
@@ -337,8 +337,8 @@ export default function ProfileSetupView({ onComplete, initialProfile }) {
             </div>
 
             <div className="space-y-2 w-full">
-              <h1 className="font-headline-lg-mobile md:font-headline-lg text-primary font-bold">Verification completed</h1>
-              <p className="text-on-surface-variant max-w-sm mx-auto">Your account has been successfully verified. You are now ready to start optimizing your yields.</p>
+              <h1 className="font-headline-lg-mobile md:font-headline-lg text-primary font-bold">Profile complete</h1>
+              <p className="text-on-surface-variant max-w-sm mx-auto">Your farm profile is saved on this device. You are now ready to start optimizing your yields.</p>
             </div>
 
             <div className="pt-2 w-full">

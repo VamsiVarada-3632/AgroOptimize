@@ -10,12 +10,14 @@ formula already defined elsewhere in the codebase (e.g. "water
 utilization" as distinct from the already-used "water storage", or the
 comparison view's 6-axis radar scores), the derivation is documented
 inline so it's easy to challenge or retune later -- see
-docs/frontend_integration.md for the full list of these choices in one
-place.
+docs/SCORING_AND_RANKING.md (repository root) for the full list of these
+choices in one place.
 """
 from __future__ import annotations
 
 import datetime as _dt
+import logging
+from functools import lru_cache
 from typing import Optional
 
 from app import config
@@ -27,6 +29,8 @@ from app.fuzzy import engine as fz
 from app.optimization.nsga2_runner import extract_convergence_history, extract_pareto_plans, run_nsga2
 from app.optimization.problem import FarmPlanProblem
 from app.services import results_store
+
+logger = logging.getLogger(__name__)
 
 _MONTHS_IN_YEAR_ORDER = [
     "January", "February", "March", "April", "May", "June",
@@ -209,7 +213,7 @@ def get_weather(location: str) -> dict:
     try:
         return _get_weather_live(location)
     except Exception as live_exc:  # noqa: BLE001 -- deliberate: fall back to real historical data, never fabricate a reading
-        print(f"[dashboard_service.get_weather] live Open-Meteo call failed for {location}: {live_exc!r}")
+        logger.warning("live Open-Meteo call failed for %s: %r -- using CSV fallback", location, live_exc)
         return _get_weather_from_csv(location)
 
 
@@ -241,6 +245,11 @@ def _current_land_row(land_df, location: str, year: int):
     season_rows = year_rows[year_rows["Season"] == _current_season()]
     return season_rows.iloc[0] if not season_rows.empty else year_rows.iloc[-1]
 
+
+
+# Reference farm size used only to express the dashboard's revenue-share
+# percentages as an illustrative hectare column.
+_REFERENCE_FARM_HA = 10.0
 
 
 class PlanGenerationError(RuntimeError):
@@ -325,17 +334,17 @@ def get_dashboard(location: str, client_id: str | None = None) -> dict:
 
     # --- crop_allocations: top 3 candidate crops by historical revenue,
     # for the current season -- reuses the same ranking preprocessing.py
-    # already does for the optimiser's candidate-crop shortlist ---
+    # already does for the optimiser's candidate-crop shortlist. NOTE: this
+    # is each crop's share of district *revenue*, not an optimised plan. ---
     try:
         profile = pp.get_region_season_profile(location, _current_season(), year=latest_year, max_candidate_crops=3)
         top3 = profile.candidate_crops
         total_revenue = sum(c.revenue_rs_lakh_hist for c in top3) or 1.0
-        reference_land_ha = 10.0  # demo reference farm size, purely to turn a % into a Ha column
         crop_allocations = [
             {
                 "crop": c.name,
                 "pct": round(c.revenue_rs_lakh_hist / total_revenue * 100, 1),
-                "ha": round(c.revenue_rs_lakh_hist / total_revenue * reference_land_ha, 1),
+                "ha": round(c.revenue_rs_lakh_hist / total_revenue * _REFERENCE_FARM_HA, 1),
             }
             for c in top3
         ]
@@ -344,6 +353,12 @@ def get_dashboard(location: str, client_id: str | None = None) -> dict:
 
     return {
         "location": location,
+        # Provenance: which dataset year these KPIs describe, and whether
+        # that year's rows are estimates (2023 carried forward/scaled) --
+        # in which case yield_trend reflects the estimation factor, not an
+        # observed change.
+        "data_year": latest_year,
+        "data_year_estimated": pp.is_estimated_year(location, latest_year),
         "estimated_yield": estimated_yield,
         "yield_trend": yield_trend,
         "active_plans": active_plans,
@@ -417,6 +432,7 @@ def get_history(location: str, client_id: str | None = None) -> dict:
         # the plan's own area so "t/ha" and "/ha" are actually true.
         area_ha = sum(top_plan["area_ha"]) if top_plan else 0.0
         real_runs.append({
+            "saved_at": summary.get("saved_at") or "",
             "id": summary["run_id"],
             "season": f"{summary['season']} {summary['year']}",
             "date": (summary.get("saved_at") or "")[:10],
@@ -429,7 +445,11 @@ def get_history(location: str, client_id: str | None = None) -> dict:
             "fuzzy_weights": record["fuzzy_assessment"],
             "is_estimated": False,
         })
-    history = sorted(real_runs, key=lambda h: h["season"], reverse=True)
+    # Most recently saved run first. (Sorting on the "Kharif 2023" display
+    # string ordered runs alphabetically by season name instead.)
+    history = sorted(real_runs, key=lambda h: h["saved_at"], reverse=True)
+    for h in history:
+        del h["saved_at"]
     return {"history": history}
 
 
@@ -460,10 +480,27 @@ def _run_dashboard_pareto_front(
     `track_history=True` costs ~2-3x the run time (pymoo snapshots every
     generation) -- only GET /api/plans/{location} opts into it, to power
     the Analytics convergence/hypervolume chart; GET /api/comparison/
-    {location} doesn't need it and stays at the cheaper default."""
-    location = resolve_location(location)
-    season = season or _current_season()
+    {location} doesn't need it and stays at the cheaper default.
 
+    Returns (profile, assessment, raw_feasible_plans, crop_confidence_map,
+    convergence_history) -- the last is [] unless track_history=True."""
+    location = resolve_location(location)
+    season = pp.canonical_choice(season, config.AG_SEASONS, "season") if season else _current_season()
+    profile, assessment, raw_plans, conf_items, history = _cached_pareto_front(
+        location, season, year, float(total_land_ha), budget_rs, track_history
+    )
+    return profile, assessment, list(raw_plans), dict(conf_items), list(history)
+
+
+@lru_cache(maxsize=32)
+def _cached_pareto_front(location, season, year, total_land_ha, budget_rs, track_history):
+    """The expensive part of _run_dashboard_pareto_front, memoised.
+
+    Safe to cache because the run is a pure function of its arguments:
+    the CSVs are loaded once and never change at runtime, and run_nsga2
+    reseeds with the fixed config.NSGA2_SEED on every call -- so a repeat
+    request would recompute a bit-identical front. Only plain data is
+    cached (not the pymoo result object), keeping each entry small."""
     profile = pp.get_region_season_profile(location, season, year=year)
     assessment = fz.evaluate_uncertainty(
         profile.rainfall.avg_deviation_percent,
@@ -472,9 +509,15 @@ def _run_dashboard_pareto_front(
     )
     problem = FarmPlanProblem(profile, assessment, total_land_ha=total_land_ha, budget_rs=budget_rs)
     result = run_nsga2(problem, pop_size=_DEMO_POP_SIZE, track_history=track_history)
-    raw_plans = [p for p in extract_pareto_plans(result, problem) if p.feasible]
-    crop_confidence_map = dict(zip(problem.crop_vec.names, problem.crop_vec.crop_yield_confidence.tolist()))
-    return profile, assessment, raw_plans, crop_confidence_map, result
+    raw_plans = tuple(p for p in extract_pareto_plans(result, problem) if p.feasible)
+    conf_items = tuple(zip(problem.crop_vec.names, problem.crop_vec.crop_yield_confidence.tolist()))
+    history = tuple(extract_convergence_history(result)) if track_history else ()
+    return profile, assessment, raw_plans, conf_items, history
+
+
+def clear_pareto_cache() -> None:
+    """Drop memoised dashboard fronts (e.g. after reloading the CSVs)."""
+    _cached_pareto_front.cache_clear()
 
 
 # ---------------------------------------------------------------------------
@@ -530,7 +573,7 @@ def get_fuzzy_comparison(
     from app.optimization.nsga2_runner import run_nsga2_with_fuzzy_toggle
 
     location = resolve_location(location)
-    season = season or _current_season()
+    season = pp.canonical_choice(season, config.AG_SEASONS, "season") if season else _current_season()
 
     profile = pp.get_region_season_profile(location, season, year=year)
     assessment = fz.evaluate_uncertainty(
@@ -572,13 +615,12 @@ def get_fuzzy_comparison(
 def get_plans(location: str, total_land_ha: float = 5.0, budget_rs: Optional[float] = None) -> dict:
     location = resolve_location(location)
     try:
-        profile, assessment, raw_plans, crop_confidence_map, result = _run_dashboard_pareto_front(
+        profile, assessment, raw_plans, crop_confidence_map, convergence_history = _run_dashboard_pareto_front(
             location, total_land_ha=total_land_ha, budget_rs=budget_rs, track_history=True
         )
         ranked = ranking.rank_plans(raw_plans, crop_confidence_map, preference="balanced", max_plans=_DEMO_POP_SIZE)
         if not ranked:
             raise RuntimeError("NSGA-II run produced no feasible plans")
-        convergence_history = extract_convergence_history(result)
         hypervolume_history = [
             {"generation": g["generation"], "hypervolume": g["hypervolume"]} for g in convergence_history
         ]
@@ -620,7 +662,7 @@ def get_plans(location: str, total_land_ha: float = 5.0, budget_rs: Optional[flo
             "hypervolume_history": hypervolume_history,
         }
     except Exception as live_exc:  # noqa: BLE001 -- deliberate: catch broadly so we can raise one clean, honest error below
-        print(f"[dashboard_service.get_plans] live NSGA-II run failed for {location}: {live_exc!r}")
+        logger.warning("live NSGA-II run failed for %s: %r", location, live_exc)
         raise PlanGenerationError(
             f"Could not generate plans for {location}: live NSGA-II optimisation "
             f"failed ({live_exc}). No saved-run or CSV-estimate fallback is used -- "
@@ -678,12 +720,16 @@ def _radar_scores(rp, trio, irrigation_risk: float, dep_by_crop: dict) -> dict:
     }
 
 
+# DEPRECATED display placeholder. The dataset has no plot/field geometry,
+# so these labels carry no information; they are kept in the response only
+# so older frontend builds that read `allocations[].plots` don't break.
+# The current frontend no longer renders them.
 _PLOT_LABELS = ["Plots 1, 2, 4", "Plots 3, 5", "Plot 6", "Plot 7", "Plots 8, 9", "Plot 10"]
 
 
 def get_comparison(location: str, total_land_ha: float = 5.0, budget_rs: Optional[float] = None) -> dict:
     location = resolve_location(location)
-    profile, assessment, raw_plans, crop_confidence_map, _result = _run_dashboard_pareto_front(
+    profile, assessment, raw_plans, crop_confidence_map, _history = _run_dashboard_pareto_front(
         location, total_land_ha=total_land_ha, budget_rs=budget_rs
     )
     if not raw_plans:
