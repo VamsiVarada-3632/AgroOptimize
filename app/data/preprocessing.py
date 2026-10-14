@@ -82,6 +82,9 @@ class RegionSeasonProfile:
     rainfall: RainfallProfile
     water: WaterProfile
     candidate_crops: List[CropCandidate] = field(default_factory=list)
+    # True when the resolved year's rows are marked "Estimated" in the
+    # CSVs' data_source column (see is_estimated_year) rather than observed.
+    data_year_estimated: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -117,6 +120,35 @@ def compute_soil_fertility_index(
         _status_to_score(n_status) + _status_to_score(p_status) + _status_to_score(k_status)
     ) / 3.0
     return round(0.3 * ph_score + 0.3 * oc_score + 0.4 * npk_score, 2)
+
+
+def canonical_choice(value: str, options: List[str], kind: str) -> str:
+    """Case/whitespace-insensitive match of `value` against `options`,
+    returning the canonical spelling (e.g. "coimbatore" -> "Coimbatore").
+    Raises ValueError (mapped to HTTP 400 by the API) if nothing matches."""
+    wanted = str(value).strip().lower()
+    for option in options:
+        if option.lower() == wanted:
+            return option
+    raise ValueError(f"Unknown {kind} '{value}'. Choose one of {options}.")
+
+
+# Rows added to extend the series past the course-provided 2020-2023
+# baseline carry a data_source value starting with this prefix (they are
+# 2023 values carried forward or scaled, not observations).
+ESTIMATED_SOURCE_PREFIX = "Estimated"
+
+
+def is_estimated_year(location: str, year: int) -> bool:
+    """True if crop.csv's rows for (location, year) are flagged as
+    estimated rather than observed in their data_source column."""
+    crop_df = load_all()["crop"]
+    if "data_source" not in crop_df.columns:
+        return False
+    sources = crop_df.loc[
+        (crop_df["Location"] == location) & (crop_df["Year"] == int(year)), "data_source"
+    ].astype(str)
+    return bool(len(sources)) and bool(sources.str.startswith(ESTIMATED_SOURCE_PREFIX).all())
 
 
 def _mode_or_first(series: pd.Series) -> str:
@@ -163,10 +195,8 @@ def get_region_season_profile(
     year: Optional[int] = None,
     max_candidate_crops: Optional[int] = None,
 ) -> RegionSeasonProfile:
-    if location not in config.LOCATIONS:
-        raise ValueError(f"Unknown location '{location}'. Choose one of {config.LOCATIONS}.")
-    if season not in config.AG_SEASONS:
-        raise ValueError(f"Unknown season '{season}'. Choose one of {config.AG_SEASONS}.")
+    location = canonical_choice(location, config.LOCATIONS, "location")
+    season = canonical_choice(season, config.AG_SEASONS, "season")
 
     data = load_all()
     crop_df, land_df, rain_df, water_df = data["crop"], data["land"], data["rainfall"], data["water"]
@@ -287,6 +317,7 @@ def get_region_season_profile(
         rainfall=rainfall,
         water=water,
         candidate_crops=candidates,
+        data_year_estimated=is_estimated_year(location, resolved_year),
     )
 
 

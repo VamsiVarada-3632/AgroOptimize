@@ -108,6 +108,7 @@ def generate_farm_plans(
                 for c in profile.candidate_crops
             ],
             "normalized_snapshot": pp.normalized_snapshot(profile),
+            "data_year_estimated": profile.data_year_estimated,
         },
         "fuzzy_assessment": vars(assessment),
         "plans": ranking.to_dict_list(ranked),

@@ -55,10 +55,13 @@ SEASON_MONTH_MAP = {
 # ---------------------------------------------------------------------------
 # Candidate crop selection
 # ---------------------------------------------------------------------------
-# A farmer plan mixes at most this many crops (matches the 3-crop-style
-# combinations reported in the reference paper's results, e.g. "Sugarcane +
-# Wheat + Groundnut"). If fewer crops are available for a location/season,
-# all of them are used.
+# Upper bound on how many candidate crops (top-N by historical revenue) enter
+# the chromosome. Every candidate always receives a small non-zero share
+# (allocation lower bound 1e-4 in problem.py), so this is also the maximum
+# number of crops in a plan. The dataset has at most 5 crops per
+# location/season/year, so in practice all available crops are used. (The
+# reference paper's reported plans mix 3 crops, e.g. "Sugarcane + Wheat +
+# Groundnut"; this value does not enforce that.)
 DEFAULT_MAX_CANDIDATE_CROPS = 6
 MIN_CANDIDATE_CROPS = 2
 
