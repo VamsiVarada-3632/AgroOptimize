@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { api, BACKEND_UNREACHABLE_MSG } from '../services/api';
 import DataSourceNotice from '../components/DataSourceNotice';
 import { downloadFile, toCsv, slug } from '../utils/download';
+import { ExplanationModal, ExplanationComparison } from '../components/ExplanationPanel';
 
 const PLAN_COLORS = ['bg-primary-fixed text-on-primary-fixed', 'bg-secondary-fixed text-on-secondary-fixed', 'bg-tertiary-fixed text-on-tertiary-fixed'];
 
@@ -56,6 +57,8 @@ function adaptComparisonPlans(apiPlans) {
 export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userLocation, onNavigate }) {
   const [selectedPlanId, setSelectedPlanId] = useState(activePlanId);
   const [adjustWeightsOpen, setAdjustWeightsOpen] = useState(false);
+  // Explanation modal: a plan key ('A' | 'B' | 'C'), 'compare' for the side-by-side view, or null.
+  const [explainTarget, setExplainTarget] = useState(null);
 
   const [apiComparison, setApiComparison] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -154,6 +157,14 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
           >
             <span className="material-symbols-outlined">tune</span>
             Adjust Weights
+          </button>
+          <button
+            onClick={() => setExplainTarget('compare')}
+            disabled={!hasData}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 border border-primary text-primary px-6 py-3 rounded-full font-label-md text-label-md hover:bg-primary/10 transition-colors min-h-[48px] cursor-pointer font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <span className="material-symbols-outlined" aria-hidden="true">psychology</span>
+            Compare explanations
           </button>
           <button
             onClick={exportComparisonCsv}
@@ -270,6 +281,7 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
                   <th className="p-4 font-semibold">Cost/ha</th>
                   <th className="p-4 font-semibold" title="Environmental-impact score per hectare (NSGA-II objective f4). Lower is better.">Env. Impact/ha</th>
                   <th className="p-4 font-semibold">Water Usg.</th>
+                  <th className="p-4 font-semibold"><span className="sr-only">Explanation</span></th>
                 </tr>
               </thead>
               <tbody className="font-body-md text-body-md text-on-surface">
@@ -320,6 +332,16 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
                           {plan.water}
                         </span>
                       </td>
+                      <td className="p-4">
+                        <button
+                          onClick={(ev) => { ev.stopPropagation(); setExplainTarget(id); }}
+                          className="text-primary font-semibold text-sm hover:underline cursor-pointer flex items-center gap-1"
+                          aria-label={`Explain Plan ${id}`}
+                        >
+                          <span className="material-symbols-outlined text-[18px]" aria-hidden="true">help</span>
+                          Explain
+                        </button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -346,6 +368,14 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
             <p className="text-on-surface-variant font-body-md">Crop areas chosen by NSGA-II and ranked by TOPSIS for your district.</p>
           </div>
 
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          <button
+            onClick={() => setExplainTarget(selectedPlanId)}
+            className="w-full md:w-auto px-6 py-3 rounded-full border border-primary text-primary font-label-md text-label-md hover:bg-primary/10 transition-colors min-h-[48px] flex justify-center items-center gap-2 cursor-pointer font-bold"
+          >
+            <span className="material-symbols-outlined" aria-hidden="true">psychology</span>
+            Why this plan?
+          </button>
           <button
             onClick={() => onSelectPlan(selectedPlanId)}
             className={`w-full md:w-auto px-8 py-3 rounded-full font-label-md text-label-md hover:opacity-90 active:scale-95 transition-all shadow-ambient-hover min-h-[48px] flex justify-center items-center gap-2 cursor-pointer font-bold ${
@@ -357,6 +387,7 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
             <span className="material-symbols-outlined">check_circle</span>
             {activePlanId === selectedPlanId ? 'Currently Active' : 'Select This Plan'}
           </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -410,6 +441,24 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
         </div>
       </div>
       </>
+      )}
+
+      {explainTarget && explainTarget !== 'compare' && (
+        <ExplanationModal
+          key={explainTarget}
+          title={`Why ${plans?.[explainTarget]?.name || `Plan ${explainTarget}`}?`}
+          load={() => api.getComparisonExplanation(userLocation, explainTarget)}
+          onClose={() => setExplainTarget(null)}
+        />
+      )}
+      {explainTarget === 'compare' && (
+        <ExplanationModal
+          title="Comparing the explanations for Plans A, B and C"
+          load={() => Promise.all(['A', 'B', 'C'].map((k) => api.getComparisonExplanation(userLocation, k)))
+            .then(([A, B, C]) => ({ A, B, C }))}
+          render={(data) => <ExplanationComparison explanations={data} />}
+          onClose={() => setExplainTarget(null)}
+        />
       )}
 
       {/* Adjust Weights overlay modal */}

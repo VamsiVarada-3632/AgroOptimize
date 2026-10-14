@@ -34,6 +34,7 @@ flowchart TB
     schemas[app/schemas.py<br/>Pydantic models]
     ps[services/plan_service.py<br/>generate_farm_plans]
     ds[services/dashboard_service.py<br/>weather · dashboard · history · soil<br/>plans · comparison · compare-fuzzy]
+    xs[services/explanation_service.py<br/>explain saved runs and comparison plans]
     rs[services/results_store.py<br/>save / list / load runs]
     pre[data/preprocessing.py<br/>RegionSeasonProfile]
     load[data/loader.py<br/>CSV load + lru_cache]
@@ -51,6 +52,8 @@ flowchart TB
     main --> pre
     main --> fz
     ps --> pre & fz & prob & run & rank & rs
+    main --> xs
+    xs --> ds & ps & rank & fz & load
     ds --> load & pre & fz & prob & run & rank & rs
     pre --> load
     run --> ops & prob
@@ -63,6 +66,7 @@ Design properties:
 
 * **Layered and acyclic.** Data → fuzzy → optimisation → decision → services → HTTP. Lower layers never import upward (`ranking.py` imports only the `FarmPlan` dataclass from the runner).
 * **Two orchestrators.** `plan_service.generate_farm_plans` serves `POST /api/farm-plans` and the CLI (≤50 plans, persistence, filters, user preference). `dashboard_service._run_dashboard_pareto_front` serves the dashboard endpoints (population 100, up to 100 plans, no persistence, memoised). They deliberately share the same lower-level modules.
+* **Explanations are a separate read-only layer.** `explanation_service` consumes a saved run or the memoised comparison front and never runs its own optimisation; see [EXPLAINABILITY.md](EXPLAINABILITY.md).
 * **Deferred imports in `main.py`.** Route handlers import services inside the function body; it only affects import order, not behaviour.
 
 ## 3. Request lifecycle – `POST /api/farm-plans`

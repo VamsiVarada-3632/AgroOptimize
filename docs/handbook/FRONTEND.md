@@ -68,6 +68,9 @@ Calls `getHistory`; lists this browser's saved runs; "Generate Report" fetches `
 ### SettingsView
 Profile (name, email, phone, avatar, district dropdown, land size, primary crop) → `onUpdateUser` (localStorage only) with an inline "saved on this device" status; language buttons; notification toggles (local state only, nothing is sent); mock Google-link section now labelled "Demo only"; logout.
 
+## 3b. Explanations
+Every recommended plan has a "Why?" entry point: Comparison (Explain per row, "Why this plan?", "Compare explanations"), Run Optimization ("Why this plan?"), History ("Explain top plan"), Reports ("Why?" and the explanation inside the downloaded report). API calls: `api.getResultExplanation(runId, rank)`, `api.getComparisonExplanation(location, plan)`. Details: [EXPLAINABILITY.md](EXPLAINABILITY.md).
+
 ## 4. Shared components
 
 | Component | Used by | Notes |
@@ -77,6 +80,7 @@ Profile (name, email, phone, avatar, district dropdown, land size, primary crop)
 | `AccountAuthOverlay` | SettingsView | mock consent dialog |
 | `ParticleBackground` | Onboarding | canvas animation |
 | `SuccessCheckSvg` | ProfileSetup | animated check |
+| `ExplanationPanel`, `ExplanationModal`, `ExplanationComparison` | Comparison, Run Optimization, History, Reports | render the backend explanation JSON (no reasoning in the UI); modal handles loading/errors/Escape; side-by-side A/B/C view |
 
 ## 5. Styling system
 

@@ -116,6 +116,17 @@ Creates `FastAPI(title="AgroOptimize API", version="0.1.0")`, adds CORS (localho
 | `get_plans` | ≤100 ranked plans per hectare + HV history |
 | `_radar_scores`, `_PLOT_LABELS` (deprecated), `get_comparison` | Plans A/B/C |
 
+### `app/services/explanation_service.py`
+| Symbol | Behaviour |
+|---|---|
+| `ExplanationContext` | everything needed to explain one plan: region profile, fuzzy, ranked set, index, preference, land, budget (+ whether recorded), convergence history, meta, subject |
+| `context_from_saved_run(record, rank)` | from a stored run (budget "not recorded" for older runs) |
+| `context_from_comparison(location, plan, land, budget)` | from the memoised dashboard front ranked under A/B/C's preference |
+| `explain(ctx)` | builds all sections (see EXPLAINABILITY.md); helpers `_crop_breakdown`, `_objective_analysis`, `_rank_under_all_preferences`, `_trade_offs`, `_constraints`, `_historical`, `_confidence`, `_risks` |
+| `explain_saved_run`, `explain_comparison_plan` | convenience wrappers used by `main.py` |
+
+Supporting additions: `ranking.topsis_scores`, `ranking.preference_weights`, `ranking.OBJECTIVES`; `fuzzy.engine.input_memberships`, `fired_rules`, `output_term`; `plan_service.region_profile_payload`; `RunMeta.total_land_ha / budget_rs`.
+
 ## 3. Error handling summary
 
 | Layer | Strategy |
@@ -140,5 +151,6 @@ Not handled: disk full during save (500), Open-Meteo slowness (up to 5 s per cal
 | test_fuzzy.py | output ranges, rule directionality, per-crop penalty | 22 |
 | test_pipeline.py | end-to-end, NSGA-II invariants, persistence, convergence | 34 |
 | test_hardening.py | run-id safety, cache, atomic save, validation, provenance, determinism, concurrency, run-id collisions, client_id redaction | 40 |
+| test_explanation.py | explanation structure, traceability, confidence, constraints, honesty rules, endpoints | 25 |
 
 Gaps: operators unit-tested only indirectly; no test pins numeric outputs (a golden-master test would catch unintended model drift – TODO T-13); weather tests call the real Open-Meteo API when network is available; no frontend tests at all.

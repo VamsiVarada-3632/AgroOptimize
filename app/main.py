@@ -19,7 +19,9 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.data import preprocessing as pp
-from app.schemas import CatalogOut, FarmPlanRequest, FarmPlanResponse, SavedRunSummaryOut
+from typing import Literal
+
+from app.schemas import CatalogOut, ExplanationOut, FarmPlanRequest, FarmPlanResponse, SavedRunSummaryOut
 
 # Shared query-parameter validation for the dashboard endpoints. Land must
 # be positive (it is a divisor in every per-hectare figure); the upper
@@ -146,6 +148,23 @@ def get_result(run_id: str):
     if record is None:
         raise HTTPException(status_code=404, detail=f"No saved run with id '{run_id}'.")
     return record
+
+
+@app.get("/api/results/{run_id}/explanation", response_model=ExplanationOut)
+def get_result_explanation(run_id: str, rank: int = Query(1, ge=1, le=500, description="Plan rank to explain (1 = top).")):
+    """Structured, data-derived explanation of one plan in a saved run:
+    reasons, objective balance, trade-offs, constraints, benefits, risks,
+    historical context, confidence breakdown and pipeline trace. See
+    app/services/explanation_service.py."""
+    from app.services import explanation_service, results_store
+
+    record = results_store.load_run(run_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail=f"No saved run with id '{run_id}'.")
+    try:
+        return explanation_service.explain_saved_run(record, rank=rank)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -280,5 +299,22 @@ def get_fuzzy_comparison_by_district(
         return ds.get_fuzzy_comparison(
             location, season=season, year=year, total_land_ha=total_land_ha, budget_rs=budget_rs
         )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.get("/api/comparison/{location}/explanation", response_model=ExplanationOut)
+def get_comparison_explanation(
+    location: str,
+    plan: Literal["A", "B", "C"] = Query("A", description="A = balanced, B = max yield, C = lowest cost."),
+    total_land_ha: float = _LAND_HA_QUERY,
+    budget_rs: float | None = _BUDGET_QUERY,
+):
+    """Explanation of Plan A, B or C from GET /api/comparison/{location},
+    built from the same memoised Pareto front."""
+    from app.services import explanation_service
+
+    try:
+        return explanation_service.explain_comparison_plan(location, plan, total_land_ha=total_land_ha, budget_rs=budget_rs)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
