@@ -73,6 +73,59 @@ function getOrCreateClientId() {
   return id;
 }
 
+/**
+ * Shown whenever the backend can't be reached at all (network error, server
+ * down). Local development gets the concrete fix; a deployed build gets
+ * wording that makes sense to a farmer.
+ */
+export const BACKEND_UNREACHABLE_MSG = import.meta.env.DEV
+  ? "Couldn't reach the backend. Start it with `uvicorn app.main:app --port 8000` and try again."
+  : "Couldn't reach the AgroOptimize server. Check your connection and try again in a moment.";
+
+/** Error thrown for any non-2xx response; `status` is the HTTP code and
+ * `detail` the backend's human-readable reason (FastAPI's `detail`). */
+export class ApiError extends Error {
+  constructor(message, status, detail) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.detail = detail;
+  }
+}
+
+function extractDetail(body) {
+  const detail = body?.detail;
+  if (!detail) return '';
+  if (typeof detail === 'string') return detail;
+  // 422 validation errors: [{ loc, msg, type }, ...]
+  if (Array.isArray(detail)) return detail.map((d) => d.msg || JSON.stringify(d)).join('; ');
+  // 503 from /api/plans: { error, message, location }
+  return detail.message || detail.error || JSON.stringify(detail);
+}
+
+async function toApiError(res, method, path) {
+  let detail = '';
+  try {
+    detail = extractDetail(await res.json());
+  } catch {
+    detail = '';
+  }
+  return new ApiError(`${method} ${path} failed: ${res.status}${detail ? ` -- ${detail}` : ''}`, res.status, detail);
+}
+
+/**
+ * User-facing text for a failed API call: the backend's own explanation for
+ * 4xx/5xx responses, or the "unreachable" message when there was no
+ * response at all.
+ */
+export function describeApiError(err) {
+  if (err instanceof ApiError) {
+    if (err.detail) return err.detail;
+    return `The server returned an error (HTTP ${err.status}). Please try again.`;
+  }
+  return BACKEND_UNREACHABLE_MSG;
+}
+
 async function fetchAPI(path, params = {}) {
   const url = new URL(`${API_BASE}${path}`);
   Object.entries(params).forEach(([key, value]) => {
@@ -81,10 +134,7 @@ async function fetchAPI(path, params = {}) {
     }
   });
   const res = await fetch(url.toString());
-  if (!res.ok) {
-    const detail = await res.text().catch(() => '');
-    throw new Error(`GET ${path} failed: ${res.status} ${detail}`);
-  }
+  if (!res.ok) throw await toApiError(res, 'GET', path);
   return res.json();
 }
 
@@ -94,10 +144,7 @@ async function postAPI(path, body) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  if (!res.ok) {
-    const detail = await res.text().catch(() => '');
-    throw new Error(`POST ${path} failed: ${res.status} ${detail}`);
-  }
+  if (!res.ok) throw await toApiError(res, 'POST', path);
   return res.json();
 }
 
@@ -141,7 +188,7 @@ export const api = {
    * -- full saved record for one of THIS browser's own past runs (id comes
    * from getHistory's list). Used by the Reports page to build a report
    * from an existing run instead of launching a new optimization. */
-  getResult: (runId) => fetchAPI(`/api/results/${runId}`),
+  getResult: (runId) => fetchAPI(`/api/results/${encodeURIComponent(runId)}`),
 
   /** GET /api/plans/{district} -- up to ~100 Pareto-optimal plans. */
   getPlans: (location, { totalLandHa, budgetRs } = {}) =>

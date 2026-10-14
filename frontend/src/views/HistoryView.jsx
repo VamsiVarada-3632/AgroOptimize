@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { api } from '../services/api';
+import { api, BACKEND_UNREACHABLE_MSG } from '../services/api';
 
 // Adapts GET /api/history/{district}'s entries (target_yield, est_cost,
 // fuzzy_weights, ...) onto this view's field names. The backend only ever
@@ -155,7 +155,7 @@ export default function HistoryView({ userLocation, onNavigate }) {
               <span className="material-symbols-outlined text-5xl text-outline mb-2">history</span>
               <p className="font-body-lg text-on-surface-variant">
                 {fetchFailed
-                  ? "Couldn't reach the backend. Confirm uvicorn is running on port 8000."
+                  ? BACKEND_UNREACHABLE_MSG
                   : historyData.length === 0
                     ? 'No optimization runs found. Generate your first optimization to see it here.'
                     : 'No history entries found matching your search/filter.'}

@@ -60,6 +60,12 @@ export default function SettingsView({ user, onUpdateUser, onLogout, onChangeLan
   // Auth Overlay state
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isGoogleLinked, setIsGoogleLinked] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
+
+  const flashStatus = (message) => {
+    setStatusMessage(message);
+    setTimeout(() => setStatusMessage((m) => (m === message ? '' : m)), 3000);
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -71,7 +77,7 @@ export default function SettingsView({ user, onUpdateUser, onLogout, onChangeLan
       landSize,
       primaryCrop,
     });
-    alert("Profile changes saved successfully!");
+    flashStatus('Profile changes saved on this device.');
   };
 
   const handleUnlinkGoogle = () => {
@@ -81,7 +87,7 @@ export default function SettingsView({ user, onUpdateUser, onLogout, onChangeLan
   const handleConfirmUnlink = () => {
     setIsGoogleLinked(false);
     setIsAuthOpen(false);
-    alert("Google account unlinked successfully.");
+    flashStatus('Google link removed (demo only).');
   };
 
   return (
@@ -196,8 +202,11 @@ export default function SettingsView({ user, onUpdateUser, onLogout, onChangeLan
               </div>
             </div>
 
-            <div className="flex justify-end pt-4 border-t border-outline-variant/20">
-              <button 
+            <div className="flex justify-end items-center gap-4 pt-4 border-t border-outline-variant/20">
+              <span role="status" aria-live="polite" className="font-label-sm text-label-sm text-primary font-semibold">
+                {statusMessage}
+              </span>
+              <button
                 type="submit" 
                 className="h-12 px-6 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:opacity-95 transition-opacity shadow-sm cursor-pointer font-bold"
               >
@@ -331,7 +340,10 @@ export default function SettingsView({ user, onUpdateUser, onLogout, onChangeLan
                   {isGoogleLinked ? 'Linked' : 'Not Linked'}
                 </span>
               </div>
-              <p className="font-label-sm text-label-sm text-on-surface-variant mb-4">{email}</p>
+              <p className="font-label-sm text-label-sm text-on-surface-variant mb-1">{email}</p>
+              <p className="font-label-sm text-label-sm text-on-surface-variant mb-4">
+                Demo only -- no Google account is contacted and nothing leaves this browser.
+              </p>
               
               {isGoogleLinked ? (
                 <button 
@@ -342,7 +354,7 @@ export default function SettingsView({ user, onUpdateUser, onLogout, onChangeLan
                 </button>
               ) : (
                 <button 
-                  onClick={() => { setIsGoogleLinked(true); alert("Google account linked successfully!"); }}
+                  onClick={() => { setIsGoogleLinked(true); flashStatus('Google link simulated (demo only).'); }}
                   className="font-label-md text-label-md text-primary font-semibold hover:underline cursor-pointer"
                 >
                   Link Google Account

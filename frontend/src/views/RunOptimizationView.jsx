@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { api, DISTRICTS, SEASONS, PREFERENCES } from '../services/api';
+import { api, DISTRICTS, SEASONS, PREFERENCES, ApiError, describeApiError } from '../services/api';
 
 const stages = [
   { step: 1, label: 'Reading soil & rainfall data', progress: 25 },
@@ -75,10 +75,12 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
             } catch (err) {
               console.warn('Optimization run failed:', err);
               const { district: d, season: s } = runParamsRef.current;
+              // The backend answers 400 (no data for this combination) or
+              // 422 (invalid input) with a readable `detail`; show it.
               setError(
-                err?.message?.includes('404')
-                  ? `No data available for ${d} / ${s}.`
-                  : "Couldn't reach the backend. Confirm uvicorn is running on port 8000, then try again."
+                err instanceof ApiError && err.status >= 400 && err.status < 500
+                  ? `Can't run ${d} / ${s}: ${describeApiError(err)}`
+                  : describeApiError(err)
               );
             } finally {
               setIsRunning(false);
@@ -154,6 +156,7 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
                   <h3 className="font-headline-md text-headline-md text-on-surface font-bold">Optimization complete and saved</h3>
                   <p className="font-label-sm text-label-sm text-on-surface-variant">
                     {result.region_profile.location} · {result.region_profile.season} {result.region_profile.year}
+                    {result.region_profile.data_year_estimated && ' (estimated-year inputs)'}
                   </p>
                 </div>
               </div>
@@ -161,6 +164,9 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
               {topPlan && (
                 <div className="bg-surface-container-low rounded-lg p-4 mb-4">
                   <p className="font-label-sm text-label-sm text-on-surface-variant mb-2 font-medium">Top-ranked plan · {cropSummary}</p>
+                  {topPlan.trade_off_summary && (
+                    <p className="font-label-sm text-label-sm text-on-surface-variant mb-3">{topPlan.trade_off_summary}</p>
+                  )}
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <p className="font-label-sm text-label-sm text-on-surface-variant">Yield</p>

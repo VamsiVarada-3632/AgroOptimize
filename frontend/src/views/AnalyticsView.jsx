@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { api } from '../services/api';
+import { api, BACKEND_UNREACHABLE_MSG } from '../services/api';
 import DataSourceNotice from '../components/DataSourceNotice';
+import { downloadFile, toCsv, slug } from '../utils/download';
 
 function padRange(lo, hi, frac = 0.1) {
   const range = hi - lo || Math.max(hi, 1) * 0.2;
@@ -12,7 +13,6 @@ const DEFAULT_BOUNDS = { minCostVal: 0, maxCostVal: 1, minYieldVal: 0, maxYieldV
 export default function AnalyticsView({ onNavigate, userLocation }) {
   const [plansData, setPlansData] = useState(null);
   const [plansLoading, setPlansLoading] = useState(true);
-  const [isFallback, setIsFallback] = useState(false);
   const [fetchFailed, setFetchFailed] = useState(false);
   const [soilProfile, setSoilProfile] = useState(null);
 
@@ -31,7 +31,6 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
       .then((data) => {
         if (cancelled) return;
         setPlansData(data);
-        setIsFallback(Boolean(data.is_fallback));
         setFetchFailed(false);
       })
       .catch(() => {
@@ -64,7 +63,7 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
 
   // Convergence / hypervolume history rides along on GET /api/plans, so it
   // shares plansData's loading state rather than a separate fetch.
-  const hypervolumeHistory = plansData?.hypervolume_history || [];
+  const hypervolumeHistory = useMemo(() => plansData?.hypervolume_history || [], [plansData]);
   const hasConvergenceData = hypervolumeHistory.length > 0;
 
   // Real plans (backend snake_case) adapted onto the shape the chart
@@ -155,6 +154,26 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
     return Array.from({ length: n + 1 }, (_, i) => Math.round((minYieldVal + ((maxYieldVal - minYieldVal) * i) / n) * 10) / 10);
   }, [minYieldVal, maxYieldVal]);
 
+  // Real export of exactly what the chart shows: every Pareto-optimal plan
+  // returned by GET /api/plans, plus whether it passes the current sliders.
+  const exportPlansCsv = () => {
+    const rows = (plansData?.plans || []).map((p) => {
+      const point = filteredPoints.find((fp) => fp.id === p.id);
+      return { ...p, meets: point?.isValid ? 'yes' : 'no' };
+    });
+    const csv = toCsv(rows, [
+      { label: 'rank', value: 'rank' },
+      { label: 'recommended', value: (r) => (r.is_recommended ? 'yes' : 'no') },
+      { label: 'cost_rs_per_ha', value: 'cost' },
+      { label: 'yield_t_per_ha', value: 'yield_val' },
+      { label: 'water_million_litres_per_ha', value: 'water_val' },
+      { label: 'env_impact_per_ha', value: 'env_impact' },
+      { label: 'crop_mix', value: (r) => Object.entries(r.crops || {}).map(([c, f]) => `${c} ${Math.round(f * 100)}%`).join('; ') },
+      { label: 'meets_current_constraints', value: 'meets' },
+    ]);
+    downloadFile(`agrooptimize-pareto-plans-${slug(plansData?.location || userLocation)}.csv`, csv, 'text/csv;charset=utf-8');
+  };
+
   const soilPct = soilProfile ? Math.round(soilProfile.fertility_index * 100) : null;
   const soilLabel = soilPct == null ? null : soilPct >= 70 ? 'Optimal' : soilPct >= 45 ? 'Moderate' : 'Needs Attention';
 
@@ -192,14 +211,9 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
         variant="live"
         onRunOptimization={() => onNavigate('run-optimization')}
       />
-      {isFallback && (
-        <div className="mb-4 font-label-sm text-label-sm bg-surface-container-high text-on-surface-variant px-3 py-2 rounded-lg flex items-center gap-2 w-fit">
-          <span className="material-symbols-outlined text-[16px]">info</span> Live optimisation was unavailable -- showing the district's last saved/estimated plans.
-        </div>
-      )}
       {fetchFailed && (
         <div className="mb-4 font-label-sm text-label-sm bg-error-container/40 text-on-error-container px-3 py-2 rounded-lg flex items-center gap-2 w-fit">
-          <span className="material-symbols-outlined text-[16px]">cloud_off</span> Couldn't reach the backend. Confirm uvicorn is running on port 8000.
+          <span className="material-symbols-outlined text-[16px]">cloud_off</span> {BACKEND_UNREACHABLE_MSG}
         </div>
       )}
 
@@ -220,7 +234,7 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
 
         <div className="bg-surface-container-lowest rounded-xl p-6 shadow-ambient flex flex-col justify-between">
           <div className="flex justify-between items-start mb-4">
-            <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">Avg Yield Target</h3>
+            <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">Min Yield Target</h3>
             <div className="bg-primary-container/10 p-2 rounded-full text-primary">
               <span className="material-symbols-outlined">agriculture</span>
             </div>
@@ -273,7 +287,7 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
               <p className="text-sm text-on-surface-variant mt-0.5">Hover points to see plan details. Non-compliant plans are faded.</p>
             </div>
             <button
-              onClick={() => alert("Exporting optimization data as CSV...")}
+              onClick={exportPlansCsv}
               disabled={!hasData}
               className="flex items-center gap-2 text-primary font-label-md text-label-md hover:bg-primary-container/10 px-4 py-2 rounded-lg transition-colors min-h-[48px] cursor-pointer font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
             >
@@ -294,7 +308,7 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
               <div className="text-center py-16">
                 <span className="material-symbols-outlined text-5xl text-outline mb-2">scatter_plot</span>
                 <p className="font-body-lg text-on-surface-variant">
-                  {fetchFailed ? "Couldn't reach the backend." : 'No optimization plans available for this district yet.'}
+                  {fetchFailed ? BACKEND_UNREACHABLE_MSG : 'No optimization plans available for this district yet.'}
                 </p>
                 <p className="text-sm text-on-surface-variant mt-1">
                   <button onClick={() => onNavigate('run-optimization')} className="text-primary font-semibold hover:underline cursor-pointer">

@@ -1,5 +1,67 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../services/api';
+import { api, BACKEND_UNREACHABLE_MSG, describeApiError } from '../services/api';
+import { downloadFile, slug } from '../utils/download';
+
+const fmtInt = (n) => Math.round(n).toLocaleString('en-IN');
+
+// Plain-text, one-file decision report for a saved run. Every number comes
+// from the saved FarmPlanResponse (GET /api/results/{run_id}).
+function buildReportText(result) {
+  const rp = result.region_profile;
+  const fz = result.fuzzy_assessment;
+  const meta = result.meta;
+  const lines = [
+    'AGROOPTIMIZE DECISION REPORT',
+    '============================',
+    `Generated        : ${new Date().toLocaleString()}`,
+    `Run ID           : ${result.run_id || '(unsaved run)'}`,
+    `District / season: ${rp.location} / ${rp.season} ${rp.year}`,
+  ];
+  if (rp.data_year_estimated) {
+    lines.push(`NOTE             : ${rp.year} inputs are estimates carried forward from the previous year, not observations.`);
+  }
+  lines.push(
+    '',
+    'REGION SNAPSHOT (district-level historical data)',
+    `  Soil            : ${rp.soil.soil_type}, pH ${rp.soil.avg_ph}, organic carbon ${rp.soil.organic_carbon_percent}%, fertility index ${rp.soil.fertility_index}/100`,
+    `  Rainfall        : ${rp.rainfall.avg_monthly_rainfall_mm} mm/month average over ${rp.rainfall.months_used.join(', ')}; deviation from normal ${rp.rainfall.avg_deviation_percent}%`,
+    `  Water storage   : ${rp.water.avg_storage_percent}% of reservoir capacity; groundwater status "${rp.water.groundwater_status}"`,
+    '',
+    'UNCERTAINTY ASSESSMENT (Mamdani fuzzy inference)',
+    `  Yield confidence: ${fz.yield_confidence} (rainfall ${fz.rainfall_label}, water ${fz.water_label}, soil ${fz.soil_label})`,
+    `  Irrigation risk : ${fz.irrigation_risk}`,
+    '',
+    'OPTIMISATION',
+    `  ${meta.algorithm}, population ${meta.pop_size}, ${meta.n_gen} generations; ${meta.n_pareto_solutions_found} feasible Pareto-optimal plans found`,
+    `  Ranked by TOPSIS with preference "${meta.preference}"; top ${Math.min(3, result.plans.length)} shown below`,
+    '',
+  );
+  result.plans.slice(0, 3).forEach((plan) => {
+    const area = plan.area_ha.reduce((a, b) => a + b, 0) || 1;
+    const mix = plan.crop_names
+      .map((name, i) => ({ name, pct: plan.allocation_percent[i], ha: plan.area_ha[i] }))
+      .filter((c) => c.pct >= 1)
+      .map((c) => `${c.name} ${c.pct.toFixed(1)}% (${c.ha.toFixed(2)} ha)`)
+      .join(', ');
+    lines.push(
+      `PLAN #${plan.rank}  (TOPSIS closeness ${plan.composite_score})`,
+      `  Crop mix        : ${mix}`,
+      `  Expected yield  : ${plan.yield_tonnes} t total (${(plan.yield_tonnes / area).toFixed(2)} t/ha)`,
+      `  Input cost      : Rs ${fmtInt(plan.cost_rs)} total (Rs ${fmtInt(plan.cost_rs / area)}/ha) -- fertilizer, pesticide and labour only`,
+      `  Irrigation water: ${fmtInt(plan.water_liters)} litres`,
+      `  Env. impact     : ${plan.env_impact_score} (relative score, lower is better)`,
+      `  Confidence      : ${plan.confidence_label}`,
+      `  Summary         : ${plan.trade_off_summary}`,
+      '',
+    );
+  });
+  lines.push(
+    'LIMITATIONS',
+    '  Estimates come from district-level averages and documented modelling assumptions',
+    '  (listed in docs/CONFIGURATION.md). They are decision support, not agronomic advice.',
+  );
+  return lines.join('\n');
+}
 
 // Builds a report card from a full FarmPlanResponse -- fetched here via
 // api.getResult(runId) for one of this browser's own saved runs. Reports
@@ -17,6 +79,8 @@ function buildReportEntry(result) {
   const areaHa = (top.area_ha || []).reduce((a, b) => a + b, 0) || 1;
   return {
     id: `${result.run_id || Date.now()}`,
+    fileName: `agrooptimize-report-${slug(result.run_id || `${result.region_profile.location}-${result.region_profile.season}`)}.txt`,
+    reportText: buildReportText(result),
     title: `${result.region_profile.location} ${result.region_profile.season} ${result.region_profile.year} -- ${cropSummary}`,
     date: dateStr,
     tag: 'NEW',
@@ -31,6 +95,17 @@ export default function ReportsView({ userLocation, onNavigate }) {
   const [fetchFailed, setFetchFailed] = useState(false);
   const [generatingId, setGeneratingId] = useState(null);
   const [genError, setGenError] = useState('');
+  const [copiedId, setCopiedId] = useState(null);
+
+  const copySummary = async (rep) => {
+    try {
+      await navigator.clipboard.writeText(`${rep.title}\n${rep.subtitle}`);
+      setCopiedId(rep.id);
+      setTimeout(() => setCopiedId((id) => (id === rep.id ? null : id)), 2000);
+    } catch {
+      setGenError('Copying to the clipboard was blocked by the browser.');
+    }
+  };
 
   // This district's real, saved optimization runs (this browser's own --
   // see dashboard_service.get_history's client_id scoping). Reports is
@@ -63,7 +138,7 @@ export default function ReportsView({ userLocation, onNavigate }) {
       setRecentReports((prev) => [buildReportEntry(result), ...prev]);
     } catch (err) {
       console.warn('Failed to load saved run for report:', err);
-      setGenError(`Couldn't load the saved run "${run.season}" to build a report from. Confirm uvicorn is running on port 8000.`);
+      setGenError(`Couldn't load the saved run "${run.season}" to build a report from. ${describeApiError(err)}`);
     } finally {
       setGeneratingId(null);
     }
@@ -120,16 +195,18 @@ export default function ReportsView({ userLocation, onNavigate }) {
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t border-outline-variant/20 gap-3">
                   <button
-                    onClick={() => alert(`Downloading "${rep.title}" PDF report...`)}
+                    onClick={() => downloadFile(rep.fileName, rep.reportText)}
                     className="min-h-touch-target-min px-4 py-2 rounded-lg bg-primary text-on-primary font-label-md text-label-md flex items-center gap-2 hover:opacity-90 transition-opacity cursor-pointer font-bold"
                   >
-                    <span className="material-symbols-outlined text-[18px]">download</span> PDF
+                    <span className="material-symbols-outlined text-[18px]">download</span> Download report
                   </button>
                   <button
-                    onClick={() => alert("Copied shareable link to clipboard!")}
+                    onClick={() => copySummary(rep)}
+                    aria-label="Copy report summary to clipboard"
+                    title="Copy summary"
                     className="min-h-touch-target-min w-10 h-10 flex items-center justify-center rounded-full text-primary border border-outline hover:bg-surface-container-high transition-colors cursor-pointer"
                   >
-                    <span className="material-symbols-outlined text-[18px]">share</span>
+                    <span className="material-symbols-outlined text-[18px]">{copiedId === rep.id ? 'check' : 'content_copy'}</span>
                   </button>
                 </div>
               </div>
@@ -149,7 +226,7 @@ export default function ReportsView({ userLocation, onNavigate }) {
           <div className="text-center py-12 bg-surface-container-lowest rounded-xl border border-dashed border-outline-variant/30">
             <span className="material-symbols-outlined text-4xl text-outline mb-2">model_training</span>
             <p className="text-on-surface-variant">
-              {fetchFailed ? "Couldn't reach the backend. Confirm uvicorn is running on port 8000." : `You haven't run any optimizations yet for ${userLocation}.`}
+              {fetchFailed ? BACKEND_UNREACHABLE_MSG : `You haven't run any optimizations yet for ${userLocation}.`}
             </p>
             {!fetchFailed && (
               <>
