@@ -127,6 +127,16 @@ Creates `FastAPI(title="AgroOptimize API", version="0.1.0")`, adds CORS (localho
 
 Supporting additions: `ranking.topsis_scores`, `ranking.preference_weights`, `ranking.OBJECTIVES`; `fuzzy.engine.input_memberships`, `fired_rules`, `output_term`; `plan_service.region_profile_payload`; `RunMeta.total_land_ha / budget_rs`.
 
+### `app/services/district_service.py`
+| Symbol | Behaviour |
+|---|---|
+| `get_district_intelligence(location)` | canonical district → cached `_build` payload |
+| `_coverage`, `_climate`, `_soil`, `_water`, `_crops`, `_suitability`, `_market`, `_overview`, `_insights`, `_summary` | one section each (see DISTRICT_INTELLIGENCE.md) |
+| `trend(years, values)`, `variability_label(cv)` | first-to-last change, slope, CV, direction and variability labels |
+| `clear_cache()` | drop cached payloads |
+
+Shared helpers added for it: `preprocessing.observed_rows`, `explanation_service.make_item`.
+
 ## 3. Error handling summary
 
 | Layer | Strategy |
@@ -152,5 +162,6 @@ Not handled: disk full during save (500), Open-Meteo slowness (up to 5 s per cal
 | test_pipeline.py | end-to-end, NSGA-II invariants, persistence, convergence | 34 |
 | test_hardening.py | run-id safety, cache, atomic save, validation, provenance, determinism, concurrency, run-id collisions, client_id redaction | 40 |
 | test_explanation.py | explanation structure, traceability, confidence, constraints, honesty rules, endpoints | 25 |
+| test_district.py | district aggregations vs raw CSVs, suitability, market, missing data, caching, endpoint | 96 |
 
 Gaps: operators unit-tested only indirectly; no test pins numeric outputs (a golden-master test would catch unintended model drift – TODO T-13); weather tests call the real Open-Meteo API when network is available; no frontend tests at all.

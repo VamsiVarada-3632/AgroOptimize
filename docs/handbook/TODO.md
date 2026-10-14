@@ -48,6 +48,14 @@ Ordered by priority. IDs are referenced from the other documents. "Decision" ite
 | T-34 | Calibrate confidence weights once observed outcomes exist |
 | T-35 | Promote economics once prices are validated (see T-10) |
 
+## District Intelligence follow-ups
+| ID | Task |
+|---|---|
+| T-36 | Cited agro-climatic zone and soil-to-crop suitability reference data |
+| T-37 | Live market prices kept separate from historical values |
+| T-38 | Move Analytics and Comparison charts onto the shared chart components |
+| T-39 | Map of the four locations; server-side PDF district report |
+
 ## P3 – UX
 
 | ID | Task |

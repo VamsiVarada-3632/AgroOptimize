@@ -62,6 +62,9 @@ flowchart LR
 
 The user's saved `landSize` is used only on the Run Optimization page.
 
+## 3b. District Intelligence flow
+`GET /api/district-intelligence/{district}` → `district_service._build` (cached) → observed rows of all four CSVs → coverage, climate, soil, water, crop history → suitability (season profiles + fuzzy + `FarmPlanProblem.evaluate` on one-crop one-hectare plans + TOPSIS goodness) → market → insights → summary → `DistrictIntelligenceView` (filters in the browser). See [DISTRICT_INTELLIGENCE.md](DISTRICT_INTELLIGENCE.md).
+
 ## 4. Caching along the path
 
 | Cache | Key | Invalidation |
@@ -70,6 +73,7 @@ The user's saved `landSize` is used only on the Run Optimization page.
 | `fuzzy._build_system` | – | process restart |
 | `dashboard_service._cached_pareto_front` (32 entries) | location, season, year, land, budget, track_history | process restart / `clear_pareto_cache()` |
 | `results_store._SUMMARY_CACHE` | file path + (mtime, size) | automatic on file change |
+| `district_service._build` (8 entries) | district | process restart / `clear_cache()` |
 | Browser | none (every page visit refetches) | – |
 
 ## 5. Persistence flow
