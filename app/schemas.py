@@ -262,3 +262,29 @@ class ExplanationOut(BaseModel):
     consistency_checks: Dict[str, Any]
     timeline: List[ExplanationItemOut]
     fuzzy_reasoning: Dict[str, Any]
+
+
+# ---------------------------------------------------------------------------
+# District Intelligence (app/services/district_service.py)
+# ---------------------------------------------------------------------------
+
+class DistrictSummaryOut(BaseModel):
+    sentences: List[str]
+    text: str
+
+
+class DistrictIntelligenceOut(BaseModel):
+    """Aggregated district profile. Sections are nested dicts documented in
+    docs/handbook/DISTRICT_INTELLIGENCE.md; values the dataset does not
+    contain are null with an accompanying note."""
+    district: str
+    overview: Dict[str, Any]
+    coverage: Dict[str, Any]
+    climate: Dict[str, Any]
+    soil: Dict[str, Any]
+    water: Dict[str, Any]
+    crops: Dict[str, Any]
+    suitability: Dict[str, Any]
+    market: Dict[str, Any]
+    insights: List[ExplanationItemOut]
+    summary: DistrictSummaryOut
