@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api, DISTRICTS, SEASONS, PREFERENCES, ApiError, describeApiError } from '../services/api';
+import { ExplanationModal } from '../components/ExplanationPanel';
 
 const stages = [
   { step: 1, label: 'Reading soil & rainfall data', progress: 25 },
@@ -34,6 +35,7 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
   const [progressWidth, setProgressWidth] = useState(0);
   const [error, setError] = useState('');
   const [result, setResult] = useState(null); // last successful run's full FarmPlanResponse
+  const [explainOpen, setExplainOpen] = useState(false);
 
   const pendingRunRef = useRef(null);
   const runParamsRef = useRef({ district, season });
@@ -189,6 +191,15 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3">
+                {topPlan && result.run_id && (
+                  <button
+                    onClick={() => setExplainOpen(true)}
+                    className="flex-1 border border-primary text-primary font-label-md text-label-md py-3 rounded-lg hover:bg-primary/10 transition-colors cursor-pointer font-bold flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-[18px]" aria-hidden="true">psychology</span>
+                    Why this plan?
+                  </button>
+                )}
                 <button
                   onClick={runAnother}
                   className="flex-1 border border-outline text-on-surface font-label-md text-label-md py-3 rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer font-bold"
@@ -298,6 +309,18 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
           )}
         </div>
       ) : (
+        null
+      )}
+
+      {explainOpen && result?.run_id && (
+        <ExplanationModal
+          title={`Why this plan for ${result.region_profile.location} ${result.region_profile.season} ${result.region_profile.year}?`}
+          load={() => api.getResultExplanation(result.run_id, 1)}
+          onClose={() => setExplainOpen(false)}
+        />
+      )}
+
+      {isRunning && (
         /* Progress loader screen -- same visual language as elsewhere in
            the app when a real, potentially-slow backend call is in flight. */
         <div className="fixed inset-0 bg-surface z-50 flex flex-col justify-center items-center overflow-hidden animate-[fadeIn_0.3s_ease-out]">

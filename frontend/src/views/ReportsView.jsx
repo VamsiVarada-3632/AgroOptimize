@@ -1,12 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { api, BACKEND_UNREACHABLE_MSG, describeApiError } from '../services/api';
 import { downloadFile, slug } from '../utils/download';
+import { ExplanationModal } from '../components/ExplanationPanel';
 
 const fmtInt = (n) => Math.round(n).toLocaleString('en-IN');
 
 // Plain-text, one-file decision report for a saved run. Every number comes
 // from the saved FarmPlanResponse (GET /api/results/{run_id}).
-function buildReportText(result) {
+// Explanation section of the report, in the order
+// Recommendation -> Reasons -> Trade-offs -> Benefits -> Risks -> Confidence.
+// All wording comes from the backend explanation service.
+function explanationLines(explanation) {
+  const s = explanation.summary;
+  const bullet = (items) => (items.length ? items.map((i) => `  - ${i.title}: ${i.detail}`) : ['  (none)']);
+  return [
+    'WHY PLAN #1 WAS RECOMMENDED',
+    `  Recommendation  : ${s.recommendation} (rule: ${s.recommendation_rule})`,
+    `  Confidence      : ${s.confidence_pct}%`,
+    '',
+    'REASONS',
+    ...bullet(explanation.reasons),
+    '',
+    'TRADE-OFFS ACCEPTED',
+    ...bullet(explanation.trade_offs.items),
+    ...explanation.trade_offs.marginal_rates.map((r) => `  - ${r.detail}`),
+    '',
+    'EXPECTED BENEFITS',
+    ...bullet(explanation.benefits),
+    '',
+    'RISKS',
+    ...(explanation.risks.length ? explanation.risks.map((r) => `  - [${r.severity}] ${r.title}: ${r.detail}`) : ['  (none detected)']),
+    '',
+    `CONFIDENCE BREAKDOWN (${explanation.confidence.method})`,
+    ...explanation.confidence.components.map((c) => `  - ${c.label}: ${c.score === null ? 'not available' : `${c.score}%`} -- ${c.detail}`),
+    '',
+  ];
+}
+
+function buildReportText(result, explanation) {
   const rp = result.region_profile;
   const fz = result.fuzzy_assessment;
   const meta = result.meta;
@@ -55,6 +86,11 @@ function buildReportText(result) {
       '',
     );
   });
+  if (explanation) {
+    lines.push(...explanationLines(explanation));
+  } else {
+    lines.push('WHY PLAN #1 WAS RECOMMENDED', '  The explanation could not be loaded when this report was generated.', '');
+  }
   lines.push(
     'LIMITATIONS',
     '  Estimates come from district-level averages and documented modelling assumptions',
@@ -68,7 +104,7 @@ function buildReportText(result) {
 // never launches a new optimization itself; it only reads an already-saved
 // one (see Run Optimization view), so there's nothing to fabricate here --
 // on failure we surface the error instead of a fake report.
-function buildReportEntry(result) {
+function buildReportEntry(result, explanation) {
   const dateStr = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
   const top = result.plans[0];
   const cropSummary = top.crop_names
@@ -80,7 +116,8 @@ function buildReportEntry(result) {
   return {
     id: `${result.run_id || Date.now()}`,
     fileName: `agrooptimize-report-${slug(result.run_id || `${result.region_profile.location}-${result.region_profile.season}`)}.txt`,
-    reportText: buildReportText(result),
+    runId: result.run_id,
+    reportText: buildReportText(result, explanation),
     title: `${result.region_profile.location} ${result.region_profile.season} ${result.region_profile.year} -- ${cropSummary}`,
     date: dateStr,
     tag: 'NEW',
@@ -96,6 +133,7 @@ export default function ReportsView({ userLocation, onNavigate }) {
   const [generatingId, setGeneratingId] = useState(null);
   const [genError, setGenError] = useState('');
   const [copiedId, setCopiedId] = useState(null);
+  const [explainRunId, setExplainRunId] = useState(null);
 
   const copySummary = async (rep) => {
     try {
@@ -135,7 +173,10 @@ export default function ReportsView({ userLocation, onNavigate }) {
     setGeneratingId(run.id);
     try {
       const result = await api.getResult(run.id);
-      setRecentReports((prev) => [buildReportEntry(result), ...prev]);
+      // The explanation is part of the report but must not block it: if it
+      // fails, the report says so instead of inventing one.
+      const explanation = await api.getResultExplanation(run.id, 1).catch(() => null);
+      setRecentReports((prev) => [buildReportEntry(result, explanation), ...prev]);
     } catch (err) {
       console.warn('Failed to load saved run for report:', err);
       setGenError(`Couldn't load the saved run "${run.season}" to build a report from. ${describeApiError(err)}`);
@@ -199,6 +240,13 @@ export default function ReportsView({ userLocation, onNavigate }) {
                     className="min-h-touch-target-min px-4 py-2 rounded-lg bg-primary text-on-primary font-label-md text-label-md flex items-center gap-2 hover:opacity-90 transition-opacity cursor-pointer font-bold"
                   >
                     <span className="material-symbols-outlined text-[18px]">download</span> Download report
+                  </button>
+                  <button
+                    onClick={() => setExplainRunId(rep.runId)}
+                    disabled={!rep.runId}
+                    className="min-h-touch-target-min px-3 py-2 rounded-lg border border-primary text-primary font-label-md text-label-md flex items-center gap-1 hover:bg-primary/10 transition-colors cursor-pointer font-bold disabled:opacity-40"
+                  >
+                    <span className="material-symbols-outlined text-[18px]" aria-hidden="true">psychology</span> Why?
                   </button>
                   <button
                     onClick={() => copySummary(rep)}
@@ -273,6 +321,14 @@ export default function ReportsView({ userLocation, onNavigate }) {
           </div>
         )}
       </section>
+
+      {explainRunId && (
+        <ExplanationModal
+          title="Why this plan was recommended"
+          load={() => api.getResultExplanation(explainRunId, 1)}
+          onClose={() => setExplainRunId(null)}
+        />
+      )}
     </div>
   );
 }

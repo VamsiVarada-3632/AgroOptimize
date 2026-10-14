@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { api, BACKEND_UNREACHABLE_MSG } from '../services/api';
+import { ExplanationModal } from '../components/ExplanationPanel';
 
 // Adapts GET /api/history/{district}'s entries (target_yield, est_cost,
 // fuzzy_weights, ...) onto this view's field names. The backend only ever
@@ -26,6 +27,7 @@ export default function HistoryView({ userLocation, onNavigate }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedYear, setSelectedYear] = useState('all');
   const [selectedDetail, setSelectedDetail] = useState(null);
+  const [explainRun, setExplainRun] = useState(null);
 
   const [historyData, setHistoryData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -210,14 +212,31 @@ export default function HistoryView({ userLocation, onNavigate }) {
               </div>
             </div>
 
-            <button
-              onClick={() => setSelectedDetail(null)}
-              className="mt-6 w-full bg-primary text-on-primary font-label-md text-label-md py-3 rounded-lg hover:opacity-90 transition-opacity shadow-sm cursor-pointer font-bold"
-            >
-              Close
-            </button>
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => { setExplainRun(selectedDetail); setSelectedDetail(null); }}
+                className="flex-1 border border-primary text-primary font-label-md text-label-md py-3 rounded-lg hover:bg-primary/10 transition-colors cursor-pointer font-bold flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[18px]" aria-hidden="true">psychology</span>
+                Explain top plan
+              </button>
+              <button
+                onClick={() => setSelectedDetail(null)}
+                className="flex-1 bg-primary text-on-primary font-label-md text-label-md py-3 rounded-lg hover:opacity-90 transition-opacity shadow-sm cursor-pointer font-bold"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
+      )}
+
+      {explainRun && (
+        <ExplanationModal
+          title={`Why this plan? ${explainRun.season}`}
+          load={() => api.getResultExplanation(explainRun.id, 1)}
+          onClose={() => setExplainRun(null)}
+        />
       )}
     </div>
   );
