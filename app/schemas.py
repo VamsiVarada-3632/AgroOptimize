@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -135,6 +135,11 @@ class RunMeta(BaseModel):
     n_pareto_solutions_found: int
     n_plans_returned: int
     optimize_seconds: float
+    # Request inputs needed to explain a saved run later (budget check,
+    # per-hectare figures). Optional so runs saved before they existed
+    # still validate; the explanation reports them as "not recorded".
+    total_land_ha: Optional[float] = None
+    budget_rs: Optional[float] = None
 
 
 class ConvergencePointOut(BaseModel):
@@ -185,3 +190,75 @@ class CatalogOut(BaseModel):
     seasons: List[str]
     years: List[int]
     crops_by_season: Dict[str, List[str]]
+
+
+# ---------------------------------------------------------------------------
+# Explainable recommendations (app/services/explanation_service.py)
+# ---------------------------------------------------------------------------
+
+class ExplanationItemOut(BaseModel):
+    """One explanation statement. `detail` is generated from `evidence`;
+    `source` names the pipeline stage the numbers come from."""
+    id: str
+    title: str
+    detail: str
+    source: str
+    evidence: Dict[str, Any] = {}
+    status: Optional[str] = None      # constraints: satisfied | moderate | risk | violated | unknown | not_applicable
+    severity: Optional[str] = None    # risks: high | medium | low
+
+
+class ConfidenceComponentOut(BaseModel):
+    id: str
+    label: str
+    score: Optional[float]            # 0-100, null when it cannot be computed
+    weight: float
+    detail: str
+    source: str
+
+
+class ConfidenceOut(BaseModel):
+    overall_pct: float
+    components: List[ConfidenceComponentOut]
+    method: str
+    strongest_component: str
+    weakest_component: str
+
+
+class ExplanationSummaryOut(BaseModel):
+    location: str
+    season: str
+    year: int
+    data_year_estimated: bool
+    preference: str
+    rank: int
+    plans_compared: int
+    plans_found: Optional[int] = None
+    closeness: float
+    recommendation: str
+    confidence_pct: float
+    total_land_ha: float
+    crop_mix: List[Dict[str, Any]]
+    per_ha: Dict[str, float]
+    totals: Dict[str, float]
+    recommendation_rule: str
+
+
+class ExplanationOut(BaseModel):
+    subject: Dict[str, Any]
+    summary: ExplanationSummaryOut
+    reasons: List[ExplanationItemOut]
+    objectives: Dict[str, Any]
+    trade_offs: Dict[str, Any]
+    constraints: Dict[str, Any]
+    benefits: List[ExplanationItemOut]
+    risks: List[ExplanationItemOut]
+    historical_context: Dict[str, Any]
+    confidence: ConfidenceOut
+    insights: List[ExplanationItemOut]
+    alternatives: List[ExplanationItemOut]
+    economics: Dict[str, Any]
+    crop_breakdown: List[Dict[str, Any]]
+    consistency_checks: Dict[str, Any]
+    timeline: List[ExplanationItemOut]
+    fuzzy_reasoning: Dict[str, Any]

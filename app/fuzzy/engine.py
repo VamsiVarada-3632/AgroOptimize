@@ -243,6 +243,64 @@ def evaluate_uncertainty(
     )
 
 
+def _clipped_inputs(rainfall_deviation_percent, water_storage_percent, soil_fertility_index):
+    return {
+        "rainfall_dev": float(np.clip(rainfall_deviation_percent, -60, 60)),
+        "water_storage": float(np.clip(water_storage_percent, 0, 100)),
+        "soil_fert": float(np.clip(soil_fertility_index, 0, 100)),
+    }
+
+
+def input_memberships(rainfall_deviation_percent, water_storage_percent, soil_fertility_index) -> dict:
+    """Membership degree of each input in each of its fuzzy sets, using the
+    same membership functions and clipping as evaluate_uncertainty."""
+    _, rainfall_dev, water_storage, soil_fert = _build_system()
+    x = _clipped_inputs(rainfall_deviation_percent, water_storage_percent, soil_fertility_index)
+    out = {}
+    for antecedent in (rainfall_dev, water_storage, soil_fert):
+        value = x[antecedent.label]
+        out[antecedent.label] = {
+            label: round(float(fuzz.interp_membership(antecedent.universe, term.mf, value)), 3)
+            for label, term in antecedent.terms.items()
+        }
+    return out
+
+
+def fired_rules(rainfall_deviation_percent, water_storage_percent, soil_fertility_index) -> list:
+    """Firing strength of every rule (min over its AND-ed antecedent
+    memberships), strongest first; rule numbers match _build_system's
+    order (1-26). Rules that do not fire (strength 0) are omitted."""
+    system, *_ = _build_system()
+    degrees = input_memberships(rainfall_deviation_percent, water_storage_percent, soil_fertility_index)
+    fired = []
+    for number, rule in enumerate(system.rules, start=1):
+        terms = list(rule.antecedent_terms)
+        strength = min(degrees[t.parent.label][t.label] for t in terms)
+        if strength <= 0:
+            continue
+        fired.append({
+            "rule": number,
+            "if": " AND ".join(f"{t.parent.label} is {t.label}" for t in terms),
+            "then": ", ".join(f"{c.term.parent.label} is {c.term.label}" for c in rule.consequent),
+            "strength": round(strength, 3),
+        })
+    return sorted(fired, key=lambda r: (-r["strength"], r["rule"]))
+
+
+def output_term(variable: str, value01: float) -> tuple:
+    """Dominant linguistic term (and all membership degrees) of a fuzzy
+    OUTPUT value in [0, 1], read off the model's own output sets
+    ("yield_conf" or "irrigation_risk")."""
+    system, *_ = _build_system()
+    consequent = next(c for c in system.consequents if c.label == variable)
+    x = float(np.clip(value01, 0, 1)) * 100
+    degrees = {
+        label: round(float(fuzz.interp_membership(consequent.universe, term.mf, x)), 3)
+        for label, term in consequent.terms.items()
+    }
+    return max(degrees, key=degrees.get), degrees
+
+
 def _clip01(x: float) -> float:
     return max(0.0, min(1.0, x))
 

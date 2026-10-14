@@ -123,6 +123,40 @@ def _bucket(x: float) -> str:
     return "Low"
 
 
+OBJECTIVES = ("yield", "cost", "water", "env")
+
+
+def preference_weights(preference: Preference) -> np.ndarray:
+    """[yield, cost, water, env] TOPSIS weights for a preference name
+    (unknown names fall back to "balanced", as rank_plans does)."""
+    weights = _PREFERENCE_WEIGHTS.get(preference, _PREFERENCE_WEIGHTS["balanced"])
+    return np.array([weights[k] for k in OBJECTIVES])
+
+
+def topsis_scores(yields, costs, waters, envs, w: np.ndarray):
+    """TOPSIS closeness for a plan set, plus the per-objective 0-1
+    "goodness" columns it was computed from (1 = best in the set).
+
+    Shared by rank_plans and the explanation service so both always use
+    exactly the same normalisation and distance maths."""
+    goodness = (
+        _minmax_norm(list(yields), higher_is_better=True),
+        _minmax_norm(list(costs), higher_is_better=False),
+        _minmax_norm(list(waters), higher_is_better=False),
+        _minmax_norm(list(envs), higher_is_better=False),
+    )
+    # Weighted, normalised decision matrix; every column already points
+    # "higher = better" thanks to _minmax_norm's good/bad flip above.
+    M = np.column_stack(goodness) * w
+    ideal_best = M.max(axis=0)
+    ideal_worst = M.min(axis=0)
+    dist_best = np.sqrt(((M - ideal_best) ** 2).sum(axis=1))
+    dist_worst = np.sqrt(((M - ideal_worst) ** 2).sum(axis=1))
+    denom = dist_best + dist_worst
+    closeness = np.divide(dist_worst, denom, out=np.full_like(denom, 0.5), where=denom > 1e-12)
+    return closeness, goodness
+
+
 def filter_plans(
     plans: List[FarmPlan],
     max_cost: Optional[float] = None,
@@ -165,18 +199,14 @@ def rank_plans(
     if not plans:
         return []
 
-    weights = _PREFERENCE_WEIGHTS.get(preference, _PREFERENCE_WEIGHTS["balanced"])
-    w = np.array([weights["yield"], weights["cost"], weights["water"], weights["env"]])
+    w = preference_weights(preference)
 
     yields = [p.yield_tonnes for p in plans]
     costs = [p.cost_rs for p in plans]
     waters = [p.water_liters for p in plans]
     envs = [p.env_impact_score for p in plans]
 
-    yield_n = _minmax_norm(yields, higher_is_better=True)
-    cost_n = _minmax_norm(costs, higher_is_better=False)
-    water_n = _minmax_norm(waters, higher_is_better=False)
-    env_n = _minmax_norm(envs, higher_is_better=False)
+    closeness, (yield_n, cost_n, water_n, env_n) = topsis_scores(yields, costs, waters, envs, w)
 
     # Raw-magnitude buckets (no good/bad flip) purely for wording the
     # plain-language trade-off sentence -- see _plain_minmax docstring.
@@ -184,17 +214,6 @@ def rank_plans(
     cost_raw = _plain_minmax(costs)
     water_raw = _plain_minmax(waters)
     env_raw = _plain_minmax(envs)
-
-    # ---- TOPSIS closeness coefficient ----
-    # Weighted, normalised decision matrix; every column already points
-    # "higher = better" thanks to _minmax_norm's good/bad flip above.
-    M = np.column_stack([yield_n, cost_n, water_n, env_n]) * w
-    ideal_best = M.max(axis=0)
-    ideal_worst = M.min(axis=0)
-    dist_best = np.sqrt(((M - ideal_best) ** 2).sum(axis=1))
-    dist_worst = np.sqrt(((M - ideal_worst) ** 2).sum(axis=1))
-    denom = dist_best + dist_worst
-    closeness = np.divide(dist_worst, denom, out=np.full_like(denom, 0.5), where=denom > 1e-12)
 
     scored: List[RankedPlan] = []
     for i, p in enumerate(plans):

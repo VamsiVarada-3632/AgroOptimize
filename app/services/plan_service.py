@@ -26,6 +26,36 @@ from app.schemas import FarmPlanRequest
 from app.services import results_store
 
 
+def region_profile_payload(profile: pp.RegionSeasonProfile) -> dict:
+    """The `region_profile` block of FarmPlanResponse. Shared with the
+    explanation service so a live (unsaved) front is described with exactly
+    the same fields as a saved run."""
+    return {
+        "location": profile.location,
+        "year": profile.year,
+        "season": profile.season,
+        "soil": vars(profile.soil),
+        "rainfall": vars(profile.rainfall),
+        "water": vars(profile.water),
+        "candidate_crops": [
+            {
+                "name": c.name,
+                "crop_type": c.crop_type,
+                "yield_kg_ha": c.yield_kg_ha,
+                "water_req_mm": c.water_req_mm,
+                "rainfall_dependency": c.rainfall_dependency,
+                "irrigation_type": c.irrigation_type,
+                "sowing_month": c.sowing_month,
+                "harvest_month": c.harvest_month,
+                "crop_duration_days": c.crop_duration_days,
+            }
+            for c in profile.candidate_crops
+        ],
+        "normalized_snapshot": pp.normalized_snapshot(profile),
+        "data_year_estimated": profile.data_year_estimated,
+    }
+
+
 def generate_farm_plans(
     request: FarmPlanRequest,
     results_dir: Optional[Path] = None,
@@ -86,30 +116,7 @@ def generate_farm_plans(
     )
 
     response = {
-        "region_profile": {
-            "location": profile.location,
-            "year": profile.year,
-            "season": profile.season,
-            "soil": vars(profile.soil),
-            "rainfall": vars(profile.rainfall),
-            "water": vars(profile.water),
-            "candidate_crops": [
-                {
-                    "name": c.name,
-                    "crop_type": c.crop_type,
-                    "yield_kg_ha": c.yield_kg_ha,
-                    "water_req_mm": c.water_req_mm,
-                    "rainfall_dependency": c.rainfall_dependency,
-                    "irrigation_type": c.irrigation_type,
-                    "sowing_month": c.sowing_month,
-                    "harvest_month": c.harvest_month,
-                    "crop_duration_days": c.crop_duration_days,
-                }
-                for c in profile.candidate_crops
-            ],
-            "normalized_snapshot": pp.normalized_snapshot(profile),
-            "data_year_estimated": profile.data_year_estimated,
-        },
+        "region_profile": region_profile_payload(profile),
         "fuzzy_assessment": vars(assessment),
         "plans": ranking.to_dict_list(ranked),
         "convergence_history": convergence_history,
@@ -123,6 +130,8 @@ def generate_farm_plans(
             "n_pareto_solutions_found": len(raw_plans),
             "n_plans_returned": len(ranked),
             "optimize_seconds": optimize_seconds,
+            "total_land_ha": request.total_land_ha,
+            "budget_rs": request.budget_rs,
         },
     }
 
