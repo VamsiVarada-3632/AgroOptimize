@@ -9,6 +9,7 @@ import RunOptimizationView from './views/RunOptimizationView';
 import HistoryView from './views/HistoryView';
 import ReportsView from './views/ReportsView';
 import DistrictIntelligenceView from './views/DistrictIntelligenceView';
+import SimulationView from './views/SimulationView';
 import SettingsView from './views/SettingsView';
 import { api, DISTRICTS } from './services/api';
 
@@ -105,6 +106,7 @@ export default function App() {
     'comparison',
     'run-optimization',
     'district-intelligence',
+    'scenario-simulation',
     'history',
     'reports',
     'settings'
@@ -133,6 +135,7 @@ export default function App() {
     { id: 'comparison', label: 'Comparison', icon: 'compare' },
     { id: 'run-optimization', label: 'Run Optimization', icon: 'model_training' },
     { id: 'district-intelligence', label: 'District Intelligence', icon: 'travel_explore' },
+    { id: 'scenario-simulation', label: 'Scenario Simulation', icon: 'science' },
     { id: 'history', label: 'History', icon: 'history' },
     { id: 'reports', label: 'Reports', icon: 'description' },
     { id: 'settings', label: 'Settings', icon: 'settings' },
@@ -423,6 +426,10 @@ export default function App() {
 
               {currentView === 'district-intelligence' && (
                 <DistrictIntelligenceView userLocation={user.location} onNavigate={navigateTo} />
+              )}
+
+              {currentView === 'scenario-simulation' && (
+                <SimulationView userLocation={user.location} landSizeHa={Number(user.landSize) || 5} onNavigate={navigateTo} />
               )}
 
               {currentView === 'history' && (
