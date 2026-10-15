@@ -167,6 +167,10 @@ def run_pipeline(
         "optimize_seconds": optimize_seconds,
         "total_land_ha": request.total_land_ha,
         "budget_rs": request.budget_rs,
+        # Engine mode, runtime profile and diversity statistics of this run.
+        # Kept in the saved run record for reports; the API's RunMeta model
+        # does not declare it, so the /api/optimize response is unchanged.
+        "optimizer": getattr(result, "engine_report", None),
     }
     if adjustments is not None:
         meta["topsis_weights"] = (
