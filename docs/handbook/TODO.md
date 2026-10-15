@@ -40,6 +40,15 @@ Ordered by priority. IDs are referenced from the other documents. "Decision" ite
 | T-22 | Return relative file names instead of absolute `saved_files` paths |
 | T-23 | Split `dashboard_service.py`; typed response models for all endpoints |
 
+## NSGA-II follow-ups ([NSGAII_IMPROVEMENT_SUMMARY.md](NSGAII_IMPROVEMENT_SUMMARY.md) §7)
+| ID | Task |
+|---|---|
+| T-48 | Decide whether a future paper version uses the enhanced engine (re-run tables with `AGROOPTIMIZE_NSGA2_MODE=enhanced`) |
+| T-49 | External ε-dominance archive of the best front found |
+| T-50 | Algorithm baselines on the new benchmark: NSGA-III, MOEA/D, SPEA2 (pymoo) and an ε-constraint LP (with T-17) |
+| T-51 | Per-request engine mode in the API, once an API change is acceptable |
+| T-52 | Population 100–160 when run time allows |
+
 ## Fuzzy system follow-ups (change outputs – versioned model change)
 | ID | Task |
 |---|---|

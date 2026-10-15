@@ -72,14 +72,17 @@ Read-only measurements: `rule_dominance`, `membership_coverage`, `output_bounds`
 `CropVector.from_candidates(crops, assessment, use_fuzzy)` precomputes per-crop NumPy arrays (confidence = 1.0 when `use_fuzzy=False`). `FarmPlanProblem(profile, assessment, total_land_ha, budget_rs, use_fuzzy)` sets bounds (allocation lower bound 1e−4), 4 objectives, optional 1 inequality constraint; `_evaluate` is fully vectorised; `decode(x)` → dict of lists.
 
 ### `app/optimization/operators.py`
-`AllocationRepair`, `SinglePointCrossover(prob)`, `GaussianMutation(prob, sigma)` – see ALGORITHMS §4.1. All use `np.random` (global RNG).
+`AllocationRepair`, `SinglePointCrossover(prob)` (vectorised over matings, same cut points as the former loop), `GaussianMutation(prob, sigma)` – see ALGORITHMS §4.1; they use `np.random` (global RNG). `binary_tournament` is pymoo's NSGA-II tournament vectorised (identical decisions and tie draws). Enhanced-mode operators: `SmartSampling` / `seed_chromosomes`, `AdaptiveSinglePointCrossover`, `AdaptiveGaussianMutation`, `TolerantDuplicateElimination`; `CountingDuplicateElimination` wraps the duplicate check to count rejections.
+
+### `app/optimization/engine_settings.py`, `monitoring.py`
+`EngineSettings` / `engine_settings(mode)`: mode and per-feature switches from `config.NSGA2_ENGINE_*`. `EngineMonitor` (pymoo callback): per-generation objective history (replaces `save_history`), diversity statistics, runtime, adaptive-mutation probability. `FrontStagnationTermination`: optional early stopping. See [NSGAII_IMPROVEMENT_SUMMARY.md](NSGAII_IMPROVEMENT_SUMMARY.md).
 
 ### `app/optimization/nsga2_runner.py`
 | Symbol | Behaviour |
 |---|---|
 | `_NSGA2_RUN_LOCK` | process-wide lock serialising runs (added) |
 | `FarmPlan` | decoded plan with rounded objective values and `feasible` |
-| `run_nsga2(problem, pop_size, n_gen, …, seed=42, track_history)` | builds pymoo `NSGA2` with custom operators, seeds global RNG and runs `minimize` under the lock |
+| `run_nsga2(problem, pop_size, n_gen, …, seed=42, track_history, mode=None, engine=None)` | builds pymoo `NSGA2` for the engine mode (default `config.NSGA2_ENGINE_MODE`), seeds global RNG and runs `minimize` under the lock with an `EngineMonitor`; attaches `result.engine_report` (mode, profile, diversity) |
 | `run_nsga2_with_fuzzy_toggle(profile, assessment, land, budget, use_fuzzy, **kw)` | builds the problem with `use_fuzzy`, returns `(problem, result)` |
 | `extract_convergence_history(result)` | per-generation best/mean objectives + normalised hypervolume; `[]` without history |
 | `extract_pareto_plans(result, problem)` | decode `result.X/F/G` into `FarmPlan`s |
@@ -184,5 +187,6 @@ Not handled: disk full during save (500), Open-Meteo slowness (up to 5 s per cal
 | test_district.py | district aggregations vs raw CSVs, suitability, market, missing data, caching, endpoint | 96 |
 | test_simulation.py | pipeline hooks, validation, paired comparison, end-to-end scenarios vs CSV, history, statements, persistence, endpoints | 61 |
 | test_fuzzy_audit.py | memoised engine = uncached scikit-fuzzy, rule-level explanation exactness and consistency, audit vs analytic values, firing on data, endpoints | 170 |
+| test_nsga2_engine.py | original mode = recorded digests, vectorised operators = replaced code, monitor = `save_history`, engine report, each enhanced feature, pipeline meta | 38 |
 
 Gaps: operators unit-tested only indirectly; no test pins numeric outputs (a golden-master test would catch unintended model drift – TODO T-13); weather tests call the real Open-Meteo API when network is available; no frontend tests at all.

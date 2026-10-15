@@ -11,7 +11,9 @@ crossover/mutation/repair operators to match the paper's stated parameters.
 
 from __future__ import annotations
 
+import logging
 import threading
+import time
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -19,13 +21,28 @@ import numpy as np
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.indicators.hv import HV
 from pymoo.operators.sampling.rnd import FloatRandomSampling
+from pymoo.operators.selection.tournament import TournamentSelection
 from pymoo.optimize import minimize
 
 from app import config
 from app.data.preprocessing import RegionSeasonProfile
 from app.fuzzy.engine import UncertaintyAssessment
-from app.optimization.operators import AllocationRepair, GaussianMutation, SinglePointCrossover
+from app.optimization.engine_settings import EngineSettings, engine_settings
+from app.optimization.monitoring import EngineMonitor, FrontStagnationTermination
+from app.optimization.operators import (
+    AdaptiveGaussianMutation,
+    AdaptiveSinglePointCrossover,
+    AllocationRepair,
+    CountingDuplicateElimination,
+    GaussianMutation,
+    SinglePointCrossover,
+    SmartSampling,
+    TolerantDuplicateElimination,
+    binary_tournament,
+)
 from app.optimization.problem import FarmPlanProblem
+
+logger = logging.getLogger(__name__)
 
 # The custom operators draw from NumPy's *process-global* RNG, which
 # run_nsga2 reseeds before every run. FastAPI executes sync endpoints in a
@@ -56,28 +73,82 @@ def run_nsga2(
     pop_size: Optional[int] = None,
     n_gen: Optional[int] = None,
     crossover_prob: float = config.NSGA2_CROSSOVER_PROB,
-    mutation_prob: float = config.NSGA2_MUTATION_PROB,
+    mutation_prob: Optional[float] = None,
     mutation_sigma: float = config.NSGA2_MUTATION_SIGMA,
     seed: int = config.NSGA2_SEED,
     verbose: bool = False,
     track_history: bool = False,
+    mode: Optional[str] = None,
+    engine: Optional[EngineSettings] = None,
 ):
-    """Run NSGA-II. Set `track_history=True` to have pymoo snapshot the
-    population at every generation (needed for convergence plots / the
-    hypervolume trend in `extract_convergence_history`); this costs extra
-    time (~2-3x slower, still well under 2s at the paper's pop=80/gen=200
-    settings) and memory, so it defaults to off for quick/test runs.
+    """Run NSGA-II. Set `track_history=True` to record the population's
+    objectives at every generation (needed for convergence plots / the
+    hypervolume trend in `extract_convergence_history`).
+
+    `mutation_prob` defaults to the engine mode's base probability.
+    `mode` selects the engine ("original" = published behaviour, the default
+    from config.NSGA2_ENGINE_MODE; "enhanced" = experimental); `engine`
+    passes explicit EngineSettings instead, e.g. one feature switched on for
+    an ablation run. The returned result carries `result.engine_report`
+    (mode, features, runtime profile, diversity statistics).
     """
     pop_size = pop_size or config.NSGA2_POP_SIZE
     n_gen = n_gen or config.NSGA2_N_GEN
+    settings = engine if engine is not None else engine_settings(mode)
+    # An explicit argument wins; otherwise the mode's base probability
+    # (0.12, the paper's value, in the original engine).
+    if mutation_prob is None:
+        mutation_prob = settings.mutation_prob
+
+    # Duplicate elimination: pymoo's exact-copy check in the original engine,
+    # optionally a tolerance-based one; both wrapped in a counter that only
+    # records how many offspring were rejected.
+    if settings.duplicate_removal:
+        inner = TolerantDuplicateElimination(settings.duplicate_tolerance, problem.xl, problem.xu)
+        eliminate_duplicates = CountingDuplicateElimination(inner)
+    else:
+        eliminate_duplicates = CountingDuplicateElimination()
+
+    if settings.smart_initialization:
+        sampling = SmartSampling(settings.smart_init_fraction)
+    else:
+        sampling = FloatRandomSampling()
+
+    if settings.adaptive_crossover:
+        p = settings.adaptive_crossover_params
+        crossover = AdaptiveSinglePointCrossover(p["start_prob"], p["end_prob"])
+    else:
+        crossover = SinglePointCrossover(prob=crossover_prob)
+
+    if settings.adaptive_mutation:
+        mutation = AdaptiveGaussianMutation(prob=mutation_prob, sigma=mutation_sigma)
+    else:
+        mutation = GaussianMutation(prob=mutation_prob, sigma=mutation_sigma)
 
     algorithm = NSGA2(
         pop_size=pop_size,
-        sampling=FloatRandomSampling(),
-        crossover=SinglePointCrossover(prob=crossover_prob),
-        mutation=GaussianMutation(prob=mutation_prob, sigma=mutation_sigma),
+        sampling=sampling,
+        # Same binary tournament as pymoo's NSGA-II default, vectorised.
+        selection=TournamentSelection(func_comp=binary_tournament),
+        crossover=crossover,
+        mutation=mutation,
         repair=AllocationRepair(),
-        eliminate_duplicates=True,
+        eliminate_duplicates=eliminate_duplicates,
+    )
+
+    if settings.early_stopping:
+        p = settings.early_stopping_params
+        termination = FrontStagnationTermination(n_gen, p["patience"], p["tolerance"], p["min_generations"])
+    else:
+        termination = ("n_gen", n_gen)
+
+    monitor = EngineMonitor(
+        record_history=track_history,
+        diversity=settings.diversity_monitoring,
+        profiling=settings.runtime_profiling,
+        adaptive_mutation=settings.adaptive_mutation_params if settings.adaptive_mutation else None,
+        base_mutation_prob=mutation_prob,
+        stagnation=settings.early_stopping_params if settings.adaptive_mutation else None,
     )
 
     with _NSGA2_RUN_LOCK:
@@ -87,15 +158,51 @@ def run_nsga2(
         # pair is fully reproducible end to end, independent of call history
         # elsewhere in the process.
         np.random.seed(seed)
+        t0 = time.perf_counter()
         result = minimize(
             problem,
             algorithm,
-            ("n_gen", n_gen),
+            termination,
             seed=seed,
             verbose=verbose,
-            save_history=track_history,
+            # The monitor records each generation's objectives itself, so
+            # pymoo's save_history (a deep copy of the whole algorithm every
+            # generation: ~2.5x the run time, ~58 MB) is no longer needed.
+            callback=monitor,
+        )
+        seconds = time.perf_counter() - t0
+
+    result.engine_report = _engine_report(settings, result, monitor, seconds, pop_size, n_gen, seed)
+    if settings.runtime_profiling:
+        prof = result.engine_report["profile"]
+        logger.info(
+            "NSGA-II %s: %d generations, %d evaluations, Pareto size %d, %.3f s (%.2f ms/generation)",
+            settings.mode, prof["generations"], prof["evaluations"], prof["pareto_size"],
+            prof["total_seconds"], prof["avg_generation_ms"],
         )
     return result
+
+
+def _engine_report(settings: EngineSettings, result, monitor: EngineMonitor, seconds: float,
+                   pop_size: int, n_gen: int, seed: int) -> dict:
+    """What a run records about its engine: mode and switches, runtime
+    profile and diversity statistics (kept in the run's meta for reports)."""
+    algorithm = result.algorithm
+    generations = len(monitor.generations)
+    report = {"engine": settings.describe(), "seed": seed, "pop_size": pop_size, "n_gen_budget": n_gen}
+    if settings.runtime_profiling:
+        report["profile"] = {
+            "total_seconds": round(seconds, 4),
+            "generations": generations,
+            "evaluations": int(algorithm.evaluator.n_eval),
+            "pareto_size": int(len(result.X)) if result.X is not None else 0,
+            "avg_generation_ms": round(1000 * seconds / generations, 3) if generations else None,
+        }
+    if settings.early_stopping:
+        report["stopped_early_at"] = getattr(algorithm.termination, "stopped_early_at", None)
+    if settings.diversity_monitoring:
+        report["diversity"] = monitor.summary()
+    return report
 
 
 def run_nsga2_with_fuzzy_toggle(
@@ -140,10 +247,11 @@ def extract_convergence_history(result) -> List[dict]:
     reference point. A rising, plateauing hypervolume curve is the
     textbook signature of NSGA-II converging.
     """
-    if not getattr(result, "history", None):
+    F_history = _objective_history(result)
+    if not F_history:
         return []
 
-    all_F = np.vstack([snapshot.pop.get("F") for snapshot in result.history])
+    all_F = np.vstack(F_history)
     lo = all_F.min(axis=0)
     hi = all_F.max(axis=0)
     span = np.where(hi - lo < 1e-9, 1.0, hi - lo)
@@ -154,8 +262,7 @@ def extract_convergence_history(result) -> List[dict]:
     hv_indicator = HV(ref_point=np.array([1.1, 1.1, 1.1, 1.1]))
 
     history: List[dict] = []
-    for gen_idx, snapshot in enumerate(result.history, start=1):
-        F = snapshot.pop.get("F")
+    for gen_idx, F in enumerate(F_history, start=1):
         F_norm = np.clip((F - lo) / span, 0.0, 1.5)
         history.append(
             {
@@ -173,6 +280,18 @@ def extract_convergence_history(result) -> List[dict]:
             }
         )
     return history
+
+
+def _objective_history(result) -> List[np.ndarray]:
+    """Each generation's population objectives: from the EngineMonitor when
+    the run recorded them, else from pymoo's own history (a result produced
+    with save_history=True); empty if neither was kept."""
+    monitor = getattr(getattr(result, "algorithm", None), "callback", None)
+    if isinstance(monitor, EngineMonitor) and monitor.F_history:
+        return monitor.F_history
+    if getattr(result, "history", None):
+        return [snapshot.pop.get("F") for snapshot in result.history]
+    return []
 
 
 def extract_pareto_plans(result, problem: FarmPlanProblem) -> List[FarmPlan]:

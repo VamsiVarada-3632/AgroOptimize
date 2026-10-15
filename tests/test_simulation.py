@@ -167,6 +167,8 @@ def test_run_pipeline_matches_a_normal_run():
     b = ps.run_pipeline(req, seed=config.NSGA2_SEED).response
     for r in (a, b):
         r["meta"].pop("optimize_seconds")
+        for timing in ("total_seconds", "avg_generation_ms"):   # wall-clock, differs per run
+            r["meta"]["optimizer"]["profile"].pop(timing)
     assert a["run_id"] is None and a["saved_files"] is None   # not saved
     assert {k: a[k] for k in b} == b
 

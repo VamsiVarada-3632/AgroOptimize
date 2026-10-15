@@ -29,8 +29,12 @@ final_year_project/
 | `app/fuzzy/audit.py` | Active | Read-only audit of the fuzzy system (dominance, coverage, firing, monotonicity) |
 | `scripts/benchmark_fuzzy.py` | Tool | Times the fuzzy layer and its callers |
 | `app/optimization/problem.py` | Active | `FarmPlanProblem` (pymoo `Problem`): chromosome bounds + 4 vectorised objectives + budget constraint |
-| `app/optimization/operators.py` | Active | Custom `SinglePointCrossover`, `GaussianMutation`, `AllocationRepair` |
-| `app/optimization/nsga2_runner.py` | Active | Runs pymoo NSGA-II (serialised by a lock), decodes Pareto front, hypervolume convergence history |
+| `app/optimization/operators.py` | Active | Custom `SinglePointCrossover`, `GaussianMutation`, `AllocationRepair`, vectorised binary tournament; enhanced-mode operators (smart sampling, adaptive crossover/mutation, duplicate elimination) |
+| `app/optimization/nsga2_runner.py` | Active | Runs pymoo NSGA-II in the configured engine mode (serialised by a lock), decodes Pareto front, hypervolume convergence history, engine report |
+| `app/optimization/engine_settings.py` | Active | Engine modes (original / enhanced) and per-feature switches |
+| `app/optimization/monitoring.py` | Active | Per-generation monitor: history, diversity, runtime profile, adaptive-mutation controller, early-stopping criterion |
+| `scripts/profile_nsga2.py` | Tool | Phase-by-phase profile of one optimisation run |
+| `scripts/benchmark_nsga2.py` | Tool | Quality benchmark / ablation study of engine modes and parameters |
 | `app/decision/ranking.py` | Active | Hard-limit filters, TOPSIS ranking, trade-off wording, confidence labels |
 | `app/services/plan_service.py` | Active | Orchestrates the 5-stage pipeline for `POST /api/farm-plans` and the CLI |
 | `app/services/results_store.py` | Active | Persists runs to `results/` (JSON/CSV/PNG), lists and loads them |
@@ -44,6 +48,7 @@ final_year_project/
 | `tests/test_data.py` | Active | 36 tests – loader, catalog, profile building, fertility formula, snapshot |
 | `tests/test_fuzzy.py` | Active | 22 tests – fuzzy ranges, rule directionality, per-crop penalty |
 | `tests/test_pipeline.py` | Active | 34 tests – end-to-end pipeline, NSGA-II invariants, persistence |
+| `tests/test_nsga2_engine.py` | Active | 38 tests – original mode reproduces published results, speed-ups equal the replaced code, each enhanced feature |
 | `tests/test_hardening.py` | Active | 40 tests added 2026-09-29 – path safety, caching, validation, provenance, determinism under concurrency |
 | `run_demo.py` | Active | CLI: run the whole pipeline without a server and print a ranked table |
 | `requirements.txt` | Active | Python dependencies (see [DEPENDENCIES.md](DEPENDENCIES.md)) |

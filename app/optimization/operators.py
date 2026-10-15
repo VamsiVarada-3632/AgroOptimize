@@ -19,8 +19,10 @@ from __future__ import annotations
 
 import numpy as np
 from pymoo.core.crossover import Crossover
+from pymoo.core.duplicate import DefaultDuplicateElimination
 from pymoo.core.mutation import Mutation
 from pymoo.core.repair import Repair
+from pymoo.core.sampling import Sampling
 
 
 class AllocationRepair(Repair):
@@ -57,13 +59,19 @@ class SinglePointCrossover(Crossover):
 
     def _do(self, problem, X, **kwargs):
         _, n_matings, n_var = X.shape
+        # Vectorised over matings. One randint call with size=n_matings draws
+        # exactly the same cut points, in the same order, as the former loop
+        # of scalar np.random.randint(1, n_var) calls (tested), so offspring
+        # are bit-identical; the loop cost ~0.1 ms per generation.
+        if n_var > 1:
+            points = np.random.randint(1, n_var, size=n_matings)
+        else:
+            points = np.ones(n_matings, dtype=int)
+        tail = np.arange(n_var)[None, :] >= points[:, None]  # (n_matings, n_var): True where genes swap
+        parent1, parent2 = X[0], X[1]
         Y = np.empty_like(X)
-        for k in range(n_matings):
-            parent1, parent2 = X[0, k], X[1, k]
-            point = np.random.randint(1, n_var) if n_var > 1 else 1
-            child1 = np.concatenate([parent1[:point], parent2[point:]])
-            child2 = np.concatenate([parent2[:point], parent1[point:]])
-            Y[0, k], Y[1, k] = child1, child2
+        Y[0] = np.where(tail, parent2, parent1)
+        Y[1] = np.where(tail, parent1, parent2)
         return Y
 
 
@@ -84,3 +92,224 @@ class GaussianMutation(Mutation):
         Xp[mask] += noise[mask]
         Xp = np.clip(Xp, problem.xl, problem.xu)
         return Xp
+
+
+# ---------------------------------------------------------------------------
+# Selection. pymoo's NSGA-II binary tournament (nsga2.binary_tournament)
+# compares the pairs one at a time in Python. This version makes the same
+# decisions with array operations and draws a random number only for ties,
+# in the same order and through the same `random_state.choice([a, b])` call,
+# so the selected parents -- and therefore every result -- are identical.
+# ---------------------------------------------------------------------------
+
+POPULATION_KEYS = ("X", "F", "CV", "rank", "crowding")
+
+
+def population_arrays(algorithm, pop) -> dict:
+    """X, F, CV, rank and crowding of `pop` as arrays, read once per
+    population. pymoo stores them per individual, so each read loops over the
+    population in Python; the monitor (after a generation) and the tournament
+    (several times during the next one, when duplicates are rejected) share
+    this one read. Keyed on the population object itself, which survival
+    replaces every generation."""
+    cached = algorithm.data.get("_population_arrays")
+    if cached is None or cached[0] is not pop:
+        cached = (pop, dict(zip(POPULATION_KEYS, pop.get(*POPULATION_KEYS))))
+        algorithm.data["_population_arrays"] = cached
+    return cached[1]
+
+
+def binary_tournament(pop, P, algorithm, random_state=None, **kwargs):
+    n_tournaments, n_parents = P.shape
+    if n_parents != 2:
+        raise ValueError("Only implemented for binary tournament!")
+    if algorithm.tournament_type != "comp_by_dom_and_crowding":
+        # Only the NSGA-II default is reimplemented; anything else is pymoo's.
+        from pymoo.algorithms.moo.nsga2 import binary_tournament as pymoo_binary_tournament
+        return pymoo_binary_tournament(pop, P, algorithm, random_state=random_state, **kwargs)
+
+    a, b = P[:, 0], P[:, 1]
+    arrays = population_arrays(algorithm, pop)
+    CV, F, CD = arrays["CV"][:, 0], arrays["F"], arrays["crowding"].astype(float)
+    a_cv, b_cv = CV[a], CV[b]
+
+    S = np.full(n_tournaments, -1, dtype=int)
+    tie = np.zeros(n_tournaments, dtype=bool)
+
+    # At least one infeasible: smaller constraint violation wins.
+    infeasible = (a_cv > 0.0) | (b_cv > 0.0)
+    S[infeasible & (a_cv < b_cv)] = a[infeasible & (a_cv < b_cv)]
+    S[infeasible & (a_cv > b_cv)] = b[infeasible & (a_cv > b_cv)]
+    tie |= infeasible & (a_cv == b_cv)
+
+    # Both feasible: Pareto dominance (Dominator.get_relation), then crowding.
+    feasible = ~infeasible
+    Fa, Fb = F[a], F[b]
+    a_better = (Fa < Fb).any(axis=1)
+    b_better = (Fb < Fa).any(axis=1)
+    a_dom = feasible & a_better & ~b_better
+    b_dom = feasible & b_better & ~a_better
+    S[a_dom] = a[a_dom]
+    S[b_dom] = b[b_dom]
+    undecided = feasible & ~a_dom & ~b_dom
+    cd_a, cd_b = CD[a], CD[b]
+    S[undecided & (cd_a > cd_b)] = a[undecided & (cd_a > cd_b)]
+    S[undecided & (cd_a < cd_b)] = b[undecided & (cd_a < cd_b)]
+    tie |= undecided & ~(cd_a > cd_b) & ~(cd_a < cd_b)
+
+    for i in np.flatnonzero(tie):  # same draws, same order as pymoo's loop
+        S[i] = random_state.choice([a[i], b[i]])
+
+    return S[:, None]
+
+
+# ---------------------------------------------------------------------------
+# Enhanced-mode operators (off in the original engine). Each is used only
+# when its switch in EngineSettings is on. Adaptive state is read from
+# `algorithm.data["adaptive"]`, which EngineMonitor (monitoring.py) updates
+# after every generation, so the operators stay stateless and deterministic.
+# ---------------------------------------------------------------------------
+
+class AdaptiveSinglePointCrossover(SinglePointCrossover):
+    """Single-point crossover whose probability follows a deterministic
+    schedule (Eiben, Hinterding & Michalewicz 1999): `start_prob` in the first
+    generation, moving linearly to `end_prob` in the last -- more
+    recombination while exploring, more mutation-only offspring later."""
+
+    def __init__(self, start_prob: float, end_prob: float):
+        super().__init__(prob=start_prob)
+        self.start_prob = float(start_prob)
+        self.end_prob = float(end_prob)
+
+    def do(self, problem, pop, parents=None, *args, **kwargs):
+        algorithm = kwargs.get("algorithm")
+        if algorithm is not None:
+            progress = _progress(algorithm)
+            self.prob = self.start_prob + (self.end_prob - self.start_prob) * progress
+            algorithm.data.setdefault("adaptive", {})["crossover_prob"] = self.prob
+        return super().do(problem, pop, parents, *args, **kwargs)
+
+
+class AdaptiveGaussianMutation(GaussianMutation):
+    """Gaussian mutation whose per-gene probability is set each generation by
+    EngineMonitor from population diversity (higher when diversity collapses,
+    lower once the front has stagnated); see monitoring.adaptive_mutation_prob."""
+
+    def _do(self, problem, X, **kwargs):
+        algorithm = kwargs.get("algorithm")
+        if algorithm is not None:
+            self.gene_prob = algorithm.data.get("adaptive", {}).get("mutation_prob", self.gene_prob)
+        return super()._do(problem, X, **kwargs)
+
+
+def _progress(algorithm) -> float:
+    """Position in the offspring generations, 0 at the first and 1 at the
+    last. Generation 1 is the initial population, so offspring are created
+    while n_gen runs from 2 to n_max_gen."""
+    n_max = getattr(algorithm.termination, "n_max_gen", None)
+    if n_max is None:
+        for term in getattr(algorithm.termination, "terminations", ()):
+            n_max = getattr(term, "n_max_gen", n_max)
+    if not n_max or n_max <= 2:
+        return 0.0
+    return float(np.clip((algorithm.n_gen - 2) / (n_max - 2), 0.0, 1.0))
+
+
+class SmartSampling(Sampling):
+    """Initial population partly seeded from the district's data.
+
+    A share `fraction` of the individuals are built from the candidate crops,
+    which the preprocessing stage already selected from the district's
+    historical records:
+      * one plan per crop with most of the land on that crop (the historical
+        single-crop practice the farmer is likely to know),
+      * land in proportion to the fuzzy-adjusted historical yield, to yield
+        per rupee and yield per litre of irrigation, and an even split.
+    Their irrigation and fertiliser multipliers are set to the lower bound:
+    in FarmPlanProblem yield does not depend on the multipliers while cost,
+    water and environmental impact rise with them, so for any allocation the
+    lower bound is never worse on any objective (existing optimisation
+    knowledge about these objectives, not a new agronomic assumption).
+    If more seeds are requested than these, the rest are random blends of
+    them. All remaining individuals are uniform random, as in the original
+    engine. Seeding is the "seeding the initial population" technique of
+    Friedrich & Wagner (2015).
+    """
+
+    def __init__(self, fraction: float):
+        super().__init__()
+        self.fraction = float(fraction)
+
+    def _do(self, problem, n_samples, *args, random_state=None, **kwargs):
+        n_seed = int(round(self.fraction * n_samples))
+        seeds = seed_chromosomes(problem)
+        if n_seed > len(seeds):
+            k = n_seed - len(seeds)
+            i = random_state.integers(0, len(seeds), size=k)
+            j = random_state.integers(0, len(seeds), size=k)
+            w = random_state.random((k, 1))
+            seeds = np.vstack([seeds, w * seeds[i] + (1 - w) * seeds[j]])
+        seeds = seeds[:n_seed]
+        xl, xu = problem.bounds()
+        rand = xl + (xu - xl) * random_state.random((n_samples - len(seeds), problem.n_var))
+        return np.vstack([seeds, rand])
+
+
+def seed_chromosomes(problem) -> np.ndarray:
+    """Knowledge-based chromosomes for SmartSampling (see its docstring)."""
+    n = problem.n_crops
+    cv = problem.crop_vec
+    xl = np.asarray(problem.xl, dtype=float)
+
+    yield_t_ha = cv.yield_kg_ha / 1000.0 * cv.crop_yield_confidence
+    metrics = problem.single_crop_metrics()  # per-hectare objectives at baseline inputs
+    cost = np.array([m["cost_rs_ha"] for m in metrics])
+    water = np.array([m["water_l_ha"] for m in metrics])
+
+    def share(weights):
+        weights = np.clip(np.nan_to_num(weights, nan=0.0, posinf=0.0), 0.0, None)
+        return weights / weights.sum() if weights.sum() > 0 else np.full(n, 1.0 / n)
+
+    allocations = [np.where(np.arange(n) == i, 1.0, 0.0) for i in range(n)]
+    allocations += [
+        share(yield_t_ha),
+        share(yield_t_ha / np.where(cost > 0, cost, np.inf)),
+        share(yield_t_ha / np.where(water > 0, water, np.inf)),
+        np.full(n, 1.0 / n),
+    ]
+    X = np.tile(xl, (len(allocations), 1))
+    X[:, :n] = np.clip(np.array(allocations), xl[:n], None)
+    return X
+
+
+class TolerantDuplicateElimination(DefaultDuplicateElimination):
+    """Treats two chromosomes as duplicates when their distance in the
+    decision space, normalised to [0, 1] per gene, is at most `tolerance`
+    (pymoo's default only removes exact copies)."""
+
+    def __init__(self, tolerance: float, xl, xu):
+        span = np.asarray(xu, dtype=float) - np.asarray(xl, dtype=float)
+        self._xl = np.asarray(xl, dtype=float)
+        self._span = np.where(span > 0, span, 1.0)
+        super().__init__(epsilon=tolerance, func=self._normalised)
+
+    def _normalised(self, pop):
+        return (pop.get("X") - self._xl) / self._span
+
+
+class CountingDuplicateElimination(DefaultDuplicateElimination):
+    """pymoo's default duplicate elimination, unchanged, that also counts how
+    many candidates it rejects (for diversity monitoring)."""
+
+    def __init__(self, inner=None):
+        super().__init__()
+        self.inner = inner
+        self.checked = 0
+        self.rejected = 0
+
+    def do(self, pop, *args, **kwargs):
+        out = self.inner.do(pop, *args, **kwargs) if self.inner is not None else super().do(pop, *args, **kwargs)
+        kept = out[0] if isinstance(out, tuple) else out
+        self.checked += len(pop)
+        self.rejected += len(pop) - len(kept)
+        return out

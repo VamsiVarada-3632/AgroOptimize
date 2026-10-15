@@ -4,6 +4,18 @@ All code modifications made during the 2026-09-29 audit. All changes are submitt
 
 Verification after all changes: backend **205/205 tests pass** (was 165/165); output fingerprint over 48 endpoint/pipeline results is **identical to HEAD** apart from the new additive provenance fields; frontend `oxlint` 0 warnings (was 3 in `src` + noise), `vite build` succeeds; UI flows exercised in Chrome with no console errors.
 
+## [Unreleased] – NSGA-II engine optimisation
+
+### Added
+- Engine modes: `original` (published, default, bit-identical results) and `enhanced` (experimental), selected by `config.NSGA2_ENGINE_MODE` or `AGROOPTIMIZE_NSGA2_MODE`; one switch per improvement (`app/optimization/engine_settings.py`).
+- Enhanced features: smart initialisation (`SmartSampling`), adaptive mutation (`AdaptiveGaussianMutation` + `monitoring.adaptive_mutation_prob`), adaptive crossover, tolerance-based duplicate removal, early stopping (`FrontStagnationTermination`). Enhanced mode enables smart initialisation and adaptive mutation from p = 0.05; the other three are available but off (no benefit or lower quality).
+- `app/optimization/monitoring.py` (`EngineMonitor`): diversity statistics, runtime profile, convergence history; every run carries `result.engine_report`, saved as `meta.optimizer` (not in the API response) and logged.
+- `scripts/profile_nsga2.py`, `scripts/benchmark_nsga2.py`; `tests/test_nsga2_engine.py` (38).
+- `NSGAII_ANALYSIS.md`, `NSGAII_PROFILE.md`, `NSGAII_RESEARCH_REVIEW.md`, `NSGAII_IMPROVEMENT_SUMMARY.md`.
+
+### Changed
+- Vectorised single-point crossover and binary tournament (same random draws); per-crop constants of `FarmPlanProblem` computed once; convergence history recorded by the monitor instead of pymoo `save_history`. Saved runs 748 → 287 ms, peak memory 57.8 → 1.6 MB; results bit-identical on 96 fingerprinted runs.
+
 ## [Unreleased] – Fuzzy system optimisation
 
 ### Added

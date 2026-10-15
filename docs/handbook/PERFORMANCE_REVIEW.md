@@ -11,7 +11,7 @@ Measured 2026-09-29 on an Apple-Silicon laptop, Python 3.13, in-process (`TestCl
 | Warm fuzzy call | 3.7 ms | new `ControlSystemSimulation` each call |
 | Build region profile | 22 ms | pandas boolean filtering on small frames |
 | NSGA-II pop 80 × 200 gen, no history | ≈0.29 s | the `/api/farm-plans` default |
-| NSGA-II pop 100 × 200 gen, with history | ≈0.8 s | `/api/plans`; retains **≈71 MB** until the request ends |
+| NSGA-II pop 100 × 200 gen, with history | ≈0.8 s | `/api/plans`; retained **≈71 MB** until the request ended – **fixed**: pop 80 saved run 748 → 287 ms, 57.8 → 1.6 MB ([NSGAII_PROFILE.md](NSGAII_PROFILE.md)) |
 | `/api/comparison` cold / warm | 369 ms / 3 ms | warm = new memoisation |
 | `/api/plans` cold / warm | 966 ms / 3 ms | |
 | `/api/compare-fuzzy` | 746 ms | two runs, not memoised |
