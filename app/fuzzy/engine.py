@@ -398,3 +398,184 @@ def crop_yield_confidence(base_yield_confidence: float, irrigation_risk: float, 
     dep_factor = config.RAINFALL_DEPENDENCY_FACTOR.get(rainfall_dependency, 0.5)
     penalty = irrigation_risk * dep_factor * 0.4  # cap the max penalty at 40%
     return round(_clip01(base_yield_confidence * (1.0 - penalty)), 3)
+
+
+# ---------------------------------------------------------------------------
+# Rule-level explanation
+#
+# scikit-fuzzy's Mamdani step, as implemented in skfuzzy.control
+# (CrispValueCalculator.find_memberships / defuzz), is:
+#   firing(rule)  = min over the rule's antecedent memberships
+#   cut(term)     = max over the firing of every rule concluding that term
+#   output(y)     = max over terms of min(cut(term), mf_term(y)) on the
+#                   output universe upsampled with each cut's crossing points
+#   crisp         = centroid(output)
+# _aggregate below repeats that with the same skfuzzy primitives, so the
+# centroid it produces equals the engine's output (checked on every call and
+# in the tests). That makes an exact rule attribution possible:
+#   * a fired rule only influences the output if its firing *sets* a cut
+#     (it is the strongest rule for that term); otherwise it is masked;
+#   * the aggregated area splits exactly into the parts where each term is
+#     the maximum, and each part is credited to the rule(s) setting its cut;
+#   * removing a rule and recomputing gives its leave-one-out importance.
+# Nothing here feeds the optimiser; evaluate_uncertainty is unchanged.
+# ---------------------------------------------------------------------------
+
+from skfuzzy.fuzzymath.fuzzy_ops import _interp_universe_fast  # noqa: E402
+
+CONSISTENCY_TOLERANCE = 1e-9   # explanation centroid vs engine output (0-1 scale)
+
+
+def _consequent(variable: str):
+    system, *_ = _build_system()
+    return next(c for c in system.consequents if c.label == variable)
+
+
+def _aggregate(variable: str, cuts: dict):
+    """Aggregated output set for `cuts` ({term: cut or None}), exactly as
+    skfuzzy builds it. Returns (universe, output_mf, {term: clipped mf})."""
+    consequent = _consequent(variable)
+    new_values = []
+    for label, term in consequent.terms.items():
+        if cuts.get(label) is None:
+            continue
+        new_values.extend(_interp_universe_fast(consequent.universe, term.mf, cuts[label]).tolist())
+    universe = np.union1d(consequent.universe, new_values)
+    output = np.zeros_like(universe, dtype=np.float64)
+    term_mfs = {}
+    for label, term in consequent.terms.items():
+        if cuts.get(label) is None:
+            continue
+        term_mfs[label] = np.minimum(cuts[label], fuzz.interp_membership(consequent.universe, term.mf, universe))
+        np.maximum(output, term_mfs[label], output)
+    return universe, output, term_mfs
+
+
+def _centroid01(variable: str, cuts: dict):
+    """Crisp output in [0, 1], or None when the aggregated set is empty
+    (the engine then falls back to 0.5)."""
+    universe, output, _ = _aggregate(variable, cuts)
+    if not np.any(output > 0):
+        return None
+    return float(fuzz.defuzz(universe, output, "centroid")) / 100.0
+
+
+def _term_cuts(firing: dict, exclude: int | None = None) -> dict:
+    """{variable: {term: (cut, [setting rules])}} from rule firing strengths."""
+    cuts = {v: {} for v in OUTPUT_VARIABLES}
+    for spec in rule_specs():
+        if spec.number == exclude:
+            continue
+        for var, term in spec.consequents:
+            cut, setters = cuts[var].get(term, (None, []))
+            f = firing[spec.number]
+            if cut is None or f > cut:
+                cuts[var][term] = (f, [spec.number])
+            elif f == cut:
+                setters.append(spec.number)
+    return cuts
+
+
+def _area(universe, mf) -> float:
+    return float(np.trapezoid(mf, universe))
+
+
+def explain_inference(rainfall_deviation_percent, water_storage_percent, soil_fertility_index) -> dict:
+    """Why the fuzzy engine produced its outputs for these inputs.
+
+    Returns the clipped inputs and their memberships; for every rule its
+    firing strength, limiting condition, status (decisive / masked / not
+    fired), share of each output's aggregated area and leave-one-out
+    importance; rules ranked by importance; per output the term cuts, the
+    rules setting them, each term's area share, the crisp value, its
+    linguistic term and membership (a confidence for the label), and a
+    consistency check against evaluate_uncertainty.
+    """
+    x = _clipped_inputs(rainfall_deviation_percent, water_storage_percent, soil_fertility_index)
+    memberships = _raw_memberships(x)
+    firing = {spec.number: min(memberships[v][t] for v, t in spec.antecedents) for spec in rule_specs()}
+    cuts = _term_cuts(firing)
+    engine = vars(evaluate_uncertainty(x["rainfall_dev"], x["water_storage"], x["soil_fert"]))
+    engine_key = {"yield_conf": "yield_confidence", "irrigation_risk": "irrigation_risk"}
+
+    outputs, crisp_values, rule_share = {}, {}, {spec.number: {} for spec in rule_specs()}
+    for var in OUTPUT_VARIABLES:
+        plain = {term: c for term, (c, _) in cuts[var].items()}
+        universe, output, term_mfs = _aggregate(var, plain)
+        total = _area(universe, output)
+        crisp = _centroid01(var, plain)
+        # Split the aggregated area between the terms that form it (ties split equally).
+        winners = {t: np.isclose(mf, output) & (output > 0) for t, mf in term_mfs.items()}
+        n_win = np.maximum(sum(w.astype(int) for w in winners.values()), 1)
+        shares = {t: (_area(universe, np.where(winners[t], output / n_win, 0.0)) / total * 100 if total > 0 else 0.0)
+                  for t in term_mfs}
+        for term, (cut, setters) in cuts[var].items():
+            if cut > 0:
+                for n in setters:
+                    rule_share[n][var] = rule_share[n].get(var, 0.0) + shares.get(term, 0.0) / len(setters)
+        value = crisp if crisp is not None else 0.5
+        crisp_values[var] = value
+        label, degrees = output_term(var, value)
+        rounded = round(_clip01(value), 3)
+        outputs[var] = {
+            "value": rounded,
+            "term": label,
+            "term_membership": degrees[label],
+            "term_memberships": degrees,
+            "term_cuts": {t: {"cut": round(c, 4), "set_by": s if c > 0 else []} for t, (c, s) in cuts[var].items()},
+            "term_area_share_pct": {t: round(v, 1) for t, v in shares.items()},
+            "fallback_used": crisp is None,
+            "matches_engine": abs(rounded - engine[engine_key[var]]) <= CONSISTENCY_TOLERANCE,
+        }
+
+    rules = []
+    for spec in rule_specs():
+        f = firing[spec.number]
+        decisive = {var: share for var, share in rule_share[spec.number].items()}
+        loo = {}
+        if f > 0 and decisive:
+            without = _term_cuts(firing, exclude=spec.number)
+            for var in decisive:
+                alt = _centroid01(var, {t: c for t, (c, _) in without[var].items()})
+                # Unrounded on both sides, so a rule whose removal changes
+                # nothing (e.g. one tied with the rule that subsumes it) shows 0.
+                loo[var] = round(crisp_values[var] - (alt if alt is not None else 0.5), 4)
+        masked_by = sorted({n for var, term in spec.consequents
+                            for n in cuts[var][term][1] if n != spec.number and cuts[var][term][0] > f})
+        tied_with = sorted({n for var, term in spec.consequents
+                            if spec.number in cuts[var][term][1] and cuts[var][term][0] > 0
+                            for n in cuts[var][term][1] if n != spec.number})
+        limiting = min(spec.antecedents, key=lambda vt: memberships[vt[0]][vt[1]])
+        status = "not fired" if f <= 0 else ("decisive" if decisive else "masked")
+        rules.append({
+            "rule": spec.number,
+            "scenario": spec.scenario,
+            "if": spec.text_if,
+            "then": spec.text_then,
+            "strength": round(f, 4),
+            "status": status,
+            "limiting_condition": None if f <= 0 else {
+                "variable": limiting[0], "term": limiting[1], "membership": round(memberships[limiting[0]][limiting[1]], 4)},
+            "masked_by": masked_by if status == "masked" else [],
+            "tied_with": tied_with,
+            "contribution_pct": {var: round(v, 1) for var, v in decisive.items()},
+            "leave_one_out_change": loo,
+            "importance": round(max((abs(v) for v in loo.values()), default=0.0), 4),
+        })
+    ranked = sorted((r for r in rules if r["status"] != "not fired"),
+                    key=lambda r: (-r["importance"], -sum(r["contribution_pct"].values()), -r["strength"], r["rule"]))
+    return {
+        "inputs": {var: {"value": x[var], "memberships": {t: round(v, 4) for t, v in memberships[var].items()},
+                         "dominant": max(memberships[var], key=memberships[var].get)} for var in INPUT_BOUNDS},
+        "outputs": outputs,
+        "rules": rules,
+        "ranking": [r["rule"] for r in ranked],
+        "summary": {"fired": sum(r["status"] != "not fired" for r in rules),
+                    "decisive": sum(r["status"] == "decisive" for r in rules),
+                    "masked": sum(r["status"] == "masked" for r in rules)},
+        "method": ("Firing = min of antecedent memberships; each output term is cut at the strongest firing of the rules "
+                   "concluding it (max aggregation); the output is the union of the cut terms, defuzzified by centroid. "
+                   "Contribution = share of the aggregated area where the rule's term is the maximum (split equally between "
+                   "rules tied for the same cut); masked rules fired but a stronger rule set the same term's cut. Leave-one-out change = output with the rule minus "
+                   "output without it (0-1 scale)."),
+    }
