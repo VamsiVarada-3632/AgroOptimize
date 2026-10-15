@@ -49,6 +49,17 @@ def _dominant_label(antecedent: ctrl.Antecedent, value: float) -> str:
     return best_label
 
 
+# Triangular membership functions [a, b, c] of every linguistic term, in
+# definition order. Values unchanged from the original inline definitions.
+MEMBERSHIP_FUNCTIONS = {
+    "rainfall_dev": {"deficit": (-60, -60, -5), "normal": (-15, 0, 15), "surplus": (5, 60, 60)},
+    "water_storage": {"low": (0, 0, 35), "medium": (20, 50, 75), "high": (60, 100, 100)},
+    "soil_fert": {"poor": (0, 0, 40), "medium": (25, 50, 75), "good": (60, 100, 100)},
+    "yield_conf": {"low": (0, 0, 45), "medium": (30, 55, 75), "high": (65, 100, 100)},
+    "irrigation_risk": {"low": (0, 0, 35), "medium": (25, 50, 75), "high": (60, 100, 100)},
+}
+
+
 @lru_cache(maxsize=1)
 def _build_system() -> tuple[ctrl.ControlSystem, ctrl.Antecedent, ctrl.Antecedent, ctrl.Antecedent]:
     # --- Antecedents (inputs) ---
@@ -60,25 +71,11 @@ def _build_system() -> tuple[ctrl.ControlSystem, ctrl.Antecedent, ctrl.Anteceden
     yield_conf = ctrl.Consequent(np.arange(0, 100.1, 1), "yield_conf")
     irrigation_risk = ctrl.Consequent(np.arange(0, 100.1, 1), "irrigation_risk")
 
-    rainfall_dev["deficit"] = fuzz.trimf(rainfall_dev.universe, [-60, -60, -5])
-    rainfall_dev["normal"] = fuzz.trimf(rainfall_dev.universe, [-15, 0, 15])
-    rainfall_dev["surplus"] = fuzz.trimf(rainfall_dev.universe, [5, 60, 60])
-
-    water_storage["low"] = fuzz.trimf(water_storage.universe, [0, 0, 35])
-    water_storage["medium"] = fuzz.trimf(water_storage.universe, [20, 50, 75])
-    water_storage["high"] = fuzz.trimf(water_storage.universe, [60, 100, 100])
-
-    soil_fert["poor"] = fuzz.trimf(soil_fert.universe, [0, 0, 40])
-    soil_fert["medium"] = fuzz.trimf(soil_fert.universe, [25, 50, 75])
-    soil_fert["good"] = fuzz.trimf(soil_fert.universe, [60, 100, 100])
-
-    yield_conf["low"] = fuzz.trimf(yield_conf.universe, [0, 0, 45])
-    yield_conf["medium"] = fuzz.trimf(yield_conf.universe, [30, 55, 75])
-    yield_conf["high"] = fuzz.trimf(yield_conf.universe, [65, 100, 100])
-
-    irrigation_risk["low"] = fuzz.trimf(irrigation_risk.universe, [0, 0, 35])
-    irrigation_risk["medium"] = fuzz.trimf(irrigation_risk.universe, [25, 50, 75])
-    irrigation_risk["high"] = fuzz.trimf(irrigation_risk.universe, [60, 100, 100])
+    # Membership functions come from MEMBERSHIP_FUNCTIONS (same triangles as
+    # before, now in one table that the audit and docs read as well).
+    for variable in (rainfall_dev, water_storage, soil_fert, yield_conf, irrigation_risk):
+        for label, abc in MEMBERSHIP_FUNCTIONS[variable.label].items():
+            variable[label] = fuzz.trimf(variable.universe, list(abc))
 
     # --- Mamdani rule base (domain-expert-style heuristics) ---
     # Rules 1-14 below are the original 3x3 rainfall x water_storage grid
@@ -203,6 +200,68 @@ def _build_system() -> tuple[ctrl.ControlSystem, ctrl.Antecedent, ctrl.Anteceden
     return system, rainfall_dev, water_storage, soil_fert
 
 
+# Input universes (the clipping range of every crisp input). Previously the
+# same bounds were written out in two places; one table keeps them in step.
+INPUT_BOUNDS = {"rainfall_dev": (-60.0, 60.0), "water_storage": (0.0, 100.0), "soil_fert": (0.0, 100.0)}
+OUTPUT_VARIABLES = ("yield_conf", "irrigation_risk")
+
+# Scenario names of rules 15-26, taken verbatim from the comments in
+# _build_system (no new agronomic content); rules 1-14 are described by
+# their conditions alone.
+RULE_SCENARIOS = {
+    15: "Severe/compound drought stress",
+    16: "Flood / waterlogging stress",
+    17: "Canal/reservoir irrigation advantage",
+    18: "Groundwater depletion risk",
+    19: "Post-monsoon Rabi transition",
+    20: "Summer drought risk",
+    21: "Optimal combined conditions",
+    22: "Semi-wet transitional zone",
+    23: "Wet-zone transitional",
+    24: "Canal irrigation advantage under deficit",
+    25: "Wet-zone optimal case",
+    26: "Dry-zone marginal case",
+}
+
+
+@dataclass(frozen=True)
+class RuleSpec:
+    """Read-only description of one rule, in rule-base order (1-26)."""
+    number: int
+    antecedents: tuple      # ((variable, term), ...) AND-ed
+    consequents: tuple      # ((variable, term), ...)
+    text_if: str
+    text_then: str
+    scenario: str | None
+
+
+@lru_cache(maxsize=1)
+def rule_specs() -> tuple:
+    """The rule base as plain data, built once from the compiled system so
+    explanations, audits and fired_rules all read the same definition."""
+    system, *_ = _build_system()
+    specs = []
+    for number, rule in enumerate(system.rules, start=1):
+        terms = list(rule.antecedent_terms)
+        specs.append(RuleSpec(
+            number=number,
+            antecedents=tuple((t.parent.label, t.label) for t in terms),
+            consequents=tuple((c.term.parent.label, c.term.label) for c in rule.consequent),
+            text_if=" AND ".join(f"{t.parent.label} is {t.label}" for t in terms),
+            text_then=", ".join(f"{c.term.parent.label} is {c.term.label}" for c in rule.consequent),
+            scenario=RULE_SCENARIOS.get(number),
+        ))
+    return tuple(specs)
+
+
+def _clipped_inputs(rainfall_deviation_percent, water_storage_percent, soil_fertility_index):
+    return {
+        "rainfall_dev": float(np.clip(rainfall_deviation_percent, *INPUT_BOUNDS["rainfall_dev"])),
+        "water_storage": float(np.clip(water_storage_percent, *INPUT_BOUNDS["water_storage"])),
+        "soil_fert": float(np.clip(soil_fertility_index, *INPUT_BOUNDS["soil_fert"])),
+    }
+
+
 def evaluate_uncertainty(
     rainfall_deviation_percent: float,
     water_storage_percent: float,
@@ -213,13 +272,32 @@ def evaluate_uncertainty(
     Inputs are clipped to the universes the membership functions were
     defined over, so extreme/out-of-range readings degrade gracefully
     instead of raising.
+
+    The inference itself is memoised on the clipped inputs (see
+    _evaluate_cached): the engine is a pure function of them, and the same
+    region profile is evaluated repeatedly (dashboard, comparison,
+    explanations, the ten runs of a scenario simulation). Each call still
+    returns a new UncertaintyAssessment, so callers can never share state.
     """
+    x = _clipped_inputs(rainfall_deviation_percent, water_storage_percent, soil_fertility_index)
+    yield_conf, irr_risk, rain_label, water_label, soil_label = _evaluate_cached(
+        x["rainfall_dev"], x["water_storage"], x["soil_fert"])
+    return UncertaintyAssessment(
+        yield_confidence=yield_conf,
+        irrigation_risk=irr_risk,
+        rainfall_label=rain_label,
+        water_label=water_label,
+        soil_label=soil_label,
+    )
+
+
+@lru_cache(maxsize=4096)
+def _evaluate_cached(r: float, w: float, s: float) -> tuple:
+    """scikit-fuzzy Mamdani inference for already-clipped inputs. Unchanged
+    from the original evaluate_uncertainty body; only moved here so its
+    result can be memoised."""
     system, rainfall_dev, water_storage, soil_fert = _build_system()
     sim = ctrl.ControlSystemSimulation(system)
-
-    r = float(np.clip(rainfall_deviation_percent, -60, 60))
-    w = float(np.clip(water_storage_percent, 0, 100))
-    s = float(np.clip(soil_fertility_index, 0, 100))
 
     sim.input["rainfall_dev"] = r
     sim.input["water_storage"] = w
@@ -234,57 +312,62 @@ def evaluate_uncertainty(
         # edges) -- fall back to a neutral, mildly cautious estimate.
         yield_conf, irr_risk = 0.5, 0.5
 
-    return UncertaintyAssessment(
-        yield_confidence=round(_clip01(yield_conf), 3),
-        irrigation_risk=round(_clip01(irr_risk), 3),
-        rainfall_label=_dominant_label(rainfall_dev, r),
-        water_label=_dominant_label(water_storage, w),
-        soil_label=_dominant_label(soil_fert, s),
+    return (
+        round(_clip01(yield_conf), 3),
+        round(_clip01(irr_risk), 3),
+        _dominant_label(rainfall_dev, r),
+        _dominant_label(water_storage, w),
+        _dominant_label(soil_fert, s),
     )
 
 
-def _clipped_inputs(rainfall_deviation_percent, water_storage_percent, soil_fertility_index):
+def _raw_memberships(x: dict) -> dict:
+    """Unrounded membership degrees of clipped inputs (the values the engine uses)."""
+    _, rainfall_dev, water_storage, soil_fert = _build_system()
     return {
-        "rainfall_dev": float(np.clip(rainfall_deviation_percent, -60, 60)),
-        "water_storage": float(np.clip(water_storage_percent, 0, 100)),
-        "soil_fert": float(np.clip(soil_fertility_index, 0, 100)),
+        antecedent.label: {
+            label: float(fuzz.interp_membership(antecedent.universe, term.mf, x[antecedent.label]))
+            for label, term in antecedent.terms.items()
+        }
+        for antecedent in (rainfall_dev, water_storage, soil_fert)
     }
+
+
+@lru_cache(maxsize=4096)
+def _memberships_cached(r: float, w: float, s: float) -> tuple:
+    raw = _raw_memberships({"rainfall_dev": r, "water_storage": w, "soil_fert": s})
+    return tuple((var, tuple((label, round(v, 3)) for label, v in terms.items())) for var, terms in raw.items())
 
 
 def input_memberships(rainfall_deviation_percent, water_storage_percent, soil_fertility_index) -> dict:
     """Membership degree of each input in each of its fuzzy sets, using the
-    same membership functions and clipping as evaluate_uncertainty."""
-    _, rainfall_dev, water_storage, soil_fert = _build_system()
+    same membership functions and clipping as evaluate_uncertainty
+    (rounded to 3 decimals). Memoised; returns a fresh dict each call."""
     x = _clipped_inputs(rainfall_deviation_percent, water_storage_percent, soil_fertility_index)
-    out = {}
-    for antecedent in (rainfall_dev, water_storage, soil_fert):
-        value = x[antecedent.label]
-        out[antecedent.label] = {
-            label: round(float(fuzz.interp_membership(antecedent.universe, term.mf, value)), 3)
-            for label, term in antecedent.terms.items()
-        }
-    return out
+    return {var: dict(terms) for var, terms in _memberships_cached(x["rainfall_dev"], x["water_storage"], x["soil_fert"])}
+
+
+@lru_cache(maxsize=4096)
+def _fired_cached(r: float, w: float, s: float) -> tuple:
+    degrees = {var: dict(terms) for var, terms in _memberships_cached(r, w, s)}
+    fired = []
+    for spec in rule_specs():
+        strength = min(degrees[var][term] for var, term in spec.antecedents)
+        if strength <= 0:
+            continue
+        fired.append((spec.number, spec.text_if, spec.text_then, round(strength, 3)))
+    return tuple(sorted(fired, key=lambda r: (-r[3], r[0])))
 
 
 def fired_rules(rainfall_deviation_percent, water_storage_percent, soil_fertility_index) -> list:
     """Firing strength of every rule (min over its AND-ed antecedent
-    memberships), strongest first; rule numbers match _build_system's
-    order (1-26). Rules that do not fire (strength 0) are omitted."""
-    system, *_ = _build_system()
-    degrees = input_memberships(rainfall_deviation_percent, water_storage_percent, soil_fertility_index)
-    fired = []
-    for number, rule in enumerate(system.rules, start=1):
-        terms = list(rule.antecedent_terms)
-        strength = min(degrees[t.parent.label][t.label] for t in terms)
-        if strength <= 0:
-            continue
-        fired.append({
-            "rule": number,
-            "if": " AND ".join(f"{t.parent.label} is {t.label}" for t in terms),
-            "then": ", ".join(f"{c.term.parent.label} is {c.term.label}" for c in rule.consequent),
-            "strength": round(strength, 3),
-        })
-    return sorted(fired, key=lambda r: (-r["strength"], r["rule"]))
+    memberships, using the 3-decimal memberships of input_memberships),
+    strongest first; rule numbers match _build_system's order (1-26).
+    Rules that do not fire (strength 0) are omitted. Memoised; returns new
+    dicts each call."""
+    x = _clipped_inputs(rainfall_deviation_percent, water_storage_percent, soil_fertility_index)
+    return [{"rule": n, "if": i, "then": t, "strength": st}
+            for n, i, t, st in _fired_cached(x["rainfall_dev"], x["water_storage"], x["soil_fert"])]
 
 
 def output_term(variable: str, value01: float) -> tuple:
