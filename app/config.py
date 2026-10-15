@@ -12,6 +12,7 @@ being scattered as magic numbers through the codebase) for two reasons:
    for the justification of each assumption below.
 """
 
+import os
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
@@ -178,6 +179,72 @@ NSGA2_SEED = 42
 # suite runs in a couple of seconds instead of ~10s per optimisation run.
 NSGA2_FAST_POP_SIZE = 24
 NSGA2_FAST_N_GEN = 15
+
+# ---------------------------------------------------------------------------
+# NSGA-II engine modes (see docs/handbook/NSGAII_IMPROVEMENT_SUMMARY.md).
+#
+# "original" is the published engine: it reproduces every published result
+# bit for bit and is the default. "enhanced" is the experimental engine; it
+# changes the optimisation outputs and must be selected explicitly, either
+# here or with the AGROOPTIMIZE_NSGA2_MODE environment variable. Each
+# improvement is a separate switch, so any one of them can be benchmarked on
+# its own (scripts/benchmark_nsga2.py) on top of either mode.
+#
+# Diversity monitoring and runtime profiling only observe the run (they draw
+# no random numbers), so they are on in both modes without changing results.
+# ---------------------------------------------------------------------------
+NSGA2_ENGINE_MODE = os.environ.get("AGROOPTIMIZE_NSGA2_MODE", "original")
+
+NSGA2_ENGINE_FEATURES = {
+    "original": {
+        "adaptive_mutation": False,
+        "adaptive_crossover": False,
+        "smart_initialization": False,
+        "duplicate_removal": False,
+        "early_stopping": False,
+        "diversity_monitoring": True,
+        "runtime_profiling": True,
+    },
+    "enhanced": {
+        "adaptive_mutation": True,
+        "adaptive_crossover": False,
+        "smart_initialization": True,
+        "duplicate_removal": False,
+        "early_stopping": False,
+        "diversity_monitoring": True,
+        "runtime_profiling": True,
+    },
+}
+
+# Base per-gene mutation probability of each mode. The original engine uses
+# the paper's 0.12; the parameter study found 0.05 better on this problem
+# (NSGAII_PROFILE.md section 4), so the enhanced engine starts from 0.05 and
+# adapts it from there.
+NSGA2_ENGINE_MUTATION_PROB = {"original": NSGA2_MUTATION_PROB, "enhanced": 0.05}
+
+# Adaptive mutation: the per-gene probability rises when decision-space
+# diversity falls below `diversity_floor` x its initial value, and is scaled
+# by `converged_scale` once the front has stagnated, within [min, max].
+# Tuned on seeds 100-104 (NSGAII_PROFILE.md); evaluated on seeds 0-9.
+NSGA2_ADAPTIVE_MUTATION = {"min_prob": 0.02, "max_prob": 0.30, "diversity_floor": 0.5, "converged_scale": 0.2}
+
+# Adaptive crossover: probability moves linearly from `start_prob` (exploration)
+# in the first generation to `end_prob` (exploitation) in the last.
+NSGA2_ADAPTIVE_CROSSOVER = {"start_prob": 0.95, "end_prob": 0.70}
+
+# Smart initialisation: share of the initial population seeded from the
+# district's candidate crops; the rest is drawn uniformly at random.
+NSGA2_SMART_INIT_FRACTION = 0.2
+
+# Duplicate removal: offspring closer than this (Euclidean distance in the
+# decision space normalised to [0, 1] per gene) to another individual are
+# rejected. pymoo's default rejects only exact copies (1e-16).
+NSGA2_DUPLICATE_TOLERANCE = 1e-4
+
+# Early stopping: stop when the hypervolume of the first front has improved
+# by less than `tolerance` (relative) over the last `patience` generations,
+# never before `min_generations`.
+NSGA2_EARLY_STOPPING = {"patience": 30, "tolerance": 1e-4, "min_generations": 60}
 
 # ---------------------------------------------------------------------------
 # Decision output
