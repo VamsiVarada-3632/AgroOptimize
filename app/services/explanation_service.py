@@ -761,7 +761,8 @@ def explain(ctx: ExplanationContext) -> dict:
 
     hv = ctx.convergence_history
     meta = ctx.meta
-    fired = fz.fired_rules(rp["rainfall"]["avg_deviation_percent"], rp["water"]["avg_storage_percent"], rp["soil"]["fertility_index"])
+    fuzzy_inputs = (rp["rainfall"]["avg_deviation_percent"], rp["water"]["avg_storage_percent"], rp["soil"]["fertility_index"])
+    fired = fz.fired_rules(*fuzzy_inputs)
     timeline = [
         make_item("data", "1 · District data", f"{rp['location']} {rp['season']} {rp['year']}: months {', '.join(rp['rainfall']['months_used'])}; "
               f"{len(rp['candidate_crops'])} candidate crops ranked by historical revenue.", "dataset",
@@ -811,7 +812,10 @@ def explain(ctx: ExplanationContext) -> dict:
         "crop_breakdown": crops["crops"],
         "consistency_checks": crops["consistency"],
         "timeline": timeline,
-        "fuzzy_reasoning": {"input_memberships": timeline[1]["evidence"]["memberships"], "fired_rules": fired},
+        # `inference` (added): per-rule status, contribution and leave-one-out
+        # importance from fuzzy.engine.explain_inference; existing keys unchanged.
+        "fuzzy_reasoning": {"input_memberships": timeline[1]["evidence"]["memberships"], "fired_rules": fired,
+                            "inference": fz.explain_inference(*fuzzy_inputs)},
     }
 
 

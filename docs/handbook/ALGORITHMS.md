@@ -83,10 +83,11 @@ AND = `min`, rule aggregation = `max`, implication = `min` (scikit-fuzzy default
 Rule-base properties worth knowing for the viva:
 
 * **Rules do not "cap" or "override".** Mamdani max-aggregation only ever *adds* consequent mass. Rule 5 (normal ∧ medium → high) and rule 22 (… ∧ soil medium → medium) both fire and the centroid lands between the sets. A rule can pull the centroid toward its consequent; it cannot stop another rule from firing.
-* **Five rules are provably inert.** If rule B has the same consequent as rule A and a strictly more specific antecedent, B's firing strength (a `min` over more terms) is never larger than A's, so it never changes the aggregated output. Measured by deleting each rule and re-evaluating a 21×21×21 input grid (9,261 points):
+* **Six rules are provably inert** (corrected from five; rule 13 was missed — see [FUZZY_SYSTEM_ANALYSIS.md](FUZZY_SYSTEM_ANALYSIS.md) §4, where `app/fuzzy/audit.py` now computes this and the tests check it). If rule B has the same consequent as rule A and a strictly more specific antecedent, B's firing strength (a `min` over more terms) is never larger than A's, so it never changes the aggregated output. Measured by deleting each rule and re-evaluating a 21×21×21 input grid (9,261 points):
 
   | Rule removed | Max change in yield_conf | Max change in irrigation_risk | Subsumed by |
   |---|---|---|---|
+  | 13 | 0 | 0 | 10 |
   | 15 | 0 | 0 | 1 (and 14, 20) |
   | 19 | 0 | 0 | 2 |
   | 21 | 0 | 0 | 6 |
@@ -95,7 +96,7 @@ Rule-base properties worth knowing for the viva:
   | 22 / 24 | 0 | 22.6 / 15.7 pts | yield part subsumed by 12 / 3; risk part active |
   | 16, 17, 18, 20, 23 | up to 19.7 pts | up to 52.1 pts | active |
 
-  The code comment on rule 19 ("caps it at medium") therefore does not describe its behaviour; with rule 10 (soil good → high) also firing, rule 19 contributes nothing. Effective rule count: **21**, not 26 (TODO T-5).
+  The code comment on rule 19 ("caps it at medium") therefore does not describe its behaviour; with rule 10 (soil good → high) also firing, rule 19 contributes nothing. Effective rule count: **20**, not 26 (TODO T-5).
 * **Incompleteness for `irrigation_risk`.** Only water/rain rules (1–9, 14, 15, 17, 18, 20–22, 24–26) set it; soil-only situations leave it to the rain×water grid, which is complete (all 9 combinations), so an output always exists.
 * **Observed output range** on the real data (60 location-season-years): yield_confidence 0.547–0.883, irrigation_risk 0.117–0.500. Low water and poor soil sets are never activated by the dataset.
 

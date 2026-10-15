@@ -19,7 +19,7 @@ Ordered by priority. IDs are referenced from the other documents. "Decision" ite
 | T-4 | Add agronomic response: irrigation via FAO-33 `Ky`, nitrogen via Mitscherlich/quadratic-plateau, so multipliers can pay off (RESEARCH_REVIEW R-1) |
 | T-10 | Replace the tonnage objective with net return using verified MSP/market prices (R-2) |
 | T-3 | Seasonal rainfall deviation from totals; Rabi = Oct(Y)–Mar(Y+1) (DATA_VALIDATION D5–D6) |
-| T-5 | Remove or rewrite fuzzy rules 15, 19, 21, 25, 26 (no effect); fix rule comments |
+| T-5 | Rewrite (rule weights or lower-term rules) fuzzy rules 13, 15, 19, 21, 25, 26 (no effect) and the capping rules 16/19/23; fix rule comments — see FUZZY_SYSTEM_ANALYSIS §8 |
 | T-17 | Multi-seed evaluation script (≥20 seeds), fixed-bounds hypervolume, NSGA-III and ε-constraint LP baselines |
 | T-18 | Let uncertainty affect water/feasibility (e.g. irrigation_risk scales effective rainfall) or add rainfall scenarios |
 
@@ -39,6 +39,14 @@ Ordered by priority. IDs are referenced from the other documents. "Decision" ite
 | T-21 | Rate limiting + per-client quota + retention policy for `results/`; require `client_id` on `GET /api/results/{id}` |
 | T-22 | Return relative file names instead of absolute `saved_files` paths |
 | T-23 | Split `dashboard_service.py`; typed response models for all endpoints |
+
+## Fuzzy system follow-ups (change outputs – versioned model change)
+| ID | Task |
+|---|---|
+| T-44 | IMD-aligned rainfall partition with ε-completeness ≥ 0.5 for all inputs (M-1) |
+| T-45 | Extend the rainfall universe / add large deficit and excess sets (5 Pollachi Summer profiles clipped) |
+| T-46 | Monotonicity regression test once the partitions are revised |
+| T-47 | Global sensitivity analysis of the fuzzy layer; calibration when outcome data exist |
 
 ## Explainability follow-ups
 | ID | Task |

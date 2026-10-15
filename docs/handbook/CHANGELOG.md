@@ -4,6 +4,19 @@ All code modifications made during the 2026-09-29 audit. All changes are submitt
 
 Verification after all changes: backend **205/205 tests pass** (was 165/165); output fingerprint over 48 endpoint/pipeline results is **identical to HEAD** apart from the new additive provenance fields; frontend `oxlint` 0 warnings (was 3 in `src` + noise), `vite build` succeeds; UI flows exercised in Chrome with no console errors.
 
+## [Unreleased] – Fuzzy system optimisation
+
+### Added
+- `fuzzy.engine.explain_inference`: exact rule-level attribution (status, limiting condition, area share, leave-one-out importance, ranking); included in plan explanations as `fuzzy_reasoning.inference` and shown in the explanation panel.
+- `app/fuzzy/audit.py`, `GET /api/fuzzy/explain`, `GET /api/fuzzy/audit`, `scripts/benchmark_fuzzy.py`.
+- `FUZZY_SYSTEM_ANALYSIS.md`, `FUZZY_EXPLAINABILITY.md`, `FUZZY_RESEARCH_REVIEW.md`, `FUZZY_IMPROVEMENT_SUMMARY.md`; `tests/test_fuzzy_audit.py` (170) and 2 frontend tests.
+
+### Changed
+- Fuzzy inference memoised per clipped input; rule base read once into `rule_specs()`; membership functions and input bounds in single tables. Outputs bit-identical on 9,321 inputs; optimisation fingerprint identical.
+
+### Fixed (documentation)
+- Six fuzzy rules are inert (13 was missed); effective rule count 20, not 21.
+
 ## [Unreleased] – Scenario Simulation & Decision Impact Analysis
 
 ### Added

@@ -25,7 +25,9 @@ final_year_project/
 | `app/main.py` | Active | FastAPI app, CORS, 13 route handlers. See [API_REFERENCE.md](API_REFERENCE.md) |
 | `app/data/loader.py` | Active | Reads the 16 CSVs, concatenates per kind, `lru_cache(maxsize=1)` |
 | `app/data/preprocessing.py` | Active | Builds `RegionSeasonProfile` (soil, rainfall, water, candidate crops); soil fertility index; `[0,1]` snapshot; provenance flag |
-| `app/fuzzy/engine.py` | Active | Mamdani fuzzy inference system (3 inputs, 2 outputs, 26 rules) + per-crop confidence adjustment |
+| `app/fuzzy/engine.py` | Active | Mamdani fuzzy inference system (3 inputs, 2 outputs, 26 rules) + per-crop confidence adjustment + rule-level explanation |
+| `app/fuzzy/audit.py` | Active | Read-only audit of the fuzzy system (dominance, coverage, firing, monotonicity) |
+| `scripts/benchmark_fuzzy.py` | Tool | Times the fuzzy layer and its callers |
 | `app/optimization/problem.py` | Active | `FarmPlanProblem` (pymoo `Problem`): chromosome bounds + 4 vectorised objectives + budget constraint |
 | `app/optimization/operators.py` | Active | Custom `SinglePointCrossover`, `GaussianMutation`, `AllocationRepair` |
 | `app/optimization/nsga2_runner.py` | Active | Runs pymoo NSGA-II (serialised by a lock), decodes Pareto front, hypervolume convergence history |

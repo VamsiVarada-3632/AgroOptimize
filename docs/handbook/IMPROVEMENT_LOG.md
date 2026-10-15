@@ -39,7 +39,7 @@ Why each change was made, how it was verified, and what was deliberately **not**
 | Totals-based rainfall deviation, Rabi across year boundary | Shifts fuzzy outputs by up to 0.21 → all results change | T-3 |
 | Yield response to irrigation/fertiliser | Needs sourced agronomic parameters; core model change | T-4 |
 | Profit objective | Needs verified prices (current MSP column questionable) | T-10 |
-| Remove inert fuzzy rules | No numeric effect, but changes the documented rule count – team should decide wording | T-5 |
+| Remove inert fuzzy rules | No numeric effect, but changes the documented rule count – team should decide wording. Six rules (13, 15, 19, 21, 25, 26) are inert; explanations now mark them as masked/tied with zero importance | T-5 |
 | Replace global RNG with pymoo `random_state` | Removes the lock but changes every seeded result | T-19 |
 | Weather TTL cache | Would make the existing weather-fallback test order-dependent; needs a small test refactor | T-20 |
 | Delete `agrooptimize-backend/frontend/` and `datasets/` | Tracked in git / possibly referenced by the team; decision first | T-7, T-8 |

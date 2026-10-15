@@ -1,6 +1,6 @@
 # AgroOptimize — Complete Project Documentation (single file)
 
-All 30 handbook documents combined and grouped into 6 parts. Cross-references point to the section of the same name below.
+All 34 handbook documents combined and grouped into 6 parts. Cross-references point to the section of the same name below.
 
 ## Table of Contents
 
@@ -20,8 +20,12 @@ All 30 handbook documents combined and grouped into 6 parts. Cross-references po
   - [DATA_VALIDATION](#doc-data-validation)
   - [DISTRICT_INTELLIGENCE](#doc-district-intelligence)
   - [SCENARIO_SIMULATION](#doc-scenario-simulation)
-- **Part 4 — Algorithms, Explainability & Pipelines**
+- **Part 4 — Algorithms, Fuzzy System, Explainability & Pipelines**
   - [ALGORITHMS](#doc-algorithms)
+  - [FUZZY_SYSTEM_ANALYSIS](#doc-fuzzy-system-analysis)
+  - [FUZZY_EXPLAINABILITY](#doc-fuzzy-explainability)
+  - [FUZZY_RESEARCH_REVIEW](#doc-fuzzy-research-review)
+  - [FUZZY_IMPROVEMENT_SUMMARY](#doc-fuzzy-improvement-summary)
   - [EXPLAINABILITY](#doc-explainability)
   - [SCORING_AND_RANKING](#doc-scoring-and-ranking)
   - [OPTIMIZATION_PIPELINE](#doc-optimization-pipeline)
@@ -94,7 +98,7 @@ Full map: [FOLDER_STRUCTURE.md](#doc-folder-structure). Architecture diagrams: [
 
 **Stage 1 – profile** (`app/data/preprocessing.py`). For (location, season, year): soil fertility index `0.3·pH_score + 0.3·OC_score + 0.4·NPK_score` (0–100); mean seasonal rainfall deviation % and storage % over the season's months (Kharif Jun–Sep, Rabi Oct–Mar same calendar year, Summer Feb–May); effective rainfall = mean monthly rain × months × 0.7; candidate crops = top-N (6) by historical revenue.
 
-**Stage 2 – fuzzy** (`app/fuzzy/engine.py`). Inputs: rainfall deviation [−60, 60] %, storage [0, 100] %, fertility [0, 100]; three triangular sets each (deficit/normal/surplus; low/medium/high; poor/medium/good). Outputs yield_confidence and irrigation_risk (low/medium/high on 0–100, centroid ÷ 100). 26 rules (9-rule rain×water grid, 5 soil interactions, 12 three-way extensions); min/max Mamdani; **5 rules (15, 19, 21, 25, 26) provably have no effect**. Per crop: `confidence = yield_confidence × (1 − irrigation_risk × dep × 0.4)`, dep ∈ {0.1, 0.3, 0.6, 1.0} for Very Low…High rainfall dependency. Observed on real data: yield_confidence 0.55–0.88, irrigation_risk 0.12–0.50.
+**Stage 2 – fuzzy** (`app/fuzzy/engine.py`). Inputs: rainfall deviation [−60, 60] %, storage [0, 100] %, fertility [0, 100]; three triangular sets each (deficit/normal/surplus; low/medium/high; poor/medium/good). Outputs yield_confidence and irrigation_risk (low/medium/high on 0–100, centroid ÷ 100). 26 rules (9-rule rain×water grid, 5 soil interactions, 12 three-way extensions); min/max Mamdani; **6 rules (13, 15, 19, 21, 25, 26) provably have no effect** (audit and per-rule attribution: [FUZZY_SYSTEM_ANALYSIS.md](#doc-fuzzy-system-analysis), [FUZZY_EXPLAINABILITY.md](#doc-fuzzy-explainability)). Per crop: `confidence = yield_confidence × (1 − irrigation_risk × dep × 0.4)`, dep ∈ {0.1, 0.3, 0.6, 1.0} for Very Low…High rainfall dependency. Observed on real data: yield_confidence 0.55–0.88, irrigation_risk 0.12–0.50.
 
 **Stage 3 – NSGA-II** (`app/optimization/`). Chromosome = n land shares ∈ [1e−4, 1] (renormalised to sum 1) + n irrigation multipliers ∈ [0.7, 1.3] + n fertiliser multipliers ∈ [0.7, 1.3]. Objectives with area aᵢ:
 - f1 = −Σ aᵢ·Yieldᵢ/1000·confᵢ
@@ -214,6 +218,7 @@ VVS Vamsi · Vennela Harshini · Garudammagari Sreenithya · Gaddam Jahnavi
 - Every saved run persisted as JSON + CSV + convergence chart.
 - District Intelligence Center: one page per district with climate, soil, water, crop history, crop suitability, historical prices and generated insights ([DISTRICT_INTELLIGENCE.md](#doc-district-intelligence)).
 - Scenario Simulation: change rainfall, water, input costs, prices, land, budget or priorities and see how — and why — the optimised recommendation changes, with statistically tested impacts ([SCENARIO_SIMULATION.md](#doc-scenario-simulation)).
+- Fuzzy system transparency: every fuzzy inference explained rule by rule (decisive vs masked rules, share and importance), plus a tested audit of the rule base and membership functions ([FUZZY_SYSTEM_ANALYSIS.md](#doc-fuzzy-system-analysis)).
 - Explainable recommendations: why a plan was chosen, trade-offs, constraint checks, risks, historical context and a decomposed confidence score – all derived from the pipeline's own numbers ([EXPLAINABILITY.md](#doc-explainability)).
 
 ### Repository layout
@@ -274,7 +279,7 @@ Frontend on Vercel (`vercel.json`, `VITE_API_BASE` in `.env.production`); backen
 Irrigation/fertiliser multipliers currently have no yield benefit (optimiser keeps them at the minimum); the yield objective sums tonnes across crops; fuzzy output affects only expected yield; district-level data, single season; demo-only client-side authentication. Full list and roadmap: [RESEARCH_REVIEW.md](#doc-research-review), [TODO.md](#doc-todo).
 
 ### Documentation index
-[PROJECT_KNOWLEDGE](#doc-project-knowledge) · [ARCHITECTURE](#doc-architecture) · [FOLDER_STRUCTURE](#doc-folder-structure) · [FRONTEND](#doc-frontend) · [BACKEND](#doc-backend) · [DATASETS](#doc-datasets) · [ALGORITHMS](#doc-algorithms) · [API_REFERENCE](#doc-api-reference) · [DATA_FLOW](#doc-data-flow) · [USER_FLOW](#doc-user-flow) · [OPTIMIZATION_PIPELINE](#doc-optimization-pipeline) · [REPORT_PIPELINE](#doc-report-pipeline) · [HISTORY_PIPELINE](#doc-history-pipeline) · [SCORING_AND_RANKING](#doc-scoring-and-ranking) · [CONFIGURATION](#doc-configuration) · [DEPENDENCIES](#doc-dependencies) · [PROJECT_REVIEW](#doc-project-review) · [DATA_VALIDATION](#doc-data-validation) · [PERFORMANCE_REVIEW](#doc-performance-review) · [SECURITY_REVIEW](#doc-security-review) · [UI_UX_REVIEW](#doc-ui-ux-review) · [RESEARCH_REVIEW](#doc-research-review) · [TECHNICAL_DEBT](#doc-technical-debt) · [IMPROVEMENT_LOG](#doc-improvement-log) · [CHANGELOG](#doc-changelog) · [TODO](#doc-todo) · [EXPLAINABILITY](#doc-explainability) · [DISTRICT_INTELLIGENCE](#doc-district-intelligence) · [SCENARIO_SIMULATION](#doc-scenario-simulation)
+[PROJECT_KNOWLEDGE](#doc-project-knowledge) · [ARCHITECTURE](#doc-architecture) · [FOLDER_STRUCTURE](#doc-folder-structure) · [FRONTEND](#doc-frontend) · [BACKEND](#doc-backend) · [DATASETS](#doc-datasets) · [ALGORITHMS](#doc-algorithms) · [API_REFERENCE](#doc-api-reference) · [DATA_FLOW](#doc-data-flow) · [USER_FLOW](#doc-user-flow) · [OPTIMIZATION_PIPELINE](#doc-optimization-pipeline) · [REPORT_PIPELINE](#doc-report-pipeline) · [HISTORY_PIPELINE](#doc-history-pipeline) · [SCORING_AND_RANKING](#doc-scoring-and-ranking) · [CONFIGURATION](#doc-configuration) · [DEPENDENCIES](#doc-dependencies) · [PROJECT_REVIEW](#doc-project-review) · [DATA_VALIDATION](#doc-data-validation) · [PERFORMANCE_REVIEW](#doc-performance-review) · [SECURITY_REVIEW](#doc-security-review) · [UI_UX_REVIEW](#doc-ui-ux-review) · [RESEARCH_REVIEW](#doc-research-review) · [TECHNICAL_DEBT](#doc-technical-debt) · [IMPROVEMENT_LOG](#doc-improvement-log) · [CHANGELOG](#doc-changelog) · [TODO](#doc-todo) · [EXPLAINABILITY](#doc-explainability) · [DISTRICT_INTELLIGENCE](#doc-district-intelligence) · [SCENARIO_SIMULATION](#doc-scenario-simulation) · [FUZZY_SYSTEM_ANALYSIS](#doc-fuzzy-system-analysis) · [FUZZY_EXPLAINABILITY](#doc-fuzzy-explainability) · [FUZZY_RESEARCH_REVIEW](#doc-fuzzy-research-review) · [FUZZY_IMPROVEMENT_SUMMARY](#doc-fuzzy-improvement-summary)
 
 <a id="doc-folder-structure"></a>
 
@@ -305,7 +310,9 @@ final_year_project/
 | `app/main.py` | Active | FastAPI app, CORS, 13 route handlers. See [API_REFERENCE.md](#doc-api-reference) |
 | `app/data/loader.py` | Active | Reads the 16 CSVs, concatenates per kind, `lru_cache(maxsize=1)` |
 | `app/data/preprocessing.py` | Active | Builds `RegionSeasonProfile` (soil, rainfall, water, candidate crops); soil fertility index; `[0,1]` snapshot; provenance flag |
-| `app/fuzzy/engine.py` | Active | Mamdani fuzzy inference system (3 inputs, 2 outputs, 26 rules) + per-crop confidence adjustment |
+| `app/fuzzy/engine.py` | Active | Mamdani fuzzy inference system (3 inputs, 2 outputs, 26 rules) + per-crop confidence adjustment + rule-level explanation |
+| `app/fuzzy/audit.py` | Active | Read-only audit of the fuzzy system (dominance, coverage, firing, monotonicity) |
+| `scripts/benchmark_fuzzy.py` | Tool | Times the fuzzy layer and its callers |
 | `app/optimization/problem.py` | Active | `FarmPlanProblem` (pymoo `Problem`): chromosome bounds + 4 vectorised objectives + budget constraint |
 | `app/optimization/operators.py` | Active | Custom `SinglePointCrossover`, `GaussianMutation`, `AllocationRepair` |
 | `app/optimization/nsga2_runner.py` | Active | Runs pymoo NSGA-II (serialised by a lock), decodes Pareto front, hypervolume convergence history |
@@ -632,9 +639,16 @@ Creates `FastAPI(title="AgroOptimize API", version="0.1.0")`, adds CORS (localho
 |---|---|
 | `UncertaintyAssessment` | `yield_confidence`, `irrigation_risk` (0–1, 3 dp) + three dominant labels |
 | `_build_system()` | `lru_cache(1)`: defines universes, MFs, 26 rules, returns `ControlSystem` + antecedents (first call ≈0.6 s) |
-| `evaluate_uncertainty(rain_dev, storage, fertility)` | clips inputs, new `ControlSystemSimulation` per call, centroid outputs ÷ 100; falls back to 0.5/0.5 on `KeyError/ValueError` |
+| `evaluate_uncertainty(rain_dev, storage, fertility)` | clips inputs to `INPUT_BOUNDS`, scikit-fuzzy inference memoised per clipped input (`_evaluate_cached`, 4096), centroid outputs ÷ 100; falls back to 0.5/0.5 on `KeyError/ValueError`; new result object per call |
+| `MEMBERSHIP_FUNCTIONS`, `INPUT_BOUNDS`, `RULE_SCENARIOS` | the triangles, input universes and scenario names of rules 15–26 |
+| `rule_specs()` | the 26 rules as plain data (conditions, conclusions, text), built once |
+| `input_memberships`, `fired_rules`, `output_term` | memberships (3 dp), fired rules (memoised), output term of a crisp value |
+| `explain_inference(rain_dev, storage, fertility)` | rule-level attribution: status, limiting condition, area share, leave-one-out importance, ranking (FUZZY_EXPLAINABILITY.md) |
 | `_dominant_label` | argmax membership |
 | `crop_yield_confidence(base, risk, dependency)` | per-crop penalty (≤ 40 %) |
+
+#### `app/fuzzy/audit.py`
+Read-only measurements: `rule_dominance`, `membership_coverage`, `output_bounds`, `leave_one_out`, `firing_statistics`, `monotonicity`, `evaluate_grid` (exact batch path), `summary` (cached, served by `/api/fuzzy/audit`). `scripts/benchmark_fuzzy.py` times the fuzzy layer and its callers.
 
 #### `app/optimization/problem.py`
 `CropVector.from_candidates(crops, assessment, use_fuzzy)` precomputes per-crop NumPy arrays (confidence = 1.0 when `use_fuzzy=False`). `FarmPlanProblem(profile, assessment, total_land_ha, budget_rs, use_fuzzy)` sets bounds (allocation lower bound 1e−4), 4 objectives, optional 1 inequality constraint; `_evaluate` is fully vectorised; `decode(x)` → dict of lists.
@@ -751,6 +765,7 @@ Not handled: disk full during save (500), Open-Meteo slowness (up to 5 s per cal
 | test_explanation.py | explanation structure, traceability, confidence, constraints, honesty rules, endpoints | 25 |
 | test_district.py | district aggregations vs raw CSVs, suitability, market, missing data, caching, endpoint | 96 |
 | test_simulation.py | pipeline hooks, validation, paired comparison, end-to-end scenarios vs CSV, history, statements, persistence, endpoints | 61 |
+| test_fuzzy_audit.py | memoised engine = uncached scikit-fuzzy, rule-level explanation exactness and consistency, audit vs analytic values, firing on data, endpoints | 170 |
 
 Gaps: operators unit-tested only indirectly; no test pins numeric outputs (a golden-master test would catch unintended model drift – TODO T-13); weather tests call the real Open-Meteo API when network is available; no frontend tests at all.
 
@@ -889,6 +904,8 @@ Base URL: local `http://localhost:8000`; production `https://agrooptimize-backen
 | GET | `/api/results/{run_id}/explanation?rank=` | Explanation of one plan in a saved run | Run Optimization, History, Reports | tens of ms |
 | GET | `/api/comparison/{district}/explanation?plan=` | Explanation of Plan A/B/C | Comparison | ~1 s cold, fast when the front is cached |
 | GET | `/api/district-intelligence/{district}` | Aggregated district profile | District Intelligence | 30–120 ms cold, ≈0 cached |
+| GET | `/api/fuzzy/explain?rainfall_dev=&water_storage=&soil_fert=` | Rule-level explanation of one fuzzy inference | – | ≈5 ms |
+| GET | `/api/fuzzy/audit` | Rule-base and membership-function audit + firing on the dataset | – | ≈0.7 s cold, cached |
 | POST | `/api/simulations/run` | Run a scenario simulation (baseline + scenario, 5 seeds each) | Scenario Simulation | ~4 s, never cached |
 | POST | `/api/simulations` | Save a simulation result by token | Scenario Simulation | fast |
 | GET | `/api/simulations?client_id=` | This browser's saved simulations | Scenario Simulation | fast |
@@ -1077,6 +1094,10 @@ One aggregated district profile (`DistrictIntelligenceOut`, ≈55 KB): `district
 ### Scenario Simulation
 
 `POST /api/simulations/run` takes `{base, scenario, client_id}` (`SimulationRequest`) and returns `SimulationOut`: `token, inputs, conditions, baseline, scenario, comparison, impact, crop_effects, fuzzy_changes, optimization, constraints, historical, decision_impact[], trade_offs, summary, meta`. Invalid controls, an unknown district or an infeasible baseline → 422. `POST /api/simulations {token, name, client_id}` saves a result computed in this process (201; 404 if the token expired or belongs to another browser). `GET /api/simulations`, `GET /api/simulations/{id}` and `DELETE /api/simulations/{id}` require `client_id` and only see that browser's simulations. Controls, validation and an example: [SCENARIO_SIMULATION.md](#doc-scenario-simulation).
+
+### Fuzzy system transparency
+
+`GET /api/fuzzy/explain` returns `fuzzy.engine.explain_inference` for one input triple (clipped like the engine; non-finite → 422): `inputs`, `outputs` (value, term and its membership, term cuts with setting rules, term area shares, `matches_engine`), `rules` (strength, status decisive/masked/not fired, `masked_by`, `tied_with`, limiting condition, `contribution_pct`, `leave_one_out_change`, `importance`), `ranking`, `summary`, `method`. Plan explanations carry the same object as `fuzzy_reasoning.inference`. `GET /api/fuzzy/audit` returns `dominance`, `coverage`, `output_bounds`, `dataset_firing`. See [FUZZY_EXPLAINABILITY.md](#doc-fuzzy-explainability) and [FUZZY_SYSTEM_ANALYSIS.md](#doc-fuzzy-system-analysis).
 
 <a id="doc-configuration"></a>
 
@@ -1821,7 +1842,7 @@ Charts reuse the validated accent/gray pair (simulated = accent green, original 
 
 ---
 
-# Part 4 — Algorithms, Explainability & Pipelines
+# Part 4 — Algorithms, Fuzzy System, Explainability & Pipelines
 
 <a id="doc-algorithms"></a>
 
@@ -1910,10 +1931,11 @@ AND = `min`, rule aggregation = `max`, implication = `min` (scikit-fuzzy default
 Rule-base properties worth knowing for the viva:
 
 * **Rules do not "cap" or "override".** Mamdani max-aggregation only ever *adds* consequent mass. Rule 5 (normal ∧ medium → high) and rule 22 (… ∧ soil medium → medium) both fire and the centroid lands between the sets. A rule can pull the centroid toward its consequent; it cannot stop another rule from firing.
-* **Five rules are provably inert.** If rule B has the same consequent as rule A and a strictly more specific antecedent, B's firing strength (a `min` over more terms) is never larger than A's, so it never changes the aggregated output. Measured by deleting each rule and re-evaluating a 21×21×21 input grid (9,261 points):
+* **Six rules are provably inert** (corrected from five; rule 13 was missed — see [FUZZY_SYSTEM_ANALYSIS.md](#doc-fuzzy-system-analysis) §4, where `app/fuzzy/audit.py` now computes this and the tests check it). If rule B has the same consequent as rule A and a strictly more specific antecedent, B's firing strength (a `min` over more terms) is never larger than A's, so it never changes the aggregated output. Measured by deleting each rule and re-evaluating a 21×21×21 input grid (9,261 points):
 
   | Rule removed | Max change in yield_conf | Max change in irrigation_risk | Subsumed by |
   |---|---|---|---|
+  | 13 | 0 | 0 | 10 |
   | 15 | 0 | 0 | 1 (and 14, 20) |
   | 19 | 0 | 0 | 2 |
   | 21 | 0 | 0 | 6 |
@@ -1922,7 +1944,7 @@ Rule-base properties worth knowing for the viva:
   | 22 / 24 | 0 | 22.6 / 15.7 pts | yield part subsumed by 12 / 3; risk part active |
   | 16, 17, 18, 20, 23 | up to 19.7 pts | up to 52.1 pts | active |
 
-  The code comment on rule 19 ("caps it at medium") therefore does not describe its behaviour; with rule 10 (soil good → high) also firing, rule 19 contributes nothing. Effective rule count: **21**, not 26 (TODO T-5).
+  The code comment on rule 19 ("caps it at medium") therefore does not describe its behaviour; with rule 10 (soil good → high) also firing, rule 19 contributes nothing. Effective rule count: **20**, not 26 (TODO T-5).
 * **Incompleteness for `irrigation_risk`.** Only water/rain rules (1–9, 14, 15, 17, 18, 20–22, 24–26) set it; soil-only situations leave it to the rain×water grid, which is complete (all 9 combinations), so an output always exists.
 * **Observed output range** on the real data (60 location-season-years): yield_confidence 0.547–0.883, irrigation_risk 0.117–0.500. Low water and poor soil sets are never activated by the dataset.
 
@@ -2072,6 +2094,371 @@ The "balanced" 0.30 was tuned empirically (documented in `ranking.py`) because c
 | Current season | `_current_season` | today's month → first season in `SEASON_MONTH_MAP` containing it (Feb/Mar → Rabi) |
 | History rows | `get_history` | per saved run: top plan yield/cost ÷ its area |
 
+<a id="doc-fuzzy-system-analysis"></a>
+
+## Fuzzy System Analysis
+
+Audit of the Mamdani fuzzy inference system in `app/fuzzy/engine.py`: architecture, data flow, membership functions, rule base, strengths, weaknesses and a prioritised improvement plan. Every figure below is produced by `app/fuzzy/audit.py` (also served by `GET /api/fuzzy/audit`) and checked in `tests/test_fuzzy_audit.py`. Explanation of individual inferences: [FUZZY_EXPLAINABILITY.md](#doc-fuzzy-explainability). Literature comparison: [FUZZY_RESEARCH_REVIEW.md](#doc-fuzzy-research-review). What was changed: [FUZZY_IMPROVEMENT_SUMMARY.md](#doc-fuzzy-improvement-summary).
+
+### 1. Architecture and workflow
+
+```mermaid
+flowchart LR
+    CSV[(rainfall, water, land CSVs)] --> P[preprocessing.get_region_season_profile]
+    P -->|season mean deviation %| R[rainfall_dev]
+    P -->|season mean storage %| W[water_storage]
+    P -->|fertility index 0-100| S[soil_fert]
+    R & W & S --> F[Mamdani FIS<br/>26 rules, min-AND, max aggregation,<br/>centroid]
+    F --> YC[yield_confidence 0-1]
+    F --> IR[irrigation_risk 0-1]
+    YC & IR --> C[crop_yield_confidence per crop<br/>yc · 1 − ir·dependency·0.4]
+    C --> N[NSGA-II yield objective f1]
+    N --> T[TOPSIS ranking]
+    F --> E[explanation engine, District Intelligence,<br/>Scenario Simulation, dashboard]
+```
+
+| Element | Implementation |
+|---|---|
+| Type | Mamdani (scikit-fuzzy 0.5.0 `ControlSystem`) |
+| Inputs | `rainfall_dev` [−60, 60] % (deficit, normal, surplus); `water_storage` [0, 100] % (low, medium, high); `soil_fert` [0, 100] (poor, medium, good) |
+| Outputs | `yield_conf` [0, 100] and `irrigation_risk` [0, 100] (low, medium, high), divided by 100 |
+| Membership functions | 15 triangles (`MEMBERSHIP_FUNCTIONS`) |
+| AND / implication / aggregation | min / min (clipping) / max |
+| Defuzzification | centroid on the output universe (step 1) upsampled with each cut's crossing points |
+| Rules | 26 (14 original + 12 named agro-climatic scenarios); effective 20 (§4) |
+| Crisp outputs | rounded to 3 decimals |
+
+**Interaction with the rest of the system.** The FIS runs once per region/season/year profile. Its only path into optimisation is `crop_yield_confidence`, which scales each crop's book yield in objective f1; cost, water and impact (f2–f4) do not use it. TOPSIS sees the effect only through the yield column, and the crop-level confidence also feeds the plan confidence label. The explanation engine, District Intelligence (suitability), Scenario Simulation (fuzzy changes) and the dashboard read the outputs, labels, memberships and fired rules.
+
+Inputs that are **not** fuzzy variables: soil moisture (not in the data), crop history (used by District Intelligence and explanations, not the FIS), budget and land size (NSGA-II constraint and problem size). They are listed in the brief but have no membership functions to audit.
+
+### 2. Data actually seen by the FIS
+
+60 location/season/year profiles (48 observed, 12 estimated 2024 rows):
+
+| Input | Observed range | Distinct values | Notes |
+|---|---|---|---|
+| rainfall_dev | −41.1 … +121.1 % | 47 | 5 Pollachi Summer profiles (+105 … +121 %) exceed the universe and are clipped to +60 |
+| water_storage | 38.3 … 85.0 % | 12 | never below 35 %: the *low* set is never activated |
+| soil_fert | 61.0 … 77.4 | 42 | never below 40: the *poor* set is never activated |
+
+Observed outputs: yield_confidence 0.547–0.883, irrigation_risk 0.117–0.500.
+
+### 3. Membership function audit (no changes made)
+
+| Input | ε-completeness | Weakly covered (max membership < 0.5) | Crossing points | Profiles in weak band |
+|---|---|---|---|---|
+| rainfall_dev | **0.143** | [−32.5, −7.5] and [7.5, 32.5] — 41.6 % of the universe | deficit/normal at −12.86 (μ 0.143); normal/surplus at +12.86 | 35 / 60 |
+| water_storage | 0.231 | [17.5, 35.0] and [62.5, 80.0] — 35 % | 26.9 (μ 0.231), 69.2 (μ 0.231) | 15 / 60 |
+| soil_fert | 0.231 | [20.0, 37.5] and [62.5, 80.0] — 35 % | 30.8 (μ 0.231), 69.2 (μ 0.231) | 54 / 60 |
+
+No gaps: every point has some membership (no zero-coverage region), and membership sums lie in [0.18, 1.0] (rainfall) and [0.375, 1.0] (others) — the partitions are not partitions of unity.
+
+| Question | Finding |
+|---|---|
+| Ranges realistic? | Storage and fertility universes fit. The rainfall universe ±60 % clips 5 real profiles (IMD's own categories run to "large excess" ≥ +60 % and "large deficient" ≤ −60 %, so the clip itself is defensible, but the clipped values lose information). |
+| Overlap correct? | Overlaps are narrow (8 points for rainfall, 13 for the others) and cross at low membership (0.14–0.23). The common design guideline is ε-completeness ≥ 0.5 (adjacent sets crossing at 0.5); all three inputs fall short. |
+| Smooth transitions? | Piecewise linear; the narrow, low crossings produce the non-monotone output steps in §5. |
+| Triangular vs Gaussian/bell? | Triangles are adequate and standard (Pedrycz 1994); Gaussians would remove kinks but not the coverage problem, and would change every output. The issue is placement, not shape. |
+| Unused regions? | Water *low* and soil *poor* are never activated by the data; rules depending on them (11 of 26) never fire on real profiles. |
+| Alignment with external standards | IMD classifies seasonal rainfall within ±19 % of the long-period average as **normal**. The FIS's *normal* set is only [−15, 15] with its crossing at ±12.9 %, so 9 profiles that IMD calls normal (e.g. −13.0 %, −18.2 %, +14.5 %, +19.0 %) get a dominant *deficit* or *surplus* label. |
+
+**Recommendation M-1 (not implemented — changes outputs).** Re-place the rainfall sets so adjacent sets cross at μ = 0.5 at the IMD category boundaries (±19.5 %), which also gives ε-completeness 0.5; the exact triangles are a design decision for the team, not something this audit should invent. Do the same for storage and fertility using agreed reference thresholds (reservoir operating rules; Soil Health Card ratings). Expected benefit: linguistic labels agree with official classifications; ε-completeness ≥ 0.5; fewer non-monotone steps. Cost: every fuzzy output and therefore every optimisation result changes — requires a new results version and re-running the paper's tables.
+
+### 4. Rule base audit (no rules changed)
+
+#### 4.1 Provably inert rules
+With AND = min, a rule whose conditions are a superset of another rule's never fires more strongly; with max aggregation, if that other rule concludes the same term, the inert rule can never set the term's cut. Rules whose *every* consequent is subsumed this way cannot change any output.
+
+| Rule | Conditions → conclusions | Subsumed by | Leave-one-out max change (11³ grid) |
+|---|---|---|---|
+| 13 | water high ∧ soil good → yield high | 10 (soil good → yield high) | 0 |
+| 15 | deficit ∧ water low ∧ soil poor → yield low, risk high | 1, 14, 20 | 0 |
+| 19 | deficit ∧ water medium ∧ soil good → yield medium | 2 | 0 |
+| 21 | normal ∧ water high ∧ soil good → yield high, risk low | 6 (and 10, 13) | 0 |
+| 25 | surplus ∧ water high ∧ soil good → yield high, risk low | 9 (and 10, 13) | 0 |
+| 26 | deficit ∧ water medium ∧ soil poor → yield low, risk high | 20 (and 11) | 0 |
+
+**Effective rule count: 20.** Partly subsumed (one consequent redundant, the other active): 14 (yield part ← 11), 20 (yield ← 11), 22 (yield ← 12), 24 (yield ← 3). This corrects the earlier statement in ALGORITHMS.md that five rules were inert: rule 13 is also inert.
+
+On the 60 real profiles, the inert rules 13, 19, 21 and 25 do fire (35, 20, 10 and 10 times), but whenever they set a cut they are exactly tied with the rule that subsumes them, so their leave-one-out importance is 0 every time.
+
+#### 4.2 Rules that cannot do what their comments say
+Rules 16, 19 and 23 are commented as *capping* yield confidence ("should NOT read as good news", "caps it at medium"). Mamdani max-aggregation cannot cap: a rule only adds its clipped consequent; it cannot remove another rule's *high* term.
+
+| Rule | Intent | Measured effect on yield_confidence (grid) |
+|---|---|---|
+| 16 | cap yield under flood + poor soil | between −0.020 and **+0.042**: where the rest of the set leans low, adding *medium* raises the centroid |
+| 19 | cap at medium for deficit + medium water + good soil | 0 (inert) |
+| 23 | moderate the wet-zone transitional case | down to −0.197 (lowers 6.7 % of grid points) — works as a pull, not a cap |
+
+#### 4.3 Firing on the real data (60 profiles)
+
+| | Value |
+|---|---|
+| Rules fired per profile | 2–11 (mean 5.4) |
+| Decisive per profile (set at least one output cut) | 1–5 (mean 3.0); masked mean 2.4 |
+| Never fire | 1, 4, 7, 11, 14, 15, 16, 17, 18, 20, 26 (all need water *low* or soil *poor*, or surplus with poor soil) |
+| Most frequent | 10 (all 60), 13 (35), 8 (30), 3 and 24 (25) |
+| Largest influence (max leave-one-out) | 8 (0.383), 3 (0.284), 22 (0.204), 23 (0.183) |
+| Dominating rule | 10 (soil good → yield high) fires in every profile and sets the *high* yield cut in 41 (alone in 30, tied in 11) |
+
+#### 4.4 Other rule-base observations
+
+| ID | Problem | Impact | Suggested improvement | Expected benefit |
+|---|---|---|---|---|
+| R-1 | 6 inert rules | Rule count overstates the model (26 vs 20 effective); explanations previously listed them as contributors | Keep (brief forbids reducing rules); mark them in explanations and docs as subsumed. Alternative for a future version: give the 3-way rules *weights* or use product AND so specificity matters | Honest rule count; future version could make the scenario rules active |
+| R-2 | "Capping" rules cannot cap | Code comments promise behaviour the engine cannot deliver; rule 16 can raise yield | Rewrite as rules on a *lower* term with higher weight, or use a modifier/hedge; or document as "pull towards medium" | Behaviour matches stated agronomic intent |
+| R-3 | Single-antecedent soil rules (10, 11) fire whenever their soil set is active | Rule 10 sets the yield *high* cut in 41/60 profiles regardless of water and rainfall; soil dominates yield confidence | Condition soil rules on water/rainfall or weight them below the 2-way grid | Yield confidence responds more to the season |
+| R-4 | No conflicting rules in the strict sense (same conditions, opposite conclusions) | — | None | — |
+| R-5 | Low-water / poor-soil rules never fire on the data | 11 rules untested by data; their behaviour is only checked synthetically | Keep (needed for drought scenarios, which Scenario Simulation now produces: water *very low* activates them) | Coverage for what-if analysis |
+| R-6 | `irrigation_risk` ignores soil except via rules 14, 17, 18, 20, 22, 24 | Acceptable | None | — |
+
+### 5. Inference quality (unchanged by this work)
+
+| Check (11³ … 21³ grid) | Result |
+|---|---|
+| yield_conf non-decreasing in soil fertility | 0.7 % of steps violate, largest drop 0.011 |
+| yield_conf non-decreasing in water storage | **14.4 %** of steps violate, largest drop 0.065 |
+| irrigation_risk non-increasing in water storage | **12.0 %** of steps violate, largest rise 0.059 |
+| Reachable range (centroid of a single fully fired extreme term) | yield_conf [0.150, 0.883]; irrigation_risk [0.117, 0.867] |
+
+The monotonicity violations come from the weak crossings (§3): as storage moves from 62 to 70 %, *medium* falls faster than *high* rises, and different rules take over the cuts. Centroid defuzzification compresses outputs away from 0 and 1 (Van Leekwijck & Kerre 1999); the observed maximum yield confidence 0.883 is exactly the ceiling.
+
+### 6. Strengths
+* Faithful Mamdani implementation on a maintained library; deterministic; inputs clipped, never rejected.
+* Linguistic, human-readable rules with named agro-climatic scenarios (15–26).
+* A complete 3×3 rainfall × water grid guarantees an output for every input.
+* Narrow coupling to optimisation (one scaling factor) keeps the fuzzy layer auditable and the optimiser's behaviour explainable.
+* Now: exact rule-level attribution and a reproducible audit (this work).
+
+### 7. Weaknesses
+* Low ε-completeness and IMD-misaligned rainfall partition (§3).
+* 6 inert rules; capping intent not achievable with max aggregation (§4).
+* Non-monotone responses to water storage (§5).
+* Output compression by centroid; outputs never reach the extremes.
+* No calibration against outcome data (the dataset has no realised-yield-vs-forecast pairs), so "accuracy" cannot be measured directly — only consistency.
+
+### 8. Implementation plan
+
+| Priority | Improvement | Problem / reason | Expected benefit | Difficulty | Risk | Files | Outputs change? | Reproducibility |
+|---|---|---|---|---|---|---|---|---|
+| **Done – Critical** | Rule-level explanation (`explain_inference`) | Fired-rule list showed masked and inert rules as if they mattered | Exact attribution, ranking, limiting condition | M | Low | engine.py, explanation_service.py, ExplanationPanel.jsx | No | Unaffected |
+| **Done – High** | Audit module + API (`audit.py`, `/api/fuzzy/audit`) | Claims about the rule base were hand-measured and partly wrong (5 vs 6 inert) | Reproducible, tested figures | M | Low | audit.py, main.py | No | Unaffected |
+| **Done – High** | Memoised inference, cached rule specs | fired_rules re-walked scikit-fuzzy's rule-order generator every call | 140× faster fired rules, 780× faster repeated inference, explanations 1.7× faster | L | Low (bit-identical tested) | engine.py | No | Unaffected |
+| **Done – Medium** | Single table for membership functions and bounds | Parameters duplicated inline | Maintainability; audit reads the same numbers | L | None | engine.py | No | Unaffected |
+| High (proposed) | M-1: IMD-aligned rainfall partition, ε ≥ 0.5 everywhere | §3 | Labels agree with IMD; fewer non-monotone steps | M | Medium | engine.py | **Yes** | Needs a new results version; paper tables re-run |
+| High (proposed) | R-2: make capping rules effective (weights or lower-term rules) | §4.2 | Behaviour matches documented intent | M | Medium | engine.py | **Yes** | As above |
+| Medium (proposed) | R-1/R-3: weights or product AND so 3-way rules and soil rules contribute proportionately | §4.1, §4.3 | 26 rules all active; season matters more | M | Medium | engine.py | **Yes** | As above |
+| Medium (proposed) | Extend rainfall universe or add *large deficit/excess* sets (IMD categories) | 5 profiles clipped | No information loss | M | Medium | engine.py | **Yes** | As above |
+| Low (proposed) | Monotonicity as a regression test with tolerance once M-1 is applied | §5 | Guards future edits | L | Low | tests | No | Unaffected |
+| Low (proposed) | Calibrate against realised yields when available (ANFIS / tuning) | §7 | Measured accuracy | H | High | new | **Yes** | New model version |
+
+Only output-preserving items were implemented, because previous optimisation results and the paper's tables must stay reproducible; every proposed item is quantified above so the team can decide on a versioned change.
+
+<a id="doc-fuzzy-explainability"></a>
+
+## Fuzzy Explainability
+
+How AgroOptimize explains a single fuzzy inference: which rules fired, why, with what strength, which of them actually shaped the output, by how much, and how important each one is. Implemented in `fuzzy.engine.explain_inference`; returned in every plan explanation (`fuzzy_reasoning.inference`) and by `GET /api/fuzzy/explain`; shown in the explanation panel's "Fuzzy rules that fired" table. Context: [FUZZY_SYSTEM_ANALYSIS.md](#doc-fuzzy-system-analysis).
+
+### 1. Why a fired-rule list was not enough
+Before this work the explanation listed every fired rule with its firing strength. In Mamdani max-aggregation, however, a fired rule only matters if it is the *strongest* rule concluding its output term — otherwise another rule has already cut that term higher and the weaker rule changes nothing. In the Salem Kharif example below, 6 rules fire but only 3 influence the outputs; the old list could not tell them apart and also presented the six provably inert rules as contributors.
+
+### 2. Method (exact, reproduces the engine)
+scikit-fuzzy computes, per output variable:
+
+1. firing(rule) = min of the rule's antecedent memberships;
+2. cut(term) = max of the firing strengths of the rules concluding that term;
+3. aggregated set = max over terms of min(cut, term membership function), on the output universe upsampled with the cut crossing points;
+4. crisp output = centroid of the aggregated set ÷ 100.
+
+`explain_inference` rebuilds steps 1–4 with the same scikit-fuzzy primitives (`interp_membership`, `_interp_universe_fast`, `defuzz`). The rebuilt centroid equals the engine's output exactly (difference 0 on a 13 × 11 × 11 grid and 150 random points; checked on every call as `matches_engine`). From that reconstruction:
+
+| Field | Meaning |
+|---|---|
+| `strength` | firing strength (unrounded min of antecedent memberships) |
+| `limiting_condition` | the antecedent with the lowest membership — *why* the rule fired at this strength and no higher |
+| `status` | **decisive**: the rule's strength sets at least one output term's cut; **masked**: fired, but a stronger rule set the same term's cut (`masked_by`); **not fired** |
+| `tied_with` | rules with exactly the same strength for the same term (they share the credit; removing one changes nothing) |
+| `contribution_pct` | per output, the rule's share of the aggregated area: the area is split exactly between the terms that form its upper envelope, and each term's part is credited to the rule(s) that set its cut. Sums to 100 % per output |
+| `leave_one_out_change` | output with the rule minus output with the rule removed from the rule base (0–1 scale) — signed effect on the crisp value |
+| `importance` | largest absolute leave-one-out change over the two outputs; rules are **ranked** by importance, then contribution, then strength |
+| `outputs[var]` | crisp value, dominant output term and its membership (how firmly the value belongs to that label — the label's confidence), term cuts with the rules that set them, term area shares |
+| `summary` | fired / decisive / masked counts |
+
+Inert rules always have importance 0; masked rules have importance 0 by construction. Area share and leave-one-out answer different questions: share says *what the output is made of*, leave-one-out says *how much it would move without the rule* (a rule can form much of the area yet move the centroid little when another term would take its place).
+
+### 3. Worked example — Salem, Kharif, latest year
+Inputs: rainfall deviation −21.1 % (deficit 0.293), storage 62 % (medium 0.520, high 0.050), soil fertility 67.8 (medium 0.288, good 0.195).
+
+| Rank | Rule | Strength | Status | Share of yield / risk | Leave-one-out (yield / risk) | Limited by |
+|---|---|---|---|---|---|---|
+| 1 | 2 — deficit ∧ water medium → risk medium, yield medium | 0.293 | decisive | 66.2 % / 90.4 % | −0.026 / +0.094 | rainfall deficit (0.293) |
+| 2 | 10 — soil good → yield high | 0.195 | decisive | 33.8 % / – | +0.072 / – | soil good (0.195) |
+| 3 | 24 — Canal irrigation advantage under deficit | 0.050 | decisive | – / 9.6 % | – / −0.035 | water high (0.050) |
+| 4 | 19 — Post-monsoon Rabi transition | 0.195 | masked by 2 | – | 0 | soil good (0.195) |
+| 5 | 3 — deficit ∧ water high → medium, medium | 0.050 | masked by 2 | – | 0 | water high (0.050) |
+| 6 | 13 — water high ∧ soil good → yield high | 0.050 | masked by 10 | – | 0 | water high (0.050) |
+
+Outputs: yield_confidence 0.636 (*medium*, membership 0.572) formed by rule 2's *medium* cut (0.293) and rule 10's *high* cut (0.195); irrigation_risk 0.465 (*medium*, 0.861) formed by rule 2's *medium* cut and rule 24's *low* cut (0.050). Reading: the season's rainfall deficit drives both outputs; good soil lifts yield confidence by 0.072; the small share of high storage lowers irrigation risk by 0.035. Rule 19 — commented as capping yield at medium — fires as strongly as rule 10 but is masked by rule 2, which already sets the *medium* cut higher.
+
+### 4. Where it appears
+* **Plan explanations** (`GET /api/results/{id}/explanation`, comparison explanations, Scenario Simulation): `fuzzy_reasoning.inference` alongside the existing `input_memberships` and `fired_rules` (unchanged).
+* **API**: `GET /api/fuzzy/explain?rainfall_dev=&water_storage=&soil_fert=` for any input triple (clipped like the engine; non-finite → 422).
+* **Frontend**: the explanation panel's "Fuzzy rules that fired" table is ranked by importance and shows status (with the masking or tied rule), share of yield / risk, limiting condition and importance, plus the output labels and their memberships. Older payloads without `inference` still render the plain list.
+
+### 5. Tests
+`tests/test_fuzzy_audit.py`: explanation equals an uncached scikit-fuzzy run (51 points); shares sum to 100 %; cut setters' strengths equal the cuts; masked rules have stronger maskers and zero importance; limiting membership equals strength; ranking order; leave-one-out equals rebuilding the scikit-fuzzy system without the rule; inert rules have zero importance at 40 random points; the Salem example; integration in the explanation service; endpoints. Frontend: the table renders with and without `inference`.
+
+### 6. Limits
+* Attribution is exact for this inference scheme (min/max/centroid); it is not a general causal claim about agronomy.
+* Leave-one-out is one-at-a-time; interactions between two removed rules are not reported.
+* Explanations describe the model as built — including the coverage and capping weaknesses documented in the analysis.
+
+<a id="doc-fuzzy-research-review"></a>
+
+## Fuzzy Research Review
+
+Comparison of the AgroOptimize Mamdani system with established fuzzy-systems literature and agricultural reference standards. Only recommendations supported by these sources are made; no rule or agronomic relationship is invented. Measurements quoted are from [FUZZY_SYSTEM_ANALYSIS.md](#doc-fuzzy-system-analysis). References are well-known foundational works; confirm page numbers against the publisher's record before citing them in the paper.
+
+### 1. Inference scheme
+
+| Topic | Literature | AgroOptimize | Assessment |
+|---|---|---|---|
+| Mamdani inference (min implication, max aggregation) | Mamdani & Assilian (1975) [2] | scikit-fuzzy Mamdani, min / max | Consistent with the paper's stated method |
+| Interpretability of rule bases | Guillaume (2001) [7]: compact, non-redundant, complete rule bases with distinguishable sets | 6 of 26 rules subsumed; complete 3×3 rainfall×water grid | Redundancy should be reported (done) and, in a future version, resolved |
+| Alternatives | Takagi–Sugeno (1985) [3] smoother, data-tunable; ANFIS (Jang 1993) [4] learns MFs from data | Not applicable without outcome data | Appropriate future work once realised yields are available |
+| Uncertainty in the MFs themselves | Interval type-2 fuzzy systems (Mendel 2001) [8] | Type-1 | Optional future work; would strengthen "uncertainty" claims |
+
+### 2. Membership functions
+
+| Topic | Literature | AgroOptimize | Recommendation |
+|---|---|---|---|
+| Triangular MFs | Pedrycz (1994) [5]: triangles are a justified default (good reconstruction, simple) | 15 triangles | Keep triangles; shape is not the problem |
+| Coverage of the universe | Lee (1990) [6]: ε-completeness, commonly ε ≥ 0.5 (adjacent sets cross at 0.5) | ε = 0.143 (rainfall), 0.231 (storage, fertility) | Widen overlaps so neighbours cross at 0.5 (M-1) |
+| Anchoring sets in domain standards | Fuzzy soil classification (McBratney & Odeh 1997) [9] anchors class boundaries in established survey classes | Rainfall sets do not match IMD categories; 9 IMD-normal profiles labelled deficit/surplus | Align rainfall crossings with IMD's ±19 % "normal" band [12]; anchor fertility sets to Soil Health Card ratings [13] when the index is mapped to them |
+
+### 3. Defuzzification
+
+| Topic | Literature | AgroOptimize | Recommendation |
+|---|---|---|---|
+| Centroid properties | Van Leekwijck & Kerre (1999) [10]: centroid is continuous and widely used but cannot reach the universe extremes | Range limited to [0.150, 0.883] yield, [0.117, 0.867] risk | Document the ceiling (done). Changing the method (e.g. extending output sets beyond the universe) would change every result — versioned change only |
+
+### 4. Agricultural grounding
+
+| Input | Reference | Relevance |
+|---|---|---|
+| Rainfall deviation | IMD categories: normal −19 … +19 %, deficient −20 … −59 %, excess +20 … +59 %, large deficient ≤ −60 %, large excess ≥ +60 % [12] | Direct basis for M-1 and for the ±60 % universe (beyond it IMD uses "large" categories — 5 Pollachi Summer profiles are clipped there) |
+| Crop water stress / yield response | FAO-56 crop evapotranspiration (Allen et al. 1998) [14]; FAO-33 yield response to water (Doorenbos & Kassam 1979) [15] | Supports modelling rainfall-dependence and irrigation pressure; a future version could replace the fixed 0.4 penalty in `crop_yield_confidence` with an FAO-33 response (Ky) — already listed in RESEARCH_REVIEW.md |
+| Soil fertility | Soil Health Card scheme ratings [13] | The fertility index is derived from pH, OC and N/P/K statuses; set boundaries should be traceable to these ratings |
+
+### 5. Decision layer
+NSGA-II (Deb et al. 2002) [11] and TOPSIS (Hwang & Yoon 1981) [16] are unaffected: the FIS scales one objective's coefficients. The literature on fuzzy-evolutionary decision support does not require changing that coupling; it does support sensitivity analysis of the fuzzy layer (Saltelli et al. 2008) [17] — the leave-one-out importance and the audit's monotonicity checks are the first steps, and Scenario Simulation already varies the fuzzy inputs.
+
+### 6. Recommendations supported by the review
+
+| ID | Recommendation | Basis | Implemented? |
+|---|---|---|---|
+| L-1 | Report redundancy, effective rule count and per-rule contribution | [7] | Yes (audit, explanations) |
+| L-2 | ε ≥ 0.5 partitions | [6] | Proposed (changes outputs) |
+| L-3 | Rainfall sets aligned to IMD categories | [12] | Proposed (changes outputs) |
+| L-4 | Keep triangular MFs | [5] | Yes (no change) |
+| L-5 | Document centroid ceiling | [10] | Yes |
+| L-6 | Sensitivity analysis of the fuzzy layer | [17] | Partly (leave-one-out, monotonicity); global sensitivity proposed |
+| L-7 | Data-driven tuning (ANFIS / TSK) once outcome data exist | [3, 4] | Future work |
+| L-8 | Type-2 MFs for membership uncertainty | [8] | Future work |
+
+### References
+1. Zadeh, L. A. (1965). Fuzzy sets. *Information and Control*, 8(3), 338–353.
+2. Mamdani, E. H., & Assilian, S. (1975). An experiment in linguistic synthesis with a fuzzy logic controller. *International Journal of Man-Machine Studies*, 7(1), 1–13.
+3. Takagi, T., & Sugeno, M. (1985). Fuzzy identification of systems and its applications to modeling and control. *IEEE Transactions on Systems, Man, and Cybernetics*, 15(1), 116–132.
+4. Jang, J.-S. R. (1993). ANFIS: Adaptive-network-based fuzzy inference system. *IEEE Transactions on Systems, Man, and Cybernetics*, 23(3), 665–685.
+5. Pedrycz, W. (1994). Why triangular membership functions? *Fuzzy Sets and Systems*, 64(1), 21–30.
+6. Lee, C. C. (1990). Fuzzy logic in control systems: Fuzzy logic controller, Parts I and II. *IEEE Transactions on Systems, Man, and Cybernetics*, 20(2), 404–435.
+7. Guillaume, S. (2001). Designing fuzzy inference systems from data: An interpretability-oriented review. *IEEE Transactions on Fuzzy Systems*, 9(3), 426–443.
+8. Mendel, J. M. (2001). *Uncertain Rule-Based Fuzzy Logic Systems: Introduction and New Directions*. Prentice Hall.
+9. McBratney, A. B., & Odeh, I. O. A. (1997). Application of fuzzy sets in soil science: fuzzy logic, fuzzy measurements and fuzzy decisions. *Geoderma*, 77(2–4), 85–113.
+10. Van Leekwijck, W., & Kerre, E. E. (1999). Defuzzification: criteria and classification. *Fuzzy Sets and Systems*, 108(2), 159–178.
+11. Deb, K., Pratap, A., Agarwal, S., & Meyarivan, T. (2002). A fast and elitist multiobjective genetic algorithm: NSGA-II. *IEEE Transactions on Evolutionary Computation*, 6(2), 182–197.
+12. India Meteorological Department. Rainfall categories (departure from the long-period average): normal −19 % to +19 %; deficient −20 % to −59 %; excess +20 % to +59 %; large deficient −60 % or less; large excess +60 % or more. Used in IMD climate summaries, e.g. https://mausam.imd.gov.in/Forecast/marquee_data/IMD%20HQ%20%20Monthly_Clim_Summary_MAR_2023_.pdf
+13. Government of India, Soil Health Card scheme — operational guidelines and nutrient rating classes. https://ies.gov.in/arthapedia/concept/soil-health-card-shc
+14. Allen, R. G., Pereira, L. S., Raes, D., & Smith, M. (1998). *Crop evapotranspiration — Guidelines for computing crop water requirements*. FAO Irrigation and Drainage Paper 56. FAO, Rome.
+15. Doorenbos, J., & Kassam, A. H. (1979). *Yield response to water*. FAO Irrigation and Drainage Paper 33. FAO, Rome.
+16. Hwang, C.-L., & Yoon, K. (1981). *Multiple Attribute Decision Making: Methods and Applications*. Springer.
+17. Saltelli, A., et al. (2008). *Global Sensitivity Analysis: The Primer*. Wiley.
+
+<a id="doc-fuzzy-improvement-summary"></a>
+
+## Fuzzy Improvement Summary
+
+What changed in the fuzzy system, what did not, and the measured effect. Principle: the published Mamdani system, its 26 rules, its membership functions and every optimisation result stay exactly as they were; improvements are in explainability, auditability, performance and maintainability. Changes that would alter results are documented with measurements as proposals ([FUZZY_SYSTEM_ANALYSIS.md](#doc-fuzzy-system-analysis) §8).
+
+### 1. Before vs after
+
+| Area | Before | After |
+|---|---|---|
+| Inference | scikit-fuzzy Mamdani, recomputed on every call | Same inference, memoised on the clipped inputs (4096 entries); a new result object per call |
+| Rule base | 26 rules, inline | Same 26 rules; read once into `rule_specs()` (with the scenario names already in the comments) |
+| Membership functions | Inline `trimf` calls | Same triangles in `MEMBERSHIP_FUNCTIONS`; input bounds in `INPUT_BOUNDS` |
+| Explanation | Fired rules with strengths | Plus per-rule status (decisive / masked / tied), limiting condition, area contribution, leave-one-out importance, ranking, output term memberships (`explain_inference`) |
+| Audit | Hand-measured statements in docs (one wrong: 5 inert rules) | `app/fuzzy/audit.py`: dominance (6 inert, 20 effective), coverage, output bounds, leave-one-out grid, firing on real data, monotonicity — tested and served at `/api/fuzzy/audit` |
+| API | — | `GET /api/fuzzy/explain`, `GET /api/fuzzy/audit` (new, read-only); existing responses gain `fuzzy_reasoning.inference` |
+| Frontend | Plain fired-rule table | Ranked table with status, share, limiting condition, importance (falls back to the plain table) |
+
+**Rule changes:** none. **Membership function changes:** none (moved into a table, values identical).
+
+### 2. Validation
+
+| Check | Result |
+|---|---|
+| Fuzzy outputs (assessment, memberships, fired rules, output terms) on 9,321 inputs (60 real profiles + 21³ grid incl. out-of-range values) | **bit-identical** before/after |
+| Optimisation fingerprint (48 stored outputs across districts, seasons, preferences, budgets) | **identical** to `main` |
+| Explanation reconstruction vs engine | difference 0 on grid and random points |
+| Backend tests | 557 passed (387 existing + 170 new) |
+| Frontend tests, lint, build | pass |
+| Determinism with the same seed | unchanged (outputs identical) |
+
+Explanations, reports, comparison, Scenario Simulation and District Intelligence all run through the same engine and are covered by their existing test suites, which pass unchanged.
+
+### 3. Performance (median of 5, same machine, `scripts/benchmark_fuzzy.py`, two runs each)
+
+| Measure | main | this branch | Change |
+|---|---|---|---|
+| Inference, new inputs (ms/call) | 3.79–3.80 | 3.00–3.10 | about −20 % (consistent across runs; cause not isolated) |
+| Inference, repeated inputs (ms/call) | 3.89–3.99 | 0.005 | ≈ 780× faster (memoised) |
+| Memberships + fired rules, new inputs (ms) | 3.47–3.49 | 0.024–0.025 | ≈ 140× faster: rule list built once instead of walking scikit-fuzzy's rule-order generator each call |
+| Full explanation of a saved run (ms) | 6.5–6.7 | 3.8 | 1.7× faster **despite** adding the rule attribution (≈ 4.5 ms when computed on its own) |
+| Scenario simulation (s) | 4.05–4.08 | 3.97–4.22 | unchanged — dominated by NSGA-II |
+| Peak traced memory, 60 inferences (KB) | 2,425–2,673 | 2,230–2,233 | ≈ −10 % |
+| Audit grid (1,331 points) | 5.31 s via the engine | 0.21 s via the exact batch path | 25× faster for analysis |
+
+The fuzzy layer is under 1 % of an optimisation run (one inference per run, 13 per simulation), so end-to-end optimisation time is unchanged; the gains matter for explanations, dashboards and analysis.
+
+### 4. Measured properties (unchanged, now reported)
+
+| Property | Value |
+|---|---|
+| Effective rules | 20 of 26 (13, 15, 19, 21, 25, 26 subsumed) |
+| Rules fired per real profile | 2–11, mean 5.4; decisive 1–5, mean 3.0 |
+| Rules never firing on the data | 11 (need water *low* or soil *poor*, never observed) |
+| ε-completeness | rainfall 0.143, storage 0.231, fertility 0.231 |
+| Monotonicity violations | yield vs storage 14.4 % of steps (≤ 0.065); risk vs storage 12.0 % (≤ 0.059); yield vs fertility 0.7 % |
+| Output ceiling (centroid) | yield 0.150–0.883; risk 0.117–0.867 |
+
+### 5. Benefits
+* Every fuzzy number in an explanation can now be traced to the rule that produced it, with its exact share and importance.
+* The documentation's claims about the rule base are now generated and tested; an error in the earlier docs (5 vs 6 inert rules) is corrected.
+* Explanation and dashboard paths are faster; nothing about the published results changed.
+
+### 6. Risks
+* Memoisation: results are cached per clipped input triple; the engine is a pure function of its inputs and returns fresh objects, which is tested. If membership functions or rules are edited at runtime (they are not), caches must be cleared.
+* The explanation reconstruction depends on scikit-fuzzy's aggregation scheme; it checks itself against the engine on every call (`matches_engine`) and in tests, so a library change would be detected.
+* Payload size: plan explanations grow by the inference block (10.5 KB on a 33 KB explanation for Salem Kharif).
+
+### 7. Future work
+The output-changing proposals (IMD-aligned rainfall partition with ε ≥ 0.5, effective capping rules, rule weights or product AND, wider rainfall universe, calibration when outcome data exist) are in [FUZZY_SYSTEM_ANALYSIS.md](#doc-fuzzy-system-analysis) §8 with their impact on reproducibility, and their literature basis in [FUZZY_RESEARCH_REVIEW.md](#doc-fuzzy-research-review). They should be done as a versioned model change with the paper's tables re-run.
+
 <a id="doc-explainability"></a>
 
 ## Explainable Recommendation Engine
@@ -2186,6 +2573,9 @@ Highly recommended: rank 1 and confidence ≥ 75 %. Recommended: rank ≤ 5 and 
 
 #### Wording thresholds (constants at the top of the service)
 `STRONG_GOODNESS 0.60`, `WEAK_GOODNESS 0.30`, `MIN_SHARE_PCT 1`, `DIVERSIFIED_SHARE_PCT 5`, `CONCENTRATION_HHI 0.50`, `PERENNIAL_DAYS 300`, `INPUT_FLOOR_TOLERANCE 0.02`, `HISTORICAL_TOP_N 3`, `HISTORICAL_HIT_RATE 0.75`, `ROBUST_TOP_FRACTION 0.10`, `CONSISTENCY_TOLERANCE 1 %`. They decide which facts are worth stating; they never alter a number.
+
+#### Fuzzy rule attribution
+`fuzzy_reasoning.inference` explains the fuzzy step rule by rule (decisive vs masked, share of each output, leave-one-out importance, limiting condition). Method and example: [FUZZY_EXPLAINABILITY.md](#doc-fuzzy-explainability).
 
 ### 5. What is deliberately *not* claimed
 
@@ -2814,7 +3204,7 @@ The **engineering** is well above typical final-year level: a clean layered pipe
 | R-1 | Irrigation and fertiliser multipliers have no benefit | f1 has no multiplier term; f2–f4 increase with them | 74–99 % of fertiliser genes and 52–100 % of irrigation genes end at the 0.7 floor; two-thirds of the chromosome is effectively inert | Yield response: FAO-33 water-production function `1 − Ya/Ym = Ky (1 − ETa/ETm)` for irrigation; Mitscherlich or quadratic-plateau response for N |
 | R-2 | Yield objective sums tonnes of different crops | sugarcane ≈95 t/ha vs cotton 1.5 t/ha | Optimiser favours heavy crops; "t/ha" of a mix is not meaningful to farmers | Maximise net return (yield × price − cost) – `MSP_Rs_Qtl` already exists – or calorie/protein output |
 | R-3 | Fuzzy output only rescales yield per crop | compare-fuzzy: identical min-cost/min-water/min-impact in both arms | The "fuzzy vs non-fuzzy study" mostly shows yield multiplied by the crop confidence (≈0.44–0.88; Salem Kharif best yield 13.96 vs 26.96 t/ha) | Let uncertainty act on water need (irrigation_risk → effective rainfall) and on feasibility; or optimise expected value over rainfall scenarios |
-| R-4 | 5 of 26 fuzzy rules have zero effect; rules cannot "cap" outputs under max aggregation | rule-deletion experiment (ALGORITHMS §2.2) | Rule-count claims overstate the model; rule comments misdescribe behaviour | Remove or rewrite; state "21 effective rules" |
+| R-4 | 6 of 26 fuzzy rules have zero effect (13, 15, 19, 21, 25, 26); rules cannot "cap" outputs under max aggregation | rule-deletion experiment (ALGORITHMS §2.2) | Rule-count claims overstate the model; rule comments misdescribe behaviour | Remove or rewrite; state "20 effective rules" |
 | R-5 | Seasonal deviation = mean of monthly percentages; Rabi spans two different seasons | DATA_VALIDATION D5–D6 | irrigation_risk shifts up to 0.21 | totals-based deviation; Oct(Y)–Mar(Y+1) |
 | R-6 | Hypervolume normalised per run | ALGORITHMS §4.4 | HV values can't be compared across runs/variants | fixed global normalisation bounds; report HV of fuzzy vs non-fuzzy on the same scale |
 | R-7 | Only one seed per result | – | No evidence of robustness | 20–30 seeds, report mean ± sd HV and front statistics |
@@ -2863,7 +3253,7 @@ Combining a Mamdani FIS with NSGA-II and TOPSIS for crop planning is a known pat
 | "Why do all your top plans use the minimum fertiliser and irrigation?" | Because the current yield model does not respond to inputs; any extra input only adds cost/water/impact, so it is dominated. Planned fix: FAO-33 / N-response functions. |
 | "Is your data real?" | State exactly what is known: course-provided baseline 2020–23 of unconfirmed origin; 2024 estimated from 2023 and flagged in the UI/API. |
 | "What does fuzzy logic change?" | It scales each crop's expected yield by a confidence derived from rainfall deviation, storage and soil; it does not change cost/water/impact, so the fuzzy/non-fuzzy fronts differ only in the yield axis and possibly crop ranking. |
-| "How many rules?" | 26 written, 21 effective – 5 are subsumed under max aggregation (show the deletion experiment). |
+| "How many rules?" | 26 written, 20 effective – 6 are subsumed under max aggregation (show the deletion experiment). |
 | "How do you know it converged?" | Hypervolume rises from ≈0.26 to ≈0.81 and plateaus (Salem Kharif, pop 100); per-run normalised; multi-seed statistics are future work. |
 | "Why NSGA-II for 4 objectives?" | Paper specification; NSGA-III/MOEA-D are better suited for ≥4 objectives – planned comparison. |
 | "Why TOPSIS; how were weights chosen?" | Closeness to ideal favours balanced plans; 'balanced' yield weight 0.30 tuned by hand because the other three objectives correlate 0.85–1.0 with yield. |
@@ -3093,7 +3483,7 @@ Why each change was made, how it was verified, and what was deliberately **not**
 | Totals-based rainfall deviation, Rabi across year boundary | Shifts fuzzy outputs by up to 0.21 → all results change | T-3 |
 | Yield response to irrigation/fertiliser | Needs sourced agronomic parameters; core model change | T-4 |
 | Profit objective | Needs verified prices (current MSP column questionable) | T-10 |
-| Remove inert fuzzy rules | No numeric effect, but changes the documented rule count – team should decide wording | T-5 |
+| Remove inert fuzzy rules | No numeric effect, but changes the documented rule count – team should decide wording. Six rules (13, 15, 19, 21, 25, 26) are inert; explanations now mark them as masked/tied with zero importance | T-5 |
 | Replace global RNG with pymoo `random_state` | Removes the lock but changes every seeded result | T-19 |
 | Weather TTL cache | Would make the existing weather-fallback test order-dependent; needs a small test refactor | T-20 |
 | Delete `agrooptimize-backend/frontend/` and `datasets/` | Tracked in git / possibly referenced by the team; decision first | T-7, T-8 |
@@ -3107,6 +3497,19 @@ Why each change was made, how it was verified, and what was deliberately **not**
 All code modifications made during the 2026-09-29 audit. All changes are submitted together on one branch for review. Frontend changes were made in the local working copy `stitch_agrooptimize_app/` and applied to the repo's `frontend/` (whose source was identical before the changes); the pre-change state is also in `_backups/stitch_agrooptimize_app_before_audit_2026-09-29.tar.gz`.
 
 Verification after all changes: backend **205/205 tests pass** (was 165/165); output fingerprint over 48 endpoint/pipeline results is **identical to HEAD** apart from the new additive provenance fields; frontend `oxlint` 0 warnings (was 3 in `src` + noise), `vite build` succeeds; UI flows exercised in Chrome with no console errors.
+
+### [Unreleased] – Fuzzy system optimisation
+
+#### Added
+- `fuzzy.engine.explain_inference`: exact rule-level attribution (status, limiting condition, area share, leave-one-out importance, ranking); included in plan explanations as `fuzzy_reasoning.inference` and shown in the explanation panel.
+- `app/fuzzy/audit.py`, `GET /api/fuzzy/explain`, `GET /api/fuzzy/audit`, `scripts/benchmark_fuzzy.py`.
+- `FUZZY_SYSTEM_ANALYSIS.md`, `FUZZY_EXPLAINABILITY.md`, `FUZZY_RESEARCH_REVIEW.md`, `FUZZY_IMPROVEMENT_SUMMARY.md`; `tests/test_fuzzy_audit.py` (170) and 2 frontend tests.
+
+#### Changed
+- Fuzzy inference memoised per clipped input; rule base read once into `rule_specs()`; membership functions and input bounds in single tables. Outputs bit-identical on 9,321 inputs; optimisation fingerprint identical.
+
+#### Fixed (documentation)
+- Six fuzzy rules are inert (13 was missed); effective rule count 20, not 21.
 
 ### [Unreleased] – Scenario Simulation & Decision Impact Analysis
 
@@ -3248,7 +3651,7 @@ Ordered by priority. IDs are referenced from the other documents. "Decision" ite
 | T-4 | Add agronomic response: irrigation via FAO-33 `Ky`, nitrogen via Mitscherlich/quadratic-plateau, so multipliers can pay off (RESEARCH_REVIEW R-1) |
 | T-10 | Replace the tonnage objective with net return using verified MSP/market prices (R-2) |
 | T-3 | Seasonal rainfall deviation from totals; Rabi = Oct(Y)–Mar(Y+1) (DATA_VALIDATION D5–D6) |
-| T-5 | Remove or rewrite fuzzy rules 15, 19, 21, 25, 26 (no effect); fix rule comments |
+| T-5 | Rewrite (rule weights or lower-term rules) fuzzy rules 13, 15, 19, 21, 25, 26 (no effect) and the capping rules 16/19/23; fix rule comments — see FUZZY_SYSTEM_ANALYSIS §8 |
 | T-17 | Multi-seed evaluation script (≥20 seeds), fixed-bounds hypervolume, NSGA-III and ε-constraint LP baselines |
 | T-18 | Let uncertainty affect water/feasibility (e.g. irrigation_risk scales effective rainfall) or add rainfall scenarios |
 
@@ -3268,6 +3671,14 @@ Ordered by priority. IDs are referenced from the other documents. "Decision" ite
 | T-21 | Rate limiting + per-client quota + retention policy for `results/`; require `client_id` on `GET /api/results/{id}` |
 | T-22 | Return relative file names instead of absolute `saved_files` paths |
 | T-23 | Split `dashboard_service.py`; typed response models for all endpoints |
+
+### Fuzzy system follow-ups (change outputs – versioned model change)
+| ID | Task |
+|---|---|
+| T-44 | IMD-aligned rainfall partition with ε-completeness ≥ 0.5 for all inputs (M-1) |
+| T-45 | Extend the rainfall universe / add large deficit and excess sets (5 Pollachi Summer profiles clipped) |
+| T-46 | Monotonicity regression test once the partitions are revised |
+| T-47 | Global sensitivity analysis of the fuzzy layer; calibration when outcome data exist |
 
 ### Explainability follow-ups
 | ID | Task |

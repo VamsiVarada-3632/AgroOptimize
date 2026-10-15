@@ -409,3 +409,35 @@ def delete_simulation(simulation_id: str, client_id: str = _REQUIRED_CLIENT_ID):
         raise HTTPException(status_code=404, detail=f"No saved simulation with id '{simulation_id}'.")
     return {"deleted": simulation_id}
 
+
+# ---------------------------------------------------------------------------
+# Fuzzy system transparency (read-only)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/fuzzy/explain")
+def explain_fuzzy(
+    rainfall_dev: float = Query(..., description="Season rainfall deviation from normal, %."),
+    water_storage: float = Query(..., description="Seasonal reservoir storage, %."),
+    soil_fert: float = Query(..., description="Soil fertility index, 0-100."),
+):
+    """Rule-level explanation of the Mamdani engine for one input triple:
+    memberships, every rule's firing strength, status (decisive / masked /
+    not fired), contribution and leave-one-out importance, and per output
+    the term cuts and crisp value. Inputs are clipped like the engine's."""
+    import math
+
+    from app.fuzzy import engine as fz
+
+    if not all(math.isfinite(v) for v in (rainfall_dev, water_storage, soil_fert)):
+        raise HTTPException(status_code=422, detail="Inputs must be finite numbers.")
+    return fz.explain_inference(rainfall_dev, water_storage, soil_fert)
+
+
+@app.get("/api/fuzzy/audit")
+def audit_fuzzy():
+    """Static audit of the rule base and membership functions plus rule
+    firing statistics on the dataset's region profiles (cached)."""
+    from app.fuzzy import audit
+
+    return audit.summary()
+
