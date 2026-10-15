@@ -288,19 +288,7 @@ export function ExplanationPanel({ explanation }) {
 
       <TimelineSection timeline={e.timeline} />
 
-      <details className="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-4">
-        <summary className="cursor-pointer font-semibold text-sm">Fuzzy rules that fired ({e.fuzzy_reasoning.fired_rules.length})</summary>
-        <table className="w-full text-xs mt-3">
-          <thead><tr className="text-left text-on-surface-variant"><th className="py-1 pr-2">Rule</th><th className="py-1 pr-2">If</th><th className="py-1 pr-2">Then</th><th className="py-1">Strength</th></tr></thead>
-          <tbody>
-            {e.fuzzy_reasoning.fired_rules.map((r) => (
-              <tr key={r.rule} className="border-t border-outline-variant/30">
-                <td className="py-1 pr-2">#{r.rule}</td><td className="py-1 pr-2">{r.if}</td><td className="py-1 pr-2">{r.then}</td><td className="py-1">{r.strength}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </details>
+      <FuzzyRulesSection reasoning={e.fuzzy_reasoning} />
 
       {e.economics.available && (
         <details className="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-4">
@@ -424,3 +412,67 @@ export function ExplanationModal({ title, load, onClose, render }) {
 }
 
 export default ExplanationPanel;
+
+const RULE_STATUS = {
+  decisive: 'Decisive',
+  masked: 'Masked',
+};
+
+/**
+ * Fired fuzzy rules. With `reasoning.inference` (rule attribution from the
+ * backend) rules are ranked by leave-one-out importance and show whether
+ * they set an output term's cut (decisive), were outweighed by a stronger
+ * rule for the same term (masked), and their share of each output.
+ * Older payloads without `inference` fall back to the plain list.
+ */
+export function FuzzyRulesSection({ reasoning }) {
+  const inference = reasoning?.inference;
+  const fired = reasoning?.fired_rules || [];
+  const byRule = inference ? Object.fromEntries(inference.rules.map((r) => [r.rule, r])) : {};
+  const rows = inference ? inference.ranking.map((n) => byRule[n]) : fired;
+  const pct = (v) => (v === undefined ? '–' : `${v}%`);
+  return (
+    <details className="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-4">
+      <summary className="cursor-pointer font-semibold text-sm">
+        Fuzzy rules that fired ({fired.length}){inference ? ` · ${inference.summary.decisive} decisive, ${inference.summary.masked} masked` : ''}
+      </summary>
+      {inference && (
+        <p className="text-[11px] text-on-surface-variant mt-2">
+          Yield confidence {inference.outputs.yield_conf.value} ({inference.outputs.yield_conf.term}, membership {inference.outputs.yield_conf.term_membership}) ·
+          irrigation risk {inference.outputs.irrigation_risk.value} ({inference.outputs.irrigation_risk.term}, membership {inference.outputs.irrigation_risk.term_membership}).
+          Ranked by how much each rule changes the outputs when removed. {inference.method}
+        </p>
+      )}
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs mt-3">
+          <thead>
+            <tr className="text-left text-on-surface-variant">
+              <th className="py-1 pr-2">Rule</th><th className="py-1 pr-2">If</th><th className="py-1 pr-2">Then</th><th className="py-1 pr-2">Strength</th>
+              {inference && <><th className="py-1 pr-2">Status</th><th className="py-1 pr-2">Share of yield / risk</th><th className="py-1 pr-2">Limited by</th><th className="py-1">Importance</th></>}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.rule} className="border-t border-outline-variant/30 align-top">
+                <td className="py-1 pr-2">#{r.rule}{r.scenario && <span className="block text-on-surface-variant">{r.scenario}</span>}</td>
+                <td className="py-1 pr-2">{r.if}</td><td className="py-1 pr-2">{r.then}</td><td className="py-1 pr-2">{r.strength}</td>
+                {inference && (
+                  <>
+                    <td className="py-1 pr-2">
+                      {RULE_STATUS[r.status]}
+                      {r.status === 'masked' && r.masked_by.length > 0 && <span className="block text-on-surface-variant">by #{r.masked_by.join(', #')}</span>}
+                      {r.tied_with.length > 0 && <span className="block text-on-surface-variant">tied with #{r.tied_with.join(', #')}</span>}
+                    </td>
+                    <td className="py-1 pr-2">{pct(r.contribution_pct.yield_conf)} / {pct(r.contribution_pct.irrigation_risk)}</td>
+                    <td className="py-1 pr-2">{r.limiting_condition ? `${r.limiting_condition.variable} is ${r.limiting_condition.term} (${r.limiting_condition.membership})` : '–'}</td>
+                    <td className="py-1">{r.importance}</td>
+                  </>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  );
+}
