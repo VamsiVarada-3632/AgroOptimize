@@ -20,6 +20,8 @@ Base URL: local `http://localhost:8000`; production `https://agrooptimize-backen
 | GET | `/api/results/{run_id}/explanation?rank=` | Explanation of one plan in a saved run | Run Optimization, History, Reports | tens of ms |
 | GET | `/api/comparison/{district}/explanation?plan=` | Explanation of Plan A/B/C | Comparison | ~1 s cold, fast when the front is cached |
 | GET | `/api/district-intelligence/{district}` | Aggregated district profile | District Intelligence | 30–120 ms cold, ≈0 cached |
+| GET | `/api/fuzzy/explain?rainfall_dev=&water_storage=&soil_fert=` | Rule-level explanation of one fuzzy inference | – | ≈5 ms |
+| GET | `/api/fuzzy/audit` | Rule-base and membership-function audit + firing on the dataset | – | ≈0.7 s cold, cached |
 | POST | `/api/simulations/run` | Run a scenario simulation (baseline + scenario, 5 seeds each) | Scenario Simulation | ~4 s, never cached |
 | POST | `/api/simulations` | Save a simulation result by token | Scenario Simulation | fast |
 | GET | `/api/simulations?client_id=` | This browser's saved simulations | Scenario Simulation | fast |
@@ -208,3 +210,7 @@ One aggregated district profile (`DistrictIntelligenceOut`, ≈55 KB): `district
 ## Scenario Simulation
 
 `POST /api/simulations/run` takes `{base, scenario, client_id}` (`SimulationRequest`) and returns `SimulationOut`: `token, inputs, conditions, baseline, scenario, comparison, impact, crop_effects, fuzzy_changes, optimization, constraints, historical, decision_impact[], trade_offs, summary, meta`. Invalid controls, an unknown district or an infeasible baseline → 422. `POST /api/simulations {token, name, client_id}` saves a result computed in this process (201; 404 if the token expired or belongs to another browser). `GET /api/simulations`, `GET /api/simulations/{id}` and `DELETE /api/simulations/{id}` require `client_id` and only see that browser's simulations. Controls, validation and an example: [SCENARIO_SIMULATION.md](SCENARIO_SIMULATION.md).
+
+## Fuzzy system transparency
+
+`GET /api/fuzzy/explain` returns `fuzzy.engine.explain_inference` for one input triple (clipped like the engine; non-finite → 422): `inputs`, `outputs` (value, term and its membership, term cuts with setting rules, term area shares, `matches_engine`), `rules` (strength, status decisive/masked/not fired, `masked_by`, `tied_with`, limiting condition, `contribution_pct`, `leave_one_out_change`, `importance`), `ranking`, `summary`, `method`. Plan explanations carry the same object as `fuzzy_reasoning.inference`. `GET /api/fuzzy/audit` returns `dominance`, `coverage`, `output_bounds`, `dataset_firing`. See [FUZZY_EXPLAINABILITY.md](FUZZY_EXPLAINABILITY.md) and [FUZZY_SYSTEM_ANALYSIS.md](FUZZY_SYSTEM_ANALYSIS.md).

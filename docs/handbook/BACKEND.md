@@ -57,9 +57,16 @@ Creates `FastAPI(title="AgroOptimize API", version="0.1.0")`, adds CORS (localho
 |---|---|
 | `UncertaintyAssessment` | `yield_confidence`, `irrigation_risk` (0–1, 3 dp) + three dominant labels |
 | `_build_system()` | `lru_cache(1)`: defines universes, MFs, 26 rules, returns `ControlSystem` + antecedents (first call ≈0.6 s) |
-| `evaluate_uncertainty(rain_dev, storage, fertility)` | clips inputs, new `ControlSystemSimulation` per call, centroid outputs ÷ 100; falls back to 0.5/0.5 on `KeyError/ValueError` |
+| `evaluate_uncertainty(rain_dev, storage, fertility)` | clips inputs to `INPUT_BOUNDS`, scikit-fuzzy inference memoised per clipped input (`_evaluate_cached`, 4096), centroid outputs ÷ 100; falls back to 0.5/0.5 on `KeyError/ValueError`; new result object per call |
+| `MEMBERSHIP_FUNCTIONS`, `INPUT_BOUNDS`, `RULE_SCENARIOS` | the triangles, input universes and scenario names of rules 15–26 |
+| `rule_specs()` | the 26 rules as plain data (conditions, conclusions, text), built once |
+| `input_memberships`, `fired_rules`, `output_term` | memberships (3 dp), fired rules (memoised), output term of a crisp value |
+| `explain_inference(rain_dev, storage, fertility)` | rule-level attribution: status, limiting condition, area share, leave-one-out importance, ranking (FUZZY_EXPLAINABILITY.md) |
 | `_dominant_label` | argmax membership |
 | `crop_yield_confidence(base, risk, dependency)` | per-crop penalty (≤ 40 %) |
+
+### `app/fuzzy/audit.py`
+Read-only measurements: `rule_dominance`, `membership_coverage`, `output_bounds`, `leave_one_out`, `firing_statistics`, `monotonicity`, `evaluate_grid` (exact batch path), `summary` (cached, served by `/api/fuzzy/audit`). `scripts/benchmark_fuzzy.py` times the fuzzy layer and its callers.
 
 ### `app/optimization/problem.py`
 `CropVector.from_candidates(crops, assessment, use_fuzzy)` precomputes per-crop NumPy arrays (confidence = 1.0 when `use_fuzzy=False`). `FarmPlanProblem(profile, assessment, total_land_ha, budget_rs, use_fuzzy)` sets bounds (allocation lower bound 1e−4), 4 objectives, optional 1 inequality constraint; `_evaluate` is fully vectorised; `decode(x)` → dict of lists.
@@ -176,5 +183,6 @@ Not handled: disk full during save (500), Open-Meteo slowness (up to 5 s per cal
 | test_explanation.py | explanation structure, traceability, confidence, constraints, honesty rules, endpoints | 25 |
 | test_district.py | district aggregations vs raw CSVs, suitability, market, missing data, caching, endpoint | 96 |
 | test_simulation.py | pipeline hooks, validation, paired comparison, end-to-end scenarios vs CSV, history, statements, persistence, endpoints | 61 |
+| test_fuzzy_audit.py | memoised engine = uncached scikit-fuzzy, rule-level explanation exactness and consistency, audit vs analytic values, firing on data, endpoints | 170 |
 
 Gaps: operators unit-tested only indirectly; no test pins numeric outputs (a golden-master test would catch unintended model drift – TODO T-13); weather tests call the real Open-Meteo API when network is available; no frontend tests at all.

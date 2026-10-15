@@ -111,6 +111,9 @@ Highly recommended: rank 1 and confidence ≥ 75 %. Recommended: rank ≤ 5 and 
 ### Wording thresholds (constants at the top of the service)
 `STRONG_GOODNESS 0.60`, `WEAK_GOODNESS 0.30`, `MIN_SHARE_PCT 1`, `DIVERSIFIED_SHARE_PCT 5`, `CONCENTRATION_HHI 0.50`, `PERENNIAL_DAYS 300`, `INPUT_FLOOR_TOLERANCE 0.02`, `HISTORICAL_TOP_N 3`, `HISTORICAL_HIT_RATE 0.75`, `ROBUST_TOP_FRACTION 0.10`, `CONSISTENCY_TOLERANCE 1 %`. They decide which facts are worth stating; they never alter a number.
 
+### Fuzzy rule attribution
+`fuzzy_reasoning.inference` explains the fuzzy step rule by rule (decisive vs masked, share of each output, leave-one-out importance, limiting condition). Method and example: [FUZZY_EXPLAINABILITY.md](FUZZY_EXPLAINABILITY.md).
+
 ## 5. What is deliberately *not* claimed
 
 * **Profit.** The dataset's `MSP_Rs_Qtl` column is not validated (several crops have no government MSP; some values look implausibly high — e.g. sugarcane yields an indicative margin of roughly ₹9.6 lakh/ha for Salem Rabi). Profit is not an optimiser objective. It is therefore shown only in a collapsed "Indicative economics (unvalidated prices)" box, with `validated: false`, and is excluded from reasons, benefits, risks and confidence. A test enforces this.
