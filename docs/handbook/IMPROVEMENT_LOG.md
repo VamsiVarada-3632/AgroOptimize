@@ -30,6 +30,9 @@ Why each change was made, how it was verified, and what was deliberately **not**
 | I-16 | Dead code removal, lint clean | Maintainability | `npm run lint` 0 warnings |
 | I-17 | Accurate wording (greeting, footer, profile, settings, KPI labels) | UX | browser |
 | I-18 | Documentation set | Knowledge transfer | this folder |
+| I-19 | NSGA-II speed-ups (vectorised tournament/crossover, cached constants, monitor instead of `save_history`) | Performance | Saved run 748 → 287 ms, 57.8 → 1.6 MB; bit-identical on 96 runs + 3 recorded digests |
+| I-20 | NSGA-II diversity monitoring and runtime profile | Observability | saved as `meta.optimizer`; does not change results (test) |
+| I-21 | Enhanced NSGA-II mode (smart initialisation, adaptive mutation) | Optimisation quality | HV better in 147/160, IGD+ in 154/160 paired runs (p < 1e-25); opt-in |
 
 ## Considered but deliberately not implemented (need a team decision or change results)
 
@@ -41,6 +44,8 @@ Why each change was made, how it was verified, and what was deliberately **not**
 | Profit objective | Needs verified prices (current MSP column questionable) | T-10 |
 | Remove inert fuzzy rules | No numeric effect, but changes the documented rule count – team should decide wording. Six rules (13, 15, 19, 21, 25, 26) are inert; explanations now mark them as masked/tied with zero importance | T-5 |
 | Replace global RNG with pymoo `random_state` | Removes the lock but changes every seeded result | T-19 |
+| Make the enhanced NSGA-II engine the default | Changes every result and the recommended plan; needs a team decision and re-run paper tables | T-48 |
+| Adaptive crossover, tolerance duplicate removal, early stopping in the enhanced engine | No measurable benefit, or lower quality (NSGAII_PROFILE.md §5) | NSGAII_IMPROVEMENT_SUMMARY.md |
 | Weather TTL cache | Would make the existing weather-fallback test order-dependent; needs a small test refactor | T-20 |
 | Delete `agrooptimize-backend/frontend/` and `datasets/` | Tracked in git / possibly referenced by the team; decision first | T-7, T-8 |
 | Wire `WATER_COST_RS_PER_MM_PER_HA` | Deliberately left unwired by the team; changes f2 | TD-17 |

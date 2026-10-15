@@ -171,6 +171,7 @@ pymoo's constraint-domination: a feasible solution beats an infeasible one; betw
 | Survival | pymoo `RankAndCrowding` | fast non-dominated sort, then crowding distance |
 | Duplicates | `eliminate_duplicates=True` | identical offspring discarded |
 | Seed | `config.NSGA2_SEED = 42` | `np.random.seed(seed)` for custom operators **and** `seed=` for pymoo's own generator |
+| Engine mode | `config.NSGA2_ENGINE_MODE` | `original` (this table, published results) or `enhanced` (adds smart initialisation and adaptive mutation from p = 0.05) – [NSGAII_IMPROVEMENT_SUMMARY.md](NSGAII_IMPROVEMENT_SUMMARY.md) |
 
 **Reproducibility and thread safety.** Two RNG streams are involved: pymoo's seeded `Generator` (sampling, selection, crossover yes/no) and NumPy's *global* RNG (cut points, mutation). Because the global RNG is process-wide, concurrent requests used to interfere: measured on the original code, 20 of 40 concurrent runs produced a different front than the same seed run alone. Since 2026-09-29 each run holds `_NSGA2_RUN_LOCK`; the measurement is 0 of 40, and `tests/test_hardening.py::test_concurrent_runs_match_serial_runs` guards it. A cleaner long-term fix is to pass pymoo's `random_state` into the operators (would change outputs, so not done).
 
@@ -181,7 +182,7 @@ Chosen to match the paper literally. For real-coded chromosomes, SBX + polynomia
 `extract_pareto_plans` decodes every individual of `result.X` (pymoo returns the non-dominated set of the final population): allocation renormalised, area = share × land, objectives rounded (yield 3 dp, cost 2 dp, water 1 dp, impact 3 dp).
 
 ### 4.4 Convergence history and hypervolume (`extract_convergence_history`)
-When `track_history=True` pymoo deep-copies the algorithm each generation. For each generation: best and mean of each raw objective over the surviving population, and hypervolume:
+When `track_history=True` the run's `EngineMonitor` records the population objectives each generation (until 2026-10 pymoo's `save_history` deep-copied the whole algorithm instead; the numbers are identical). For each generation: best and mean of each raw objective over the surviving population, and hypervolume:
 ```
 lo, hi = min/max of F over ALL generations of this run
 F_norm = clip((F − lo) / (hi − lo), 0, 1.5)
@@ -193,7 +194,8 @@ Consequences: HV is **run-relative** (normalised by that run's own extremes), so
 * **Chosen because:** the paper specifies it; widely taught; returns a spread Pareto set in one run.
 * **Caveat:** with 4 objectives NSGA-II's crowding distance loses selection pressure (many-objective regime); **NSGA-III** or **MOEA/D** are designed for ≥4 objectives.
 * **Exact alternative:** because f1–f3 are linear in the land shares, an ε-constraint method with an LP solver would give the exact trade-off curve and a proof of optimality; the square-root in f4 is the only non-linearity (it could be linearised by optimising L and C separately). This is the strongest comparison baseline for the report.
-* **Performance:** a full run takes ≈0.3 s (pop 80, 200 generations) without history and ≈0.8 s with history.
+* **Performance:** a full run takes ≈0.3 s (pop 80, 200 generations) with or without history (≈0.75 s with history before 2026-10).
+* **Convergence:** every plan the original engine returns is dominated by its own copy with multipliers at 0.7 (960/960 plans, seed 42); the enhanced mode halves that gap – [NSGAII_ANALYSIS.md](NSGAII_ANALYSIS.md) §4.2.
 
 ### 4.6 How much does fuzzy logic change the optimum?
 Fuzzy confidence multiplies each crop's yield by a constant. It rescales f1 per crop but does not touch f2–f4. `GET /api/compare-fuzzy` therefore shows identical min-cost, min-water and min-impact values for the fuzzy and non-fuzzy runs; only best-yield differs (e.g. Salem Kharif 13.96 vs 26.96 t/ha). The crop *ranking* by yield can change when dependencies differ, which is the genuine effect to report.

@@ -32,7 +32,7 @@ Inputs (−21.1, 62.0, 67.8) → labels deficit / medium / medium → **yield_co
 Bounds: shares [1e−4, 1], multipliers [0.7, 1.3]. Budget constraint absent (no budget).
 
 ## Stage 4 – NSGA-II
-`run_nsga2(pop 80, gen 200, seed 42, track_history=save_results)` under the run lock. ≈0.29 s without history.
+`run_nsga2(pop 80, gen 200, seed 42, track_history=save_results)` under the run lock, in the configured engine mode (`original` by default, which reproduces the published results; see [NSGAII_IMPROVEMENT_SUMMARY.md](NSGAII_IMPROVEMENT_SUMMARY.md)). ≈0.29 s with or without history. The run's mode, runtime profile and diversity statistics are saved as `meta.optimizer`.
 
 ## Stage 5 – Decode
 80 non-dominated solutions (whole final population is non-dominated), all feasible.
