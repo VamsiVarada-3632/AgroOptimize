@@ -119,6 +119,18 @@ class FarmPlanProblem(Problem):
 
         n_ieq_constr = 1 if budget_rs else 0
 
+        # Per-crop quantities that do not depend on the chromosome, computed
+        # once here instead of on every evaluation (same expressions, so the
+        # objective values are bit-identical).
+        cv = self.crop_vec
+        prices = {k: v * self.fertilizer_price_factor for k, v in config.FERTILIZER_PRICE_RS_PER_KG_NUTRIENT.items()}
+        self._fert_cost_per_ha = (
+            cv.fert_n_kg_ha * prices["N"] + cv.fert_p_kg_ha * prices["P"] + cv.fert_k_kg_ha * prices["K"]
+        )
+        self._yield_t_per_ha = cv.yield_kg_ha / 1000.0  # multiplied by confidence after area, as before
+        self._net_irrigation_mm = np.clip(cv.water_req_mm - self.effective_rainfall_mm, 0.0, None)
+        self._fert_npk_kg_ha = cv.fert_n_kg_ha + cv.fert_p_kg_ha + cv.fert_k_kg_ha
+
         super().__init__(n_var=3 * n, n_obj=4, n_ieq_constr=n_ieq_constr, xl=xl, xu=xu)
 
     def _evaluate(self, X, out, *args, **kwargs):
@@ -133,17 +145,13 @@ class FarmPlanProblem(Problem):
         area_ha = alloc * self.total_land_ha  # (pop, n_crops)
 
         # --- f1: expected yield (tonnes), maximised -> stored as negative ---
-        yield_tonnes = area_ha * (cv.yield_kg_ha / 1000.0) * cv.crop_yield_confidence
+        yield_tonnes = area_ha * self._yield_t_per_ha * cv.crop_yield_confidence
         total_yield = yield_tonnes.sum(axis=1)
         f1 = -total_yield
 
         # --- f2: total production cost (Rs) ---
-        prices = {k: v * self.fertilizer_price_factor for k, v in config.FERTILIZER_PRICE_RS_PER_KG_NUTRIENT.items()}
-        fert_cost_per_ha = (
-            cv.fert_n_kg_ha * prices["N"] + cv.fert_p_kg_ha * prices["P"] + cv.fert_k_kg_ha * prices["K"]
-        )
         cost_per_ha = (
-            fert_mult * fert_cost_per_ha
+            fert_mult * self._fert_cost_per_ha
             + cv.pesticide_cost_rs_ha
             + cv.labor_days_ha * config.LABOR_WAGE_RS_PER_DAY
         )
@@ -151,8 +159,7 @@ class FarmPlanProblem(Problem):
         f2 = total_cost
 
         # --- f3: total irrigation water (litres) ---
-        net_irrigation_mm = np.clip(cv.water_req_mm - self.effective_rainfall_mm, 0.0, None)
-        water_liters = area_ha * irr_mult * net_irrigation_mm * config.LITERS_PER_MM_PER_HA
+        water_liters = area_ha * irr_mult * self._net_irrigation_mm * config.LITERS_PER_MM_PER_HA
         total_water = water_liters.sum(axis=1)
         f3 = total_water
 
@@ -162,7 +169,7 @@ class FarmPlanProblem(Problem):
         # leaching risk and carbon proxy" definition).
         leaching = (area_ha * fert_mult * cv.fert_n_kg_ha).sum(axis=1)
         carbon = (
-            area_ha * fert_mult * (cv.fert_n_kg_ha + cv.fert_p_kg_ha + cv.fert_k_kg_ha) * config.CARBON_FERTILIZER_FACTOR
+            area_ha * fert_mult * self._fert_npk_kg_ha * config.CARBON_FERTILIZER_FACTOR
             + area_ha * irr_mult * cv.water_req_mm * config.CARBON_PUMPING_FACTOR
         ).sum(axis=1)
         f4 = np.sqrt(np.clip(leaching, 0, None) * np.clip(carbon, 0, None))
