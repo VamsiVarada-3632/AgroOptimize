@@ -11,11 +11,18 @@
  *   uvicorn app.main:app --reload --port 8000
  */
 
-// Vite exposes build-time env vars prefixed VITE_ on import.meta.env. Set
-// VITE_API_BASE in a Vercel (or other host) project's environment config to
-// point the deployed frontend at a real deployed backend -- local dev
-// (`npm run dev`) keeps working unchanged via the localhost fallback.
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+/**
+ * Where the backend lives. VITE_API_BASE (a build-time env var) wins when set,
+ * e.g. for a frontend hosted apart from the API. Otherwise a production build
+ * calls the API on its own origin -- the deployed backend serves this build
+ * (app/frontend.py) -- and `npm run dev` uses the local backend on port 8000.
+ */
+export function resolveApiBase(env, origin) {
+  if (env.VITE_API_BASE) return env.VITE_API_BASE.replace(/\/+$/, '');
+  return env.PROD ? origin : 'http://localhost:8000';
+}
+
+const API_BASE = resolveApiBase(import.meta.env, typeof window !== 'undefined' ? window.location.origin : '');
 
 export const DISTRICTS = ['Coimbatore', 'Erode', 'Salem', 'Pollachi'];
 
