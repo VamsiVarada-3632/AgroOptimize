@@ -92,6 +92,12 @@ def health() -> dict:
     return {"status": "ok"}
 
 
+# Uptime monitors often probe with HEAD; answer it without a second schema entry.
+@app.head("/health", include_in_schema=False)
+def health_head() -> dict:
+    return {"status": "ok"}
+
+
 @app.get("/api/catalog", response_model=CatalogOut)
 def get_catalog():
     """What locations / years / seasons / crops the dataset covers."""

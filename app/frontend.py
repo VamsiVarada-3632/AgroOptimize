@@ -56,7 +56,8 @@ def mount_frontend(app: FastAPI, dist: Path = FRONTEND_DIST) -> bool:
     if (dist / "assets").is_dir():
         app.mount("/assets", _CachedStaticFiles(directory=dist / "assets"), name="frontend-assets")
 
-    @app.get("/{full_path:path}", include_in_schema=False)
+    # HEAD as well as GET: uptime monitors and link checkers often send HEAD.
+    @app.api_route("/{full_path:path}", methods=["GET", "HEAD"], include_in_schema=False)
     def frontend(full_path: str):
         if _is_reserved(full_path):
             raise HTTPException(status_code=404, detail="Not Found")
