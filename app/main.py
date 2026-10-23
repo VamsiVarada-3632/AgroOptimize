@@ -17,6 +17,7 @@ import os
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 
 from app.data import preprocessing as pp
 from typing import Literal
@@ -79,6 +80,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Plans, explanations and district profiles are large JSON documents
+# (often 100-500 kB); compressing them cuts transfer size by ~85-90 %.
+# Only the encoding changes, never the content.
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
 @app.get("/health")
@@ -441,3 +447,11 @@ def audit_fuzzy():
 
     return audit.summary()
 
+
+# ---------------------------------------------------------------------------
+# Frontend (production build), registered last so every API route wins
+# ---------------------------------------------------------------------------
+
+from app.frontend import mount_frontend  # noqa: E402
+
+mount_frontend(app)
