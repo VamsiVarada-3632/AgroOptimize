@@ -17,7 +17,6 @@ services:
         - app/**
         - data/**
         - frontend/src/**
-        - frontend/public/**
         - frontend/index.html
         - frontend/package.json
         - frontend/package-lock.json
