@@ -1,17 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import OnboardingView from './views/OnboardingView';
-import AuthView from './views/AuthView';
-import ProfileSetupView from './views/ProfileSetupView';
-import DashboardView from './views/DashboardView';
-import AnalyticsView from './views/AnalyticsView';
-import ComparisonView from './views/ComparisonView';
-import RunOptimizationView from './views/RunOptimizationView';
-import HistoryView from './views/HistoryView';
-import ReportsView from './views/ReportsView';
-import DistrictIntelligenceView from './views/DistrictIntelligenceView';
-import SimulationView from './views/SimulationView';
-import SettingsView from './views/SettingsView';
+import React, { useState, useEffect, Suspense } from 'react';
 import { api, DISTRICTS } from './services/api';
+import { lazyView } from './utils/lazyView';
+import ViewLoading from './components/ViewLoading';
+
+// Each page is its own chunk, fetched the first time it is opened.
+const OnboardingView = lazyView(() => import('./views/OnboardingView'));
+const AuthView = lazyView(() => import('./views/AuthView'));
+const ProfileSetupView = lazyView(() => import('./views/ProfileSetupView'));
+const DashboardView = lazyView(() => import('./views/DashboardView'));
+const AnalyticsView = lazyView(() => import('./views/AnalyticsView'));
+const ComparisonView = lazyView(() => import('./views/ComparisonView'));
+const RunOptimizationView = lazyView(() => import('./views/RunOptimizationView'));
+const HistoryView = lazyView(() => import('./views/HistoryView'));
+const ReportsView = lazyView(() => import('./views/ReportsView'));
+const DistrictIntelligenceView = lazyView(() => import('./views/DistrictIntelligenceView'));
+const SimulationView = lazyView(() => import('./views/SimulationView'));
+const SettingsView = lazyView(() => import('./views/SettingsView'));
 
 const defaultAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23707a6f'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>";
 
@@ -144,28 +148,30 @@ export default function App() {
   return (
     <div className="min-h-screen bg-background text-on-background font-body-md antialiased">
       {/* 1. Linear/Transactional Views (No Shell) */}
-      {currentView === 'onboarding' && (
-        <OnboardingView 
-          onNavigate={setCurrentView} 
-          selectedLanguage={selectedLanguage}
-          onChangeLanguage={setSelectedLanguage}
-        />
-      )}
+      <Suspense fallback={<ViewLoading fullScreen />}>
+        {currentView === 'onboarding' && (
+          <OnboardingView 
+            onNavigate={setCurrentView} 
+            selectedLanguage={selectedLanguage}
+            onChangeLanguage={setSelectedLanguage}
+          />
+        )}
 
-      {(currentView === 'login' || currentView === 'register') && (
-        <AuthView 
-          initialMode={currentView}
-          onSuccess={handleAuthSuccess}
-          selectedLanguage={selectedLanguage}
-        />
-      )}
+        {(currentView === 'login' || currentView === 'register') && (
+          <AuthView 
+            initialMode={currentView}
+            onSuccess={handleAuthSuccess}
+            selectedLanguage={selectedLanguage}
+          />
+        )}
 
-      {currentView === 'profile-setup' && (
-        <ProfileSetupView 
-          initialProfile={user}
-          onComplete={handleProfileComplete}
-        />
-      )}
+        {currentView === 'profile-setup' && (
+          <ProfileSetupView 
+            initialProfile={user}
+            onComplete={handleProfileComplete}
+          />
+        )}
+      </Suspense>
 
       {/* 2. Main Application Navigation Shell */}
       {isDashboardShell && hasCompleteProfile && user && (
@@ -389,66 +395,68 @@ export default function App() {
             
             {/* View Canvas Content */}
             <main className="flex-grow p-4 md:p-8 max-w-7xl mx-auto w-full">
-              {currentView === 'dashboard' && (
-                <DashboardView
-                  user={user}
-                  onNavigate={navigateTo}
-                  layout={dashboardLayout}
-                  onToggleLayout={handleToggleLayout}
-                />
-              )}
+              <Suspense fallback={<ViewLoading />}>
+                {currentView === 'dashboard' && (
+                  <DashboardView
+                    user={user}
+                    onNavigate={navigateTo}
+                    layout={dashboardLayout}
+                    onToggleLayout={handleToggleLayout}
+                  />
+                )}
 
-              {currentView === 'analytics' && (
-                <AnalyticsView
-                  onNavigate={navigateTo}
-                  userLocation={user.location}
-                />
-              )}
+                {currentView === 'analytics' && (
+                  <AnalyticsView
+                    onNavigate={navigateTo}
+                    userLocation={user.location}
+                  />
+                )}
 
-              {currentView === 'comparison' && (
-                <ComparisonView
-                  activePlanId={activePlanId}
-                  onSelectPlan={setActivePlanId}
-                  userLocation={user.location}
-                  onNavigate={navigateTo}
-                />
-              )}
+                {currentView === 'comparison' && (
+                  <ComparisonView
+                    activePlanId={activePlanId}
+                    onSelectPlan={setActivePlanId}
+                    userLocation={user.location}
+                    onNavigate={navigateTo}
+                  />
+                )}
 
-              {currentView === 'run-optimization' && (
-                <RunOptimizationView
-                  key={navParams.district || 'profile'}
-                  userLocation={user.location}
-                  initialDistrict={navParams.district}
-                  landSizeHa={Number(user.landSize) || 5}
-                  onNavigate={navigateTo}
-                />
-              )}
+                {currentView === 'run-optimization' && (
+                  <RunOptimizationView
+                    key={navParams.district || 'profile'}
+                    userLocation={user.location}
+                    initialDistrict={navParams.district}
+                    landSizeHa={Number(user.landSize) || 5}
+                    onNavigate={navigateTo}
+                  />
+                )}
 
-              {currentView === 'district-intelligence' && (
-                <DistrictIntelligenceView userLocation={user.location} onNavigate={navigateTo} />
-              )}
+                {currentView === 'district-intelligence' && (
+                  <DistrictIntelligenceView userLocation={user.location} onNavigate={navigateTo} />
+                )}
 
-              {currentView === 'scenario-simulation' && (
-                <SimulationView userLocation={user.location} landSizeHa={Number(user.landSize) || 5} onNavigate={navigateTo} />
-              )}
+                {currentView === 'scenario-simulation' && (
+                  <SimulationView userLocation={user.location} landSizeHa={Number(user.landSize) || 5} onNavigate={navigateTo} />
+                )}
 
-              {currentView === 'history' && (
-                <HistoryView userLocation={user.location} onNavigate={navigateTo} />
-              )}
+                {currentView === 'history' && (
+                  <HistoryView userLocation={user.location} onNavigate={navigateTo} />
+                )}
 
-              {currentView === 'reports' && (
-                <ReportsView userLocation={user.location} onNavigate={navigateTo} />
-              )}
+                {currentView === 'reports' && (
+                  <ReportsView userLocation={user.location} onNavigate={navigateTo} />
+                )}
 
-              {currentView === 'settings' && (
-                <SettingsView 
-                  user={user}
-                  onUpdateUser={(updated) => setUser(prev => ({ ...prev, ...updated }))}
-                  onLogout={handleLogout}
-                  onChangeLanguage={setSelectedLanguage}
-                  selectedLanguage={selectedLanguage}
-                />
-              )}
+                {currentView === 'settings' && (
+                  <SettingsView 
+                    user={user}
+                    onUpdateUser={(updated) => setUser(prev => ({ ...prev, ...updated }))}
+                    onLogout={handleLogout}
+                    onChangeLanguage={setSelectedLanguage}
+                    selectedLanguage={selectedLanguage}
+                  />
+                )}
+              </Suspense>
             </main>
 
             {/* Footer */}
