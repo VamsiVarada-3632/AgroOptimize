@@ -24,6 +24,8 @@ from pymoo.core.mutation import Mutation
 from pymoo.core.repair import Repair
 from pymoo.core.sampling import Sampling
 
+from app.optimization.portable_random import legacy_normal
+
 
 class AllocationRepair(Repair):
     """Keeps the chromosome feasible after crossover/mutation:
@@ -88,7 +90,9 @@ class GaussianMutation(Mutation):
         Xp = np.array(X, dtype=float, copy=True)
         mask = np.random.random(Xp.shape) < self.gene_prob
         span = np.asarray(problem.xu) - np.asarray(problem.xl)
-        noise = np.random.normal(0.0, self.sigma, Xp.shape) * span
+        # Same draws as np.random.normal(0.0, sigma, shape), identical on
+        # every platform (see portable_random); only masked genes use them.
+        noise = legacy_normal(self.sigma, Xp.shape, mask) * span
         Xp[mask] += noise[mask]
         Xp = np.clip(Xp, problem.xl, problem.xu)
         return Xp
