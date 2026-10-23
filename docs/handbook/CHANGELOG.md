@@ -4,6 +4,21 @@ All code modifications made during the 2026-09-29 audit. All changes are submitt
 
 Verification after all changes: backend **205/205 tests pass** (was 165/165); output fingerprint over 48 endpoint/pipeline results is **identical to HEAD** apart from the new additive provenance fields; frontend `oxlint` 0 warnings (was 3 in `src` + noise), `vite build` succeeds; UI flows exercised in Chrome with no console errors.
 
+## [Unreleased] – Render deployment
+
+### Added
+- One-service deployment: FastAPI serves the built React app (`app/frontend.py`: `/assets` with a one-year cache, SPA fallback, API/docs paths keep JSON 404s); gzip for responses over 1 kB.
+- Two-stage `Dockerfile` (Node build → Python 3.13 runtime, binary wheels only, non-root user, `$PORT`), `.dockerignore`, `render.yaml` Blueprint.
+- `AGROOPTIMIZE_RESULTS_DIR` and `AGROOPTIMIZE_FRONTEND_DIST` settings; `requirements-dev.txt`.
+- `scripts/smoke_test_deployment.py` (34 checks, 17 result fingerprints); `tests/test_deployment.py`; frontend tests for the API base and lazy loading.
+- `DEPLOYMENT_GUIDE.md`, `DEPLOYMENT_REPORT.md`.
+
+### Changed
+- `requirements.txt` pins exact versions and no longer contains test tools.
+- Production frontend builds call the API on the page origin; `VITE_API_BASE` still overrides it.
+- Each page is a lazily loaded chunk: initial JavaScript 476 → 211 kB (122 → 66 kB gzipped).
+- Optimisation, fuzzy and ranking results are unchanged (identical fingerprints against `main`).
+
 ## [Unreleased] – NSGA-II engine optimisation
 
 ### Added

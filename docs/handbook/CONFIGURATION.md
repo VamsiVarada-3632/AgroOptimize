@@ -103,12 +103,14 @@ All modelling constants live in `agrooptimize-backend/app/config.py`; a few more
 
 | File | Key settings |
 |---|---|
-| `Dockerfile` | `python:3.11-slim`, installs gcc/g++, `pip install -r requirements.txt`, copies `app/ data/ run_demo.py`, `mkdir /app/results`, `uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers`; runs as root |
-| `.dockerignore` | excludes `.git`, `notes/`, `docs/`, `tests/`, `results/`, caches |
+| `Dockerfile` | two stages: `node:22-slim` builds `frontend/dist` (`npm ci`, `vite build`); `python:3.13-slim` installs pinned binary wheels from `requirements.txt`, copies `app/ data/` and the build, runs as user `agro` (uid 10001), `uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers`, 1 worker. See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) |
+| `.dockerignore` | excludes `.git`, `tests/`, `docs/`, `notes/`, `scripts/`, `results/`, caches, `frontend/node_modules`, `frontend/dist`, `frontend/.env*` |
 | `fly.toml` | app `agrooptimize-backend`, region `sin`, `force_https`, `auto_stop_machines=false`, `min_machines_running=1`, 1 shared CPU / 512 MB, health `/health` 15 s, volume `agrooptimize_results → /app/results` |
-| `render.yaml` | docker runtime, free plan, Singapore, health `/health`, CORS env |
+| `render.yaml` | one Docker web service `agrooptimize` (frontend + API), free plan, Singapore, health `/health`, auto-deploy with build filters, `AGROOPTIMIZE_NSGA2_MODE=original`; optional persistent disk documented in comments |
 | `vercel.json` | `npm run build`, output `dist`, SPA rewrite |
 | `.github/workflows/deploy-backend.yml` | on push to `main` under `agrooptimize-backend/**`: `test` job (Python 3.11, pytest) → `deploy` job (`needs: test`) |
+| Environment | `AGROOPTIMIZE_RESULTS_DIR` (saved runs/simulations folder, default `results/`), `AGROOPTIMIZE_FRONTEND_DIST` (frontend build served by the API, default `frontend/dist`), `AGROOPTIMIZE_NSGA2_MODE`, `CORS_ALLOW_ORIGINS`, `PORT`; frontend build: `VITE_API_BASE` (optional; production default is the page origin) |
+| `requirements.txt` / `requirements-dev.txt` | pinned runtime dependencies / runtime + pytest, httpx |
 | `pytest.ini` | testpaths `tests`, `-v --tb=short`, ignore Deprecation/User warnings |
 | `.oxlintrc.json` | react + oxc plugins; `rules-of-hooks` error; ignores `dist/**`, `*/code.html` |
 

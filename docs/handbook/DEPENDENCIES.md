@@ -20,7 +20,7 @@ Only lower bounds are pinned (`>=`); there is no lock file, so a fresh install t
 | pytest | ≥8.0 | 8.4.2 | tests | `tests/` – **test-only, but installed in the production image** |
 | httpx | ≥0.28 | 0.28.1 | required by `fastapi.testclient` | tests – **test-only** |
 
-Recommendations: split `requirements-dev.txt` (pytest, httpx) from runtime; generate a lock (`pip-compile` / `uv pip compile`) so Docker, CI and laptops run identical versions; the Dockerfile's `gcc g++` install is unnecessary when all packages ship wheels (they do for these versions on linux/amd64) and adds ~200 MB.
+Since the Render deployment: `requirements.txt` pins exact versions (the ones the tests and published results use) and `requirements-dev.txt` adds pytest and httpx; the Dockerfile installs binary wheels only (no gcc/g++). A full lock with hashes (`pip-compile --generate-hashes`) remains a possible next step.
 
 ## 2. Frontend (`stitch_agrooptimize_app/package.json`)
 
