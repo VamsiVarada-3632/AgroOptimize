@@ -127,6 +127,15 @@ def test_files_outside_the_build_are_not_served(site, path):
     assert "outside the build" not in res.text
 
 
+@pytest.mark.parametrize("path", ["/", "/history", "/assets/index-abc123.js"])
+def test_head_requests_are_answered(site, path):
+    assert site.head(path).status_code == 200
+
+
+def test_head_on_the_real_health_check():
+    assert TestClient(real_app).head("/health").status_code == 200
+
+
 def test_nothing_is_mounted_without_a_build(tmp_path):
     app = FastAPI()
     assert mount_frontend(app, tmp_path) is False
