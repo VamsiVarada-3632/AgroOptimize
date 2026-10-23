@@ -21,7 +21,9 @@ from pathlib import Path
 APP_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = APP_DIR.parent
 RAW_DATA_DIR = PROJECT_ROOT / "data" / "raw"
-RESULTS_DIR = PROJECT_ROOT / "results"
+# Saved runs and simulations. Overridable so a deployment can point it at a
+# persistent disk (e.g. a Render disk mounted at /var/data/results).
+RESULTS_DIR = Path(os.environ.get("AGROOPTIMIZE_RESULTS_DIR") or PROJECT_ROOT / "results")
 
 # ---------------------------------------------------------------------------
 # Dataset structure (data/raw/<location>_<kind>.csv)
