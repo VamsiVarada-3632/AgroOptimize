@@ -34,6 +34,7 @@ VOLATILE_KEYS = {
     "optimize_seconds", "total_seconds", "avg_generation_ms", "saved_at", "run_id",
     "token", "simulation_id", "client_id", "seconds", "elapsed_seconds", "generated_at",
     "saved_files",  # absolute paths on the server
+    "last_dataset_update",  # modification date of the CSV files on the server (checkout time)
 }
 
 TIMEOUT = 300
