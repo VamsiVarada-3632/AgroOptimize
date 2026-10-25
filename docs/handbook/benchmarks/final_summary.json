@@ -1,0 +1,538 @@
+{
+ "variants": [
+  "original",
+  "enhanced",
+  "enhanced+duplicate_avoidance+constraint_aware_initialization"
+ ],
+ "seeds": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9
+ ],
+ "problems": [
+  "Coimbatore Kharif",
+  "Coimbatore Rabi",
+  "Coimbatore Summer",
+  "Erode Kharif",
+  "Erode Rabi",
+  "Erode Summer",
+  "Salem Kharif",
+  "Salem Rabi",
+  "Salem Summer",
+  "Pollachi Kharif",
+  "Pollachi Rabi",
+  "Pollachi Summer",
+  "Coimbatore Kharif budget 177,874",
+  "Erode Kharif budget 254,478",
+  "Salem Kharif budget 213,525",
+  "Pollachi Kharif budget 268,297"
+ ],
+ "table": {
+  "original": {
+   "hypervolume": 0.443102771616749,
+   "gd": 0.32769016219005054,
+   "igd": 0.06604785539534311,
+   "igd_plus": 0.039222302506392914,
+   "spread": 0.5469543064930463,
+   "spacing": 0.09298576856019715,
+   "front_size": 80.0,
+   "entropy": 0.36730819847599083,
+   "allocation_entropy": 0.5564004902592703,
+   "population_duplicates": 0.0,
+   "constraint_satisfaction": 1.0,
+   "duplicates_rejected": 738.0,
+   "dominated_by_lower_bound_copy": 0.9125,
+   "seconds": 0.3357471459894441,
+   "evaluations": 16000.0,
+   "generations": 200.0,
+   "median_generations_to_99pct_original_hv": 55,
+   "share_reaching_99pct_original_hv": 0.99375,
+   "top_plan_mean": {
+    "yield_tonnes": 85.1406125,
+    "cost_rs": 204068.3861875,
+    "water_liters": 25043471.35875,
+    "env_impact_score": 251.43493125
+   }
+  },
+  "enhanced": {
+   "hypervolume": 0.4608303460309897,
+   "gd": 0.15649374377972902,
+   "igd": 0.04339078301097689,
+   "igd_plus": 0.02379529809658519,
+   "spread": 0.5493409011488181,
+   "spacing": 0.07133494422401954,
+   "front_size": 80.0,
+   "entropy": 0.2648010633589078,
+   "allocation_entropy": 0.568491919310981,
+   "population_duplicates": 0.0,
+   "constraint_satisfaction": 1.0,
+   "duplicates_rejected": 8021.5,
+   "dominated_by_lower_bound_copy": 0.4625,
+   "seconds": 0.5133342915214598,
+   "evaluations": 15999.0,
+   "generations": 200.0,
+   "median_generations_to_99pct_original_hv": 10.0,
+   "share_reaching_99pct_original_hv": 1.0,
+   "top_plan_mean": {
+    "yield_tonnes": 67.67211875,
+    "cost_rs": 184920.592125,
+    "water_liters": 20833313.678125,
+    "env_impact_score": 217.5325125
+   }
+  },
+  "enhanced+duplicate_avoidance+constraint_aware_initialization": {
+   "hypervolume": 0.46433605104211695,
+   "gd": 0.165517108087838,
+   "igd": 0.04500280000219711,
+   "igd_plus": 0.02471275600019245,
+   "spread": 0.5093193742237446,
+   "spacing": 0.0712320658772238,
+   "front_size": 80.0,
+   "entropy": 0.27409493890635306,
+   "allocation_entropy": 0.5770507499701506,
+   "population_duplicates": 0.0,
+   "constraint_satisfaction": 1.0,
+   "duplicates_rejected": 139.5,
+   "dominated_by_lower_bound_copy": 0.49375,
+   "seconds": 0.29978877102257684,
+   "evaluations": 15999.0,
+   "generations": 200.0,
+   "median_generations_to_99pct_original_hv": 10.0,
+   "share_reaching_99pct_original_hv": 1.0,
+   "top_plan_mean": {
+    "yield_tonnes": 72.34791875,
+    "cost_rs": 188275.8664375,
+    "water_liters": 22064949.27375,
+    "env_impact_score": 223.98899375
+   }
+  }
+ },
+ "paired": {
+  "enhanced": {
+   "hypervolume": {
+    "median_variant": 0.4608303460309897,
+    "median_original": 0.443102771616749,
+    "median_diff": 0.014095154342478933,
+    "better": 147,
+    "worse": 13,
+    "ties": 0,
+    "p_value": 5.421210222366024e-26
+   },
+   "gd": {
+    "median_variant": 0.15649374377972902,
+    "median_original": 0.32769016219005054,
+    "median_diff": -0.15174744692149514,
+    "better": 151,
+    "worse": 9,
+    "ties": 0,
+    "p_value": 3.0868718848596555e-26
+   },
+   "igd": {
+    "median_variant": 0.04339078301097689,
+    "median_original": 0.06604785539534311,
+    "median_diff": -0.01759338270619718,
+    "better": 155,
+    "worse": 5,
+    "ties": 0,
+    "p_value": 6.266399759196926e-26
+   },
+   "igd_plus": {
+    "median_variant": 0.02379529809658519,
+    "median_original": 0.039222302506392914,
+    "median_diff": -0.013205786655422064,
+    "better": 155,
+    "worse": 5,
+    "ties": 0,
+    "p_value": 1.570475075523725e-26
+   },
+   "spread": {
+    "median_variant": 0.5493409011488181,
+    "median_original": 0.5469543064930463,
+    "median_diff": 0.002959735907189953,
+    "better": 79,
+    "worse": 81,
+    "ties": 0,
+    "p_value": 0.9226406240209359
+   },
+   "spacing": {
+    "median_variant": 0.07133494422401954,
+    "median_original": 0.09298576856019715,
+    "median_diff": -0.02026629810059922,
+    "better": 130,
+    "worse": 30,
+    "ties": 0,
+    "p_value": 4.946362666965868e-15
+   },
+   "front_size": {
+    "median_variant": 80.0,
+    "median_original": 80.0,
+    "median_diff": 0.0,
+    "better": 0,
+    "worse": 0,
+    "ties": 160,
+    "p_value": NaN
+   },
+   "entropy": {
+    "median_variant": 0.2648010633589078,
+    "median_original": 0.36730819847599083,
+    "median_diff": -0.11078630412678933,
+    "better": 3,
+    "worse": 157,
+    "ties": 0,
+    "p_value": 5.977921076492581e-28
+   },
+   "allocation_entropy": {
+    "median_variant": 0.568491919310981,
+    "median_original": 0.5564004902592703,
+    "median_diff": 0.0053757798405415225,
+    "better": 106,
+    "worse": 54,
+    "ties": 0,
+    "p_value": 0.00032476498739244315
+   },
+   "population_duplicates": {
+    "median_variant": 0.0,
+    "median_original": 0.0,
+    "median_diff": 0.0,
+    "better": 17,
+    "worse": 43,
+    "ties": 100,
+    "p_value": 0.00015811820870342732
+   },
+   "dominated_by_lower_bound_copy": {
+    "median_variant": 0.4625,
+    "median_original": 0.9125,
+    "median_diff": -0.35,
+    "better": 160,
+    "worse": 0,
+    "ties": 0,
+    "p_value": 5.197940032222291e-28
+   },
+   "constraint_satisfaction": {
+    "median_variant": 1.0,
+    "median_original": 1.0,
+    "median_diff": 0.0,
+    "better": 0,
+    "worse": 0,
+    "ties": 160,
+    "p_value": NaN
+   },
+   "duplicates_rejected": {
+    "median_variant": 8021.5,
+    "median_original": 738.0,
+    "median_diff": 7085.5,
+    "better": 0,
+    "worse": 160,
+    "ties": 0,
+    "p_value": 5.239534620376308e-28
+   },
+   "seconds": {
+    "median_variant": 0.5133342915214598,
+    "median_original": 0.3357471459894441,
+    "median_diff": 0.13759781201952137,
+    "better": 0,
+    "worse": 160,
+    "ties": 0,
+    "p_value": 5.239534620376308e-28
+   },
+   "evaluations": {
+    "median_variant": 15999.0,
+    "median_original": 16000.0,
+    "median_diff": -1.0,
+    "better": 91,
+    "worse": 0,
+    "ties": 69,
+    "p_value": 1.6208872206832012e-17
+   }
+  },
+  "enhanced+duplicate_avoidance+constraint_aware_initialization": {
+   "hypervolume": {
+    "median_variant": 0.46433605104211695,
+    "median_original": 0.443102771616749,
+    "median_diff": 0.015588626459432237,
+    "better": 150,
+    "worse": 10,
+    "ties": 0,
+    "p_value": 3.3810208517357245e-26
+   },
+   "gd": {
+    "median_variant": 0.165517108087838,
+    "median_original": 0.32769016219005054,
+    "median_diff": -0.14941589958150314,
+    "better": 154,
+    "worse": 6,
+    "ties": 0,
+    "p_value": 2.7715176370368382e-27
+   },
+   "igd": {
+    "median_variant": 0.04500280000219711,
+    "median_original": 0.06604785539534311,
+    "median_diff": -0.017301980323050827,
+    "better": 149,
+    "worse": 11,
+    "ties": 0,
+    "p_value": 1.2217751509040795e-25
+   },
+   "igd_plus": {
+    "median_variant": 0.02471275600019245,
+    "median_original": 0.039222302506392914,
+    "median_diff": -0.013013469871579968,
+    "better": 152,
+    "worse": 8,
+    "ties": 0,
+    "p_value": 2.5260636076867278e-26
+   },
+   "spread": {
+    "median_variant": 0.5093193742237446,
+    "median_original": 0.5469543064930463,
+    "median_diff": -0.02038203425459595,
+    "better": 92,
+    "worse": 68,
+    "ties": 0,
+    "p_value": 0.005516021203833687
+   },
+   "spacing": {
+    "median_variant": 0.0712320658772238,
+    "median_original": 0.09298576856019715,
+    "median_diff": -0.018072543930254654,
+    "better": 136,
+    "worse": 24,
+    "ties": 0,
+    "p_value": 4.2053552970426906e-20
+   },
+   "front_size": {
+    "median_variant": 80.0,
+    "median_original": 80.0,
+    "median_diff": 0.0,
+    "better": 0,
+    "worse": 0,
+    "ties": 160,
+    "p_value": NaN
+   },
+   "entropy": {
+    "median_variant": 0.27409493890635306,
+    "median_original": 0.36730819847599083,
+    "median_diff": -0.09686416806270665,
+    "better": 3,
+    "worse": 157,
+    "ties": 0,
+    "p_value": 8.870639326960817e-28
+   },
+   "allocation_entropy": {
+    "median_variant": 0.5770507499701506,
+    "median_original": 0.5564004902592703,
+    "median_diff": 0.004003201489069075,
+    "better": 99,
+    "worse": 61,
+    "ties": 0,
+    "p_value": 0.00017702372480532302
+   },
+   "population_duplicates": {
+    "median_variant": 0.0,
+    "median_original": 0.0,
+    "median_diff": 0.0,
+    "better": 22,
+    "worse": 1,
+    "ties": 137,
+    "p_value": 2.0356765080558656e-05
+   },
+   "dominated_by_lower_bound_copy": {
+    "median_variant": 0.49375,
+    "median_original": 0.9125,
+    "median_diff": -0.32500000000000007,
+    "better": 157,
+    "worse": 3,
+    "ties": 0,
+    "p_value": 5.79862503211094e-28
+   },
+   "constraint_satisfaction": {
+    "median_variant": 1.0,
+    "median_original": 1.0,
+    "median_diff": 0.0,
+    "better": 0,
+    "worse": 0,
+    "ties": 160,
+    "p_value": NaN
+   },
+   "duplicates_rejected": {
+    "median_variant": 139.5,
+    "median_original": 738.0,
+    "median_diff": -627.0,
+    "better": 160,
+    "worse": 0,
+    "ties": 0,
+    "p_value": 5.238727261367764e-28
+   },
+   "seconds": {
+    "median_variant": 0.29978877102257684,
+    "median_original": 0.3357471459894441,
+    "median_diff": -0.003178187005687505,
+    "better": 86,
+    "worse": 74,
+    "ties": 0,
+    "p_value": 7.790259853595104e-05
+   },
+   "evaluations": {
+    "median_variant": 15999.0,
+    "median_original": 16000.0,
+    "median_diff": -1.0,
+    "better": 91,
+    "worse": 0,
+    "ties": 69,
+    "p_value": 1.6208872206832012e-17
+   }
+  }
+ },
+ "paired_vs_enhanced": {
+  "enhanced+duplicate_avoidance+constraint_aware_initialization": {
+   "hypervolume": {
+    "median_variant": 0.46433605104211695,
+    "median_original": 0.4608303460309897,
+    "median_diff": 0.00034472700858068084,
+    "better": 87,
+    "worse": 73,
+    "ties": 0,
+    "p_value": 0.9104738689392428
+   },
+   "gd": {
+    "median_variant": 0.165517108087838,
+    "median_original": 0.15649374377972902,
+    "median_diff": 0.00011405623615454657,
+    "better": 77,
+    "worse": 82,
+    "ties": 1,
+    "p_value": 0.8190868665197307
+   },
+   "igd": {
+    "median_variant": 0.04500280000219711,
+    "median_original": 0.04339078301097689,
+    "median_diff": 0.00018876398505557682,
+    "better": 73,
+    "worse": 87,
+    "ties": 0,
+    "p_value": 0.149503553833666
+   },
+   "igd_plus": {
+    "median_variant": 0.02471275600019245,
+    "median_original": 0.02379529809658519,
+    "median_diff": 0.00011117939482354787,
+    "better": 76,
+    "worse": 84,
+    "ties": 0,
+    "p_value": 0.26228736103618133
+   },
+   "spread": {
+    "median_variant": 0.5093193742237446,
+    "median_original": 0.5493409011488181,
+    "median_diff": -0.02469297525329081,
+    "better": 93,
+    "worse": 67,
+    "ties": 0,
+    "p_value": 0.0066152430338147425
+   },
+   "spacing": {
+    "median_variant": 0.0712320658772238,
+    "median_original": 0.07133494422401954,
+    "median_diff": 0.0008443047337021933,
+    "better": 76,
+    "worse": 84,
+    "ties": 0,
+    "p_value": 0.3877251590094638
+   },
+   "front_size": {
+    "median_variant": 80.0,
+    "median_original": 80.0,
+    "median_diff": 0.0,
+    "better": 0,
+    "worse": 0,
+    "ties": 160,
+    "p_value": NaN
+   },
+   "entropy": {
+    "median_variant": 0.27409493890635306,
+    "median_original": 0.2648010633589078,
+    "median_diff": 0.008308804131509612,
+    "better": 101,
+    "worse": 59,
+    "ties": 0,
+    "p_value": 2.6550514546105856e-05
+   },
+   "allocation_entropy": {
+    "median_variant": 0.5770507499701506,
+    "median_original": 0.568491919310981,
+    "median_diff": -0.0016940281032802873,
+    "better": 68,
+    "worse": 91,
+    "ties": 1,
+    "p_value": 0.5407957771920673
+   },
+   "population_duplicates": {
+    "median_variant": 0.0,
+    "median_original": 0.0,
+    "median_diff": 0.0,
+    "better": 47,
+    "worse": 0,
+    "ties": 113,
+    "p_value": 1.998980067968229e-10
+   },
+   "dominated_by_lower_bound_copy": {
+    "median_variant": 0.49375,
+    "median_original": 0.4625,
+    "median_diff": 0.012499999999999956,
+    "better": 69,
+    "worse": 81,
+    "ties": 10,
+    "p_value": 0.09269647298744123
+   },
+   "constraint_satisfaction": {
+    "median_variant": 1.0,
+    "median_original": 1.0,
+    "median_diff": 0.0,
+    "better": 0,
+    "worse": 0,
+    "ties": 160,
+    "p_value": NaN
+   },
+   "duplicates_rejected": {
+    "median_variant": 139.5,
+    "median_original": 8021.5,
+    "median_diff": -7920.0,
+    "better": 160,
+    "worse": 0,
+    "ties": 0,
+    "p_value": 5.239419276007625e-28
+   },
+   "seconds": {
+    "median_variant": 0.29978877102257684,
+    "median_original": 0.5133342915214598,
+    "median_diff": -0.1390194999985397,
+    "better": 159,
+    "worse": 1,
+    "ties": 0,
+    "p_value": 5.339198943584314e-28
+   },
+   "evaluations": {
+    "median_variant": 15999.0,
+    "median_original": 15999.0,
+    "median_diff": 0.0,
+    "better": 0,
+    "worse": 0,
+    "ties": 160,
+    "p_value": NaN
+   }
+  }
+ },
+ "peak_memory_mb": {
+  "original": 1.174156665802002,
+  "enhanced": 1.1693987846374512,
+  "enhanced+duplicate_avoidance+constraint_aware_initialization": 1.212489128112793
+ },
+ "note": "Generated by scripts/benchmark_nsga2.py; 'enhanced' here is the engine of PR #12 (before duplicate avoidance and constraint-aware initialisation). Seeds 0-9, pop 80, 200 generations, convergence history tracked."
+}
