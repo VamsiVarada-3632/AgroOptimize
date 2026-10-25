@@ -23,6 +23,7 @@ from pymoo.core.duplicate import DefaultDuplicateElimination
 from pymoo.core.mutation import Mutation
 from pymoo.core.repair import Repair
 from pymoo.core.sampling import Sampling
+from pymoo.operators.sampling.lhs import LHS
 
 
 class AllocationRepair(Repair):
@@ -232,13 +233,14 @@ class SmartSampling(Sampling):
     knowledge about these objectives, not a new agronomic assumption).
     If more seeds are requested than these, the rest are random blends of
     them. All remaining individuals are uniform random, as in the original
-    engine. Seeding is the "seeding the initial population" technique of
-    Friedrich & Wagner (2015).
+    engine, or a Latin Hypercube sample when `lhs` is set. Seeding is the
+    "seeding the initial population" technique of Friedrich & Wagner (2015).
     """
 
-    def __init__(self, fraction: float):
+    def __init__(self, fraction: float, lhs: bool = False):
         super().__init__()
         self.fraction = float(fraction)
+        self.lhs = bool(lhs)
 
     def _do(self, problem, n_samples, *args, random_state=None, **kwargs):
         n_seed = int(round(self.fraction * n_samples))
@@ -250,8 +252,12 @@ class SmartSampling(Sampling):
             w = random_state.random((k, 1))
             seeds = np.vstack([seeds, w * seeds[i] + (1 - w) * seeds[j]])
         seeds = seeds[:n_seed]
-        xl, xu = problem.bounds()
-        rand = xl + (xu - xl) * random_state.random((n_samples - len(seeds), problem.n_var))
+        n_rand = n_samples - len(seeds)
+        if self.lhs and n_rand > 1:
+            rand = LHS()._do(problem, n_rand, random_state=random_state)
+        else:
+            xl, xu = problem.bounds()
+            rand = xl + (xu - xl) * random_state.random((n_rand, problem.n_var))
         return np.vstack([seeds, rand])
 
 

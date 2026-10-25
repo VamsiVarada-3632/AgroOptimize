@@ -194,3 +194,50 @@ def test_saved_runs_without_metrics_still_validate():
     meta = RunMeta(pop_size=80, n_gen=200, crossover_prob=0.85, mutation_prob=0.12, preference="balanced",
                    n_pareto_solutions_found=80, n_plans_returned=50, optimize_seconds=0.3)
     assert meta.quality_metrics is None
+
+
+# ---------------------------------------------------------------------------
+# Switchable features
+# ---------------------------------------------------------------------------
+
+import dataclasses  # noqa: E402
+
+from app.optimization.engine_settings import engine_settings  # noqa: E402
+
+
+def _with(base="original", **features):
+    return dataclasses.replace(engine_settings(base), **features)
+
+
+def _strata_filled(X, xl, xu):
+    """True when every gene of the n rows of X has one value in each of n equal strata."""
+    n = len(X)
+    idx = np.floor((X - xl) / (xu - xl) * n).clip(0, n - 1).astype(int)
+    return all(len(set(idx[:, j])) == n for j in range(X.shape[1]))
+
+
+def test_lhs_sampling_fills_every_stratum():
+    problem = _problem("Salem", "Kharif")
+    rng = np.random.default_rng(0)
+    X = operators.LHS()._do(problem, 40, random_state=rng)
+    assert _strata_filled(X, problem.xl, problem.xu)
+
+
+def test_smart_sampling_with_lhs_keeps_seeds_and_stratifies_the_rest():
+    problem = _problem("Salem", "Kharif")
+    X = operators.SmartSampling(0.2, lhs=True)._do(problem, 40, random_state=np.random.default_rng(0))
+    n_seed = 8  # 20 % of 40
+    np.testing.assert_array_equal(X[:n_seed], operators.seed_chromosomes(problem)[:n_seed])
+    assert _strata_filled(X[n_seed:], problem.xl, problem.xu)
+
+
+@pytest.mark.parametrize("base", ["original", "enhanced"])
+def test_lhs_initialization_is_deterministic_and_in_bounds(base):
+    problem = _problem("Erode", "Kharif", budget=180000.0)
+    engine = _with(base, lhs_initialization=True)
+    a = run_nsga2(problem, pop_size=30, n_gen=10, seed=6, engine=engine)
+    b = run_nsga2(problem, pop_size=30, n_gen=10, seed=6, engine=engine)
+    assert _digest(a) == _digest(b)
+    X = a.pop.get("X")
+    assert np.all(X >= problem.xl - 1e-12) and np.all(X <= problem.xu + 1e-12)
+    assert _digest(a) != _digest(run_nsga2(problem, pop_size=30, n_gen=10, seed=6, mode=base))

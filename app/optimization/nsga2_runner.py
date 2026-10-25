@@ -20,6 +20,7 @@ from typing import List, Optional
 import numpy as np
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.indicators.hv import HV
+from pymoo.operators.sampling.lhs import LHS
 from pymoo.operators.sampling.rnd import FloatRandomSampling
 from pymoo.operators.selection.tournament import TournamentSelection
 from pymoo.optimize import minimize
@@ -110,7 +111,12 @@ def run_nsga2(
         eliminate_duplicates = CountingDuplicateElimination()
 
     if settings.smart_initialization:
-        sampling = SmartSampling(settings.smart_init_fraction)
+        sampling = SmartSampling(settings.smart_init_fraction, lhs=settings.lhs_initialization)
+    elif settings.lhs_initialization:
+        # Latin Hypercube sampling (McKay, Beckman & Conover 1979): each gene's
+        # range is split into pop_size strata and every stratum gets one
+        # individual, so the first population covers the space evenly.
+        sampling = LHS()
     else:
         sampling = FloatRandomSampling()
 

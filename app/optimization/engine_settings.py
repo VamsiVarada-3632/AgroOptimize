@@ -26,6 +26,7 @@ class EngineSettings:
     smart_initialization: bool = False
     duplicate_removal: bool = False
     early_stopping: bool = False
+    lhs_initialization: bool = False
     diversity_monitoring: bool = True
     runtime_profiling: bool = True
     # Base per-gene mutation probability (the adaptive rule starts from it).
@@ -67,6 +68,7 @@ FEATURES_CHANGING_OUTPUTS = (
     "smart_initialization",
     "duplicate_removal",
     "early_stopping",
+    "lhs_initialization",
 )
 
 

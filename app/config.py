@@ -202,6 +202,7 @@ NSGA2_ENGINE_FEATURES = {
         "smart_initialization": False,
         "duplicate_removal": False,
         "early_stopping": False,
+        "lhs_initialization": False,
         "diversity_monitoring": True,
         "runtime_profiling": True,
     },
@@ -211,6 +212,7 @@ NSGA2_ENGINE_FEATURES = {
         "smart_initialization": True,
         "duplicate_removal": False,
         "early_stopping": False,
+        "lhs_initialization": False,
         "diversity_monitoring": True,
         "runtime_profiling": True,
     },
@@ -233,7 +235,8 @@ NSGA2_ADAPTIVE_MUTATION = {"min_prob": 0.02, "max_prob": 0.30, "diversity_floor"
 NSGA2_ADAPTIVE_CROSSOVER = {"start_prob": 0.95, "end_prob": 0.70}
 
 # Smart initialisation: share of the initial population seeded from the
-# district's candidate crops; the rest is drawn uniformly at random.
+# district's candidate crops; the rest is drawn uniformly at random (or by
+# Latin Hypercube sampling when lhs_initialization is on).
 NSGA2_SMART_INIT_FRACTION = 0.2
 
 # Duplicate removal: offspring closer than this (Euclidean distance in the
