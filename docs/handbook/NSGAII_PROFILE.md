@@ -1,6 +1,6 @@
 # NSGA-II Profile
 
-Measured runtime, memory, diversity and quality of the NSGA-II engine before and after this work. Context: [NSGAII_ANALYSIS.md](NSGAII_ANALYSIS.md). Decisions: [NSGAII_IMPROVEMENT_SUMMARY.md](NSGAII_IMPROVEMENT_SUMMARY.md).
+Measured runtime, memory, diversity and quality of the NSGA-II engine. Sections 1–6 profile the first round of work (PR #12: "main" = the engine before it). Section 7 profiles the second round ([NSGAII_IMPROVEMENTS.md](NSGAII_IMPROVEMENTS.md)), whose full benchmark is in [NSGAII_BENCHMARK_RESULTS.md](NSGAII_BENCHMARK_RESULTS.md). Context: [NSGAII_ANALYSIS.md](NSGAII_ANALYSIS.md). PR #12 decisions: [NSGAII_IMPROVEMENT_SUMMARY.md](NSGAII_IMPROVEMENT_SUMMARY.md).
 
 **Machine and method.** One Apple-silicon laptop, Python 3.13, pymoo 0.6.2, NumPy, single process, no other load (the quality study ran alone). Timings are medians of repeated runs; run-to-run noise is about ±10 %. "main" is the code before this work, checked out separately.
 
@@ -140,3 +140,39 @@ Enhanced wins on hypervolume in every one of the 16 problems (7–10 of 10 seeds
 ## 6. Diversity statistics recorded per run
 
 Every run now records (meta → `optimizer.diversity`): population entropy, allocation diversity, mean finite crowding distance and first-front size (initial / final / minimum), and the share of offspring rejected as duplicates. Example (Salem Kharif, original, seed 42): entropy 0.865 → 0.407, first front 13 → 80 individuals (full from generation 8), 1.9 % of offspring rejected. Coimbatore Summer: 31 % rejected; Erode Rabi: 12 %.
+
+## 7. Second round: profile, bottlenecks and what was done about them
+
+Measured with `scripts/profile_nsga2.py --no-history` (median of 5 runs; pop 80 × 200; the profiler's timers are excluded from the totals they measure).
+
+| Phase (ms per run) | Salem Kharif original | Salem Kharif enhanced | Coimbatore Summer original | Coimbatore Summer enhanced | Erode Kharif budget original | Erode Kharif budget enhanced |
+|---|---|---|---|---|---|---|
+| Duplicate elimination | 46.5 | 45.2 | **94.3** | 39.1 | 49.0 | 43.6 |
+| Objective evaluation | 38.2 | 37.8 | 37.9 | 37.4 | 37.8 | 38.4 |
+| Monitoring (diversity, history, adaptive control) | 34.1 | 40.2 | 33.3 | 38.7 | 34.4 | 40.7 |
+| Mutation | 7.9 | 26.4 | 9.9 | 31.3 | 8.0 | 28.2 |
+| Tournament selection | 11.4 | 10.7 | 24.8 | 9.6 | 12.2 | 9.8 |
+| Crowding distance / non-dominated sorting | 11.0 / 6.3 | 10.8 / 6.2 | ≈ same | ≈ same | ≈ same | ≈ same |
+| Quality metrics / TOPSIS / fuzzy | 0.7 / 0.6 / < 0.1 | same | same | same | same | same |
+| **Optimisation total** | 307 | 327 | **420** | **320** | 406 | 420 |
+| Mating rounds per run | 354 | 325 | 846 | 298 | 386 | 296 |
+| Offspring rejected as duplicates | 317 of 16,408 | 188 of 16,276 | 7,191 of 23,260 | 134 of 16,204 | 503 of 16,590 | 150 of 16,222 |
+| Over-budget evaluations (constraint violations) | 0 | 0 | 0 | 0 | 993 of 16,000 | 605 of 16,000 |
+| Dominated solutions in the final population | 0 | 0 | 0 | 0 | 0 | 0 |
+| Front beaten by its lower-bound copy | 97.5 % | 58.8 % | 50.0 % | 41.3 % | 96.3 % | 42.5 % |
+| CPU utilisation / peak traced memory | 1.00 / 1.4 MB | 1.00 / 1.5 MB | 1.00 / 1.5 MB | 1.00 / 1.6 MB | 1.00 / 1.4 MB | 1.00 / 1.8 MB |
+
+"Enhanced" is the engine of this round (with duplicate avoidance and constraint-aware initialisation).
+
+**Bottlenecks found and how they were addressed**
+
+| Bottleneck | Evidence | Action | Effect |
+|---|---|---|---|
+| Rejected duplicates force extra mating rounds | PR #12's enhanced engine rejected 33 % of offspring (median; up to 73 %), 12–31 % of the original's in duplicate-heavy problems; each rejection repeats selection, crossover, mutation, repair and the duplicate check | duplicate avoidance (§2.2 D of NSGAII_IMPROVEMENTS.md) | rejections 8,022 → 140 per run; enhanced runs 13–52 % faster |
+| Per-generation front hypervolume read through pymoo getters | ~30× the cost of the hypervolume itself | read from the cached arrays | exact; part of a 4–13 % gain in enhanced mode |
+| Parent X re-read for every mating batch | 2–3 batches per generation, more with many duplicates | cached per population object | exact |
+| Mutation now 26–31 ms in enhanced mode | the copy check builds a set of the parents' rows per call | a vectorised alternative (NumPy void views + `isin`) was tried and was slower (38 ms), so it was reverted | accepted cost; far smaller than the mating rounds it saves |
+| Monitoring 33–41 ms | entropy, crowding and history per generation | kept: it provides the run report and adaptive control; can be switched off (`diversity_monitoring`, `runtime_profiling`) | — |
+| Evaluation 38 ms | already one vectorised pass; most of it is pymoo setting values on individuals | parallel evaluation tried: slower | rejected |
+| pymoo's per-individual Population objects | remaining time is spread over pymoo bookkeeping | not changed (would mean replacing pymoo's core) | — |
+

@@ -35,6 +35,14 @@ With four objectives the whole population becomes non-dominated within 4–8 gen
 | Diversity monitoring | Population entropy and crowding as diversity measures (Zitzler et al. 2003 [21]) | Entropy, allocation diversity, mean crowding, first-front size and duplicate ratio per generation | Implemented (observational, both modes) |
 | Runtime profiling | — | Total time, generations, evaluations, Pareto size, time per generation, in the log and the saved run | Implemented (observational, both modes) |
 | Code optimisation | — | Vectorised crossover and tournament (same random draws), cached constants, history without deep copies | Implemented (both modes, bit-identical) |
+| *Second round (NSGAII_IMPROVEMENTS.md):* | | | |
+| Diversity-driven adaptive crossover | Adaptive probabilities [2]; diversity-guided EAs [4] | p_c 0.85 at the running peak of allocation diversity, rising to 0.95 as diversity falls to half of it | Rejected: no measurable effect (HV p 0.22 / 0.33) |
+| Latin Hypercube initialisation | McKay, Beckman & Conover 1979 [22] | pymoo LHS (maxmin criterion) for the random part of the first population | Rejected: no measurable effect; the initial layout is forgotten within 200 generations |
+| Constraint-aware (repair) initialisation | Repair-based constraint handling, Coello Coello 2002 [23]; complements constrained domination, Deb 2000 [24] | Over-budget first plans: fertiliser to the lower bound, then the allocation blended towards the cheapest crop with the exact weight that meets the budget | **Accepted** (enhanced): first feasible plan in generation 1 instead of up to 19; HV better under tight budgets (p 4e-5) |
+| Duplicate avoidance | Duplicate genotypes waste GA effort, Ronald 1998 [25] | A child still identical to a parent after mutation gets one Gaussian step on a random gene | **Accepted** (enhanced): same front quality, better spread, 13–52 % less time |
+| Robust objective-space termination | Blank & Deb 2020 [14]; Martí et al. 2016 [16] | pymoo `DefaultMultiObjectiveTermination` (xtol, cvtol, ftol over a window) | Rejected: never triggers with default tolerances; looser ones save nothing and add checking cost |
+| Parallel (master–slave) evaluation | Cantú-Paz 2000 [26]: worthwhile only when evaluation dominates | Thread-pool chunks, results joined in order (identical) | Rejected: slower, because evaluation is ~0.05 ms of vectorised arithmetic per generation |
+| Per-run quality metrics | Zitzler et al. 2003 [21]; Riquelme, Von Lücken & Barán 2015 [27] (indicator review) | HV, GD [28], IGD [29], IGD+ [11], spread [12], spacing [13] against the run's lower-bound reference; in the API and Reports | Implemented (observational, both modes) |
 
 ## 4. Evaluation methodology
 
@@ -42,6 +50,7 @@ With four objectives the whole population becomes non-dominated within 4–8 gen
 |---|---|---|
 | Unary quality indicators on a common normalisation | Zitzler et al. 2003 [21] | Objectives normalised per problem by the reference front's ideal and nadir |
 | Hypervolume (Pareto-compliant) | Zitzler & Thiele 1999 [6] | Reference point 1.1 in every objective |
+| GD and IGD (convergence; convergence and coverage) | Van Veldhuizen & Lamont 1998 [28]; Coello Coello & Reyes Sierra 2004 [29] | Reported alongside IGD+, which unlike them is weakly Pareto compliant [11] |
 | IGD+ (weakly Pareto-compliant) | Ishibuchi et al. 2015 [11] | Against the reference front: non-dominated union of all fronts of all variants, plus each solution's lower-bound-multiplier copy |
 | Spread for > 2 objectives | Generalised spread, Zhou et al. 2006 [12]; spacing, Schott 1995 [13] | Both reported |
 | Multiple independent runs, paired non-parametric test | Derrac et al. 2011 [19] | 16 problems × 10 seeds, Wilcoxon signed-rank against the original on the same (problem, seed) |
@@ -83,3 +92,11 @@ With four objectives the whole population becomes non-dominated within 4–8 gen
 19. Derrac, J., García, S., Molina, D., & Herrera, F. (2011). A practical tutorial on the use of nonparametric statistical tests as a methodology for comparing evolutionary and swarm intelligence algorithms. *Swarm and Evolutionary Computation*, 1(1), 3–18. Elsevier.
 20. Deb, K. (2001). *Multi-Objective Optimization Using Evolutionary Algorithms*. Wiley.
 21. Zitzler, E., Thiele, L., Laumanns, M., Fonseca, C. M., & da Fonseca, V. G. (2003). Performance assessment of multiobjective optimizers: An analysis and review. *IEEE Transactions on Evolutionary Computation*, 7(2), 117–132.
+22. McKay, M. D., Beckman, R. J., & Conover, W. J. (1979). A comparison of three methods for selecting values of input variables in the analysis of output from a computer code. *Technometrics*, 21(2), 239–245.
+23. Coello Coello, C. A. (2002). Theoretical and numerical constraint-handling techniques used with evolutionary algorithms: a survey of the state of the art. *Computer Methods in Applied Mechanics and Engineering*, 191(11–12), 1245–1287.
+24. Deb, K. (2000). An efficient constraint handling method for genetic algorithms. *Computer Methods in Applied Mechanics and Engineering*, 186(2–4), 311–338.
+25. Ronald, S. (1998). Duplicate genotypes in a genetic algorithm. In *Proc. IEEE International Conference on Evolutionary Computation (ICEC 1998)*, 793–798.
+26. Cantú-Paz, E. (2000). *Efficient and Accurate Parallel Genetic Algorithms*. Kluwer Academic Publishers.
+27. Riquelme, N., Von Lücken, C., & Barán, B. (2015). Performance metrics in multi-objective optimization. In *Proc. Latin American Computing Conference (CLEI 2015)*, 1–11.
+28. Van Veldhuizen, D. A., & Lamont, G. B. (1998). *Multiobjective evolutionary algorithm research: A history and analysis*. Technical Report TR-98-03, Air Force Institute of Technology.
+29. Coello Coello, C. A., & Reyes Sierra, M. (2004). A study of the parallelization of a coevolutionary multi-objective evolutionary algorithm. In *MICAI 2004*, LNAI 2972, 688–697. Springer.
