@@ -302,10 +302,23 @@ class CountingDuplicateElimination(DefaultDuplicateElimination):
     many candidates it rejects (for diversity monitoring)."""
 
     def __init__(self, inner=None):
-        super().__init__()
+        super().__init__(func=self._decision_vectors)
         self.inner = inner
         self.checked = 0
         self.rejected = 0
+        self._recent = []  # (population, X) of the last few populations read
+
+    def _decision_vectors(self, pop):
+        """pop.get("X"), remembered for the last few population objects. The
+        mating loop checks every batch of offspring against the same parent
+        population, so its X was read again on each of the ~2-3 batches per
+        generation. Keyed on the object itself (held, so it cannot be reused)."""
+        for obj, X in self._recent:
+            if obj is pop:
+                return X
+        X = pop.get("X")
+        self._recent = [(pop, X)] + self._recent[:3]
+        return X
 
     def do(self, pop, *args, **kwargs):
         out = self.inner.do(pop, *args, **kwargs) if self.inner is not None else super().do(pop, *args, **kwargs)

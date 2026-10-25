@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 from pymoo.indicators.hv import HV
 
-from app.optimization import monitoring
+from app.optimization import monitoring, operators
 from app.optimization.nsga2_runner import run_nsga2
 
 from tests.test_nsga2_engine import _digest, _problem
@@ -52,3 +52,24 @@ def test_front_hypervolume_matches_the_getter_computation(budget):
     algorithm = result.algorithm
     algorithm.data.pop("_hv_cache", None)
     assert monitoring.front_hypervolume(algorithm) == _hypervolume_from_getters(algorithm)
+
+
+def test_duplicate_eliminator_caches_population_reads():
+    result = run_nsga2(_problem("Coimbatore", "Summer"), pop_size=24, n_gen=6, seed=1)
+    pop = result.pop
+    eliminator = operators.CountingDuplicateElimination()
+    first = eliminator._decision_vectors(pop)
+    assert eliminator._decision_vectors(pop) is first  # served from the cache
+    np.testing.assert_array_equal(first, pop.get("X"))
+    other = pop[:5]
+    np.testing.assert_array_equal(eliminator._decision_vectors(other), pop.get("X")[:5])
+
+
+def test_duplicate_eliminator_still_rejects_copies():
+    result = run_nsga2(_problem("Salem", "Kharif"), pop_size=24, n_gen=4, seed=2)
+    pop = result.pop
+    eliminator = operators.CountingDuplicateElimination()
+    doubled = pop.__class__.merge(pop[:6], pop[:6])
+    kept = eliminator.do(doubled)
+    assert len(kept) == 6
+    assert (eliminator.checked, eliminator.rejected) == (12, 6)
