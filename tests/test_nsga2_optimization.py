@@ -6,6 +6,7 @@ metrics and their exposure through the API.
 
 from __future__ import annotations
 
+import dataclasses
 import math
 
 import numpy as np
@@ -29,9 +30,38 @@ ENHANCED_GOLDEN = [
 ]
 
 
+# Digests of the current enhanced engine (PR #12 + constraint-aware
+# initialisation + duplicate avoidance), so later refactors keep it exact.
+ENHANCED_V2_GOLDEN = [
+    (dict(location="Salem", season="Kharif"), "262810d25bee0edc"),
+    (dict(location="Erode", season="Rabi", budget=120000.0), "9da0c2675df7573d"),
+    (dict(location="Coimbatore", season="Summer"), "97e00ad7994ac91f"),
+    (dict(location="Erode", season="Kharif", budget=230000.0), "8e9a80d61c07acf0"),
+]
+
+
+@pytest.mark.parametrize("args,digest", ENHANCED_V2_GOLDEN)
+def test_current_enhanced_engine_reproduces_its_recorded_results(args, digest):
+    result = run_nsga2(_problem(**args), pop_size=40, n_gen=60, seed=3, mode="enhanced")
+    assert _digest(result) == digest
+
+
+def test_enhanced_mode_enables_the_accepted_switches_only():
+    from app.optimization.engine_settings import engine_settings as settings
+    on = set(settings("enhanced").enabled_features()) - {"diversity_monitoring", "runtime_profiling"}
+    assert on == {"adaptive_mutation", "smart_initialization", "constraint_aware_initialization", "duplicate_avoidance"}
+    assert set(settings("original").enabled_features()) == {"diversity_monitoring", "runtime_profiling"}
+
+
+def _pr12_enhanced():
+    """The enhanced engine as merged in PR #12 (before the switches added here)."""
+    from app.optimization.engine_settings import engine_settings as settings
+    return dataclasses.replace(settings("enhanced"), duplicate_avoidance=False, constraint_aware_initialization=False)
+
+
 @pytest.mark.parametrize("args,digest", ENHANCED_GOLDEN)
 def test_enhanced_engine_reproduces_its_recorded_results(args, digest):
-    result = run_nsga2(_problem(**args), pop_size=40, n_gen=60, seed=3, mode="enhanced")
+    result = run_nsga2(_problem(**args), pop_size=40, n_gen=60, seed=3, engine=_pr12_enhanced())
     assert _digest(result) == digest
 
 
@@ -200,8 +230,6 @@ def test_saved_runs_without_metrics_still_validate():
 # Switchable features
 # ---------------------------------------------------------------------------
 
-import dataclasses  # noqa: E402
-
 from app.optimization.engine_settings import engine_settings  # noqa: E402
 
 
@@ -342,7 +370,7 @@ def test_duplicate_avoidance_reduces_rejections_and_is_deterministic():
     a = run_nsga2(problem, seed=2, pop_size=40, n_gen=40, engine=engine)
     b = run_nsga2(problem, seed=2, pop_size=40, n_gen=40, engine=engine)
     assert _digest(a) == _digest(b)
-    plain = run_nsga2(problem, seed=2, pop_size=40, n_gen=40, mode="enhanced")
+    plain = run_nsga2(problem, seed=2, pop_size=40, n_gen=40, engine=_with("enhanced", duplicate_avoidance=False))
     assert a.engine_report["copies_perturbed"] > 0
     assert a.engine_report["diversity"]["duplicates_rejected"] < 0.2 * plain.engine_report["diversity"]["duplicates_rejected"]
 

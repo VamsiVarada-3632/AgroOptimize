@@ -181,7 +181,7 @@ NSGA2_FAST_POP_SIZE = 24
 NSGA2_FAST_N_GEN = 15
 
 # ---------------------------------------------------------------------------
-# NSGA-II engine modes (see docs/handbook/NSGAII_IMPROVEMENT_SUMMARY.md).
+# NSGA-II engine modes (see docs/handbook/NSGAII_IMPROVEMENTS.md).
 #
 # "original" is the published engine: it reproduces every published result
 # bit for bit and is the default. "enhanced" is the experimental engine; it
@@ -192,6 +192,10 @@ NSGA2_FAST_N_GEN = 15
 #
 # Diversity monitoring and runtime profiling only observe the run (they draw
 # no random numbers), so they are on in both modes without changing results.
+# Enhanced mode = the switches the benchmark accepted: smart initialisation,
+# adaptive mutation (PR #12), constraint-aware initialisation and duplicate
+# avoidance; the others are available for ablation runs but measured no
+# benefit (docs/handbook/NSGAII_BENCHMARK_RESULTS.md).
 # ---------------------------------------------------------------------------
 NSGA2_ENGINE_MODE = os.environ.get("AGROOPTIMIZE_NSGA2_MODE", "original")
 
@@ -216,8 +220,8 @@ NSGA2_ENGINE_FEATURES = {
         "duplicate_removal": False,
         "early_stopping": False,
         "lhs_initialization": False,
-        "constraint_aware_initialization": False,
-        "duplicate_avoidance": False,
+        "constraint_aware_initialization": True,
+        "duplicate_avoidance": True,
         "parallel_evaluation": False,
         "diversity_monitoring": True,
         "runtime_profiling": True,
