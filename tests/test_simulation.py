@@ -169,6 +169,7 @@ def test_run_pipeline_matches_a_normal_run():
         r["meta"].pop("optimize_seconds")
         for timing in ("total_seconds", "avg_generation_ms"):   # wall-clock, differs per run
             r["meta"]["optimizer"]["profile"].pop(timing)
+        r["meta"]["quality_metrics"].pop("runtime_seconds")
     assert a["run_id"] is None and a["saved_files"] is None   # not saved
     assert {k: a[k] for k in b} == b
 

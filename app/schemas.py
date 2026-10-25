@@ -140,6 +140,40 @@ class RunMeta(BaseModel):
     # still validate; the explanation reports them as "not recorded".
     total_land_ha: Optional[float] = None
     budget_rs: Optional[float] = None
+    # Pareto-front quality indicators of the run (app/optimization/metrics.py).
+    # Optional so runs saved before they existed still validate.
+    quality_metrics: Optional["QualityMetricsOut"] = None
+
+
+class MeanObjectivesOut(BaseModel):
+    yield_tonnes: float
+    cost_rs: float
+    water_liters: float
+    env_impact_score: float
+
+
+class QualityMetricsOut(BaseModel):
+    """Quality of the run's Pareto front. Distances and volumes are on
+    objectives normalised by the reference front's ideal and nadir; the
+    reference is the front plus each plan's copy with irrigation and
+    fertiliser multipliers at their lower bound (never worse in this model).
+    Null when the run has no feasible plan or too few plans for the metric."""
+    reference_front: str
+    pareto_size: int
+    feasible_pareto_size: int
+    constraint_satisfaction_rate: Optional[float] = Field(None, description="Share of the final population within budget.")
+    dominated_by_lower_bound_copy: Optional[float] = Field(None, description="Share of the front its lower-bound copy beats.")
+    runtime_seconds: Optional[float] = None
+    generations: Optional[int] = None
+    evaluations: Optional[int] = None
+    mean_objectives: Optional[MeanObjectivesOut] = None
+    hypervolume: Optional[float] = None
+    hypervolume_ratio: Optional[float] = Field(None, description="Hypervolume / reference-front hypervolume (1 = converged).")
+    gd: Optional[float] = Field(None, description="Generational distance (lower is better).")
+    igd: Optional[float] = Field(None, description="Inverted generational distance (lower is better).")
+    igd_plus: Optional[float] = Field(None, description="IGD+ (lower is better).")
+    spread: Optional[float] = Field(None, description="Generalised spread (lower = more even).")
+    spacing: Optional[float] = Field(None, description="Schott spacing (lower = more even).")
 
 
 class ConvergencePointOut(BaseModel):

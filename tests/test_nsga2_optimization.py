@@ -10,10 +10,13 @@ import math
 
 import numpy as np
 import pytest
+from fastapi.testclient import TestClient
 from pymoo.indicators.hv import HV
 
+from app.main import app
 from app.optimization import metrics, monitoring, operators
 from app.optimization.nsga2_runner import extract_pareto_plans, run_nsga2
+from app.services import results_store
 
 from tests.test_nsga2_engine import _digest, _problem
 
@@ -166,3 +169,28 @@ def test_computing_metrics_does_not_change_the_run():
     metrics.run_quality_metrics(a, problem)
     b = run_nsga2(problem, pop_size=24, n_gen=10, seed=9)
     assert _digest(a) == _digest(b)
+
+
+def test_api_returns_and_saves_quality_metrics(tmp_path, monkeypatch):
+    from app import config
+    monkeypatch.setattr(config, "RESULTS_DIR", tmp_path)
+    client = TestClient(app)
+    body = {"location": "Salem", "season": "Kharif", "year": 2023, "total_land_ha": 5,
+            "pop_size": 24, "n_gen": 10, "save_results": False}
+    res = client.post("/api/farm-plans", json=body)
+    assert res.status_code == 200
+    q = res.json()["meta"]["quality_metrics"]
+    assert set(q) == REQUIRED_KEYS and q["hypervolume"] > 0
+
+    from app.services import plan_service
+    saved = plan_service.generate_farm_plans(plan_service.FarmPlanRequest(**{**body, "save_results": True}),
+                                             results_dir=tmp_path)
+    record = results_store.load_run(saved["run_id"], out_dir=tmp_path)
+    assert set(record["meta"]["quality_metrics"]) == REQUIRED_KEYS
+
+
+def test_saved_runs_without_metrics_still_validate():
+    from app.schemas import RunMeta
+    meta = RunMeta(pop_size=80, n_gen=200, crossover_prob=0.85, mutation_prob=0.12, preference="balanced",
+                   n_pareto_solutions_found=80, n_plans_returned=50, optimize_seconds=0.3)
+    assert meta.quality_metrics is None
