@@ -241,3 +241,50 @@ def test_lhs_initialization_is_deterministic_and_in_bounds(base):
     X = a.pop.get("X")
     assert np.all(X >= problem.xl - 1e-12) and np.all(X <= problem.xu + 1e-12)
     assert _digest(a) != _digest(run_nsga2(problem, pop_size=30, n_gen=10, seed=6, mode=base))
+
+
+def _costs(problem, X):
+    return problem.evaluate(X, return_as_dictionary=True)["F"][:, 1]
+
+
+def _uniform(problem, n=60, seed=0):
+    return problem.xl + (problem.xu - problem.xl) * np.random.default_rng(seed).random((n, problem.n_var))
+
+
+def test_budget_repair_makes_over_budget_plans_feasible_and_keeps_the_rest():
+    problem = _problem("Erode", "Kharif", budget=230000.0)
+    X = _uniform(problem)
+    before = _costs(problem, X)
+    Y = operators.make_budget_feasible(problem, X)
+    after = _costs(problem, Y)
+    assert (before > problem.budget_rs).any() and (before <= problem.budget_rs).any()
+    assert np.all(after <= problem.budget_rs * (1 + 1e-9))
+    ok = before <= problem.budget_rs
+    np.testing.assert_array_equal(Y[ok], X[ok])
+    assert np.all(Y >= problem.xl - 1e-12) and np.all(Y <= problem.xu + 1e-12)
+
+
+def test_budget_repair_moves_plans_only_as_far_as_needed():
+    problem = _problem("Erode", "Kharif", budget=230000.0)
+    X = _uniform(problem, seed=3)
+    fixed = operators.make_budget_feasible(problem, X)
+    moved = _costs(problem, X) > problem.budget_rs
+    # Repaired plans end close to the budget, not at the cheapest corner.
+    assert np.median(_costs(problem, fixed)[moved]) > 0.95 * problem.budget_rs
+
+
+@pytest.mark.parametrize("budget", [None, 20000.0])  # no budget / no feasible plan at all
+def test_budget_repair_changes_nothing_without_a_reachable_budget(budget):
+    problem = _problem("Erode", "Kharif", budget=budget)
+    X = _uniform(problem)
+    np.testing.assert_array_equal(operators.make_budget_feasible(problem, X), X)
+
+
+def test_constraint_aware_initialization_draws_no_extra_random_numbers():
+    problem = _problem("Erode", "Kharif", budget=230000.0)
+    a = run_nsga2(problem, pop_size=30, n_gen=10, seed=2, engine=_with(constraint_aware_initialization=True))
+    b = run_nsga2(problem, pop_size=30, n_gen=10, seed=2, engine=_with(constraint_aware_initialization=True))
+    assert _digest(a) == _digest(b)
+    unconstrained = _problem("Erode", "Kharif")
+    c = run_nsga2(unconstrained, pop_size=30, n_gen=10, seed=2, engine=_with(constraint_aware_initialization=True))
+    assert _digest(c) == _digest(run_nsga2(unconstrained, pop_size=30, n_gen=10, seed=2))

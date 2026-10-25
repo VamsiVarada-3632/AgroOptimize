@@ -261,6 +261,66 @@ class SmartSampling(Sampling):
         return np.vstack([seeds, rand])
 
 
+class BudgetAwareSampling(Sampling):
+    """Constraint-aware initialisation for budget problems: the plans drawn
+    by `inner` that exceed the budget are moved just inside it (see
+    make_budget_feasible); all others are kept as drawn."""
+
+    def __init__(self, inner: Sampling):
+        super().__init__()
+        self.inner = inner
+
+    def _do(self, problem, n_samples, *args, **kwargs):
+        X = self.inner._do(problem, n_samples, *args, **kwargs)
+        return make_budget_feasible(problem, X)
+
+
+def make_budget_feasible(problem, X: np.ndarray) -> np.ndarray:
+    """Repair of over-budget plans before the first evaluation (a standard
+    repair-based constraint-handling initialisation; Coello Coello 2002):
+
+    1. their fertiliser multipliers go to the lower bound (in this model cost
+       depends on the inputs only through fertiliser), then
+    2. if still over budget, their land allocation is blended towards the
+       cheapest single-crop plan, a' = (1 - w) a + w e_cheapest, with the
+       smallest w that meets the budget. Cost is linear in w for fixed
+       multipliers, so w is solved exactly rather than searched.
+
+    Deterministic (no random numbers). Nothing changes when there is no
+    budget, or when even the cheapest plan exceeds it (no feasible point to
+    move towards)."""
+    budget = getattr(problem, "budget_rs", None)
+    if not budget:
+        return X
+    n = problem.n_crops
+    xl = np.asarray(problem.xl, dtype=float)
+    X = np.array(X, dtype=float, copy=True)
+
+    def cost(Y):
+        return problem.evaluate(Y, return_as_dictionary=True)["F"][:, 1]
+
+    cheapest = np.tile(xl, (n, 1))
+    cheapest[:, :n] = np.where(np.eye(n, dtype=bool), 1.0, xl[:n])
+    single = cost(cheapest)
+    c = int(np.argmin(single))
+    if single[c] > budget:
+        return X
+
+    over = cost(X) > budget
+    X[over, 2 * n:] = xl[2 * n:]
+    still = np.flatnonzero(cost(X) > budget)
+    if len(still):
+        alloc = X[still, :n] / X[still, :n].sum(axis=1, keepdims=True)
+        target = np.where(np.arange(n) == c, 1.0, 0.0)
+        c0 = cost(X[still])
+        Y = X[still].copy()
+        Y[:, :n] = np.clip(target, xl[:n], None)
+        c1 = cost(Y)
+        w = np.clip((c0 - budget) / np.where(c0 - c1 > 0, c0 - c1, np.inf) * (1 + 1e-6) + 1e-9, 0.0, 1.0)
+        X[still, :n] = np.clip((1 - w)[:, None] * alloc + w[:, None] * target, xl[:n], None)
+    return X
+
+
 def seed_chromosomes(problem) -> np.ndarray:
     """Knowledge-based chromosomes for SmartSampling (see its docstring)."""
     n = problem.n_crops

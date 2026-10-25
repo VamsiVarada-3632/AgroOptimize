@@ -231,6 +231,8 @@ def _with(feature: str, **params) -> EngineSettings:
 
 @pytest.mark.parametrize("feature", FEATURES_CHANGING_OUTPUTS)
 def test_each_feature_is_valid_deterministic_and_changes_the_search(salem, feature):
+    if feature == "constraint_aware_initialization":   # only acts when there is a budget
+        salem = _problem("Erode", "Kharif", budget=230000.0)
     settings = _with(feature, early_stopping_params={"patience": 5, "tolerance": 1e-3, "min_generations": 10})
     r1 = run_nsga2(salem, seed=3, engine=settings, pop_size=30, n_gen=40)
     r2 = run_nsga2(salem, seed=3, engine=settings, pop_size=30, n_gen=40)

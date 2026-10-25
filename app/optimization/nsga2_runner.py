@@ -34,6 +34,7 @@ from app.optimization.operators import (
     AdaptiveGaussianMutation,
     AdaptiveSinglePointCrossover,
     AllocationRepair,
+    BudgetAwareSampling,
     CountingDuplicateElimination,
     GaussianMutation,
     SinglePointCrossover,
@@ -119,6 +120,8 @@ def run_nsga2(
         sampling = LHS()
     else:
         sampling = FloatRandomSampling()
+    if settings.constraint_aware_initialization:
+        sampling = BudgetAwareSampling(sampling)
 
     if settings.adaptive_crossover:
         p = settings.adaptive_crossover_params
