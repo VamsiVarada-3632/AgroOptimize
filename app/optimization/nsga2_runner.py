@@ -20,19 +20,23 @@ from typing import List, Optional
 import numpy as np
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.indicators.hv import HV
+from pymoo.operators.sampling.lhs import LHS
 from pymoo.operators.sampling.rnd import FloatRandomSampling
 from pymoo.operators.selection.tournament import TournamentSelection
 from pymoo.optimize import minimize
+from pymoo.termination.default import DefaultMultiObjectiveTermination
 
 from app import config
 from app.data.preprocessing import RegionSeasonProfile
 from app.fuzzy.engine import UncertaintyAssessment
 from app.optimization.engine_settings import EngineSettings, engine_settings
+from app.optimization.parallel import ChunkedThreadEvaluator
 from app.optimization.monitoring import EngineMonitor, FrontStagnationTermination
 from app.optimization.operators import (
     AdaptiveGaussianMutation,
     AdaptiveSinglePointCrossover,
     AllocationRepair,
+    BudgetAwareSampling,
     CountingDuplicateElimination,
     GaussianMutation,
     SinglePointCrossover,
@@ -110,20 +114,28 @@ def run_nsga2(
         eliminate_duplicates = CountingDuplicateElimination()
 
     if settings.smart_initialization:
-        sampling = SmartSampling(settings.smart_init_fraction)
+        sampling = SmartSampling(settings.smart_init_fraction, lhs=settings.lhs_initialization)
+    elif settings.lhs_initialization:
+        # Latin Hypercube sampling (McKay, Beckman & Conover 1979): each gene's
+        # range is split into pop_size strata and every stratum gets one
+        # individual, so the first population covers the space evenly.
+        sampling = LHS()
     else:
         sampling = FloatRandomSampling()
+    if settings.constraint_aware_initialization:
+        sampling = BudgetAwareSampling(sampling)
 
     if settings.adaptive_crossover:
         p = settings.adaptive_crossover_params
-        crossover = AdaptiveSinglePointCrossover(p["start_prob"], p["end_prob"])
+        crossover = AdaptiveSinglePointCrossover(
+            p["start_prob"], p["end_prob"], schedule=p.get("schedule", "linear"),
+            high_diversity_prob=p.get("high_diversity_prob", 0.85), low_diversity_prob=p.get("low_diversity_prob", 0.95),
+            diversity_floor=p.get("diversity_floor", 0.5))
     else:
         crossover = SinglePointCrossover(prob=crossover_prob)
 
-    if settings.adaptive_mutation:
-        mutation = AdaptiveGaussianMutation(prob=mutation_prob, sigma=mutation_sigma)
-    else:
-        mutation = GaussianMutation(prob=mutation_prob, sigma=mutation_sigma)
+    mutation_cls = AdaptiveGaussianMutation if settings.adaptive_mutation else GaussianMutation
+    mutation = mutation_cls(prob=mutation_prob, sigma=mutation_sigma, avoid_duplicates=settings.duplicate_avoidance)
 
     algorithm = NSGA2(
         pop_size=pop_size,
@@ -134,11 +146,20 @@ def run_nsga2(
         mutation=mutation,
         repair=AllocationRepair(),
         eliminate_duplicates=eliminate_duplicates,
+        **({"evaluator": ChunkedThreadEvaluator(settings.parallel_workers)} if settings.parallel_evaluation else {}),
     )
 
     if settings.early_stopping:
         p = settings.early_stopping_params
-        termination = FrontStagnationTermination(n_gen, p["patience"], p["tolerance"], p["min_generations"])
+        criterion = p.get("criterion", "hypervolume")
+        if criterion == "hypervolume":
+            termination = FrontStagnationTermination(n_gen, p["patience"], p["tolerance"], p["min_generations"])
+        elif criterion == "objective_space":
+            termination = DefaultMultiObjectiveTermination(
+                xtol=p.get("xtol", 0.0005), cvtol=1e-8, ftol=p.get("ftol", 0.005),
+                period=int(p.get("period", 50)), n_skip=int(p.get("n_skip", 5)), n_max_gen=n_gen)
+        else:
+            raise ValueError(f"Unknown early-stopping criterion {criterion!r}")
     else:
         termination = ("n_gen", n_gen)
 
@@ -149,6 +170,7 @@ def run_nsga2(
         adaptive_mutation=settings.adaptive_mutation_params if settings.adaptive_mutation else None,
         base_mutation_prob=mutation_prob,
         stagnation=settings.early_stopping_params if settings.adaptive_mutation else None,
+        share_diversity=settings.adaptive_crossover and settings.adaptive_crossover_params.get("schedule") == "diversity",
     )
 
     with _NSGA2_RUN_LOCK:
@@ -199,7 +221,12 @@ def _engine_report(settings: EngineSettings, result, monitor: EngineMonitor, sec
             "avg_generation_ms": round(1000 * seconds / generations, 3) if generations else None,
         }
     if settings.early_stopping:
-        report["stopped_early_at"] = getattr(algorithm.termination, "stopped_early_at", None)
+        stopped = getattr(algorithm.termination, "stopped_early_at", None)
+        if stopped is None and generations < n_gen:
+            stopped = generations   # pymoo's objective-space criterion: generations completed
+        report["stopped_early_at"] = stopped
+    if settings.duplicate_avoidance:
+        report["copies_perturbed"] = int(getattr(algorithm.mating.mutation, "forced", 0))
     if settings.diversity_monitoring:
         report["diversity"] = monitor.summary()
     return report

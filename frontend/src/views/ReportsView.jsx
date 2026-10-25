@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api, BACKEND_UNREACHABLE_MSG, describeApiError } from '../services/api';
 import { downloadFile, slug } from '../utils/download';
 import { ExplanationModal } from '../components/ExplanationPanel';
+import { headlineQuality, qualityReportLines } from '../utils/qualityMetrics';
 
 const fmtInt = (n) => Math.round(n).toLocaleString('en-IN');
 
@@ -66,6 +67,7 @@ function buildReportText(result, explanation) {
     `  ${meta.algorithm}, population ${meta.pop_size}, ${meta.n_gen} generations; ${meta.n_pareto_solutions_found} feasible Pareto-optimal plans found`,
     `  Ranked by TOPSIS with preference "${meta.preference}"; top ${Math.min(3, result.plans.length)} shown below`,
     '',
+    ...qualityReportLines(meta.quality_metrics),
   );
   result.plans.slice(0, 3).forEach((plan) => {
     const area = plan.area_ha.reduce((a, b) => a + b, 0) || 1;
@@ -122,6 +124,7 @@ function buildReportEntry(result, explanation) {
     date: dateStr,
     tag: 'NEW',
     subtitle: `Yield ${(top.yield_tonnes / areaHa).toFixed(1)} t/ha · Cost ₹${Math.round(top.cost_rs / areaHa).toLocaleString()}/ha · ${top.confidence_label}`,
+    quality: headlineQuality(result.meta.quality_metrics),
   };
 }
 
@@ -233,6 +236,16 @@ export default function ReportsView({ userLocation, onNavigate }) {
                     <span className="material-symbols-outlined text-[14px]">calendar_today</span>
                     {rep.date}
                   </p>
+                  {rep.quality.length > 0 && (
+                    <dl className="mb-4 grid grid-cols-2 gap-x-3 gap-y-1 font-label-sm text-label-sm" aria-label="Optimization quality">
+                      {rep.quality.map((m) => (
+                        <div key={m.key} className="flex flex-col" title={m.hint}>
+                          <dt className="text-on-surface-variant">{m.label}</dt>
+                          <dd className="text-on-surface font-semibold tabular-nums">{m.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  )}
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t border-outline-variant/20 gap-3">
                   <button

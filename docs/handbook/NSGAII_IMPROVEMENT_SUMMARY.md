@@ -1,5 +1,7 @@
 # NSGA-II Improvement Summary
 
+> This is the record of the first round (PR #12). The second round (quality metrics, constraint-aware initialisation, duplicate avoidance, and the rejected LHS, diversity crossover, objective-space stopping and parallel evaluation) is in [NSGAII_IMPROVEMENTS.md](NSGAII_IMPROVEMENTS.md) and [NSGAII_BENCHMARK_RESULTS.md](NSGAII_BENCHMARK_RESULTS.md); enhanced mode now also enables those two accepted switches.
+
 What changed in the NSGA-II engine, why, how it was measured, and what it does to results and reproducibility. Analysis: [NSGAII_ANALYSIS.md](NSGAII_ANALYSIS.md). Measurements: [NSGAII_PROFILE.md](NSGAII_PROFILE.md). Literature: [NSGAII_RESEARCH_REVIEW.md](NSGAII_RESEARCH_REVIEW.md).
 
 ## 1. Two engine modes

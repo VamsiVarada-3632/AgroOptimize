@@ -181,7 +181,7 @@ NSGA2_FAST_POP_SIZE = 24
 NSGA2_FAST_N_GEN = 15
 
 # ---------------------------------------------------------------------------
-# NSGA-II engine modes (see docs/handbook/NSGAII_IMPROVEMENT_SUMMARY.md).
+# NSGA-II engine modes (see docs/handbook/NSGAII_IMPROVEMENTS.md).
 #
 # "original" is the published engine: it reproduces every published result
 # bit for bit and is the default. "enhanced" is the experimental engine; it
@@ -192,6 +192,10 @@ NSGA2_FAST_N_GEN = 15
 #
 # Diversity monitoring and runtime profiling only observe the run (they draw
 # no random numbers), so they are on in both modes without changing results.
+# Enhanced mode = the switches the benchmark accepted: smart initialisation,
+# adaptive mutation (PR #12), constraint-aware initialisation and duplicate
+# avoidance; the others are available for ablation runs but measured no
+# benefit (docs/handbook/NSGAII_BENCHMARK_RESULTS.md).
 # ---------------------------------------------------------------------------
 NSGA2_ENGINE_MODE = os.environ.get("AGROOPTIMIZE_NSGA2_MODE", "original")
 
@@ -202,6 +206,10 @@ NSGA2_ENGINE_FEATURES = {
         "smart_initialization": False,
         "duplicate_removal": False,
         "early_stopping": False,
+        "lhs_initialization": False,
+        "constraint_aware_initialization": False,
+        "duplicate_avoidance": False,
+        "parallel_evaluation": False,
         "diversity_monitoring": True,
         "runtime_profiling": True,
     },
@@ -211,6 +219,10 @@ NSGA2_ENGINE_FEATURES = {
         "smart_initialization": True,
         "duplicate_removal": False,
         "early_stopping": False,
+        "lhs_initialization": False,
+        "constraint_aware_initialization": True,
+        "duplicate_avoidance": True,
+        "parallel_evaluation": False,
         "diversity_monitoring": True,
         "runtime_profiling": True,
     },
@@ -228,12 +240,18 @@ NSGA2_ENGINE_MUTATION_PROB = {"original": NSGA2_MUTATION_PROB, "enhanced": 0.05}
 # Tuned on seeds 100-104 (NSGAII_PROFILE.md); evaluated on seeds 0-9.
 NSGA2_ADAPTIVE_MUTATION = {"min_prob": 0.02, "max_prob": 0.30, "diversity_floor": 0.5, "converged_scale": 0.2}
 
-# Adaptive crossover: probability moves linearly from `start_prob` (exploration)
-# in the first generation to `end_prob` (exploitation) in the last.
-NSGA2_ADAPTIVE_CROSSOVER = {"start_prob": 0.95, "end_prob": 0.70}
+# Adaptive crossover. schedule "linear": probability moves linearly from
+# `start_prob` (exploration) in the first generation to `end_prob`
+# (exploitation) in the last. schedule "diversity": `high_diversity_prob`
+# while allocation diversity is at its peak so far, rising towards
+# `low_diversity_prob` as it falls to `diversity_floor` x that peak (more
+# recombination to escape stagnation).
+NSGA2_ADAPTIVE_CROSSOVER = {"schedule": "linear", "start_prob": 0.95, "end_prob": 0.70,
+                            "high_diversity_prob": 0.85, "low_diversity_prob": 0.95, "diversity_floor": 0.5}
 
 # Smart initialisation: share of the initial population seeded from the
-# district's candidate crops; the rest is drawn uniformly at random.
+# district's candidate crops; the rest is drawn uniformly at random (or by
+# Latin Hypercube sampling when lhs_initialization is on).
 NSGA2_SMART_INIT_FRACTION = 0.2
 
 # Duplicate removal: offspring closer than this (Euclidean distance in the
@@ -241,10 +259,22 @@ NSGA2_SMART_INIT_FRACTION = 0.2
 # rejected. pymoo's default rejects only exact copies (1e-16).
 NSGA2_DUPLICATE_TOLERANCE = 1e-4
 
-# Early stopping: stop when the hypervolume of the first front has improved
-# by less than `tolerance` (relative) over the last `patience` generations,
-# never before `min_generations`.
-NSGA2_EARLY_STOPPING = {"patience": 30, "tolerance": 1e-4, "min_generations": 60}
+# Parallel evaluation: number of threads the population is split over when
+# the parallel_evaluation switch is on.
+NSGA2_PARALLEL_WORKERS = 4
+
+# Early stopping. criterion "hypervolume": stop when the hypervolume of the
+# first front has improved by less than `tolerance` (relative) over the last
+# `patience` generations, never before `min_generations`. criterion
+# "objective_space": pymoo's robust multi-objective termination (Blank & Deb
+# 2020) -- stop when the movement of the decision vectors (`xtol`), of the
+# constraint violation and of the front in objective space (`ftol`, ideal,
+# nadir and front change) has stayed below tolerance for `period`
+# generations, checked every `n_skip`.
+# (`patience` and `tolerance` also set when adaptive mutation regards the
+# front as stagnant.)
+NSGA2_EARLY_STOPPING = {"criterion": "hypervolume", "patience": 30, "tolerance": 1e-4, "min_generations": 60,
+                        "xtol": 0.0005, "ftol": 0.005, "period": 50, "n_skip": 5}
 
 # ---------------------------------------------------------------------------
 # Decision output

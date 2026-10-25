@@ -71,11 +71,14 @@ def front_hypervolume(algorithm) -> float:
         lo, hi = F0.min(axis=0), F0.max(axis=0)
         data["_hv_bounds"] = (lo, np.where(hi - lo > 1e-12, hi - lo, 1.0))
     lo, span = data["_hv_bounds"]
-    opt = algorithm.opt
-    feasible = opt[np.ravel(opt.get("FEAS")).astype(bool)] if opt is not None else []
+    # The feasible part of the first front (algorithm.opt filtered by FEAS),
+    # taken from the cached population arrays in the same order: reading it
+    # through pymoo's per-individual getters cost ~30x the hypervolume itself.
+    arrays = population_arrays(algorithm, algorithm.pop)
+    feasible = arrays["CV"][:, 0] <= 0.0
     value = 0.0
-    if len(feasible):
-        F = (feasible.get("F") - lo) / span
+    if feasible.any():
+        F = (arrays["F"][(arrays["rank"] == 0) & feasible] - lo) / span
         value = float(HV(ref_point=_HV_REF[: F.shape[1]])(F))
     data["_hv_cache"] = (algorithm.n_gen, value)
     data.setdefault("front_hv", []).append(value)
@@ -142,11 +145,14 @@ class EngineMonitor(Callback):
     * profiling          -- per-generation wall time.
     * adaptive_mutation  -- sets algorithm.data["adaptive"]["mutation_prob"]
                             for the next generation.
+    * share_diversity    -- publishes the allocation-diversity ratio in
+                            algorithm.data["adaptive"] for the diversity-driven
+                            crossover.
     """
 
     def __init__(self, record_history: bool = False, diversity: bool = True, profiling: bool = True,
                  adaptive_mutation: Optional[dict] = None, base_mutation_prob: float = 0.12,
-                 stagnation: Optional[dict] = None):
+                 stagnation: Optional[dict] = None, share_diversity: bool = False):
         super().__init__()
         self.record_history = record_history
         self.diversity = diversity
@@ -154,12 +160,14 @@ class EngineMonitor(Callback):
         self.adaptive_mutation = adaptive_mutation
         self.base_mutation_prob = base_mutation_prob
         self.stagnation = stagnation
+        self.share_diversity = share_diversity
         self.duplicate_counter = None  # the run's CountingDuplicateElimination, found in initialize()
         self.F_history: List[np.ndarray] = []
         self.generations: List[dict] = []
         self._t_last: Optional[float] = None
         self._dup_last = (0, 0)
         self._diversity0: Optional[float] = None
+        self._diversity_peak: Optional[float] = None
 
     def initialize(self, algorithm):
         self._t_last = time.perf_counter()
@@ -181,17 +189,26 @@ class EngineMonitor(Callback):
             row["seconds"] = now - self._t_last
         self._t_last = now
 
-        if self.diversity or self.adaptive_mutation is not None:
+        if self.diversity or self.adaptive_mutation is not None or self.share_diversity:
             X = arrays["X"]
             problem = algorithm.problem
             div = allocation_diversity(X, problem.n_crops)
             if self._diversity0 is None:
                 self._diversity0 = div if div > 0 else 1.0
             row["allocation_diversity"] = div
+            if self.share_diversity:
+                # Read by the diversity-driven crossover in the next generation.
+                # Relative to the highest diversity so far: in this problem the
+                # allocation spread grows from the first population, so a
+                # collapse shows as a fall from that peak, not below the start.
+                self._diversity_peak = max(self._diversity_peak or 0.0, div)
+                algorithm.data.setdefault("adaptive", {})["diversity_ratio"] = (
+                    div / self._diversity_peak if self._diversity_peak > 0 else 1.0)
             if self.diversity:
                 row["entropy"] = population_entropy(X, problem.xl, problem.xu)
                 row["mean_crowding"] = mean_crowding(arrays["rank"], arrays["crowding"])
                 row["front_size"] = int(len(algorithm.opt)) if algorithm.opt is not None else 0
+                row["feasible_share"] = float((arrays["CV"][:, 0] <= 0.0).mean())
                 if self.duplicate_counter is not None:
                     checked = self.duplicate_counter.checked - self._dup_last[0]
                     rejected = self.duplicate_counter.rejected - self._dup_last[1]

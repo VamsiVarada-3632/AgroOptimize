@@ -23,6 +23,7 @@ from pymoo.core.duplicate import DefaultDuplicateElimination
 from pymoo.core.mutation import Mutation
 from pymoo.core.repair import Repair
 from pymoo.core.sampling import Sampling
+from pymoo.operators.sampling.lhs import LHS
 
 
 class AllocationRepair(Repair):
@@ -77,12 +78,20 @@ class SinglePointCrossover(Crossover):
 
 class GaussianMutation(Mutation):
     """Per-gene Gaussian perturbation applied independently with
-    probability `prob` per gene, then clipped back to bounds."""
+    probability `prob` per gene, then clipped back to bounds.
 
-    def __init__(self, prob: float = 0.12, sigma: float = 0.12):
+    With `avoid_duplicates` (enhanced-mode switch duplicate_avoidance), an
+    offspring that is still an exact copy of a parent after mutation gets one
+    extra Gaussian step on a randomly chosen gene (in the opposite direction
+    if the first one is clipped away at a bound). Such copies would only be
+    rejected by duplicate elimination and re-mated."""
+
+    def __init__(self, prob: float = 0.12, sigma: float = 0.12, avoid_duplicates: bool = False):
         super().__init__()
         self.gene_prob = prob
         self.sigma = sigma
+        self.avoid_duplicates = avoid_duplicates
+        self.forced = 0  # offspring given the extra step (for the run report)
 
     def _do(self, problem, X, **kwargs):
         Xp = np.array(X, dtype=float, copy=True)
@@ -91,6 +100,25 @@ class GaussianMutation(Mutation):
         noise = np.random.normal(0.0, self.sigma, Xp.shape) * span
         Xp[mask] += noise[mask]
         Xp = np.clip(Xp, problem.xl, problem.xu)
+        algorithm = kwargs.get("algorithm")
+        if self.avoid_duplicates and algorithm is not None and algorithm.pop is not None:
+            Xp = self._perturb_copies(problem, Xp, population_arrays(algorithm, algorithm.pop)["X"], span)
+        return Xp
+
+    def _perturb_copies(self, problem, Xp, parents, span):
+        known = {row.tobytes() for row in np.ascontiguousarray(parents)}
+        copies = [i for i, row in enumerate(np.ascontiguousarray(Xp)) if row.tobytes() in known]
+        if not copies:
+            return Xp
+        genes = np.random.randint(0, Xp.shape[1], size=len(copies))
+        steps = np.random.normal(0.0, self.sigma, size=len(copies)) * span[genes]
+        xl, xu = np.asarray(problem.xl, dtype=float), np.asarray(problem.xu, dtype=float)
+        for i, j, step in zip(copies, genes, steps):
+            value = np.clip(Xp[i, j] + step, xl[j], xu[j])
+            if value == Xp[i, j]:
+                value = np.clip(Xp[i, j] - step, xl[j], xu[j])
+            Xp[i, j] = value
+        self.forced += len(copies)
         return Xp
 
 
@@ -171,22 +199,42 @@ def binary_tournament(pop, P, algorithm, random_state=None, **kwargs):
 # ---------------------------------------------------------------------------
 
 class AdaptiveSinglePointCrossover(SinglePointCrossover):
-    """Single-point crossover whose probability follows a deterministic
-    schedule (Eiben, Hinterding & Michalewicz 1999): `start_prob` in the first
-    generation, moving linearly to `end_prob` in the last -- more
-    recombination while exploring, more mutation-only offspring later."""
+    """Single-point crossover whose probability is set every generation.
 
-    def __init__(self, start_prob: float, end_prob: float):
-        super().__init__(prob=start_prob)
+    schedule "linear" -- deterministic parameter control (Eiben, Hinterding &
+        Michalewicz 1999): `start_prob` in the first generation, moving
+        linearly to `end_prob` in the last.
+    schedule "diversity" -- adaptive control from population diversity
+        (Srinivas & Patnaik 1994; Ursem 2002): `high_diversity_prob` while the
+        allocation diversity is at its peak so far, moving linearly to
+        `low_diversity_prob` as it falls to `diversity_floor` x that peak.
+        The ratio is published by EngineMonitor in algorithm.data["adaptive"].
+    """
+
+    def __init__(self, start_prob: float, end_prob: float, schedule: str = "linear",
+                 high_diversity_prob: float = 0.85, low_diversity_prob: float = 0.95,
+                 diversity_floor: float = 0.5):
+        super().__init__(prob=start_prob if schedule == "linear" else high_diversity_prob)
+        if schedule not in ("linear", "diversity"):
+            raise ValueError(f"Unknown crossover schedule {schedule!r}")
+        self.schedule = schedule
         self.start_prob = float(start_prob)
         self.end_prob = float(end_prob)
+        self.high_diversity_prob = float(high_diversity_prob)
+        self.low_diversity_prob = float(low_diversity_prob)
+        self.diversity_floor = float(diversity_floor)
 
     def do(self, problem, pop, parents=None, *args, **kwargs):
         algorithm = kwargs.get("algorithm")
         if algorithm is not None:
-            progress = _progress(algorithm)
-            self.prob = self.start_prob + (self.end_prob - self.start_prob) * progress
-            algorithm.data.setdefault("adaptive", {})["crossover_prob"] = self.prob
+            adaptive = algorithm.data.setdefault("adaptive", {})
+            if self.schedule == "linear":
+                self.prob = self.start_prob + (self.end_prob - self.start_prob) * _progress(algorithm)
+            else:
+                ratio = adaptive.get("diversity_ratio", 1.0)
+                level = float(np.clip((ratio - self.diversity_floor) / (1.0 - self.diversity_floor), 0.0, 1.0))
+                self.prob = self.low_diversity_prob + (self.high_diversity_prob - self.low_diversity_prob) * level
+            adaptive["crossover_prob"] = self.prob
         return super().do(problem, pop, parents, *args, **kwargs)
 
 
@@ -232,13 +280,14 @@ class SmartSampling(Sampling):
     knowledge about these objectives, not a new agronomic assumption).
     If more seeds are requested than these, the rest are random blends of
     them. All remaining individuals are uniform random, as in the original
-    engine. Seeding is the "seeding the initial population" technique of
-    Friedrich & Wagner (2015).
+    engine, or a Latin Hypercube sample when `lhs` is set. Seeding is the
+    "seeding the initial population" technique of Friedrich & Wagner (2015).
     """
 
-    def __init__(self, fraction: float):
+    def __init__(self, fraction: float, lhs: bool = False):
         super().__init__()
         self.fraction = float(fraction)
+        self.lhs = bool(lhs)
 
     def _do(self, problem, n_samples, *args, random_state=None, **kwargs):
         n_seed = int(round(self.fraction * n_samples))
@@ -250,9 +299,73 @@ class SmartSampling(Sampling):
             w = random_state.random((k, 1))
             seeds = np.vstack([seeds, w * seeds[i] + (1 - w) * seeds[j]])
         seeds = seeds[:n_seed]
-        xl, xu = problem.bounds()
-        rand = xl + (xu - xl) * random_state.random((n_samples - len(seeds), problem.n_var))
+        n_rand = n_samples - len(seeds)
+        if self.lhs and n_rand > 1:
+            rand = LHS()._do(problem, n_rand, random_state=random_state)
+        else:
+            xl, xu = problem.bounds()
+            rand = xl + (xu - xl) * random_state.random((n_rand, problem.n_var))
         return np.vstack([seeds, rand])
+
+
+class BudgetAwareSampling(Sampling):
+    """Constraint-aware initialisation for budget problems: the plans drawn
+    by `inner` that exceed the budget are moved just inside it (see
+    make_budget_feasible); all others are kept as drawn."""
+
+    def __init__(self, inner: Sampling):
+        super().__init__()
+        self.inner = inner
+
+    def _do(self, problem, n_samples, *args, **kwargs):
+        X = self.inner._do(problem, n_samples, *args, **kwargs)
+        return make_budget_feasible(problem, X)
+
+
+def make_budget_feasible(problem, X: np.ndarray) -> np.ndarray:
+    """Repair of over-budget plans before the first evaluation (a standard
+    repair-based constraint-handling initialisation; Coello Coello 2002):
+
+    1. their fertiliser multipliers go to the lower bound (in this model cost
+       depends on the inputs only through fertiliser), then
+    2. if still over budget, their land allocation is blended towards the
+       cheapest single-crop plan, a' = (1 - w) a + w e_cheapest, with the
+       smallest w that meets the budget. Cost is linear in w for fixed
+       multipliers, so w is solved exactly rather than searched.
+
+    Deterministic (no random numbers). Nothing changes when there is no
+    budget, or when even the cheapest plan exceeds it (no feasible point to
+    move towards)."""
+    budget = getattr(problem, "budget_rs", None)
+    if not budget:
+        return X
+    n = problem.n_crops
+    xl = np.asarray(problem.xl, dtype=float)
+    X = np.array(X, dtype=float, copy=True)
+
+    def cost(Y):
+        return problem.evaluate(Y, return_as_dictionary=True)["F"][:, 1]
+
+    cheapest = np.tile(xl, (n, 1))
+    cheapest[:, :n] = np.where(np.eye(n, dtype=bool), 1.0, xl[:n])
+    single = cost(cheapest)
+    c = int(np.argmin(single))
+    if single[c] > budget:
+        return X
+
+    over = cost(X) > budget
+    X[over, 2 * n:] = xl[2 * n:]
+    still = np.flatnonzero(cost(X) > budget)
+    if len(still):
+        alloc = X[still, :n] / X[still, :n].sum(axis=1, keepdims=True)
+        target = np.where(np.arange(n) == c, 1.0, 0.0)
+        c0 = cost(X[still])
+        Y = X[still].copy()
+        Y[:, :n] = np.clip(target, xl[:n], None)
+        c1 = cost(Y)
+        w = np.clip((c0 - budget) / np.where(c0 - c1 > 0, c0 - c1, np.inf) * (1 + 1e-6) + 1e-9, 0.0, 1.0)
+        X[still, :n] = np.clip((1 - w)[:, None] * alloc + w[:, None] * target, xl[:n], None)
+    return X
 
 
 def seed_chromosomes(problem) -> np.ndarray:
@@ -302,10 +415,23 @@ class CountingDuplicateElimination(DefaultDuplicateElimination):
     many candidates it rejects (for diversity monitoring)."""
 
     def __init__(self, inner=None):
-        super().__init__()
+        super().__init__(func=self._decision_vectors)
         self.inner = inner
         self.checked = 0
         self.rejected = 0
+        self._recent = []  # (population, X) of the last few populations read
+
+    def _decision_vectors(self, pop):
+        """pop.get("X"), remembered for the last few population objects. The
+        mating loop checks every batch of offspring against the same parent
+        population, so its X was read again on each of the ~2-3 batches per
+        generation. Keyed on the object itself (held, so it cannot be reused)."""
+        for obj, X in self._recent:
+            if obj is pop:
+                return X
+        X = pop.get("X")
+        self._recent = [(pop, X)] + self._recent[:3]
+        return X
 
     def do(self, pop, *args, **kwargs):
         out = self.inner.do(pop, *args, **kwargs) if self.inner is not None else super().do(pop, *args, **kwargs)

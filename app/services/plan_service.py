@@ -21,6 +21,7 @@ from app import config
 from app.data import preprocessing as pp
 from app.decision import ranking
 from app.fuzzy import engine as fz
+from app.optimization.metrics import run_quality_metrics
 from app.optimization.nsga2_runner import FarmPlan, extract_convergence_history, extract_pareto_plans, run_nsga2
 from app.optimization.problem import FarmPlanProblem
 from app.schemas import FarmPlanRequest
@@ -171,6 +172,10 @@ def run_pipeline(
         # Kept in the saved run record for reports; the API's RunMeta model
         # does not declare it, so the /api/optimize response is unchanged.
         "optimizer": getattr(result, "engine_report", None),
+        # Pareto-front quality of this run (hypervolume, GD, IGD, IGD+,
+        # spread, spacing, constraint satisfaction, effort, mean objectives;
+        # see app/optimization/metrics.py). Observes the result only.
+        "quality_metrics": run_quality_metrics(result, problem),
     }
     if adjustments is not None:
         meta["topsis_weights"] = (

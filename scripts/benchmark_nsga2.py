@@ -17,7 +17,8 @@ front (the non-dominated union of every front found by every variant and
 seed, plus each solution's copy with the multipliers at their lower bound,
 which is never worse -- see operators.SmartSampling):
 
-  hypervolume (ref. point 1.1, higher is better), IGD+ (lower is better),
+  hypervolume (ref. point 1.1, higher is better), GD, IGD and IGD+ (lower is
+  better; app.optimization.metrics),
   generalised spread (Zhou et al. 2006, lower = more even), spacing (Schott
   1995), front size, duplicate objective vectors in the final population,
   population entropy, mean crowding distance, evaluations, generations,
@@ -31,7 +32,7 @@ Each variant is compared with the original on the same (problem, seed)
 pairs with the Wilcoxon signed-rank test.
 
 Usage:
-    python scripts/benchmark_nsga2.py [--seeds 10] [--seed-offset 0]
+    python scripts/benchmark_nsga2.py [--seeds 10] [--seed-offset 0] [--memory]
         [--variants original,smart_initialization,original@pop_size=160,...]
         [--json results.json] [--quick]
 
@@ -53,20 +54,16 @@ from scipy.stats import wilcoxon
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from pymoo.indicators.hv import HV  # noqa: E402
-from pymoo.indicators.igd_plus import IGDPlus  # noqa: E402
-from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting  # noqa: E402
-
 from app import config  # noqa: E402
 from app.data import loader, preprocessing as pp  # noqa: E402
 from app.decision import ranking  # noqa: E402
 from app.fuzzy import engine as fz  # noqa: E402
+from app.optimization import metrics  # noqa: E402
 from app.optimization.engine_settings import FEATURES_CHANGING_OUTPUTS, engine_settings  # noqa: E402
 from app.optimization.monitoring import population_entropy  # noqa: E402
 from app.optimization.nsga2_runner import extract_pareto_plans, run_nsga2  # noqa: E402
 from app.optimization.problem import FarmPlanProblem  # noqa: E402
 
-HV_REF = 1.1
 HISTORY_STEP = 5  # hypervolume is computed every HISTORY_STEP generations
 
 
@@ -89,6 +86,8 @@ def problems():
 
 
 RUN_KWARGS = ("pop_size", "n_gen", "crossover_prob", "mutation_prob", "mutation_sigma")
+INTEGER_PARAMS = ("patience", "min_generations", "period", "n_skip")
+PERFORMANCE_FEATURES = ("parallel_evaluation",)
 
 
 def parse_variant(spec: str):
@@ -106,39 +105,29 @@ def parse_variant(spec: str):
     features = parts[1:] if parts[0] in ("original", "enhanced") else parts
     settings = engine_settings(base)
     for f in features:
-        if f not in FEATURES_CHANGING_OUTPUTS:
+        if f not in FEATURES_CHANGING_OUTPUTS + PERFORMANCE_FEATURES:
             raise SystemExit(f"unknown feature {f!r} in {spec!r}")
         settings = dataclasses.replace(settings, **{f: True})
     run_kwargs = {}
     for item in filter(None, params.split("+")):
-        key, _, value = item.partition("=")
-        value = float(value)
+        key, _, raw = item.partition("=")
+        try:
+            value = float(raw)
+        except ValueError:
+            value = raw  # e.g. schedule=diversity, criterion=objective_space
         if key in RUN_KWARGS:
             run_kwargs[key] = int(value) if key in ("pop_size", "n_gen") else value
         elif "." in key:
             field_name, sub = key.split(".", 1)
             d = dict(getattr(settings, field_name))
-            d[sub] = int(value) if value.is_integer() and sub in ("patience", "min_generations") else value
+            integer = isinstance(value, float) and value.is_integer() and sub in INTEGER_PARAMS
+            d[sub] = int(value) if integer else value
             settings = dataclasses.replace(settings, **{field_name: d})
         else:
+            if isinstance(value, float) and key == "parallel_workers":
+                value = int(value)
             settings = dataclasses.replace(settings, **{key: value})
     return dataclasses.replace(settings, mode=spec), run_kwargs
-
-
-def lower_bound_copy(problem, X):
-    X = np.array(X, dtype=float, copy=True)
-    X[:, problem.n_crops:] = problem.xl[problem.n_crops:]
-    return X
-
-
-def feasible_front(result):
-    """Objectives and decision vectors of the final feasible first front."""
-    if result.X is None:
-        return np.empty((0, 4)), np.empty((0, 0))
-    X, F = np.atleast_2d(result.X), np.atleast_2d(result.F)
-    G = np.atleast_2d(result.G) if result.G is not None and np.size(result.G) else None
-    ok = np.all(G <= 1e-6, axis=1) if G is not None else np.ones(len(F), bool)
-    return F[ok], X[ok]
 
 
 def run_one(problem, spec, seed):
@@ -146,18 +135,14 @@ def run_one(problem, spec, seed):
     t0 = time.perf_counter()
     result = run_nsga2(problem, seed=seed, engine=settings, track_history=True, **run_kwargs)
     seconds = time.perf_counter() - t0
-    F, X = feasible_front(result)
+    X, F = metrics.feasible_front(result)
     monitor = result.algorithm.callback
     plans = [p for p in extract_pareto_plans(result, problem) if p.feasible]
     conf = dict(zip(problem.crop_vec.names, problem.crop_vec.crop_yield_confidence.tolist()))
     ranked = ranking.rank_plans(plans, crop_confidence_map=conf, preference="balanced")
     top = ranked[0] if ranked else None
     pop_X, pop_F = result.pop.get("X"), result.pop.get("F")
-    dominated_by_copy = 0.0
-    if len(X):
-        F_lb = problem.evaluate(lower_bound_copy(problem, X), return_as_dictionary=True)["F"]
-        strictly = np.all(F_lb <= F + 1e-9 * np.abs(F), axis=1) & np.any(F_lb < F - 1e-6 * np.abs(F), axis=1)
-        dominated_by_copy = float(strictly.mean())
+    dominated_by_copy = metrics.share_dominated_by_lower_bound_copy(problem, X, F) if len(X) else 0.0
     report = result.engine_report
     return {
         "F": F, "X": X,
@@ -174,10 +159,23 @@ def run_one(problem, spec, seed):
         "mean_crowding": report.get("diversity", {}).get("mean_crowding", {}).get("final"),
         "duplicate_ratio": report.get("diversity", {}).get("duplicate_ratio"),
         "population_duplicates": int(len(pop_F) - len(np.unique(np.round(pop_F, 6), axis=0))),
+        "constraint_satisfaction": float((np.ravel(result.pop.get("CV")) <= 0.0).mean()),
+        "duplicates_rejected": report.get("diversity", {}).get("duplicates_rejected", 0),
+        "first_feasible_generation": _first_feasible_generation(result),
         "mean_objectives": F.mean(axis=0).tolist() if len(F) else None,
         "top_plan": _top_objectives(top),
         "dominated_by_lower_bound_copy": dominated_by_copy,
     }
+
+
+def _first_feasible_generation(result):
+    """First generation whose first front contained a feasible plan (budget problems)."""
+    if result.problem.n_ieq_constr == 0:
+        return 1
+    for row in result.algorithm.callback.generations:
+        if row.get("feasible_share", 0) > 0:
+            return row["generation"]
+    return None
 
 
 def _top_objectives(top):
@@ -187,60 +185,24 @@ def _top_objectives(top):
     return {k: d[k] for k in ("yield_tonnes", "cost_rs", "water_liters", "env_impact_score") if k in d}
 
 
-def nondominated(F):
-    if len(F) == 0:
-        return F
-    return F[NonDominatedSorting().do(F, only_non_dominated_front=True)]
-
-
-def generalized_spread(F, extremes):
-    """Zhou et al. (2006) generalised spread on normalised objectives."""
-    if len(F) < 2:
-        return float("nan")
-    D = np.linalg.norm(F[:, None, :] - F[None, :, :], axis=2)
-    np.fill_diagonal(D, np.inf)
-    d = D.min(axis=1)
-    d_mean = d.mean()
-    d_ext = sum(np.linalg.norm(F - e, axis=1).min() for e in extremes)
-    denom = d_ext + len(F) * d_mean
-    return float((d_ext + np.abs(d - d_mean).sum()) / denom) if denom > 0 else float("nan")
-
-
-def spacing(F):
-    """Schott (1995) spacing on normalised objectives (L1 nearest neighbour)."""
-    if len(F) < 2:
-        return float("nan")
-    D = np.abs(F[:, None, :] - F[None, :, :]).sum(axis=2)
-    np.fill_diagonal(D, np.inf)
-    d = D.min(axis=1)
-    return float(np.sqrt(((d - d.mean()) ** 2).sum() / (len(F) - 1)))
-
-
 def score(runs_by_problem, problems_list):
-    """Adds normalised quality indicators to every run, per problem."""
+    """Adds normalised quality indicators (app.optimization.metrics) to every
+    run, against one reference front per problem: the non-dominated union of
+    every front found by every variant and seed, plus each solution's
+    lower-bound-multiplier copy."""
     for name, problem in problems_list:
         runs = runs_by_problem[name]
         fronts = [r["F"] for r in runs if len(r["F"])]
-        copies = []
-        for r in runs:
-            if len(r["X"]):
-                copies.append(problem.evaluate(lower_bound_copy(problem, r["X"]), return_as_dictionary=True)["F"])
-        ref = nondominated(np.vstack(fronts + copies))
+        copies = [metrics.lower_bound_copies(problem, r["X"]) for r in runs if len(r["X"])]
+        ref = metrics.nondominated(np.vstack(fronts + copies))
         if problem.budget_rs:
             ref = ref[ref[:, 1] <= problem.budget_rs + 1e-6]
-        lo, hi = ref.min(axis=0), ref.max(axis=0)
-        span = np.where(hi - lo > 1e-12, hi - lo, 1.0)
-        ref_n = (ref - lo) / span
-        hv = HV(ref_point=np.full(4, HV_REF))
-        igd = IGDPlus(ref_n)
-        extremes = [ref_n[np.argmin(ref_n[:, m])] for m in range(4)]
+        lo, span = metrics.normalisation(ref)
         for r in runs:
-            Fn = (r["F"] - lo) / span if len(r["F"]) else r["F"]
-            r["hypervolume"] = float(hv(Fn)) if len(Fn) else 0.0
-            r["igd_plus"] = float(igd(Fn)) if len(Fn) else float("nan")
-            r["spread"] = generalized_spread(Fn, extremes) if len(Fn) else float("nan")
-            r["spacing"] = spacing(Fn) if len(Fn) else float("nan")
-            r["hv_history"] = [float(hv(nondominated((f - lo) / span))) for f in r["F_history"]]
+            r.update(metrics.front_quality(r["F"], ref) if len(r["F"]) else
+                     {"hypervolume": 0.0, "hypervolume_ratio": 0.0, "gd": float("nan"), "igd": float("nan"),
+                      "igd_plus": float("nan"), "spread": float("nan"), "spacing": float("nan")})
+            r["hv_history"] = [metrics.hypervolume(metrics.nondominated((f - lo) / span)) for f in r["F_history"]]
         best = max(r["hypervolume"] for r in runs)
         for r in runs:
             r["hv_ratio"] = r["hypervolume"] / best if best > 0 else float("nan")
@@ -269,6 +231,22 @@ def compare(rows_v, rows_o, key, higher_is_better):
             "ties": int(len(diff) - better - worse), "p_value": p}
 
 
+def measure_memory(probs, variants):
+    """Peak memory allocated during one run (tracemalloc), per variant."""
+    import tracemalloc
+    out = {}
+    for v in variants:
+        settings, run_kwargs = parse_variant(v)
+        peaks = []
+        for _, problem in probs:
+            tracemalloc.start()
+            run_nsga2(problem, seed=0, engine=settings, track_history=True, **run_kwargs)
+            peaks.append(tracemalloc.get_traced_memory()[1] / 2**20)
+            tracemalloc.stop()
+        out[v] = statistics.median(peaks)
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--seeds", type=int, default=10)
@@ -277,6 +255,8 @@ def main():
     ap.add_argument("--variants", default="original," + ",".join(FEATURES_CHANGING_OUTPUTS) + ",enhanced")
     ap.add_argument("--quick", action="store_true", help="3 problems x 3 seeds, for a smoke test")
     ap.add_argument("--json", default=None)
+    ap.add_argument("--memory", action="store_true",
+                    help="also measure peak traced memory of one run per variant on the first four problems")
     args = ap.parse_args()
 
     variants = [v.strip() for v in args.variants.split(",") if v.strip()]
@@ -312,14 +292,19 @@ def main():
             if r["problem"] == name:
                 r["generations_to_99pct_original_hv"] = generations_to(target, r["hv_history"])
 
-    metrics = [("hypervolume", True), ("igd_plus", False), ("spread", False), ("spacing", False),
+    metrics_list = [("hypervolume", True), ("gd", False), ("igd", False), ("igd_plus", False),
+                    ("spread", False), ("spacing", False),
                ("front_size", True), ("entropy", True), ("allocation_entropy", True), ("population_duplicates", False),
-               ("dominated_by_lower_bound_copy", False), ("seconds", False), ("evaluations", False)]
-    summary = {}
+               ("dominated_by_lower_bound_copy", False), ("constraint_satisfaction", True), ("duplicates_rejected", False),
+               ("seconds", False), ("evaluations", False)]
+    summary, summary_vs_base = {}, {}
     for v in variants:
         if v == "original":
             continue
-        summary[v] = {m: compare(by_variant[v], by_variant["original"], m, hib) for m, hib in metrics}
+        summary[v] = {m: compare(by_variant[v], by_variant["original"], m, hib) for m, hib in metrics_list}
+        base = v.split("+")[0].split("@")[0]
+        if base == "enhanced" and v != "enhanced" and "enhanced" in by_variant:
+            summary_vs_base[v] = {m: compare(by_variant[v], by_variant["enhanced"], m, hib) for m, hib in metrics_list}
 
     def med(v, k):
         vals = [r[k] for r in by_variant[v] if r[k] is not None and np.isfinite(r[k])]
@@ -338,10 +323,13 @@ def main():
         gens = [r["generations_to_99pct_original_hv"] for r in by_variant[v]
                 if r["generations_to_99pct_original_hv"] is not None]
         table[v] = {
-            "hypervolume": med(v, "hypervolume"), "igd_plus": med(v, "igd_plus"), "spread": med(v, "spread"),
+            "hypervolume": med(v, "hypervolume"), "gd": med(v, "gd"), "igd": med(v, "igd"),
+            "igd_plus": med(v, "igd_plus"), "spread": med(v, "spread"),
             "spacing": med(v, "spacing"), "front_size": med(v, "front_size"), "entropy": med(v, "entropy"),
             "allocation_entropy": med(v, "allocation_entropy"),
             "population_duplicates": med(v, "population_duplicates"),
+            "constraint_satisfaction": med(v, "constraint_satisfaction"),
+            "duplicates_rejected": med(v, "duplicates_rejected"),
             "dominated_by_lower_bound_copy": med(v, "dominated_by_lower_bound_copy"),
             "seconds": med(v, "seconds"), "evaluations": med(v, "evaluations"), "generations": med(v, "generations"),
             "median_generations_to_99pct_original_hv": statistics.median(gens) if gens else None,
@@ -358,19 +346,30 @@ def main():
         print(f"{v:<44}{t['hypervolume']:8.4f}{t['igd_plus']:9.4f}{t['spread']:8.3f}{t['front_size']:6.0f}"
               f"{t['entropy']:8.3f}{t['dominated_by_lower_bound_copy']:9.2f}{(g if g else float('nan')):7.0f}"
               f"{t['evaluations']:7.0f}{t['seconds']:7.3f}")
-    print("\nPaired vs original (Wilcoxon signed-rank): better/worse/ties, median diff, p")
-    for v, s in summary.items():
-        parts = []
-        for m in ("hypervolume", "igd_plus", "spread", "allocation_entropy", "seconds"):
-            c = s[m]
-            parts.append(f"{m} {c['better']}/{c['worse']}/{c['ties']} {c['median_diff']:+.4g} p={c['p_value']:.2g}")
-        print(f"  {v}: " + "; ".join(parts))
+    for title, table_ in (("original", summary), ("enhanced", summary_vs_base)):
+        if not table_:
+            continue
+        print(f"\nPaired vs {title} (Wilcoxon signed-rank): better/worse/ties, median diff, p")
+        for v, s in table_.items():
+            parts = []
+            for m in ("hypervolume", "gd", "igd_plus", "spread", "allocation_entropy", "seconds"):
+                c = s[m]
+                parts.append(f"{m} {c['better']}/{c['worse']}/{c['ties']} {c['median_diff']:+.4g} p={c['p_value']:.2g}")
+            print(f"  {v}: " + "; ".join(parts))
+
+    memory = measure_memory(probs[:4], variants) if args.memory else {}
+    if memory:
+        print("\nPeak traced memory (MB, median of 4 problems, seed 0, history tracked)")
+        for v, mb in memory.items():
+            print(f"  {v:<60}{mb:8.2f}")
 
     if args.json:
         slim = [{k: v for k, v in r.items() if k not in ("F", "X", "F_history")} for r in runs]
         Path(args.json).write_text(json.dumps({"variants": variants, "seeds": seeds,
                                                "problems": [n for n, _ in probs], "table": table,
-                                               "paired": summary, "runs": slim}, indent=1, default=float))
+                                               "paired": summary, "paired_vs_enhanced": summary_vs_base,
+                                               "peak_memory_mb": memory,
+                                               "runs": slim}, indent=1, default=float))
 
 
 if __name__ == "__main__":
