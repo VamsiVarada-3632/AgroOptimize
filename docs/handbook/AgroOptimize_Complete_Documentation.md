@@ -1,6 +1,6 @@
 # AgroOptimize — Complete Project Documentation (single file)
 
-All 38 handbook documents combined and grouped into 6 parts. Cross-references point to the section of the same name below.
+All 41 handbook documents combined and grouped into 6 parts. Cross-references point to the section of the same name below.
 
 ## Table of Contents
 
@@ -30,6 +30,9 @@ All 38 handbook documents combined and grouped into 6 parts. Cross-references po
   - [NSGAII_PROFILE](#doc-nsgaii-profile)
   - [NSGAII_RESEARCH_REVIEW](#doc-nsgaii-research-review)
   - [NSGAII_IMPROVEMENT_SUMMARY](#doc-nsgaii-improvement-summary)
+  - [NSGAII_ARCHITECTURE](#doc-nsgaii-architecture)
+  - [NSGAII_IMPROVEMENTS](#doc-nsgaii-improvements)
+  - [NSGAII_BENCHMARK_RESULTS](#doc-nsgaii-benchmark-results)
   - [EXPLAINABILITY](#doc-explainability)
   - [SCORING_AND_RANKING](#doc-scoring-and-ranking)
   - [OPTIMIZATION_PIPELINE](#doc-optimization-pipeline)
@@ -1002,10 +1005,16 @@ Response (`FarmPlanResponse`, ≈33 KB with 50 plans):
             "confidence_label":"Moderate",
             "trade_off_summary":"High yield, Moderate cost, Moderate water use, Moderate environmental impact (confidence: moderate)"}],
  "convergence_history": [{"generation":1,"population_size":80,"best_yield_tonnes":0.0,"mean_yield_tonnes":0.0,"best_cost_rs":0.0,"mean_cost_rs":0.0,"best_water_liters":0.0,"mean_water_liters":0.0,"best_env_impact":0.0,"mean_env_impact":0.0,"hypervolume":0.0}],
- "meta": {"algorithm":"NSGA-II","pop_size":80,"n_gen":200,"crossover_prob":0.85,"mutation_prob":0.12,"preference":"balanced","n_pareto_solutions_found":80,"n_plans_returned":50,"optimize_seconds":0.291},
+ "meta": {"algorithm":"NSGA-II","pop_size":80,"n_gen":200,"crossover_prob":0.85,"mutation_prob":0.12,"preference":"balanced","n_pareto_solutions_found":80,"n_plans_returned":50,"optimize_seconds":0.291,
+          "quality_metrics":{"reference_front":"front + lower-bound-multiplier copies (non-dominated union)","pareto_size":80,
+            "feasible_pareto_size":80,"constraint_satisfaction_rate":1.0,"dominated_by_lower_bound_copy":1.0,"runtime_seconds":0.2737,
+            "generations":200,"evaluations":16000,"mean_objectives":{"yield_tonnes":39.53,"cost_rs":180937.6,"water_liters":19067479.8,"env_impact_score":226.27},
+            "hypervolume":0.335263,"hypervolume_ratio":0.830674,"gd":0.514275,"igd":0.10979,"igd_plus":0.073573,"spread":0.493938,"spacing":0.12189}},
  "run_id": "salem_kharif_2024_<UTC timestamp>",
  "saved_files": {"run_id":"…","json_path":"…/results/….json","plans_csv_path":"…","convergence_csv_path":"…","convergence_plot_path":"…"}}
 ```
+`meta.quality_metrics` (optional; absent in runs saved before it existed) describes the quality of the run's Pareto front: hypervolume and its ratio to a reference front, generational distance (GD), inverted generational distance (IGD), IGD+, generalised spread and spacing, on objectives normalised to the reference front's ideal and nadir, where the reference is the front plus each plan's copy with irrigation and fertiliser multipliers at 0.7 (never worse in this model). Lower is better for GD, IGD, IGD+, spread and spacing. Values that cannot be computed (no feasible plan, fewer than two plans) are `null`. See [NSGAII_IMPROVEMENTS.md](#doc-nsgaii-improvements) §2.3.
+
 (`convergence_history` values above are placeholders showing the shape; it has one entry per generation when `save_results` is true and is `[]` otherwise. `run_id`/`saved_files` are `null` when not saved.) Units: `yield_tonnes`, `cost_rs`, `water_liters`, `env_impact_score` are **totals over `total_land_ha`**, not per hectare. `saved_files` exposes absolute server paths (minor information disclosure – see [SECURITY_REVIEW.md](#doc-security-review)).
 
 ### GET /api/results
@@ -1179,14 +1188,15 @@ All modelling constants live in `agrooptimize-backend/app/config.py`; a few more
 | `NSGA2_MUTATION_SIGMA` | 0.12 (× gene range) | Assumption |
 | `NSGA2_SEED` | 42 | Convention |
 | `NSGA2_FAST_POP_SIZE / FAST_N_GEN` | 24 / 15 | tests only |
-| `NSGA2_ENGINE_MODE` | `"original"` (env `AGROOPTIMIZE_NSGA2_MODE`) | `original` reproduces published results; `enhanced` is experimental ([NSGAII_IMPROVEMENT_SUMMARY.md](#doc-nsgaii-improvement-summary)) |
-| `NSGA2_ENGINE_FEATURES` | per-mode switches | enhanced: smart initialisation + adaptive mutation |
+| `NSGA2_ENGINE_MODE` | `"original"` (env `AGROOPTIMIZE_NSGA2_MODE`) | `original` reproduces published results; `enhanced` is experimental ([NSGAII_IMPROVEMENTS.md](#doc-nsgaii-improvements)) |
+| `NSGA2_ENGINE_FEATURES` | per-mode switches | enhanced: smart initialisation, adaptive mutation, constraint-aware initialisation, duplicate avoidance; available but off: adaptive crossover, tolerance duplicate removal, early stopping, LHS initialisation, parallel evaluation ([NSGAII_BENCHMARK_RESULTS.md](#doc-nsgaii-benchmark-results)) |
 | `NSGA2_ENGINE_MUTATION_PROB` | original 0.12, enhanced 0.05 | Parameter study (NSGAII_PROFILE.md §4) |
 | `NSGA2_ADAPTIVE_MUTATION` | min 0.02, max 0.30, diversity floor 0.5, converged scale 0.2 | Tuned on seeds 100–104 |
-| `NSGA2_ADAPTIVE_CROSSOVER` | 0.95 → 0.70 | Off in both modes |
+| `NSGA2_ADAPTIVE_CROSSOVER` | schedule `linear` (0.95 → 0.70) or `diversity` (0.85 at the diversity peak → 0.95 at half of it) | Off in both modes |
 | `NSGA2_SMART_INIT_FRACTION` | 0.2 | Tuned |
 | `NSGA2_DUPLICATE_TOLERANCE` | 1e-4 | Off in both modes |
-| `NSGA2_EARLY_STOPPING` | patience 30, tolerance 1e-4 (relative), min 60 | Off in both modes |
+| `NSGA2_EARLY_STOPPING` | criterion `hypervolume` (patience 30, tolerance 1e-4 relative, min 60) or `objective_space` (pymoo: xtol 0.0005, ftol 0.005, period 50, n_skip 5) | Off in both modes; patience/tolerance also define stagnation for adaptive mutation |
+| `NSGA2_PARALLEL_WORKERS` | 4 | Threads for `parallel_evaluation` (off) |
 | `MAX_RETURNED_PLANS` | 50 | Assumption (paper: 20–50 plans) |
 
 ### 3. Constants outside `config.py`
@@ -2619,7 +2629,7 @@ Details, measurements and the accept/reject decision for each improvement are in
 
 ## NSGA-II Profile
 
-Measured runtime, memory, diversity and quality of the NSGA-II engine before and after this work. Context: [NSGAII_ANALYSIS.md](#doc-nsgaii-analysis). Decisions: [NSGAII_IMPROVEMENT_SUMMARY.md](#doc-nsgaii-improvement-summary).
+Measured runtime, memory, diversity and quality of the NSGA-II engine. Sections 1–6 profile the first round of work (PR #12: "main" = the engine before it). Section 7 profiles the second round ([NSGAII_IMPROVEMENTS.md](#doc-nsgaii-improvements)), whose full benchmark is in [NSGAII_BENCHMARK_RESULTS.md](#doc-nsgaii-benchmark-results). Context: [NSGAII_ANALYSIS.md](#doc-nsgaii-analysis). PR #12 decisions: [NSGAII_IMPROVEMENT_SUMMARY.md](#doc-nsgaii-improvement-summary).
 
 **Machine and method.** One Apple-silicon laptop, Python 3.13, pymoo 0.6.2, NumPy, single process, no other load (the quality study ran alone). Timings are medians of repeated runs; run-to-run noise is about ±10 %. "main" is the code before this work, checked out separately.
 
@@ -2760,6 +2770,41 @@ Enhanced wins on hypervolume in every one of the 16 problems (7–10 of 10 seeds
 
 Every run now records (meta → `optimizer.diversity`): population entropy, allocation diversity, mean finite crowding distance and first-front size (initial / final / minimum), and the share of offspring rejected as duplicates. Example (Salem Kharif, original, seed 42): entropy 0.865 → 0.407, first front 13 → 80 individuals (full from generation 8), 1.9 % of offspring rejected. Coimbatore Summer: 31 % rejected; Erode Rabi: 12 %.
 
+### 7. Second round: profile, bottlenecks and what was done about them
+
+Measured with `scripts/profile_nsga2.py --no-history` (median of 5 runs; pop 80 × 200; the profiler's timers are excluded from the totals they measure).
+
+| Phase (ms per run) | Salem Kharif original | Salem Kharif enhanced | Coimbatore Summer original | Coimbatore Summer enhanced | Erode Kharif budget original | Erode Kharif budget enhanced |
+|---|---|---|---|---|---|---|
+| Duplicate elimination | 46.5 | 45.2 | **94.3** | 39.1 | 49.0 | 43.6 |
+| Objective evaluation | 38.2 | 37.8 | 37.9 | 37.4 | 37.8 | 38.4 |
+| Monitoring (diversity, history, adaptive control) | 34.1 | 40.2 | 33.3 | 38.7 | 34.4 | 40.7 |
+| Mutation | 7.9 | 26.4 | 9.9 | 31.3 | 8.0 | 28.2 |
+| Tournament selection | 11.4 | 10.7 | 24.8 | 9.6 | 12.2 | 9.8 |
+| Crowding distance / non-dominated sorting | 11.0 / 6.3 | 10.8 / 6.2 | ≈ same | ≈ same | ≈ same | ≈ same |
+| Quality metrics / TOPSIS / fuzzy | 0.7 / 0.6 / < 0.1 | same | same | same | same | same |
+| **Optimisation total** | 307 | 327 | **420** | **320** | 406 | 420 |
+| Mating rounds per run | 354 | 325 | 846 | 298 | 386 | 296 |
+| Offspring rejected as duplicates | 317 of 16,408 | 188 of 16,276 | 7,191 of 23,260 | 134 of 16,204 | 503 of 16,590 | 150 of 16,222 |
+| Over-budget evaluations (constraint violations) | 0 | 0 | 0 | 0 | 993 of 16,000 | 605 of 16,000 |
+| Dominated solutions in the final population | 0 | 0 | 0 | 0 | 0 | 0 |
+| Front beaten by its lower-bound copy | 97.5 % | 58.8 % | 50.0 % | 41.3 % | 96.3 % | 42.5 % |
+| CPU utilisation / peak traced memory | 1.00 / 1.4 MB | 1.00 / 1.5 MB | 1.00 / 1.5 MB | 1.00 / 1.6 MB | 1.00 / 1.4 MB | 1.00 / 1.8 MB |
+
+"Enhanced" is the engine of this round (with duplicate avoidance and constraint-aware initialisation).
+
+**Bottlenecks found and how they were addressed**
+
+| Bottleneck | Evidence | Action | Effect |
+|---|---|---|---|
+| Rejected duplicates force extra mating rounds | PR #12's enhanced engine rejected 33 % of offspring (median; up to 73 %), 12–31 % of the original's in duplicate-heavy problems; each rejection repeats selection, crossover, mutation, repair and the duplicate check | duplicate avoidance (§2.2 D of NSGAII_IMPROVEMENTS.md) | rejections 8,022 → 140 per run; enhanced runs 13–52 % faster |
+| Per-generation front hypervolume read through pymoo getters | ~30× the cost of the hypervolume itself | read from the cached arrays | exact; part of a 4–13 % gain in enhanced mode |
+| Parent X re-read for every mating batch | 2–3 batches per generation, more with many duplicates | cached per population object | exact |
+| Mutation now 26–31 ms in enhanced mode | the copy check builds a set of the parents' rows per call | a vectorised alternative (NumPy void views + `isin`) was tried and was slower (38 ms), so it was reverted | accepted cost; far smaller than the mating rounds it saves |
+| Monitoring 33–41 ms | entropy, crowding and history per generation | kept: it provides the run report and adaptive control; can be switched off (`diversity_monitoring`, `runtime_profiling`) | — |
+| Evaluation 38 ms | already one vectorised pass; most of it is pymoo setting values on individuals | parallel evaluation tried: slower | rejected |
+| pymoo's per-individual Population objects | remaining time is spread over pymoo bookkeeping | not changed (would mean replacing pymoo's core) | — |
+
 <a id="doc-nsgaii-research-review"></a>
 
 ## NSGA-II Research Review
@@ -2799,6 +2844,14 @@ With four objectives the whole population becomes non-dominated within 4–8 gen
 | Diversity monitoring | Population entropy and crowding as diversity measures (Zitzler et al. 2003 [21]) | Entropy, allocation diversity, mean crowding, first-front size and duplicate ratio per generation | Implemented (observational, both modes) |
 | Runtime profiling | — | Total time, generations, evaluations, Pareto size, time per generation, in the log and the saved run | Implemented (observational, both modes) |
 | Code optimisation | — | Vectorised crossover and tournament (same random draws), cached constants, history without deep copies | Implemented (both modes, bit-identical) |
+| *Second round (NSGAII_IMPROVEMENTS.md):* | | | |
+| Diversity-driven adaptive crossover | Adaptive probabilities [2]; diversity-guided EAs [4] | p_c 0.85 at the running peak of allocation diversity, rising to 0.95 as diversity falls to half of it | Rejected: no measurable effect (HV p 0.22 / 0.33) |
+| Latin Hypercube initialisation | McKay, Beckman & Conover 1979 [22] | pymoo LHS (maxmin criterion) for the random part of the first population | Rejected: no measurable effect; the initial layout is forgotten within 200 generations |
+| Constraint-aware (repair) initialisation | Repair-based constraint handling, Coello Coello 2002 [23]; complements constrained domination, Deb 2000 [24] | Over-budget first plans: fertiliser to the lower bound, then the allocation blended towards the cheapest crop with the exact weight that meets the budget | **Accepted** (enhanced): first feasible plan in generation 1 instead of up to 19; HV better under tight budgets (p 4e-5) |
+| Duplicate avoidance | Duplicate genotypes waste GA effort, Ronald 1998 [25] | A child still identical to a parent after mutation gets one Gaussian step on a random gene | **Accepted** (enhanced): same front quality, better spread, 13–52 % less time |
+| Robust objective-space termination | Blank & Deb 2020 [14]; Martí et al. 2016 [16] | pymoo `DefaultMultiObjectiveTermination` (xtol, cvtol, ftol over a window) | Rejected: never triggers with default tolerances; looser ones save nothing and add checking cost |
+| Parallel (master–slave) evaluation | Cantú-Paz 2000 [26]: worthwhile only when evaluation dominates | Thread-pool chunks, results joined in order (identical) | Rejected: slower, because evaluation is ~0.05 ms of vectorised arithmetic per generation |
+| Per-run quality metrics | Zitzler et al. 2003 [21]; Riquelme, Von Lücken & Barán 2015 [27] (indicator review) | HV, GD [28], IGD [29], IGD+ [11], spread [12], spacing [13] against the run's lower-bound reference; in the API and Reports | Implemented (observational, both modes) |
 
 ### 4. Evaluation methodology
 
@@ -2806,6 +2859,7 @@ With four objectives the whole population becomes non-dominated within 4–8 gen
 |---|---|---|
 | Unary quality indicators on a common normalisation | Zitzler et al. 2003 [21] | Objectives normalised per problem by the reference front's ideal and nadir |
 | Hypervolume (Pareto-compliant) | Zitzler & Thiele 1999 [6] | Reference point 1.1 in every objective |
+| GD and IGD (convergence; convergence and coverage) | Van Veldhuizen & Lamont 1998 [28]; Coello Coello & Reyes Sierra 2004 [29] | Reported alongside IGD+, which unlike them is weakly Pareto compliant [11] |
 | IGD+ (weakly Pareto-compliant) | Ishibuchi et al. 2015 [11] | Against the reference front: non-dominated union of all fronts of all variants, plus each solution's lower-bound-multiplier copy |
 | Spread for > 2 objectives | Generalised spread, Zhou et al. 2006 [12]; spacing, Schott 1995 [13] | Both reported |
 | Multiple independent runs, paired non-parametric test | Derrac et al. 2011 [19] | 16 problems × 10 seeds, Wilcoxon signed-rank against the original on the same (problem, seed) |
@@ -2847,10 +2901,20 @@ With four objectives the whole population becomes non-dominated within 4–8 gen
 19. Derrac, J., García, S., Molina, D., & Herrera, F. (2011). A practical tutorial on the use of nonparametric statistical tests as a methodology for comparing evolutionary and swarm intelligence algorithms. *Swarm and Evolutionary Computation*, 1(1), 3–18. Elsevier.
 20. Deb, K. (2001). *Multi-Objective Optimization Using Evolutionary Algorithms*. Wiley.
 21. Zitzler, E., Thiele, L., Laumanns, M., Fonseca, C. M., & da Fonseca, V. G. (2003). Performance assessment of multiobjective optimizers: An analysis and review. *IEEE Transactions on Evolutionary Computation*, 7(2), 117–132.
+22. McKay, M. D., Beckman, R. J., & Conover, W. J. (1979). A comparison of three methods for selecting values of input variables in the analysis of output from a computer code. *Technometrics*, 21(2), 239–245.
+23. Coello Coello, C. A. (2002). Theoretical and numerical constraint-handling techniques used with evolutionary algorithms: a survey of the state of the art. *Computer Methods in Applied Mechanics and Engineering*, 191(11–12), 1245–1287.
+24. Deb, K. (2000). An efficient constraint handling method for genetic algorithms. *Computer Methods in Applied Mechanics and Engineering*, 186(2–4), 311–338.
+25. Ronald, S. (1998). Duplicate genotypes in a genetic algorithm. In *Proc. IEEE International Conference on Evolutionary Computation (ICEC 1998)*, 793–798.
+26. Cantú-Paz, E. (2000). *Efficient and Accurate Parallel Genetic Algorithms*. Kluwer Academic Publishers.
+27. Riquelme, N., Von Lücken, C., & Barán, B. (2015). Performance metrics in multi-objective optimization. In *Proc. Latin American Computing Conference (CLEI 2015)*, 1–11.
+28. Van Veldhuizen, D. A., & Lamont, G. B. (1998). *Multiobjective evolutionary algorithm research: A history and analysis*. Technical Report TR-98-03, Air Force Institute of Technology.
+29. Coello Coello, C. A., & Reyes Sierra, M. (2004). A study of the parallelization of a coevolutionary multi-objective evolutionary algorithm. In *MICAI 2004*, LNAI 2972, 688–697. Springer.
 
 <a id="doc-nsgaii-improvement-summary"></a>
 
 ## NSGA-II Improvement Summary
+
+> This is the record of the first round (PR #12). The second round (quality metrics, constraint-aware initialisation, duplicate avoidance, and the rejected LHS, diversity crossover, objective-space stopping and parallel evaluation) is in [NSGAII_IMPROVEMENTS.md](#doc-nsgaii-improvements) and [NSGAII_BENCHMARK_RESULTS.md](#doc-nsgaii-benchmark-results); enhanced mode now also enables those two accepted switches.
 
 What changed in the NSGA-II engine, why, how it was measured, and what it does to results and reproducibility. Analysis: [NSGAII_ANALYSIS.md](#doc-nsgaii-analysis). Measurements: [NSGAII_PROFILE.md](#doc-nsgaii-profile). Literature: [NSGAII_RESEARCH_REVIEW.md](#doc-nsgaii-research-review).
 
@@ -2945,6 +3009,424 @@ Explanations, reports, history, Scenario Simulation, District Intelligence, comp
 5. An input–yield response in f1 so the multiplier genes carry a real trade-off (changes the objectives).
 6. Optionally expose the engine mode per request once an API change is acceptable.
 7. Population 100–160 when run time allows (HV better in 78/80 tuning runs at 160).
+
+<a id="doc-nsgaii-architecture"></a>
+
+## NSGA-II Architecture
+
+Every part of the AgroOptimize NSGA-II engine, traced function by function. Companion documents:
+* [NSGAII_ANALYSIS.md](#doc-nsgaii-analysis): behaviour and weaknesses
+* [NSGAII_PROFILE.md](#doc-nsgaii-profile): where the time goes
+* [NSGAII_RESEARCH_REVIEW.md](#doc-nsgaii-research-review): literature
+* [NSGAII_IMPROVEMENTS.md](#doc-nsgaii-improvements): what changed and why
+* [NSGAII_BENCHMARK_RESULTS.md](#doc-nsgaii-benchmark-results): the evidence
+
+Code lives in `app/optimization/`: `problem.py`, `nsga2_runner.py`, `operators.py`, `monitoring.py`, `metrics.py`, `engine_settings.py`, `parallel.py`. Selection mechanics come from pymoo 0.6.2 (`pymoo.algorithms.moo.nsga2`, `pymoo.core.*`, `pymoo.operators.survival.rank_and_crowding`).
+
+### 1. Call graph
+
+```
+plan_service.run_pipeline(request)                                     app/services/plan_service.py
+ ├─ preprocessing.get_region_season_profile → RegionSeasonProfile      app/data/preprocessing.py
+ ├─ fuzzy.evaluate_uncertainty → UncertaintyAssessment                 app/fuzzy/engine.py
+ ├─ FarmPlanProblem(profile, assessment, land, budget)                 problem.py
+ ├─ run_nsga2(problem, pop_size, n_gen, seed, track_history, mode|engine)   nsga2_runner.py
+ │    ├─ engine_settings(mode) → EngineSettings (switches from config)  engine_settings.py
+ │    ├─ build operators: sampling, TournamentSelection(binary_tournament),
+ │    │    crossover, mutation, AllocationRepair, CountingDuplicateElimination,
+ │    │    [ChunkedThreadEvaluator]                                     operators.py, parallel.py
+ │    ├─ termination: ("n_gen", n) | FrontStagnationTermination | DefaultMultiObjectiveTermination
+ │    ├─ EngineMonitor (pymoo Callback)                                 monitoring.py
+ │    └─ with _NSGA2_RUN_LOCK: np.random.seed(seed); pymoo.minimize(problem, NSGA2(...), termination, seed=seed)
+ │         ├─ _initialize_infill: sampling.do → repair → duplicates → evaluator.eval
+ │         ├─ _initialize_advance: RankAndCrowding.do (rank + crowding on generation 1)
+ │         └─ per generation:
+ │              _infill: Mating loop (infill.py) until pop_size unique offspring
+ │                  TournamentSelection → crossover → mutation → repair → duplicate elimination
+ │              evaluator.eval(offspring)                             (FarmPlanProblem._evaluate)
+ │              _advance: Population.merge(parents, offspring) → RankAndCrowding.do (keep pop_size)
+ │              _set_optimum: opt = rank-0 individuals (or least-violating if none feasible)
+ │              termination.update → callback.notify (EngineMonitor)
+ ├─ result.engine_report  (mode, switches, profile, diversity)          nsga2_runner._engine_report
+ ├─ extract_convergence_history(result)  (saved runs)                   nsga2_runner.py
+ ├─ extract_pareto_plans(result, problem) → FarmPlan list               nsga2_runner.py
+ ├─ metrics.run_quality_metrics(result, problem) → meta.quality_metrics metrics.py
+ └─ ranking.filter_plans → ranking.rank_plans (TOPSIS)                   app/decision/ranking.py
+```
+
+`run_pipeline` is the single entry point used by Run Optimization, saved runs, explanations, Scenario Simulation, District Intelligence (through `single_crop_metrics`), the dashboards and the comparison endpoints.
+
+### 2. Problem definition — `FarmPlanProblem` (problem.py)
+
+| Element | Definition |
+|---|---|
+| Decision variables | 3n real genes for n candidate crops (2–5 in the dataset): land shares `a_i ∈ [1e-4, 1]`, irrigation multipliers `m_i ∈ [0.7, 1.3]`, fertiliser multipliers `r_i ∈ [0.7, 1.3]` |
+| Decoding | shares normalised to sum 1; `area_i = a_i / Σa × land` (`_evaluate`, `decode`) |
+| f1 (min) | −Σ area_i × yield_i(t/ha) × fuzzy crop confidence_i |
+| f2 (min) | Σ area_i × (r_i × fert cost/ha + pesticide/ha + labour days/ha × wage) |
+| f3 (min) | Σ area_i × m_i × max(water req − effective rain, 0) × 10,000 L |
+| f4 (min) | √(leaching × carbon); leaching = Σ area × r × N; carbon = Σ area × (r × NPK × 0.15 + m × water req × 0.01) |
+| Constraint | g = f2 − budget ≤ 0, only when a budget is given (pymoo constrained domination) |
+| Evaluation | fully vectorised over the population, one NumPy pass; per-crop constants precomputed in `__init__` |
+| Other entry points | `single_crop_metrics()` (one crop, one hectare, multipliers 1.0; District Intelligence, smart seeds), `decode(x)` |
+
+Property used by several components: yield does not depend on `m` or `r`, while f2–f4 increase with them. So a plan's copy with every multiplier at 0.7 is never worse (NSGAII_ANALYSIS.md §4.2).
+
+### 3. Components
+
+#### 3.1 Initialisation
+| Setting | Class | Behaviour |
+|---|---|---|
+| default | `pymoo FloatRandomSampling` | uniform in the bounds (pymoo `random_state`) |
+| `lhs_initialization` | `pymoo LHS` | Latin Hypercube: one individual per stratum of each gene (maxmin criterion) |
+| `smart_initialization` | `operators.SmartSampling(fraction, lhs)` | 20 % knowledge-based seeds (`seed_chromosomes`: dominant-crop plans; yield, yield/cost, yield/water-proportional and even allocations; multipliers at 0.7), the rest uniform or LHS |
+| `constraint_aware_initialization` | `operators.BudgetAwareSampling(inner)` → `make_budget_feasible` | over-budget plans: fertiliser multipliers to 0.7, then the allocation is blended towards the cheapest crop with the exact weight that meets the budget |
+
+pymoo then applies `AllocationRepair` and duplicate elimination, and evaluates the population.
+
+#### 3.2 Evaluation
+`pymoo.core.evaluator.Evaluator` calls `problem.evaluate(X)` → `FarmPlanProblem._evaluate`, which sets F (4 objectives), G (budget) and, through pymoo, CV and FEAS. With `parallel_evaluation`, `parallel.ChunkedThreadEvaluator` splits X into chunks on a shared thread pool and joins them in order, so the values are identical.
+
+#### 3.3 Fast non-dominated sorting
+`RankAndCrowding` (pymoo `operators/survival/rank_and_crowding/classes.py`) calls `NonDominatedSorting` (`fast_non_dominated_sort`, Deb et al. 2002, compiled) on the merged 2N population. Constrained domination: feasible solutions dominate infeasible ones, and infeasible ones are ordered by CV. Each individual gets `rank` (0 = first front).
+
+#### 3.4 Crowding distance
+In the same survival step, `calc_crowding_distance` (`rank_and_crowding/metrics.py`) gives each front's boundary points ∞ and interior points the sum of normalised neighbour gaps per objective. It is computed on every front that is kept and on the front that is split.
+
+#### 3.5 Elitism and replacement
+(μ + λ) survival: parents and offspring are merged (`GeneticAlgorithm._advance` → `Population.merge`), whole fronts fill the next population in rank order, and the last front is truncated by descending crowding distance. The best solutions are never lost.
+
+#### 3.6 Selection and tournament
+`TournamentSelection(func_comp=operators.binary_tournament)` draws random pairs (pymoo `random_state`). `binary_tournament` is a vectorised copy of pymoo's `comp_by_dom_and_crowding` that makes identical decisions:
+1. if either is infeasible, the lower CV wins;
+2. otherwise Pareto dominance between the pair decides;
+3. otherwise the larger crowding distance wins;
+4. otherwise `random_state.choice([a, b])` decides.
+
+It reads X, F, CV, rank and crowding through `operators.population_arrays` (one read per population object, cached in `algorithm.data`).
+
+#### 3.7 Crossover
+`operators.SinglePointCrossover` (p 0.85 per mating, decided by pymoo's `random_state`): one cut in 1 … 3n−1 per mating (`np.random.randint`, global RNG), tails swapped (vectorised). `AdaptiveSinglePointCrossover` sets the probability each generation:
+* `schedule="linear"`: 0.95 → 0.70 over the run;
+* `schedule="diversity"`: 0.85 while allocation diversity is at its peak, rising to 0.95 as it falls to half the peak.
+
+#### 3.8 Mutation
+`operators.GaussianMutation`: each gene with probability p (0.12; 0.05 base in enhanced mode) gets `N(0, 0.12 × range)`, then is clipped (`np.random`, global RNG).
+* `AdaptiveGaussianMutation` reads p each generation from `algorithm.data["adaptive"]`, which `EngineMonitor` sets with `monitoring.adaptive_mutation_prob` (raised when diversity collapses, scaled down after hypervolume stagnation).
+* With `duplicate_avoidance`, an offspring still identical to a parent gets one extra Gaussian step on a random gene.
+
+#### 3.9 Repair
+`operators.AllocationRepair`: shares clipped at ≥ 0 and renormalised to sum 1, then every gene clipped to its bounds. It is applied after sampling and after every mating batch.
+
+#### 3.10 Duplicate elimination
+`operators.CountingDuplicateElimination` is pymoo's exact-copy check (Euclidean distance ≤ 1e-16) against the batch itself, the parent population and the offspring found so far. It counts checked and rejected candidates, and caches X for the last few population objects (the parent population is checked once per batch). With `duplicate_removal`, `TolerantDuplicateElimination` uses a normalised tolerance (1e-4). The mating loop in `pymoo/core/infill.py` repeats until there are `pop_size` unique offspring (at most 100 rounds), so rejected copies are never evaluated but cost extra rounds.
+
+#### 3.11 Termination
+| Setting | Class | Rule |
+|---|---|---|
+| default | `("n_gen", 200)` | fixed budget |
+| `early_stopping`, criterion `hypervolume` | `monitoring.FrontStagnationTermination` | stop when the first-front hypervolume (`front_hypervolume`) rose by < 1e-4 (relative) in 30 generations, after generation 60 |
+| `early_stopping`, criterion `objective_space` | `pymoo DefaultMultiObjectiveTermination` | stop when decision-space movement, CV and objective-space change (ideal, nadir, front) stay below xtol/cvtol/ftol for `period` generations |
+
+#### 3.12 Monitoring and reporting
+`EngineMonitor.notify` runs after every generation. It is observation only, except for publishing the adaptive values. It records:
+* the convergence history F;
+* entropy, allocation diversity, mean crowding, front size, feasible share and duplicate ratio;
+* the wall time per generation;
+* the adaptive mutation probability and the diversity ratio.
+
+`nsga2_runner._engine_report` builds `result.engine_report` (saved as `meta.optimizer`). `metrics.run_quality_metrics` builds `meta.quality_metrics` (API and saved runs).
+
+### 4. Randomness and reproducibility
+
+| Stream | Draws | Seeded by |
+|---|---|---|
+| pymoo `random_state` (NumPy Generator) | sampling, LHS, tournament pairs and ties, crossover yes/no, survival tie order, smart-seed blends | `minimize(..., seed=seed)` |
+| NumPy global RNG | crossover cut points, mutation mask and noise, duplicate-avoidance steps | `np.random.seed(seed)` in `run_nsga2` |
+
+Both are reseeded per run under `_NSGA2_RUN_LOCK`, so concurrent requests cannot interleave draws. Same inputs + seed → same front (tested). Bit-identical results hold on the same platform: an x86-64 Linux server and an arm64 Mac follow different trajectories because the C library's `log` and NumPy's fused multiply-add differ in the last bit (recorded during the Render deployment).
+
+### 5. Configuration
+
+All switches and parameters are in `app/config.py` (`NSGA2_ENGINE_MODE`, `NSGA2_ENGINE_FEATURES`, `NSGA2_ENGINE_MUTATION_PROB`, `NSGA2_ADAPTIVE_MUTATION`, `NSGA2_ADAPTIVE_CROSSOVER`, `NSGA2_SMART_INIT_FRACTION`, `NSGA2_DUPLICATE_TOLERANCE`, `NSGA2_EARLY_STOPPING`, `NSGA2_PARALLEL_WORKERS`), and are read into the frozen `EngineSettings` dataclass. `original` reproduces the published engine bit for bit. Any switch can be turned on for a single run: `run_nsga2(problem, engine=dataclasses.replace(engine_settings("original"), lhs_initialization=True))`.
+
+<a id="doc-nsgaii-improvements"></a>
+
+## NSGA-II Improvements
+
+What changed in the NSGA-II engine in this round, why, and what it does. Evidence: [NSGAII_BENCHMARK_RESULTS.md](#doc-nsgaii-benchmark-results). Structure: [NSGAII_ARCHITECTURE.md](#doc-nsgaii-architecture). Previous round (PR #12): [NSGAII_IMPROVEMENT_SUMMARY.md](#doc-nsgaii-improvement-summary).
+
+### 1. Summary
+
+* **The published engine is unchanged.** `original` mode is still the default and reproduces every published result bit for bit. It is the same 96-run fingerprint as `main`, and the golden digests pass.
+* **The enhanced engine is better and now fast.** Against the original:
+  * hypervolume better in 150 of 160 paired runs, GD in 154, IGD+ in 152;
+  * spread better (p 0.006), and the original's final quality is reached in 10 generations instead of 55;
+  * median run time 0.30 s instead of 0.34 s (saved runs).
+
+  Against PR #12's enhanced engine it has the same front quality, better spread, and takes 42 % less time.
+* **Every run reports its quality.** `meta.quality_metrics` reports hypervolume and its ratio to a reference front, GD, IGD, IGD+, spread, spacing, Pareto size, constraint satisfaction, runtime and mean objectives. It is returned by the API, stored with saved runs and shown in Reports.
+* **Six switches were evaluated.** Two were accepted into enhanced mode. Four were rejected, because they measured no benefit; they remain available for ablation runs.
+* **Two speed-ups are output-preserving.** They are exact and apply to both modes.
+* **The API is backward compatible.** `quality_metrics` is a new optional field; nothing was removed or renamed.
+
+### 2. Changes
+
+#### 2.1 Output-preserving speed-ups (both modes)
+
+| Change | Why | Before → after | Results |
+|---|---|---|---|
+| Front hypervolume read from the cached population arrays (`monitoring.front_hypervolume`) | the per-generation hypervolume used by adaptive mutation and early stopping read the front through pymoo's per-individual getters, at ~30× the cost of the hypervolume itself | part of the enhanced-mode gain below | bit-identical |
+| Parent-population X cached in the duplicate check (`CountingDuplicateElimination`) | each mating batch was checked against the same parent population, whose X was re-read for every batch | enhanced 4–13 % faster (Coimbatore Summer 690 → 600 ms), original 1–2 % | bit-identical |
+
+#### 2.2 New switches
+
+Each switch is independent (`EngineSettings`, `config.NSGA2_ENGINE_FEATURES`) and off in the original engine.
+
+| # | Switch | Why | How | Scientific basis | Benchmark | Decision |
+|---|---|---|---|---|---|---|
+| A | Adaptive mutation (PR #12) | fixed p = 0.12 keeps knocking multipliers off their optimum | diversity-guided, reduced after stagnation, base 0.05 | Srinivas & Patnaik 1994; Eiben et al. 1999; Ursem 2002 | accepted in PR #12; re-measured in the final comparison | **enhanced: on** (unchanged) |
+| B | Adaptive crossover, `schedule="diversity"` (new) | the linear schedule of PR #12 had no effect; recombine more when the population stagnates | p_c 0.85 at the running diversity peak, up to 0.95 as allocation diversity falls to half the peak (it never falls below its start in this problem) | Srinivas & Patnaik 1994; Ursem 2002 | HV n.s. vs original (p 0.22) and vs enhanced (p 0.33) | **rejected** |
+| C1 | Latin Hypercube initialisation `lhs_initialization` | uniform sampling can leave parts of each gene's range empty | pymoo LHS (maxmin) for the random part of the first population; seeds kept | McKay, Beckman & Conover 1979 | HV n.s. (p 0.54 / 0.48): with 200 generations and the smart seeds the initial layout is forgotten | **rejected** |
+| C2 | Constraint-aware initialisation `constraint_aware_initialization` | random first plans often exceed a tight budget; the original engine needed up to 19 generations to find a feasible plan | over-budget plans: fertiliser to 0.7, then allocation blended towards the cheapest crop with the exact weight that meets the budget; deterministic | repair-based constraint handling (Coello Coello 2002; Deb 2000 for the constrained domination it complements) | ordinary budgets: neutral (feasible plans exist in generation 1). Tight budgets: first feasible generation 8 → 1 (original); enhanced HV better in 57/80 (p 4e-5), IGD+ 49/31 (p 8e-4) | **enhanced: on** |
+| D | Duplicate avoidance `duplicate_avoidance` | copies are never evaluated but each costs another mating round: 2–40 % of offspring in the original engine (median 4 %), 14–73 % in the enhanced one (median 33 %) | an offspring still equal to a parent after mutation gets one Gaussian step on a random gene | duplicate genotypes waste GA effort (Ronald 1998); the exact-copy check itself is pymoo's | quality equal to enhanced (HV p 0.47; IGD+ 69/91, p 0.054, median +0.0003); spread better (p 0.001); faster in 156/160 runs; duplicates rejected 8,022 → 140 (median) | **enhanced: on** |
+| E | Early stopping, `criterion="objective_space"` (new) | the hypervolume-stagnation rule of PR #12 lowered quality | pymoo's robust multi-objective termination (decision-space, CV and objective-space tolerances over a window) | Blank & Deb 2020; Martí et al. 2016 | default tolerances never trigger within 200 generations; looser ones change 11–22 of 160 runs, no quality change, and the extra checks make runs slower | **rejected** |
+| F | Parallel evaluation `parallel_evaluation` | requested; only useful if evaluation dominates the run | chunks on a thread pool, joined in order; identical results | master–slave parallel GAs pay off only when evaluation is expensive (Cantú-Paz 2000) | identical fronts; 4–24 % slower at population 80, 1–8 % at 300 (evaluation is ~0.05 ms of vectorised arithmetic per generation) | **rejected** (kept as a switch) |
+
+The previous round's tolerance-based duplicate removal, linear crossover schedule and hypervolume early stopping stay available and off (NSGAII_IMPROVEMENT_SUMMARY.md).
+
+#### 2.3 Quality metrics (`app/optimization/metrics.py`)
+
+* **Indicators:**
+  * hypervolume (Zitzler & Thiele 1999);
+  * GD (Van Veldhuizen & Lamont 1998);
+  * IGD (Coello & Reyes Sierra 2004);
+  * IGD+ (Ishibuchi et al. 2015);
+  * generalised spread (Zhou et al. 2006);
+  * spacing (Schott 1995).
+
+  All are computed on objectives normalised by a reference front.
+* **Per-run reference:** a single run has no external reference front. The run uses the non-dominated union of its front and the copies of its plans with input multipliers at 0.7. That copy is never worse in this model, which makes GD, IGD and the hypervolume ratio a direct measure of how far the run is from converging.
+* **Other figures:** Pareto and feasible front size, constraint satisfaction rate, share beaten by the lower-bound copy, runtime, generations, evaluations, mean objectives.
+* **Where it shows:** in the API (`meta.quality_metrics` in `POST /api/farm-plans` and `GET /api/results/{id}`), in saved runs, and in Reports (four headline metrics on the card; every metric in the downloaded report). Runs saved earlier show "Not recorded".
+* **Performance and safety:** it costs under 1 ms per run and does not touch the search (tested). NaN values become null.
+* **Shared with the benchmark:** the benchmark uses the same module. Its re-scored values are identical to the earlier inline code.
+
+#### 2.4 Tooling
+* `scripts/benchmark_nsga2.py`:
+  * GD and IGD;
+  * text parameters and performance switches;
+  * constraint satisfaction, duplicates rejected and first feasible generation;
+  * comparisons against both engines;
+  * `--memory`.
+* `scripts/benchmark_tight_budget.py`: the constraint study.
+* `scripts/report_nsga2_benchmark.py`: charts and Markdown tables.
+* `scripts/profile_nsga2.py`:
+  * CPU utilisation;
+  * over-budget evaluations;
+  * dominated solutions;
+  * share beaten by the lower-bound copy;
+  * monitoring and quality-metric timers;
+  * `--switch`.
+
+### 3. Before vs after (enhanced engine)
+
+| Measure (median of 160 paired runs) | original | enhanced, PR #12 | enhanced, this work |
+|---|---|---|---|
+| Hypervolume ↑ | 0.4431 | 0.4608 | **0.4643** |
+| GD ↓ | 0.3277 | **0.1565** | 0.1655 |
+| IGD ↓ | 0.0660 | **0.0434** | 0.0450 |
+| IGD+ ↓ | 0.0392 | **0.0238** | 0.0247 |
+| Spread ↓ | 0.547 | 0.549 | **0.509** |
+| Spacing ↓ | 0.093 | 0.071 | 0.071 |
+| Duplicates rejected per run | 738 | 8,022 | **140** |
+| Generations to 99 % of the original's final HV | 55 | 10 | 10 |
+| Time per saved run (s) | 0.336 | 0.513 | **0.300** |
+| Peak memory (MB) | 1.17 | 1.17 | 1.21 |
+
+The GD/IGD/IGD+ differences between the two enhanced engines are not significant (p 0.82 / 0.26), and neither is hypervolume (p 0.91). The two enhanced engines are equally good fronts, and this one is cheaper and more evenly spread.
+
+### 4. Impact on outputs and reproducibility
+
+* **Original mode:** no output changes. The only addition is `meta.quality_metrics` in the response and saved runs.
+* **Enhanced mode:** fronts differ from PR #12's enhanced engine, deterministically per seed (new golden digests recorded in the tests). As before, TOPSIS's rank-1 plan differs from the original engine's, so enhanced mode stays opt-in (`AGROOPTIMIZE_NSGA2_MODE=enhanced`) and the published tables must be reproduced with `original`.
+* **Platform:** results are bit-identical on the same platform. A different CPU architecture or C library (e.g. x86-64 Linux vs arm64 macOS) gives a different but equally good trajectory. This was measured during the Render deployment: hypervolume +0.7 % on average over 12 district-seasons.
+
+### 5. Validation
+
+| Check | Result |
+|---|---|
+| Original-engine fingerprint (96 runs) and golden digests | identical to `main` |
+| PR #12 enhanced engine (96-run fingerprint, 3 digests) with the new switches off | identical to `main` |
+| Objectives, constraints, fuzzy outputs, TOPSIS | untouched by this work; their test suites pass unchanged |
+| Every switch: deterministic per seed, within bounds, valid plans, changes the search (or, for parallel evaluation, does not) | tested |
+| APIs and UI | all backend and frontend tests pass; Reports checked in the browser with no console errors |
+| Tests | 649 backend (595 on `main`; +51 in `tests/test_nsga2_optimization.py`, +3 from the new switches in the per-feature test), 61 frontend (57 on `main`; +4) |
+
+### 6. Limitations
+
+* **Many objectives:** with four objectives the whole population is non-dominated from generation 4–8. Every improvement here works around that loss of selection pressure, and none removes it. The remedy is a many-objective algorithm (NSGA-III, MOEA/D) or an archive, which is outside the "keep NSGA-II" scope.
+* **Remaining convergence gap:** even the enhanced engine leaves 41–59 % of the front beaten by its own lower-bound copy. The multipliers have no yield response, so the search space has a known optimal face that a GA approaches slowly.
+* **Per-run reference front:** the reference used for the per-run metrics is built from the run's own front, so GD and IGD in the API measure convergence towards the multiplier bound, not towards the true Pareto front. The benchmark uses a common reference built from all runs.
+* **Timing:** run times come from one laptop and vary by a few percent between sessions. Comparisons are paired within one session.
+* **Statistics:** significance is per indicator, with no multiple-comparison correction. The accepted changes have p < 1e-20 on time and p < 0.01 on spread or tight-budget hypervolume, well clear of any correction. The rejected ones fail even uncorrected.
+* **Parameters:** the new switches use literature defaults (pymoo LHS, pymoo termination tolerances, crossover 0.85/0.95). Only the early-stopping tolerances were varied.
+
+### 7. Future work
+
+1. An external ε-dominance archive (Laumanns et al. 2002) to return the best front found rather than the last population.
+2. NSGA-III or MOEA/D as a comparison baseline for four objectives (RESEARCH_REVIEW.md R-8).
+3. A yield response to irrigation and fertiliser in f1, so the multiplier genes carry a real trade-off (an objective change).
+4. Run-level parallelism for Scenario Simulation's 5-seed ensemble (independent runs, so it would scale, unlike per-population evaluation), with care for the global RNG lock.
+5. A platform-independent random stream for the operators (pymoo's Generator instead of the NumPy global RNG and C `log`), accepting one change of all results.
+6. A per-request engine mode once an API change is acceptable.
+
+<a id="doc-nsgaii-benchmark-results"></a>
+
+## NSGA-II Benchmark Results
+
+Evidence for every engine change in [NSGAII_IMPROVEMENTS.md](#doc-nsgaii-improvements). Produced with:
+* `scripts/benchmark_nsga2.py`: quality and ablation study
+* `scripts/benchmark_tight_budget.py`: constraint study
+* `scripts/report_nsga2_benchmark.py`: charts and tables
+* `scripts/profile_nsga2.py`: phase profile
+
+Raw summaries are in [`benchmarks/`](benchmarks/).
+
+### 1. Methodology
+
+| Item | Setting |
+|---|---|
+| Problems | 16: the 12 district × season profiles (5 ha, no budget) and the Kharif profile of each district with a budget of 5 ha × the median single-crop cost |
+| Seeds | evaluation seeds 0–9 (PR #12 tuned its parameters on seeds 100–104; the new switches have no tuned parameters) |
+| Budget | population 80, 200 generations, 16,000 evaluations per run, for every variant |
+| Pairing | each variant is compared with its baseline engine on the same problem and seed; Wilcoxon signed-rank test (Derrac et al. 2011) |
+| Reference front | per problem: non-dominated union of every front of every variant and seed, plus each solution's copy with irrigation and fertiliser multipliers at 0.7 (never worse in this model) |
+| Normalisation | objectives scaled by the reference front's ideal and nadir; hypervolume reference point 1.1 |
+| Indicators | hypervolume (HV ↑), generational distance (GD ↓), inverted generational distance (IGD ↓), IGD+ (↓), generalised spread (↓), spacing (↓), front size, final-population constraint satisfaction, duplicates rejected, generations to 99 % of the original engine's median final HV, evaluations, wall time, peak traced memory (tracemalloc, 4 problems, seed 0) |
+| Machine | Apple M-series laptop, Python 3.13, NumPy 2.3.5, pymoo 0.6.2; convergence history tracked in the study (as for saved runs) |
+| Runs | ablation study: 14 variants × 160 = 2,240 runs; final comparison: 3 × 160; tight-budget study: 4 engines × 80 |
+
+"Better/worse" counts paired runs; for time, "better" means faster. Run times differ between study sessions (laptop load), so compare times within one table, where all variants ran in the same session.
+
+### 2. Final result: original vs enhanced
+
+| Engine | HV | GD | IGD | IGD+ | Spread | Spacing | Dup. rejected | Gen. to 99 % | Evals | Time (s) | Peak MB |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| original (published, default) | 0.4431 | 0.3277 | 0.0660 | 0.0392 | 0.547 | 0.093 | 738 | 55 | 16,000 | 0.336 | 1.17 |
+| enhanced (PR #12) | 0.4608 | 0.1565 | 0.0434 | 0.0238 | 0.549 | 0.071 | 8,022 | 10 | 15,999 | 0.513 | 1.17 |
+| **enhanced (this work)** | **0.4643** | 0.1655 | 0.0450 | 0.0247 | **0.509** | 0.071 | **140** | **10** | 15,999 | **0.300** | 1.21 |
+
+Medians of 160 runs. Front size 80 and constraint satisfaction 1.00 for all.
+
+| Comparison | HV | GD | IGD+ | Spread | Time |
+|---|---|---|---|---|---|
+| enhanced (this work) vs original | 150/10 (p 3e-26) | 154/6 (p 3e-27) | 152/8 (p 3e-26) | 92/68 (p 0.006) | 86/74 faster (p 8e-5) |
+| enhanced (PR #12) vs original | 147/13 (p 5e-26) | 151/9 (p 3e-26) | 155/5 (p 2e-26) | 79/81 (p 0.92) | 0/160 faster (p 5e-28) |
+| enhanced (this work) vs enhanced (PR #12) | 87/73 (p 0.91) | 77/82 (p 0.82) | 76/84 (p 0.26) | 93/67 (p 0.007) | **159/1 faster (p 5e-28)** |
+
+Hypervolume, median [IQR]:
+* original: 0.4431 [0.4005, 0.4749]
+* enhanced (PR #12): 0.4608 [0.4323, 0.4845]
+* enhanced (this work): 0.4643 [0.4326, 0.4827]
+
+![Paired hypervolume difference](benchmarks/final_hypervolume_difference.png)
+![Convergence](benchmarks/final_convergence.png)
+![Runtime](benchmarks/final_runtime.png)
+
+More charts: [IGD+](benchmarks/final_igd_plus_difference.png), [GD](benchmarks/final_gd_difference.png), [spread](benchmarks/final_spread_difference.png), [memory](benchmarks/final_memory.png).
+
+#### Runtime without convergence history (the API's unsaved path)
+Median of 7 seeds, ms per run:
+
+| Problem | original | enhanced (PR #12) | enhanced (this work) |
+|---|---|---|---|
+| Salem Kharif | 285 | 342 | 297 |
+| Erode Rabi | 305 | 506 | 295 |
+| Coimbatore Summer | 373 | 618 | 295 |
+| Erode Kharif, budget ₹230,000 | 394 | 491 | 407 |
+
+The current enhanced engine costs 13–52 % less time than PR #12's. It is within ±4 % of the original engine, except where duplicates were frequent (Coimbatore Summer, 21 % faster). With history tracked, as in the study, the median over all 160 runs is faster than the original (0.300 vs 0.336 s).
+
+### 3. Ablation: each switch on its own
+
+#### 3.1 Against the original engine
+
+| Variant | HV | GD | IGD | IGD+ | Spread | Spacing | Dup. rejected | Gen. to 99 % | Time (s) | Peak MB |
+|---|---|---|---|---|---|---|---|---|---|---|
+| original (published) | 0.4432 | 0.3282 | 0.0668 | 0.0406 | 0.547 | 0.093 | 738 | 55 | 0.401 | 1.17 |
+| + LHS initialisation | 0.4434 | 0.3336 | 0.0650 | 0.0386 | 0.523 | 0.095 | 696 | 55 | 0.400 | 1.17 |
+| + constraint-aware init. | 0.4433 | 0.3297 | 0.0671 | 0.0408 | 0.546 | 0.093 | 809 | 55 | 0.402 | 1.17 |
+| + diversity crossover | 0.4403 | 0.3172 | 0.0667 | 0.0398 | 0.532 | 0.093 | 696 | 55 | 0.398 | 1.19 |
+| + duplicate avoidance | 0.4453 | 0.3287 | 0.0663 | 0.0402 | 0.538 | 0.093 | **20** | 55 | **0.343** | 1.19 |
+| + early stop (pymoo default) | 0.4432 | 0.3282 | 0.0668 | 0.0406 | 0.547 | 0.093 | 738 | 55 | 0.454 | 1.19 |
+| + early stop (pymoo, ftol 0.05, xtol 0.005) | 0.4433 | 0.3280 | 0.0663 | 0.0410 | 0.545 | 0.093 | 719 | 55 | 0.460 | 1.16 |
+| + parallel evaluation (4 threads) | 0.4432 | 0.3282 | 0.0668 | 0.0406 | 0.547 | 0.093 | 738 | 55 | 0.436 | 1.18 |
+
+| Variant vs original | HV | GD | IGD+ | Spread | Time |
+|---|---|---|---|---|---|
+| + LHS initialisation | 84/76 (0.54) | 78/82 (0.93) | 82/78 (0.48) | 84/76 (0.61) | 93/67 (0.001) |
+| + constraint-aware init. (acts on 40 budget runs only) | 19/21 (0.67) | 16/24 (0.15) | 23/17 (0.99) | 16/24 (0.33) | 86/74 (0.11) |
+| + diversity crossover | 90/70 (0.22) | 92/68 (0.14) | 89/71 (0.18) | 79/81 (0.86) | 78/82 (0.69) |
+| + duplicate avoidance | 91/69 (0.43) | 85/75 (0.72) | 77/83 (0.57) | 79/81 (0.55) | **153/7 (3e-23)** |
+| + early stop (pymoo default): never triggered | 0/0 | 0/0 | 0/0 | 0/0 | 32/128 (3e-5) |
+| + early stop (pymoo, loose): stopped early, changing the result, in 11 runs | 6/5 (0.53) | 7/4 (0.37) | 5/6 (0.86) | 7/4 (0.42) | 31/129 (4e-6) |
+| + parallel evaluation: identical results | 0/0 | 0/0 | 0/0 | 0/0 | 37/123 (0.002) |
+
+#### 3.2 Against the enhanced engine of PR #12
+
+| Variant vs enhanced (PR #12) | HV | GD | IGD+ | Spread | Time |
+|---|---|---|---|---|---|
+| + LHS initialisation | 82/78 (0.48) | 92/64 (0.10) | 74/86 (0.98) | 77/83 (0.58) | 79/81 (0.76) |
+| + constraint-aware init. | 24/16 (0.19) | 22/18 (0.55) | 20/20 (0.71) | 21/19 (0.46) | 96/64 (0.002) |
+| + diversity crossover | 86/74 (0.33) | 85/75 (0.18) | 78/82 (0.65) | 88/72 (0.44) | 89/71 (0.014) |
+| + duplicate avoidance | 80/80 (0.47) | 75/84 (0.63) | 69/91 (0.054) | **97/63 (0.001)** | **156/4 (1e-24)** |
+| + early stop (pymoo, loose): changed the result in 22 runs | 10/12 (0.61) | 11/11 (0.94) | 14/8 (0.18) | 12/10 (0.78) | 35/125 (7e-6) |
+
+![Ablation: paired hypervolume difference](benchmarks/ablation_hypervolume_difference.png)
+
+More charts: [IGD+](benchmarks/ablation_igd_plus_difference.png), [GD](benchmarks/ablation_gd_difference.png), [spread](benchmarks/ablation_spread_difference.png), [runtime](benchmarks/ablation_runtime.png), [memory](benchmarks/ablation_memory.png), [convergence](benchmarks/ablation_convergence.png).
+
+### 4. Tight budgets: constraint-aware initialisation
+
+The ablation budgets leave feasible plans in generation 1 of every run, so the constraint-aware switch has nothing to repair there. Here the budget is 5 % or 20 % above the cheapest possible plan, for the Kharif season of every district, 10 seeds (80 paired runs per engine).
+
+| Engine | HV better/worse (p) | median ΔHV | IGD+ better/worse (p) | First feasible generation, off → on (median, max) |
+|---|---|---|---|---|
+| original | 48/32 (0.12) | +0.0026 | 49/31 (0.061) | 8, 19 → **1, 1** |
+| enhanced (PR #12) | **57/23 (4e-5)** | +0.0060 | **49/31 (8e-4)** | 1, 1 → 1, 1 |
+
+### 5. Profile (Salem Kharif and two contrasting problems, median of 5, no history)
+
+| Phase (ms per run) | Salem Kharif original | Salem Kharif enhanced | Coimbatore Summer original | Coimbatore Summer enhanced | Erode Kharif budget original | Erode Kharif budget enhanced |
+|---|---|---|---|---|---|---|
+| Duplicate elimination | 46.5 | 45.2 | **94.3** | 39.1 | 49.0 | 43.6 |
+| Evaluation | 38.2 | 37.8 | 37.9 | 37.4 | 37.8 | 38.4 |
+| Monitoring (observation) | 34.1 | 40.2 | 33.3 | 38.7 | 34.4 | 40.7 |
+| Mutation | 7.9 | 26.4 | 9.9 | 31.3 | 8.0 | 28.2 |
+| Selection | 11.4 | 10.7 | 24.8 | 9.6 | 12.2 | 9.8 |
+| **Optimisation total** | 307 | 327 | **420** | **320** | 406 | 420 |
+| Mating rounds (calls) | 354 | 325 | 846 | 298 | 386 | 296 |
+| Duplicates rejected | 317 of 16,408 | 188 of 16,276 | 7,191 of 23,260 | 134 of 16,204 | 503 of 16,590 | 150 of 16,222 |
+| Over-budget evaluations | 0 | 0 | 0 | 0 | 993 | 605 |
+| Front beaten by its lower-bound copy | 97.5 % | 58.8 % | 50.0 % | 41.3 % | 96.3 % | 42.5 % |
+
+Other figures:
+* CPU utilisation is 1.00 (single thread) in every case.
+* No dominated solutions remain in the final population, because the whole population is the first front.
+* Peak traced memory is 1.4–1.8 MB.
+* Quality metrics take 0.7 ms per run, TOPSIS 0.6 ms and fuzzy inference under 0.1 ms (cached).
+
+### 6. Exactness of the output-preserving changes
+
+| Check | Result |
+|---|---|
+| 96-run fingerprint of the original engine (12 district-seasons × budget/none × 2 seeds × history on/off: population X and F, convergence history, plans) | `aa942cba79791d4f`, identical to `main` |
+| Same fingerprint for PR #12's enhanced engine | `d0679ccd00e9aa59`, identical to `main` |
+| 48 early-stopping runs, including an infeasible budget | identical to `main` |
+| Golden digests of the original engine (tests) and of PR #12's enhanced engine recorded on `main` | identical |
+| Parallel evaluation vs serial (1–7 workers, with and without a budget, both modes, population 300) | identical |
+| Re-scored benchmark (shared metrics module vs the old inline functions) | identical HV, IGD+, spread, spacing on all runs |
 
 <a id="doc-explainability"></a>
 
@@ -3989,6 +4471,19 @@ Why each change was made, how it was verified, and what was deliberately **not**
 All code modifications made during the 2026-09-29 audit. All changes are submitted together on one branch for review. Frontend changes were made in the local working copy `stitch_agrooptimize_app/` and applied to the repo's `frontend/` (whose source was identical before the changes); the pre-change state is also in `_backups/stitch_agrooptimize_app_before_audit_2026-09-29.tar.gz`.
 
 Verification after all changes: backend **205/205 tests pass** (was 165/165); output fingerprint over 48 endpoint/pipeline results is **identical to HEAD** apart from the new additive provenance fields; frontend `oxlint` 0 warnings (was 3 in `src` + noise), `vite build` succeeds; UI flows exercised in Chrome with no console errors.
+
+### [Unreleased] – NSGA-II optimisation engine (second round)
+
+#### Added
+- `app/optimization/metrics.py`: hypervolume, GD, IGD, IGD+, spread, spacing, reference fronts; `meta.quality_metrics` on every run (API, saved runs) and shown in Reports.
+- Engine switches: `lhs_initialization`, `constraint_aware_initialization` (`BudgetAwareSampling`), `duplicate_avoidance`, `parallel_evaluation` (`app/optimization/parallel.py`); adaptive crossover `schedule="diversity"`; early-stopping `criterion="objective_space"`.
+- `scripts/benchmark_tight_budget.py`, `scripts/report_nsga2_benchmark.py`; benchmark: GD/IGD, text parameters, comparisons against both modes, `--memory`; profiler: constraint violations, dominated solutions, monitoring time, `--switch`.
+- `NSGAII_ARCHITECTURE.md`, `NSGAII_IMPROVEMENTS.md`, `NSGAII_BENCHMARK_RESULTS.md`, `benchmarks/` charts and summaries; `tests/test_nsga2_optimization.py` (51 tests), `frontend/src/utils/qualityMetrics.test.js`.
+
+#### Changed
+- Enhanced mode also enables constraint-aware initialisation and duplicate avoidance: same front quality as before, better spread, 13–52 % faster; better than the original on HV in 150/160 paired runs.
+- Exact speed-ups (both modes): front hypervolume from cached arrays; parent X cached in duplicate checks.
+- The original engine's results are unchanged (same 96-run fingerprint as `main`).
 
 ### [Unreleased] – NSGA-II engine optimisation
 

@@ -4,6 +4,19 @@ All code modifications made during the 2026-09-29 audit. All changes are submitt
 
 Verification after all changes: backend **205/205 tests pass** (was 165/165); output fingerprint over 48 endpoint/pipeline results is **identical to HEAD** apart from the new additive provenance fields; frontend `oxlint` 0 warnings (was 3 in `src` + noise), `vite build` succeeds; UI flows exercised in Chrome with no console errors.
 
+## [Unreleased] – NSGA-II optimisation engine (second round)
+
+### Added
+- `app/optimization/metrics.py`: hypervolume, GD, IGD, IGD+, spread, spacing, reference fronts; `meta.quality_metrics` on every run (API, saved runs) and shown in Reports.
+- Engine switches: `lhs_initialization`, `constraint_aware_initialization` (`BudgetAwareSampling`), `duplicate_avoidance`, `parallel_evaluation` (`app/optimization/parallel.py`); adaptive crossover `schedule="diversity"`; early-stopping `criterion="objective_space"`.
+- `scripts/benchmark_tight_budget.py`, `scripts/report_nsga2_benchmark.py`; benchmark: GD/IGD, text parameters, comparisons against both modes, `--memory`; profiler: constraint violations, dominated solutions, monitoring time, `--switch`.
+- `NSGAII_ARCHITECTURE.md`, `NSGAII_IMPROVEMENTS.md`, `NSGAII_BENCHMARK_RESULTS.md`, `benchmarks/` charts and summaries; `tests/test_nsga2_optimization.py` (51 tests), `frontend/src/utils/qualityMetrics.test.js`.
+
+### Changed
+- Enhanced mode also enables constraint-aware initialisation and duplicate avoidance: same front quality as before, better spread, 13–52 % faster; better than the original on HV in 150/160 paired runs.
+- Exact speed-ups (both modes): front hypervolume from cached arrays; parent X cached in duplicate checks.
+- The original engine's results are unchanged (same 96-run fingerprint as `main`).
+
 ## [Unreleased] – NSGA-II engine optimisation
 
 ### Added

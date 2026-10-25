@@ -63,14 +63,15 @@ All modelling constants live in `agrooptimize-backend/app/config.py`; a few more
 | `NSGA2_MUTATION_SIGMA` | 0.12 (× gene range) | Assumption |
 | `NSGA2_SEED` | 42 | Convention |
 | `NSGA2_FAST_POP_SIZE / FAST_N_GEN` | 24 / 15 | tests only |
-| `NSGA2_ENGINE_MODE` | `"original"` (env `AGROOPTIMIZE_NSGA2_MODE`) | `original` reproduces published results; `enhanced` is experimental ([NSGAII_IMPROVEMENT_SUMMARY.md](NSGAII_IMPROVEMENT_SUMMARY.md)) |
-| `NSGA2_ENGINE_FEATURES` | per-mode switches | enhanced: smart initialisation + adaptive mutation |
+| `NSGA2_ENGINE_MODE` | `"original"` (env `AGROOPTIMIZE_NSGA2_MODE`) | `original` reproduces published results; `enhanced` is experimental ([NSGAII_IMPROVEMENTS.md](NSGAII_IMPROVEMENTS.md)) |
+| `NSGA2_ENGINE_FEATURES` | per-mode switches | enhanced: smart initialisation, adaptive mutation, constraint-aware initialisation, duplicate avoidance; available but off: adaptive crossover, tolerance duplicate removal, early stopping, LHS initialisation, parallel evaluation ([NSGAII_BENCHMARK_RESULTS.md](NSGAII_BENCHMARK_RESULTS.md)) |
 | `NSGA2_ENGINE_MUTATION_PROB` | original 0.12, enhanced 0.05 | Parameter study (NSGAII_PROFILE.md §4) |
 | `NSGA2_ADAPTIVE_MUTATION` | min 0.02, max 0.30, diversity floor 0.5, converged scale 0.2 | Tuned on seeds 100–104 |
-| `NSGA2_ADAPTIVE_CROSSOVER` | 0.95 → 0.70 | Off in both modes |
+| `NSGA2_ADAPTIVE_CROSSOVER` | schedule `linear` (0.95 → 0.70) or `diversity` (0.85 at the diversity peak → 0.95 at half of it) | Off in both modes |
 | `NSGA2_SMART_INIT_FRACTION` | 0.2 | Tuned |
 | `NSGA2_DUPLICATE_TOLERANCE` | 1e-4 | Off in both modes |
-| `NSGA2_EARLY_STOPPING` | patience 30, tolerance 1e-4 (relative), min 60 | Off in both modes |
+| `NSGA2_EARLY_STOPPING` | criterion `hypervolume` (patience 30, tolerance 1e-4 relative, min 60) or `objective_space` (pymoo: xtol 0.0005, ftol 0.005, period 50, n_skip 5) | Off in both modes; patience/tolerance also define stagnation for adaptive mutation |
+| `NSGA2_PARALLEL_WORKERS` | 4 | Threads for `parallel_evaluation` (off) |
 | `MAX_RETURNED_PLANS` | 50 | Assumption (paper: 20–50 plans) |
 
 ## 3. Constants outside `config.py`

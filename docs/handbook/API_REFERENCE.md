@@ -105,10 +105,16 @@ Response (`FarmPlanResponse`, ≈33 KB with 50 plans):
             "confidence_label":"Moderate",
             "trade_off_summary":"High yield, Moderate cost, Moderate water use, Moderate environmental impact (confidence: moderate)"}],
  "convergence_history": [{"generation":1,"population_size":80,"best_yield_tonnes":0.0,"mean_yield_tonnes":0.0,"best_cost_rs":0.0,"mean_cost_rs":0.0,"best_water_liters":0.0,"mean_water_liters":0.0,"best_env_impact":0.0,"mean_env_impact":0.0,"hypervolume":0.0}],
- "meta": {"algorithm":"NSGA-II","pop_size":80,"n_gen":200,"crossover_prob":0.85,"mutation_prob":0.12,"preference":"balanced","n_pareto_solutions_found":80,"n_plans_returned":50,"optimize_seconds":0.291},
+ "meta": {"algorithm":"NSGA-II","pop_size":80,"n_gen":200,"crossover_prob":0.85,"mutation_prob":0.12,"preference":"balanced","n_pareto_solutions_found":80,"n_plans_returned":50,"optimize_seconds":0.291,
+          "quality_metrics":{"reference_front":"front + lower-bound-multiplier copies (non-dominated union)","pareto_size":80,
+            "feasible_pareto_size":80,"constraint_satisfaction_rate":1.0,"dominated_by_lower_bound_copy":1.0,"runtime_seconds":0.2737,
+            "generations":200,"evaluations":16000,"mean_objectives":{"yield_tonnes":39.53,"cost_rs":180937.6,"water_liters":19067479.8,"env_impact_score":226.27},
+            "hypervolume":0.335263,"hypervolume_ratio":0.830674,"gd":0.514275,"igd":0.10979,"igd_plus":0.073573,"spread":0.493938,"spacing":0.12189}},
  "run_id": "salem_kharif_2024_<UTC timestamp>",
  "saved_files": {"run_id":"…","json_path":"…/results/….json","plans_csv_path":"…","convergence_csv_path":"…","convergence_plot_path":"…"}}
 ```
+`meta.quality_metrics` (optional; absent in runs saved before it existed) describes the quality of the run's Pareto front: hypervolume and its ratio to a reference front, generational distance (GD), inverted generational distance (IGD), IGD+, generalised spread and spacing, on objectives normalised to the reference front's ideal and nadir, where the reference is the front plus each plan's copy with irrigation and fertiliser multipliers at 0.7 (never worse in this model). Lower is better for GD, IGD, IGD+, spread and spacing. Values that cannot be computed (no feasible plan, fewer than two plans) are `null`. See [NSGAII_IMPROVEMENTS.md](NSGAII_IMPROVEMENTS.md) §2.3.
+
 (`convergence_history` values above are placeholders showing the shape; it has one entry per generation when `save_results` is true and is `[]` otherwise. `run_id`/`saved_files` are `null` when not saved.) Units: `yield_tonnes`, `cost_rs`, `water_liters`, `env_impact_score` are **totals over `total_land_ha`**, not per hectare. `saved_files` exposes absolute server paths (minor information disclosure – see [SECURITY_REVIEW.md](SECURITY_REVIEW.md)).
 
 ## GET /api/results
