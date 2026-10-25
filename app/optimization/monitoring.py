@@ -208,6 +208,7 @@ class EngineMonitor(Callback):
                 row["entropy"] = population_entropy(X, problem.xl, problem.xu)
                 row["mean_crowding"] = mean_crowding(arrays["rank"], arrays["crowding"])
                 row["front_size"] = int(len(algorithm.opt)) if algorithm.opt is not None else 0
+                row["feasible_share"] = float((arrays["CV"][:, 0] <= 0.0).mean())
                 if self.duplicate_counter is not None:
                     checked = self.duplicate_counter.checked - self._dup_last[0]
                     rejected = self.duplicate_counter.rejected - self._dup_last[1]
