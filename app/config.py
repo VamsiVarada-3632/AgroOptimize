@@ -232,9 +232,14 @@ NSGA2_ENGINE_MUTATION_PROB = {"original": NSGA2_MUTATION_PROB, "enhanced": 0.05}
 # Tuned on seeds 100-104 (NSGAII_PROFILE.md); evaluated on seeds 0-9.
 NSGA2_ADAPTIVE_MUTATION = {"min_prob": 0.02, "max_prob": 0.30, "diversity_floor": 0.5, "converged_scale": 0.2}
 
-# Adaptive crossover: probability moves linearly from `start_prob` (exploration)
-# in the first generation to `end_prob` (exploitation) in the last.
-NSGA2_ADAPTIVE_CROSSOVER = {"start_prob": 0.95, "end_prob": 0.70}
+# Adaptive crossover. schedule "linear": probability moves linearly from
+# `start_prob` (exploration) in the first generation to `end_prob`
+# (exploitation) in the last. schedule "diversity": `high_diversity_prob`
+# while allocation diversity is at its peak so far, rising towards
+# `low_diversity_prob` as it falls to `diversity_floor` x that peak (more
+# recombination to escape stagnation).
+NSGA2_ADAPTIVE_CROSSOVER = {"schedule": "linear", "start_prob": 0.95, "end_prob": 0.70,
+                            "high_diversity_prob": 0.85, "low_diversity_prob": 0.95, "diversity_floor": 0.5}
 
 # Smart initialisation: share of the initial population seeded from the
 # district's candidate crops; the rest is drawn uniformly at random (or by

@@ -172,22 +172,42 @@ def binary_tournament(pop, P, algorithm, random_state=None, **kwargs):
 # ---------------------------------------------------------------------------
 
 class AdaptiveSinglePointCrossover(SinglePointCrossover):
-    """Single-point crossover whose probability follows a deterministic
-    schedule (Eiben, Hinterding & Michalewicz 1999): `start_prob` in the first
-    generation, moving linearly to `end_prob` in the last -- more
-    recombination while exploring, more mutation-only offspring later."""
+    """Single-point crossover whose probability is set every generation.
 
-    def __init__(self, start_prob: float, end_prob: float):
-        super().__init__(prob=start_prob)
+    schedule "linear" -- deterministic parameter control (Eiben, Hinterding &
+        Michalewicz 1999): `start_prob` in the first generation, moving
+        linearly to `end_prob` in the last.
+    schedule "diversity" -- adaptive control from population diversity
+        (Srinivas & Patnaik 1994; Ursem 2002): `high_diversity_prob` while the
+        allocation diversity is at its peak so far, moving linearly to
+        `low_diversity_prob` as it falls to `diversity_floor` x that peak.
+        The ratio is published by EngineMonitor in algorithm.data["adaptive"].
+    """
+
+    def __init__(self, start_prob: float, end_prob: float, schedule: str = "linear",
+                 high_diversity_prob: float = 0.85, low_diversity_prob: float = 0.95,
+                 diversity_floor: float = 0.5):
+        super().__init__(prob=start_prob if schedule == "linear" else high_diversity_prob)
+        if schedule not in ("linear", "diversity"):
+            raise ValueError(f"Unknown crossover schedule {schedule!r}")
+        self.schedule = schedule
         self.start_prob = float(start_prob)
         self.end_prob = float(end_prob)
+        self.high_diversity_prob = float(high_diversity_prob)
+        self.low_diversity_prob = float(low_diversity_prob)
+        self.diversity_floor = float(diversity_floor)
 
     def do(self, problem, pop, parents=None, *args, **kwargs):
         algorithm = kwargs.get("algorithm")
         if algorithm is not None:
-            progress = _progress(algorithm)
-            self.prob = self.start_prob + (self.end_prob - self.start_prob) * progress
-            algorithm.data.setdefault("adaptive", {})["crossover_prob"] = self.prob
+            adaptive = algorithm.data.setdefault("adaptive", {})
+            if self.schedule == "linear":
+                self.prob = self.start_prob + (self.end_prob - self.start_prob) * _progress(algorithm)
+            else:
+                ratio = adaptive.get("diversity_ratio", 1.0)
+                level = float(np.clip((ratio - self.diversity_floor) / (1.0 - self.diversity_floor), 0.0, 1.0))
+                self.prob = self.low_diversity_prob + (self.high_diversity_prob - self.low_diversity_prob) * level
+            adaptive["crossover_prob"] = self.prob
         return super().do(problem, pop, parents, *args, **kwargs)
 
 

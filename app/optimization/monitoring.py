@@ -145,11 +145,14 @@ class EngineMonitor(Callback):
     * profiling          -- per-generation wall time.
     * adaptive_mutation  -- sets algorithm.data["adaptive"]["mutation_prob"]
                             for the next generation.
+    * share_diversity    -- publishes the allocation-diversity ratio in
+                            algorithm.data["adaptive"] for the diversity-driven
+                            crossover.
     """
 
     def __init__(self, record_history: bool = False, diversity: bool = True, profiling: bool = True,
                  adaptive_mutation: Optional[dict] = None, base_mutation_prob: float = 0.12,
-                 stagnation: Optional[dict] = None):
+                 stagnation: Optional[dict] = None, share_diversity: bool = False):
         super().__init__()
         self.record_history = record_history
         self.diversity = diversity
@@ -157,12 +160,14 @@ class EngineMonitor(Callback):
         self.adaptive_mutation = adaptive_mutation
         self.base_mutation_prob = base_mutation_prob
         self.stagnation = stagnation
+        self.share_diversity = share_diversity
         self.duplicate_counter = None  # the run's CountingDuplicateElimination, found in initialize()
         self.F_history: List[np.ndarray] = []
         self.generations: List[dict] = []
         self._t_last: Optional[float] = None
         self._dup_last = (0, 0)
         self._diversity0: Optional[float] = None
+        self._diversity_peak: Optional[float] = None
 
     def initialize(self, algorithm):
         self._t_last = time.perf_counter()
@@ -184,13 +189,21 @@ class EngineMonitor(Callback):
             row["seconds"] = now - self._t_last
         self._t_last = now
 
-        if self.diversity or self.adaptive_mutation is not None:
+        if self.diversity or self.adaptive_mutation is not None or self.share_diversity:
             X = arrays["X"]
             problem = algorithm.problem
             div = allocation_diversity(X, problem.n_crops)
             if self._diversity0 is None:
                 self._diversity0 = div if div > 0 else 1.0
             row["allocation_diversity"] = div
+            if self.share_diversity:
+                # Read by the diversity-driven crossover in the next generation.
+                # Relative to the highest diversity so far: in this problem the
+                # allocation spread grows from the first population, so a
+                # collapse shows as a fall from that peak, not below the start.
+                self._diversity_peak = max(self._diversity_peak or 0.0, div)
+                algorithm.data.setdefault("adaptive", {})["diversity_ratio"] = (
+                    div / self._diversity_peak if self._diversity_peak > 0 else 1.0)
             if self.diversity:
                 row["entropy"] = population_entropy(X, problem.xl, problem.xu)
                 row["mean_crowding"] = mean_crowding(arrays["rank"], arrays["crowding"])

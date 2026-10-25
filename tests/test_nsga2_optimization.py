@@ -288,3 +288,32 @@ def test_constraint_aware_initialization_draws_no_extra_random_numbers():
     unconstrained = _problem("Erode", "Kharif")
     c = run_nsga2(unconstrained, pop_size=30, n_gen=10, seed=2, engine=_with(constraint_aware_initialization=True))
     assert _digest(c) == _digest(run_nsga2(unconstrained, pop_size=30, n_gen=10, seed=2))
+
+
+def _diversity_crossover(base="original", **params):
+    e = engine_settings(base)
+    return dataclasses.replace(e, adaptive_crossover=True,
+                               adaptive_crossover_params=dict(e.adaptive_crossover_params, schedule="diversity", **params))
+
+
+def test_diversity_crossover_stays_between_its_bounds_and_follows_diversity():
+    result = run_nsga2(_problem("Erode", "Rabi"), seed=1, pop_size=40, n_gen=60, engine=_diversity_crossover("enhanced"))
+    rows = result.algorithm.callback.generations[1:]
+    pc = np.array([r["crossover_prob"] for r in rows])
+    assert np.all((pc >= 0.85 - 1e-12) & (pc <= 0.95 + 1e-12))
+    div = np.array([r["allocation_diversity"] for r in result.algorithm.callback.generations])
+    ratio = div / np.maximum.accumulate(div)
+    expected = 0.95 + (0.85 - 0.95) * np.clip((ratio - 0.5) / 0.5, 0, 1)
+    np.testing.assert_allclose(pc, expected[:-1])   # each generation uses the previous one's ratio
+
+
+def test_diversity_crossover_is_deterministic():
+    problem = _problem("Salem", "Kharif")
+    a = run_nsga2(problem, seed=4, pop_size=30, n_gen=20, engine=_diversity_crossover())
+    b = run_nsga2(problem, seed=4, pop_size=30, n_gen=20, engine=_diversity_crossover())
+    assert _digest(a) == _digest(b)
+
+
+def test_unknown_crossover_schedule_is_rejected():
+    with pytest.raises(ValueError):
+        operators.AdaptiveSinglePointCrossover(0.95, 0.7, schedule="cosine")

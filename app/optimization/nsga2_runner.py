@@ -125,7 +125,10 @@ def run_nsga2(
 
     if settings.adaptive_crossover:
         p = settings.adaptive_crossover_params
-        crossover = AdaptiveSinglePointCrossover(p["start_prob"], p["end_prob"])
+        crossover = AdaptiveSinglePointCrossover(
+            p["start_prob"], p["end_prob"], schedule=p.get("schedule", "linear"),
+            high_diversity_prob=p.get("high_diversity_prob", 0.85), low_diversity_prob=p.get("low_diversity_prob", 0.95),
+            diversity_floor=p.get("diversity_floor", 0.5))
     else:
         crossover = SinglePointCrossover(prob=crossover_prob)
 
@@ -158,6 +161,7 @@ def run_nsga2(
         adaptive_mutation=settings.adaptive_mutation_params if settings.adaptive_mutation else None,
         base_mutation_prob=mutation_prob,
         stagnation=settings.early_stopping_params if settings.adaptive_mutation else None,
+        share_diversity=settings.adaptive_crossover and settings.adaptive_crossover_params.get("schedule") == "diversity",
     )
 
     with _NSGA2_RUN_LOCK:
