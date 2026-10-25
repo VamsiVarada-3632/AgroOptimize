@@ -29,6 +29,10 @@ class EngineSettings:
     lhs_initialization: bool = False
     constraint_aware_initialization: bool = False
     duplicate_avoidance: bool = False
+    # Performance switch: evaluates each population in parallel chunks.
+    # Results are identical, so it is not in FEATURES_CHANGING_OUTPUTS.
+    parallel_evaluation: bool = False
+    parallel_workers: int = config.NSGA2_PARALLEL_WORKERS
     diversity_monitoring: bool = True
     runtime_profiling: bool = True
     # Base per-gene mutation probability (the adaptive rule starts from it).
@@ -61,6 +65,8 @@ class EngineSettings:
             out["duplicate_tolerance"] = self.duplicate_tolerance
         if self.early_stopping:
             out["early_stopping"] = dict(self.early_stopping_params)
+        if self.parallel_evaluation:
+            out["parallel_workers"] = self.parallel_workers
         return out
 
 

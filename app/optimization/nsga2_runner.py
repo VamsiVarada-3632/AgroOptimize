@@ -30,6 +30,7 @@ from app import config
 from app.data.preprocessing import RegionSeasonProfile
 from app.fuzzy.engine import UncertaintyAssessment
 from app.optimization.engine_settings import EngineSettings, engine_settings
+from app.optimization.parallel import ChunkedThreadEvaluator
 from app.optimization.monitoring import EngineMonitor, FrontStagnationTermination
 from app.optimization.operators import (
     AdaptiveGaussianMutation,
@@ -145,6 +146,7 @@ def run_nsga2(
         mutation=mutation,
         repair=AllocationRepair(),
         eliminate_duplicates=eliminate_duplicates,
+        **({"evaluator": ChunkedThreadEvaluator(settings.parallel_workers)} if settings.parallel_evaluation else {}),
     )
 
     if settings.early_stopping:

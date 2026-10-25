@@ -205,6 +205,7 @@ NSGA2_ENGINE_FEATURES = {
         "lhs_initialization": False,
         "constraint_aware_initialization": False,
         "duplicate_avoidance": False,
+        "parallel_evaluation": False,
         "diversity_monitoring": True,
         "runtime_profiling": True,
     },
@@ -217,6 +218,7 @@ NSGA2_ENGINE_FEATURES = {
         "lhs_initialization": False,
         "constraint_aware_initialization": False,
         "duplicate_avoidance": False,
+        "parallel_evaluation": False,
         "diversity_monitoring": True,
         "runtime_profiling": True,
     },
@@ -252,6 +254,10 @@ NSGA2_SMART_INIT_FRACTION = 0.2
 # decision space normalised to [0, 1] per gene) to another individual are
 # rejected. pymoo's default rejects only exact copies (1e-16).
 NSGA2_DUPLICATE_TOLERANCE = 1e-4
+
+# Parallel evaluation: number of threads the population is split over when
+# the parallel_evaluation switch is on.
+NSGA2_PARALLEL_WORKERS = 4
 
 # Early stopping. criterion "hypervolume": stop when the hypervolume of the
 # first front has improved by less than `tolerance` (relative) over the last

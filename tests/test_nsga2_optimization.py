@@ -370,3 +370,23 @@ def test_objective_space_stopping_with_default_tolerances_runs_the_budget_here()
 def test_unknown_stopping_criterion_is_rejected():
     with pytest.raises(ValueError):
         run_nsga2(_problem(), pop_size=10, n_gen=5, engine=_objective_space_stopping(criterion="patience-only"))
+
+
+@pytest.mark.parametrize("workers", [1, 2, 4, 7])
+@pytest.mark.parametrize("budget", [None, 150000.0])
+def test_parallel_evaluation_gives_identical_results(workers, budget):
+    problem = _problem("Erode", "Kharif", budget=budget)
+    engine = _with(parallel_evaluation=True, parallel_workers=workers)
+    parallel = run_nsga2(problem, seed=5, pop_size=30, n_gen=12, engine=engine)
+    serial = run_nsga2(problem, seed=5, pop_size=30, n_gen=12)
+    assert _digest(parallel) == _digest(serial)
+    np.testing.assert_array_equal(parallel.pop.get("CV"), serial.pop.get("CV"))
+    assert parallel.engine_report["profile"]["evaluations"] == serial.engine_report["profile"]["evaluations"]
+
+
+def test_parallel_evaluation_with_the_enhanced_engine_and_a_large_population():
+    problem = _problem("Salem", "Kharif")
+    engine = _with("enhanced", parallel_evaluation=True, parallel_workers=4)
+    a = run_nsga2(problem, seed=8, pop_size=300, n_gen=6, engine=engine)
+    b = run_nsga2(problem, seed=8, pop_size=300, n_gen=6, mode="enhanced")
+    assert _digest(a) == _digest(b)
