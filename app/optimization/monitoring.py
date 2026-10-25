@@ -71,11 +71,14 @@ def front_hypervolume(algorithm) -> float:
         lo, hi = F0.min(axis=0), F0.max(axis=0)
         data["_hv_bounds"] = (lo, np.where(hi - lo > 1e-12, hi - lo, 1.0))
     lo, span = data["_hv_bounds"]
-    opt = algorithm.opt
-    feasible = opt[np.ravel(opt.get("FEAS")).astype(bool)] if opt is not None else []
+    # The feasible part of the first front (algorithm.opt filtered by FEAS),
+    # taken from the cached population arrays in the same order: reading it
+    # through pymoo's per-individual getters cost ~30x the hypervolume itself.
+    arrays = population_arrays(algorithm, algorithm.pop)
+    feasible = arrays["CV"][:, 0] <= 0.0
     value = 0.0
-    if len(feasible):
-        F = (feasible.get("F") - lo) / span
+    if feasible.any():
+        F = (arrays["F"][(arrays["rank"] == 0) & feasible] - lo) / span
         value = float(HV(ref_point=_HV_REF[: F.shape[1]])(F))
     data["_hv_cache"] = (algorithm.n_gen, value)
     data.setdefault("front_hv", []).append(value)
