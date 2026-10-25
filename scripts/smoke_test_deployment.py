@@ -45,6 +45,8 @@ def _strip(obj):
         return {k: _strip(v) for k, v in obj.items() if k not in VOLATILE_KEYS}
     if isinstance(obj, list):
         return [_strip(v) for v in obj]
+    if isinstance(obj, float) and obj == 0.0:
+        return 0.0  # -0.0 and 0.0 are equal; linear-algebra libraries differ in the sign
     return obj
 
 
