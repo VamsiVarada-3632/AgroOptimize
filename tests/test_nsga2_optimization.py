@@ -6,12 +6,14 @@ metrics and their exposure through the API.
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import pytest
 from pymoo.indicators.hv import HV
 
-from app.optimization import monitoring, operators
-from app.optimization.nsga2_runner import run_nsga2
+from app.optimization import metrics, monitoring, operators
+from app.optimization.nsga2_runner import extract_pareto_plans, run_nsga2
 
 from tests.test_nsga2_engine import _digest, _problem
 
@@ -73,3 +75,94 @@ def test_duplicate_eliminator_still_rejects_copies():
     kept = eliminator.do(doubled)
     assert len(kept) == 6
     assert (eliminator.checked, eliminator.rejected) == (12, 6)
+
+
+# ---------------------------------------------------------------------------
+# Quality metrics (app/optimization/metrics.py)
+# ---------------------------------------------------------------------------
+
+
+def test_nondominated_keeps_only_the_front():
+    F = np.array([[0.0, 1.0], [1.0, 0.0], [1.0, 1.0], [0.5, 0.5]])
+    assert sorted(map(tuple, metrics.nondominated(F))) == [(0.0, 1.0), (0.5, 0.5), (1.0, 0.0)]
+
+
+def test_hypervolume_of_a_single_point():
+    assert metrics.hypervolume(np.zeros((1, 4))) == pytest.approx(1.1 ** 4)
+    assert metrics.hypervolume(np.empty((0, 4))) == 0.0
+
+
+def test_gd_and_igd_on_a_hand_calculated_case():
+    front = np.array([[0.0, 1.0], [1.0, 0.0]])
+    reference = np.array([[0.0, 0.0]])
+    assert metrics.generational_distance(front, reference) == pytest.approx(1.0)
+    assert metrics.inverted_generational_distance(front, reference) == pytest.approx(1.0)
+    # A front equal to the reference is at distance 0 both ways.
+    assert metrics.generational_distance(front, front) == 0.0
+    assert metrics.inverted_generational_distance(front, front) == 0.0
+
+
+def test_spacing_and_spread_of_an_evenly_spaced_front():
+    front = np.array([[0.0, 1.0], [0.5, 0.5], [1.0, 0.0]])
+    assert metrics.spacing(front) == pytest.approx(0.0)
+    assert metrics.generalized_spread(front, metrics.extremes(front)) == pytest.approx(0.0)
+    uneven = np.array([[0.0, 1.0], [0.1, 0.9], [1.0, 0.0]])
+    assert metrics.spacing(uneven) > 0.1
+    assert metrics.generalized_spread(uneven, metrics.extremes(front)) > 0.1
+
+
+def test_metrics_need_enough_points():
+    one = np.array([[0.2, 0.3]])
+    assert math.isnan(metrics.spacing(one))
+    assert math.isnan(metrics.generalized_spread(one, metrics.extremes(one)))
+    assert math.isnan(metrics.generational_distance(np.empty((0, 2)), one))
+
+
+def test_front_quality_of_the_reference_itself():
+    ref = np.array([[0.0, 4.0, 1.0, 2.0], [1.0, 3.0, 2.0, 1.0], [2.0, 1.0, 0.0, 3.0]])
+    q = metrics.front_quality(ref, ref)
+    assert q["hypervolume_ratio"] == pytest.approx(1.0)
+    assert q["gd"] == 0.0 and q["igd"] == 0.0 and q["igd_plus"] == 0.0
+
+
+def test_lower_bound_reference_dominates_or_equals_the_front():
+    problem = _problem("Salem", "Kharif")
+    result = run_nsga2(problem, pop_size=30, n_gen=15, seed=4)
+    X, F = metrics.feasible_front(result)
+    ref = metrics.lower_bound_reference(problem, X, F)
+    q = metrics.front_quality(F, ref)
+    assert 0.0 < q["hypervolume_ratio"] <= 1.0 + 1e-9
+    assert q["gd"] >= 0.0 and q["igd"] >= 0.0
+
+
+REQUIRED_KEYS = {"reference_front", "pareto_size", "feasible_pareto_size", "constraint_satisfaction_rate",
+                 "dominated_by_lower_bound_copy", "runtime_seconds", "generations", "evaluations",
+                 "mean_objectives", "hypervolume", "hypervolume_ratio", "gd", "igd", "igd_plus", "spread", "spacing"}
+
+
+def test_run_quality_metrics_report():
+    problem = _problem("Erode", "Rabi", budget=200000.0)
+    result = run_nsga2(problem, pop_size=30, n_gen=15, seed=4)
+    q = metrics.run_quality_metrics(result, problem)
+    assert set(q) == REQUIRED_KEYS
+    assert q["feasible_pareto_size"] <= q["pareto_size"] <= 30
+    assert 0.0 <= q["constraint_satisfaction_rate"] <= 1.0
+    assert q["evaluations"] == result.engine_report["profile"]["evaluations"]
+    plans = [p for p in extract_pareto_plans(result, problem) if p.feasible]
+    assert q["mean_objectives"]["yield_tonnes"] == pytest.approx(np.mean([p.yield_tonnes for p in plans]), rel=1e-3)
+
+
+def test_metrics_of_an_infeasible_run_are_null_not_nan():
+    problem = _problem("Erode", "Kharif", budget=20000.0)
+    result = run_nsga2(problem, pop_size=24, n_gen=8, seed=1)
+    q = metrics.run_quality_metrics(result, problem)
+    assert q["feasible_pareto_size"] == 0 and q["constraint_satisfaction_rate"] == 0.0
+    assert q["hypervolume"] is None and q["mean_objectives"] is None
+
+
+def test_computing_metrics_does_not_change_the_run():
+    problem = _problem("Salem", "Kharif")
+    a = run_nsga2(problem, pop_size=24, n_gen=10, seed=9)
+    metrics.run_quality_metrics(a, problem)
+    b = run_nsga2(problem, pop_size=24, n_gen=10, seed=9)
+    assert _digest(a) == _digest(b)
