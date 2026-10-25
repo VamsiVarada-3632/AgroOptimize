@@ -7,14 +7,17 @@ produces exactly the same Pareto front as an unprofiled one) and reports:
 
     preprocessing, fuzzy inference, sampling, objective evaluation,
     tournament selection, crossover, mutation, repair, duplicate elimination,
-    non-dominated sorting, crowding distance, convergence-history extraction,
-    plan decoding and TOPSIS ranking -- plus wall/CPU time, peak traced
-    memory, evaluations, Pareto-front size, offspring rejected as duplicates,
-    and per-generation diversity / hypervolume.
+    non-dominated sorting, crowding distance, run monitoring,
+    convergence-history extraction, plan decoding, quality metrics and TOPSIS
+    ranking -- plus wall/CPU time and CPU utilisation, peak traced memory,
+    evaluations, evaluations of over-budget plans (constraint violations),
+    dominated solutions in the final population, Pareto-front size, offspring
+    rejected as duplicates, and per-generation diversity / hypervolume.
 
 Usage:
     python scripts/profile_nsga2.py [--location Salem --season Kharif]
-        [--repeats 5] [--mode original|enhanced] [--json out.json]
+        [--repeats 5] [--mode original|enhanced] [--switch duplicate_avoidance ...]
+        [--budget 200000] [--json out.json]
 
 `--mode` is only used when the engine supports it; on older checkouts it is
 ignored so the same script profiles the code before and after a change.
@@ -46,7 +49,7 @@ from app import config  # noqa: E402
 from app.data import preprocessing as pp  # noqa: E402
 from app.decision import ranking  # noqa: E402
 from app.fuzzy import engine as fz  # noqa: E402
-from app.optimization import nsga2_runner, operators  # noqa: E402
+from app.optimization import metrics, monitoring, nsga2_runner, operators  # noqa: E402
 from app.optimization.problem import FarmPlanProblem  # noqa: E402
 
 TIMES: dict = defaultdict(float)
@@ -77,6 +80,17 @@ def _count_duplicates(fn):
     return wrapper
 
 
+def _count_infeasible(fn):
+    """Counts evaluated plans that violate the budget constraint."""
+    def wrapper(self, problem, pop, *args, **kwargs):
+        out = fn(self, problem, pop, *args, **kwargs)
+        cv = np.ravel(pop.get("CV")) if len(pop) else np.empty(0)
+        COUNTS["evaluated"] += len(cv)
+        COUNTS["evaluated_over_budget"] += int((cv > 0).sum())
+        return out
+    return wrapper
+
+
 def install_timers() -> None:
     # The project's operators (the adaptive variants subclass these, so
     # wrapping the base classes' _do covers them too).
@@ -84,7 +98,9 @@ def install_timers() -> None:
                             ("GaussianMutation", "mutation")):
         cls = getattr(operators, cls_name)
         cls._do = _timed(label, cls.__dict__["_do"])
-    pm_evaluator.Evaluator.eval = _timed("evaluation", pm_evaluator.Evaluator.eval)
+    # Counted outside the timer, so the count itself is not timed as evaluation.
+    pm_evaluator.Evaluator.eval = _count_infeasible(_timed("evaluation", pm_evaluator.Evaluator.eval))
+    monitoring.EngineMonitor.notify = _timed("monitoring", monitoring.EngineMonitor.notify)
     pm_tournament.TournamentSelection._do = _timed("selection", pm_tournament.TournamentSelection._do)
     dup_do = pm_duplicate.DuplicateElimination.do
     pm_duplicate.DuplicateElimination.do = _timed("duplicate_elimination", _count_duplicates(dup_do))
@@ -109,7 +125,7 @@ def decision_entropy(X: np.ndarray, xl: np.ndarray, xu: np.ndarray, bins: int = 
     return float(np.mean(ent))
 
 
-def profile_once(location: str, season: str, land: float, budget, mode: str, track_history: bool):
+def profile_once(location: str, season: str, land: float, budget, mode: str, track_history: bool, switches=()):
     TIMES.clear(); CALLS.clear(); COUNTS.clear()
     wall0, cpu0 = time.perf_counter(), time.process_time()
 
@@ -124,7 +140,11 @@ def profile_once(location: str, season: str, land: float, budget, mode: str, tra
 
     problem = FarmPlanProblem(profile, assessment, total_land_ha=land, budget_rs=budget)
     kwargs = {"track_history": track_history}
-    if _supports(nsga2_runner.run_nsga2, "mode"):
+    if switches:
+        import dataclasses
+        from app.optimization.engine_settings import engine_settings
+        kwargs["engine"] = dataclasses.replace(engine_settings(mode), **{s: True for s in switches})
+    elif _supports(nsga2_runner.run_nsga2, "mode"):
         kwargs["mode"] = mode
 
     t = time.perf_counter()
@@ -138,6 +158,10 @@ def profile_once(location: str, season: str, land: float, budget, mode: str, tra
     t = time.perf_counter()
     plans = [p for p in nsga2_runner.extract_pareto_plans(result, problem) if p.feasible]
     TIMES["decoding"] += time.perf_counter() - t
+
+    t = time.perf_counter()
+    quality = metrics.run_quality_metrics(result, problem)
+    TIMES["quality_metrics"] += time.perf_counter() - t
 
     t = time.perf_counter()
     conf = dict(zip(problem.crop_vec.names, problem.crop_vec.crop_yield_confidence.tolist()))
@@ -166,6 +190,9 @@ def profile_once(location: str, season: str, land: float, budget, mode: str, tra
         "final_population_entropy": decision_entropy(X, problem.xl, problem.xu),
         "final_duplicate_objective_vectors": int(len(F) - len(np.unique(rounded, axis=0))),
         "final_hypervolume": history[-1]["hypervolume"] if history else None,
+        "final_dominated_solutions": int((np.ravel(result.pop.get("rank")) > 0).sum()),
+        "front_beaten_by_lower_bound_copy": quality["dominated_by_lower_bound_copy"],
+        "quality_metrics": quality,
         "history": history,
     }
 
@@ -179,18 +206,19 @@ def main() -> None:
     ap.add_argument("--repeats", type=int, default=5)
     ap.add_argument("--mode", default="original")
     ap.add_argument("--no-history", action="store_true")
+    ap.add_argument("--switch", action="append", default=[], help="engine switch to turn on (repeatable)")
     ap.add_argument("--json", default=None)
     args = ap.parse_args()
 
     install_timers()
     # Warm-up (imports, CSV caches, scikit-fuzzy caches) is excluded.
-    profile_once(args.location, args.season, args.land, args.budget, args.mode, False)
+    profile_once(args.location, args.season, args.land, args.budget, args.mode, False, args.switch)
 
-    runs = [profile_once(args.location, args.season, args.land, args.budget, args.mode, not args.no_history)
+    runs = [profile_once(args.location, args.season, args.land, args.budget, args.mode, not args.no_history, args.switch)
             for _ in range(args.repeats)]
 
     tracemalloc.start()
-    profile_once(args.location, args.season, args.land, args.budget, args.mode, not args.no_history)
+    profile_once(args.location, args.season, args.land, args.budget, args.mode, not args.no_history, args.switch)
     _, peak = tracemalloc.get_traced_memory()
     tracemalloc.stop()
 
@@ -217,6 +245,10 @@ def main() -> None:
     print(f"  generations {lr['generations']}, evaluations {lr['evaluations']}, Pareto size {lr['pareto_size']}, "
           f"duplicates rejected {lr['counts'].get('offspring_rejected_as_duplicate', 0)} of "
           f"{lr['counts'].get('offspring_checked', 0)} checked, final entropy {lr['final_population_entropy']:.3f}")
+    print(f"  cpu utilisation {lr['cpu_utilisation']:.2f}, over-budget evaluations "
+          f"{lr['counts'].get('evaluated_over_budget', 0)} of {lr['counts'].get('evaluated', 0)}, "
+          f"dominated solutions in final population {lr['final_dominated_solutions']}, "
+          f"front beaten by its lower-bound copy {lr['front_beaten_by_lower_bound_copy']}")
     if args.json:
         Path(args.json).write_text(json.dumps(out, indent=2, default=float))
 
