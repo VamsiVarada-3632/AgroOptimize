@@ -24,6 +24,7 @@ from pymoo.operators.sampling.lhs import LHS
 from pymoo.operators.sampling.rnd import FloatRandomSampling
 from pymoo.operators.selection.tournament import TournamentSelection
 from pymoo.optimize import minimize
+from pymoo.termination.default import DefaultMultiObjectiveTermination
 
 from app import config
 from app.data.preprocessing import RegionSeasonProfile
@@ -148,7 +149,15 @@ def run_nsga2(
 
     if settings.early_stopping:
         p = settings.early_stopping_params
-        termination = FrontStagnationTermination(n_gen, p["patience"], p["tolerance"], p["min_generations"])
+        criterion = p.get("criterion", "hypervolume")
+        if criterion == "hypervolume":
+            termination = FrontStagnationTermination(n_gen, p["patience"], p["tolerance"], p["min_generations"])
+        elif criterion == "objective_space":
+            termination = DefaultMultiObjectiveTermination(
+                xtol=p.get("xtol", 0.0005), cvtol=1e-8, ftol=p.get("ftol", 0.005),
+                period=int(p.get("period", 50)), n_skip=int(p.get("n_skip", 5)), n_max_gen=n_gen)
+        else:
+            raise ValueError(f"Unknown early-stopping criterion {criterion!r}")
     else:
         termination = ("n_gen", n_gen)
 
@@ -210,7 +219,10 @@ def _engine_report(settings: EngineSettings, result, monitor: EngineMonitor, sec
             "avg_generation_ms": round(1000 * seconds / generations, 3) if generations else None,
         }
     if settings.early_stopping:
-        report["stopped_early_at"] = getattr(algorithm.termination, "stopped_early_at", None)
+        stopped = getattr(algorithm.termination, "stopped_early_at", None)
+        if stopped is None and generations < n_gen:
+            stopped = generations   # pymoo's objective-space criterion: generations completed
+        report["stopped_early_at"] = stopped
     if settings.duplicate_avoidance:
         report["copies_perturbed"] = int(getattr(algorithm.mating.mutation, "forced", 0))
     if settings.diversity_monitoring:

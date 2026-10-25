@@ -345,3 +345,28 @@ def test_duplicate_avoidance_reduces_rejections_and_is_deterministic():
     plain = run_nsga2(problem, seed=2, pop_size=40, n_gen=40, mode="enhanced")
     assert a.engine_report["copies_perturbed"] > 0
     assert a.engine_report["diversity"]["duplicates_rejected"] < 0.2 * plain.engine_report["diversity"]["duplicates_rejected"]
+
+
+def _objective_space_stopping(**params):
+    e = engine_settings("original")
+    params = {"criterion": "objective_space", **params}
+    return dataclasses.replace(e, early_stopping=True, early_stopping_params={**e.early_stopping_params, **params})
+
+
+def test_objective_space_stopping_stops_when_tolerances_are_loose():
+    engine = _objective_space_stopping(xtol=1e9, ftol=1e9, period=5, n_skip=1)
+    result = run_nsga2(_problem("Salem", "Kharif"), seed=1, pop_size=30, n_gen=100, engine=engine)
+    stopped = result.engine_report["stopped_early_at"]
+    assert stopped is not None and stopped < 100
+    assert result.engine_report["profile"]["generations"] == stopped
+
+
+def test_objective_space_stopping_with_default_tolerances_runs_the_budget_here():
+    result = run_nsga2(_problem("Salem", "Kharif"), seed=1, pop_size=30, n_gen=60, engine=_objective_space_stopping())
+    assert result.engine_report["stopped_early_at"] is None
+    assert result.engine_report["profile"]["generations"] == 60
+
+
+def test_unknown_stopping_criterion_is_rejected():
+    with pytest.raises(ValueError):
+        run_nsga2(_problem(), pop_size=10, n_gen=5, engine=_objective_space_stopping(criterion="patience-only"))

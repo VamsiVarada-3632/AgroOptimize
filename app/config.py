@@ -253,10 +253,18 @@ NSGA2_SMART_INIT_FRACTION = 0.2
 # rejected. pymoo's default rejects only exact copies (1e-16).
 NSGA2_DUPLICATE_TOLERANCE = 1e-4
 
-# Early stopping: stop when the hypervolume of the first front has improved
-# by less than `tolerance` (relative) over the last `patience` generations,
-# never before `min_generations`.
-NSGA2_EARLY_STOPPING = {"patience": 30, "tolerance": 1e-4, "min_generations": 60}
+# Early stopping. criterion "hypervolume": stop when the hypervolume of the
+# first front has improved by less than `tolerance` (relative) over the last
+# `patience` generations, never before `min_generations`. criterion
+# "objective_space": pymoo's robust multi-objective termination (Blank & Deb
+# 2020) -- stop when the movement of the decision vectors (`xtol`), of the
+# constraint violation and of the front in objective space (`ftol`, ideal,
+# nadir and front change) has stayed below tolerance for `period`
+# generations, checked every `n_skip`.
+# (`patience` and `tolerance` also set when adaptive mutation regards the
+# front as stagnant.)
+NSGA2_EARLY_STOPPING = {"criterion": "hypervolume", "patience": 30, "tolerance": 1e-4, "min_generations": 60,
+                        "xtol": 0.0005, "ftol": 0.005, "period": 50, "n_skip": 5}
 
 # ---------------------------------------------------------------------------
 # Decision output
