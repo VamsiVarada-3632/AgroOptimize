@@ -317,3 +317,31 @@ def test_diversity_crossover_is_deterministic():
 def test_unknown_crossover_schedule_is_rejected():
     with pytest.raises(ValueError):
         operators.AdaptiveSinglePointCrossover(0.95, 0.7, schedule="cosine")
+
+
+def test_duplicate_avoidance_perturbs_copies_of_parents():
+    problem = _problem("Coimbatore", "Summer")
+    mutation = operators.GaussianMutation(prob=0.0, sigma=0.12, avoid_duplicates=True)
+
+    class _Algo:  # the parts of the algorithm the mutation reads
+        data = {}
+        pop = run_nsga2(problem, pop_size=20, n_gen=3, seed=1).pop
+
+    parents = _Algo.pop.get("X")
+    np.random.seed(0)
+    out = mutation._do(problem, parents.copy(), algorithm=_Algo)
+    assert mutation.forced == len(parents)                      # every child was a copy (prob 0)
+    changed = (out != parents).sum(axis=1)
+    assert np.all(changed <= 1) and (changed == 1).mean() > 0.9  # one gene each (rarely clipped back)
+    assert np.all(out >= problem.xl) and np.all(out <= problem.xu)
+
+
+def test_duplicate_avoidance_reduces_rejections_and_is_deterministic():
+    problem = _problem("Coimbatore", "Summer")
+    engine = _with("enhanced", duplicate_avoidance=True)
+    a = run_nsga2(problem, seed=2, pop_size=40, n_gen=40, engine=engine)
+    b = run_nsga2(problem, seed=2, pop_size=40, n_gen=40, engine=engine)
+    assert _digest(a) == _digest(b)
+    plain = run_nsga2(problem, seed=2, pop_size=40, n_gen=40, mode="enhanced")
+    assert a.engine_report["copies_perturbed"] > 0
+    assert a.engine_report["diversity"]["duplicates_rejected"] < 0.2 * plain.engine_report["diversity"]["duplicates_rejected"]

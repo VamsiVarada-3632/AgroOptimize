@@ -78,12 +78,20 @@ class SinglePointCrossover(Crossover):
 
 class GaussianMutation(Mutation):
     """Per-gene Gaussian perturbation applied independently with
-    probability `prob` per gene, then clipped back to bounds."""
+    probability `prob` per gene, then clipped back to bounds.
 
-    def __init__(self, prob: float = 0.12, sigma: float = 0.12):
+    With `avoid_duplicates` (enhanced-mode switch duplicate_avoidance), an
+    offspring that is still an exact copy of a parent after mutation gets one
+    extra Gaussian step on a randomly chosen gene (in the opposite direction
+    if the first one is clipped away at a bound). Such copies would only be
+    rejected by duplicate elimination and re-mated."""
+
+    def __init__(self, prob: float = 0.12, sigma: float = 0.12, avoid_duplicates: bool = False):
         super().__init__()
         self.gene_prob = prob
         self.sigma = sigma
+        self.avoid_duplicates = avoid_duplicates
+        self.forced = 0  # offspring given the extra step (for the run report)
 
     def _do(self, problem, X, **kwargs):
         Xp = np.array(X, dtype=float, copy=True)
@@ -92,6 +100,25 @@ class GaussianMutation(Mutation):
         noise = np.random.normal(0.0, self.sigma, Xp.shape) * span
         Xp[mask] += noise[mask]
         Xp = np.clip(Xp, problem.xl, problem.xu)
+        algorithm = kwargs.get("algorithm")
+        if self.avoid_duplicates and algorithm is not None and algorithm.pop is not None:
+            Xp = self._perturb_copies(problem, Xp, population_arrays(algorithm, algorithm.pop)["X"], span)
+        return Xp
+
+    def _perturb_copies(self, problem, Xp, parents, span):
+        known = {row.tobytes() for row in np.ascontiguousarray(parents)}
+        copies = [i for i, row in enumerate(np.ascontiguousarray(Xp)) if row.tobytes() in known]
+        if not copies:
+            return Xp
+        genes = np.random.randint(0, Xp.shape[1], size=len(copies))
+        steps = np.random.normal(0.0, self.sigma, size=len(copies)) * span[genes]
+        xl, xu = np.asarray(problem.xl, dtype=float), np.asarray(problem.xu, dtype=float)
+        for i, j, step in zip(copies, genes, steps):
+            value = np.clip(Xp[i, j] + step, xl[j], xu[j])
+            if value == Xp[i, j]:
+                value = np.clip(Xp[i, j] - step, xl[j], xu[j])
+            Xp[i, j] = value
+        self.forced += len(copies)
         return Xp
 
 

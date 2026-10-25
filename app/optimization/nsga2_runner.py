@@ -132,10 +132,8 @@ def run_nsga2(
     else:
         crossover = SinglePointCrossover(prob=crossover_prob)
 
-    if settings.adaptive_mutation:
-        mutation = AdaptiveGaussianMutation(prob=mutation_prob, sigma=mutation_sigma)
-    else:
-        mutation = GaussianMutation(prob=mutation_prob, sigma=mutation_sigma)
+    mutation_cls = AdaptiveGaussianMutation if settings.adaptive_mutation else GaussianMutation
+    mutation = mutation_cls(prob=mutation_prob, sigma=mutation_sigma, avoid_duplicates=settings.duplicate_avoidance)
 
     algorithm = NSGA2(
         pop_size=pop_size,
@@ -213,6 +211,8 @@ def _engine_report(settings: EngineSettings, result, monitor: EngineMonitor, sec
         }
     if settings.early_stopping:
         report["stopped_early_at"] = getattr(algorithm.termination, "stopped_early_at", None)
+    if settings.duplicate_avoidance:
+        report["copies_perturbed"] = int(getattr(algorithm.mating.mutation, "forced", 0))
     if settings.diversity_monitoring:
         report["diversity"] = monitor.summary()
     return report

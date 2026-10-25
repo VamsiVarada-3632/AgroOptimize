@@ -28,6 +28,7 @@ class EngineSettings:
     early_stopping: bool = False
     lhs_initialization: bool = False
     constraint_aware_initialization: bool = False
+    duplicate_avoidance: bool = False
     diversity_monitoring: bool = True
     runtime_profiling: bool = True
     # Base per-gene mutation probability (the adaptive rule starts from it).
@@ -71,6 +72,7 @@ FEATURES_CHANGING_OUTPUTS = (
     "early_stopping",
     "lhs_initialization",
     "constraint_aware_initialization",
+    "duplicate_avoidance",
 )
 
 
