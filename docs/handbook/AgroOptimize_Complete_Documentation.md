@@ -1,6 +1,6 @@
 # AgroOptimize — Complete Project Documentation (single file)
 
-All 41 handbook documents combined and grouped into 6 parts. Cross-references point to the section of the same name below.
+All 43 handbook documents combined and grouped into 6 parts. Cross-references point to the section of the same name below.
 
 ## Table of Contents
 
@@ -8,13 +8,15 @@ All 41 handbook documents combined and grouped into 6 parts. Cross-references po
   - [PROJECT_KNOWLEDGE](#doc-project-knowledge)
   - [README_UPDATED](#doc-readme-updated)
   - [FOLDER_STRUCTURE](#doc-folder-structure)
-- **Part 2 — Architecture & Code**
+- **Part 2 — Architecture, Code & Deployment**
   - [ARCHITECTURE](#doc-architecture)
   - [BACKEND](#doc-backend)
   - [FRONTEND](#doc-frontend)
   - [API_REFERENCE](#doc-api-reference)
   - [CONFIGURATION](#doc-configuration)
   - [DEPENDENCIES](#doc-dependencies)
+  - [DEPLOYMENT_GUIDE](#doc-deployment-guide)
+  - [DEPLOYMENT_REPORT](#doc-deployment-report)
 - **Part 3 — Data, District Intelligence & Scenario Simulation**
   - [DATASETS](#doc-datasets)
   - [DATA_VALIDATION](#doc-data-validation)
@@ -407,7 +409,7 @@ Removed on 2026-09-29 (all preserved in `_backups/stitch_agrooptimize_app_before
 
 ---
 
-# Part 2 — Architecture & Code
+# Part 2 — Architecture, Code & Deployment
 
 <a id="doc-architecture"></a>
 
@@ -1229,12 +1231,14 @@ All modelling constants live in `agrooptimize-backend/app/config.py`; a few more
 
 | File | Key settings |
 |---|---|
-| `Dockerfile` | `python:3.11-slim`, installs gcc/g++, `pip install -r requirements.txt`, copies `app/ data/ run_demo.py`, `mkdir /app/results`, `uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers`; runs as root |
-| `.dockerignore` | excludes `.git`, `notes/`, `docs/`, `tests/`, `results/`, caches |
+| `Dockerfile` | two stages: `node:22-slim` builds `frontend/dist` (`npm ci`, `vite build`); `python:3.13-slim` installs pinned binary wheels from `requirements.txt`, copies `app/ data/` and the build, runs as user `agro` (uid 10001), `uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers`, 1 worker. See [DEPLOYMENT_GUIDE.md](#doc-deployment-guide) |
+| `.dockerignore` | excludes `.git`, `tests/`, `docs/`, `notes/`, `scripts/`, `results/`, caches, `frontend/node_modules`, `frontend/dist`, `frontend/.env*` |
 | `fly.toml` | app `agrooptimize-backend`, region `sin`, `force_https`, `auto_stop_machines=false`, `min_machines_running=1`, 1 shared CPU / 512 MB, health `/health` 15 s, volume `agrooptimize_results → /app/results` |
-| `render.yaml` | docker runtime, free plan, Singapore, health `/health`, CORS env |
+| `render.yaml` | one Docker web service `agrooptimize` (frontend + API), free plan, Singapore, health `/health`, auto-deploy with build filters, `AGROOPTIMIZE_NSGA2_MODE=original`; optional persistent disk documented in comments |
 | `vercel.json` | `npm run build`, output `dist`, SPA rewrite |
 | `.github/workflows/deploy-backend.yml` | on push to `main` under `agrooptimize-backend/**`: `test` job (Python 3.11, pytest) → `deploy` job (`needs: test`) |
+| Environment | `AGROOPTIMIZE_RESULTS_DIR` (saved runs/simulations folder, default `results/`), `AGROOPTIMIZE_FRONTEND_DIST` (frontend build served by the API, default `frontend/dist`), `AGROOPTIMIZE_NSGA2_MODE`, `CORS_ALLOW_ORIGINS`, `PORT`; frontend build: `VITE_API_BASE` (optional; production default is the page origin) |
+| `requirements.txt` / `requirements-dev.txt` | pinned runtime dependencies / runtime + pytest, httpx |
 | `pytest.ini` | testpaths `tests`, `-v --tb=short`, ignore Deprecation/User warnings |
 | `.oxlintrc.json` | react + oxc plugins; `rules-of-hooks` error; ignores `dist/**`, `*/code.html` |
 
@@ -1264,7 +1268,7 @@ Only lower bounds are pinned (`>=`); there is no lock file, so a fresh install t
 | pytest | ≥8.0 | 8.4.2 | tests | `tests/` – **test-only, but installed in the production image** |
 | httpx | ≥0.28 | 0.28.1 | required by `fastapi.testclient` | tests – **test-only** |
 
-Recommendations: split `requirements-dev.txt` (pytest, httpx) from runtime; generate a lock (`pip-compile` / `uv pip compile`) so Docker, CI and laptops run identical versions; the Dockerfile's `gcc g++` install is unnecessary when all packages ship wheels (they do for these versions on linux/amd64) and adds ~200 MB.
+Since the Render deployment: `requirements.txt` pins exact versions (the ones the tests and published results use) and `requirements-dev.txt` adds pytest and httpx; the Dockerfile installs binary wheels only (no gcc/g++). A full lock with hashes (`pip-compile --generate-hashes`) remains a possible next step.
 
 ### 2. Frontend (`stitch_agrooptimize_app/package.json`)
 
@@ -1301,6 +1305,200 @@ Recommendations: split `requirements-dev.txt` (pytest, httpx) from runtime; gene
 | `flyctl-actions@master` | pin to a release |
 | External logo/images | vendor into `public/` |
 | Material Symbols font (~all icons) loaded from Google at runtime | self-host or subset the icon font |
+
+<a id="doc-deployment-guide"></a>
+
+## Deployment Guide
+
+AgroOptimize runs on [Render](https://render.com) as **one Docker web service** that serves the React frontend, the FastAPI backend and the API docs from a single URL. This guide explains how that works and how to deploy, redeploy, update and roll back.
+
+### 1. How the deployment works
+
+```
+GitHub repo ──push──► Render (Blueprint: render.yaml)
+                         │ docker build (Dockerfile)
+                         │   stage 1  node:22-slim      npm ci → vite build → frontend/dist
+                         │   stage 2  python:3.13-slim  pip install pinned wheels; copy app/, data/, dist/
+                         ▼
+                  container: uvicorn app.main:app --port $PORT   (user "agro", 1 worker)
+                         │
+   https://<service>.onrender.com
+       /                → React app (index.html; any page path falls back to it)
+       /assets/*        → hashed JS/CSS, cached for a year
+       /api/*           → FastAPI endpoints (JSON, gzip over 1 kB)
+       /docs, /redoc    → Swagger UI / ReDoc;  /openapi.json
+       /health          → {"status": "ok"}  (Render health check)
+```
+
+* **Same origin.** The production build calls the API on `window.location.origin` (`frontend/src/services/api.js` → `resolveApiBase`), so no CORS setup and no API URL are needed. `VITE_API_BASE` still overrides it for a frontend hosted elsewhere, e.g. Vercel (`frontend/vercel.json`), together with `CORS_ALLOW_ORIGINS` on the backend.
+* **Frontend serving.** `app/frontend.py` mounts `frontend/dist` after every API route. Unknown `/api/…`, `/docs/…` and `/health/…` paths stay JSON 404s, and nothing is mounted when there is no build, so local development is unchanged.
+* **Identical results.** `requirements.txt` pins the exact library versions the tests and published results use, and `AGROOPTIMIZE_NSGA2_MODE=original` selects the published NSGA-II engine. `scripts/smoke_test_deployment.py` checks that a deployment gives the same results as a local server (§6).
+
+### 2. Configuration
+
+| Setting | Where | Value | Purpose |
+|---|---|---|---|
+| Service | `render.yaml` | `agrooptimize`, Docker, plan `free`, region `singapore` | One web service |
+| Health check | `render.yaml` | `/health` | Render restarts or keeps the old version if it fails |
+| Auto-deploy | `render.yaml` | on, with `buildFilter` paths | Docs-only commits don't trigger a rebuild |
+| `PORT` | set by Render | e.g. `10000` | uvicorn listens on it (the Dockerfile defaults to 8000) |
+| `AGROOPTIMIZE_NSGA2_MODE` | `render.yaml` | `original` | Published engine; `enhanced` is experimental |
+| `AGROOPTIMIZE_RESULTS_DIR` | optional | e.g. `/var/data/results` | Folder for saved runs and simulations (default `/app/results`) |
+| `AGROOPTIMIZE_FRONTEND_DIST` | optional | path | Use a different frontend build |
+| `CORS_ALLOW_ORIGINS` | optional | comma-separated origins | Only for a frontend on another domain |
+| `VITE_API_BASE` | frontend build time, optional | URL | Only for a frontend on another domain |
+
+There are **no secrets**: the only external API (Open-Meteo weather) needs no key.
+
+#### Storage
+Saved runs (History, Reports, explanations of saved runs) and saved simulations are files in `/app/results`. On the **free plan the filesystem is temporary**: it is wiped when the service redeploys, restarts or wakes up after sleeping (free services sleep after about 15 minutes without traffic). Everything else is computed from the bundled dataset and needs no storage.
+
+To keep saved runs, use a paid instance type with a persistent disk: in `render.yaml` change `plan: free` to `starter`, uncomment the `disk` block (mounted at `/var/data`) and add `AGROOPTIMIZE_RESULTS_DIR=/var/data/results`. The container runs as a non-root user (uid 10001). If the disk is not writable by that user, saving a run fails; check the logs after the first save.
+
+### 3. First deployment
+
+1. Push the branch to GitHub (the repository is public).
+2. In the Render dashboard: **New → Blueprint**, connect the GitHub repository `VamsiVarada-3632/AgroOptimize`, and choose the branch to deploy (`main` once merged, or a feature branch for a preview).
+3. Render reads `render.yaml`, shows the `agrooptimize` web service and creates it. The first build takes a few minutes: Node install and build, then Python wheels (~110 MB).
+4. When the deploy is **Live**, open `https://<service>.onrender.com` and run the smoke test (§6).
+
+### 4. Redeploy and update
+
+| Task | How |
+|---|---|
+| Deploy new code | Merge or push to the deployed branch. Auto-deploy builds it if a path in `buildFilter` changed |
+| Redeploy without changes | Dashboard → service → **Manual Deploy → Deploy latest commit** |
+| Rebuild from scratch | **Manual Deploy → Clear build cache & deploy** (after dependency changes, or if a cached layer is suspect) |
+| Change an environment variable | Dashboard → **Environment**, edit, save (Render redeploys). Keep `render.yaml` in sync |
+| Change the dataset | Edit `data/raw/*.csv` and push. The data is loaded once per process, so the redeploy picks it up |
+| Update dependencies | Change the pins in `requirements.txt` (and `package-lock.json` for the frontend), run the full test suites and the smoke-test comparison locally, then push. A new numpy/pymoo/scikit-fuzzy version can change optimisation results |
+
+Zero-downtime: Render keeps the previous version running until the new one passes `/health`.
+
+### 5. Rollback
+
+1. Dashboard → service → **Events**: every deploy is listed with its commit.
+2. Pick the last good deploy → **Rollback** (Render redeploys that build).
+3. Auto-deploy stays on, so the next push deploys again. Revert the bad commit in git (`git revert <sha>`) so the branch matches what runs. Rollback alone does not change the repository.
+
+Saved runs are not affected by a rollback on a persistent disk; on the free plan they are lost on any redeploy anyway.
+
+### 6. Verifying a deployment
+
+```bash
+# reference from a local server on the same commit
+uvicorn app.main:app --port 8000 &
+python scripts/smoke_test_deployment.py --base-url http://localhost:8000 --record ref.json
+# check the deployment
+python scripts/smoke_test_deployment.py --base-url https://<service>.onrender.com --compare ref.json
+```
+
+The script calls 34 endpoints and pages: health, docs, the frontend and an asset, the SPA fallback, catalog, region profile, farm plans (saved and unsaved), saved result and its explanation, history, dashboard, weather, soil profile, plans, comparison and its explanation, fuzzy vs non-fuzzy, District Intelligence, fuzzy explain and audit, simulation run, save, list, load and delete, and three error cases. It compares 17 result fingerprints: optimisation, ranking, fuzzy and simulation outputs with timings and ids removed. It exits non-zero on any failure or difference.
+
+The first request after the free service has slept takes ~30–60 s while the instance starts.
+
+### 7. Local production run (without Docker)
+
+```bash
+cd frontend && npm ci && npm run build && cd ..
+pip install -r requirements.txt
+uvicorn app.main:app --port 8000          # http://localhost:8000 serves the app and the API
+```
+
+For development, keep using `npm run dev` (port 5173) and `uvicorn app.main:app --reload --port 8000`. The Vite dev server calls the backend on port 8000. If a local `frontend/.env.production` sets `VITE_API_BASE`, local production builds use that URL instead of the same origin.
+
+### 8. Troubleshooting
+
+| Symptom | Cause / fix |
+|---|---|
+| Build fails in `pip install` with "no matching distribution" | a pin without a Linux wheel for Python 3.13; pick a version that has one (the Dockerfile refuses to compile) |
+| Build fails in `npm ci` | `package-lock.json` out of sync with `package.json`; run `npm install` locally and commit the lock |
+| Deploy stuck "in progress", then fails the health check | the app did not start: check the logs for an import error or a wrong `PORT` |
+| Page loads but shows "Couldn't reach the AgroOptimize server" | the build was made with a `VITE_API_BASE` pointing elsewhere; remove it |
+| History empty after a while | free-plan storage was reset (§2) |
+| First request very slow | free instance waking up |
+| `/api/...` returns the HTML page | should never happen (tested); check that `mount_frontend` is still called last in `app/main.py` |
+
+<a id="doc-deployment-report"></a>
+
+## Deployment Report
+
+What was done to put AgroOptimize on Render, how it was verified, and what is still open. How to deploy, update and roll back: [DEPLOYMENT_GUIDE.md](#doc-deployment-guide).
+
+### 1. Summary
+
+* **Live URL:** https://agrooptimize.onrender.com. One Docker web service on Render's free plan (Singapore) serves the React app, the API, the API docs and the health check from one origin.
+* **Built from the repository.** `render.yaml` is a Render Blueprint, and the two-stage `Dockerfile` builds the frontend with Node 22, then installs the pinned Python dependencies on Python 3.13 from binary wheels only.
+* **Every endpoint works.** The smoke test passes 34 of 34 checks against the live service: pages, assets, API, docs, saving and loading, and error cases.
+* **Results.** Everything that does not run NSGA-II is identical to a local server. NSGA-II results are reproducible on Render from one deploy to the next, but differ from a Mac's at the last bits of floating-point arithmetic, so the fronts follow a different, equally good path (§4).
+* **No code paths changed for local development.** Without a frontend build the API behaves as before; `npm run dev` and `uvicorn --reload` work unchanged.
+
+### 2. Changes
+
+| Area | Change | Files |
+|---|---|---|
+| Dependencies | `requirements.txt` pins the exact versions behind the tests and published results; test tools moved to `requirements-dev.txt` | `requirements.txt`, `requirements-dev.txt` |
+| Storage | saved runs go to `AGROOPTIMIZE_RESULTS_DIR` (default `results/`) | `app/config.py` |
+| Serving the frontend | FastAPI serves `frontend/dist`: hashed assets cached for a year, other page paths fall back to `index.html`, unknown `/api`, `/docs` and `/health` paths stay JSON 404s; gzip over 1 kB; HEAD answered for pages and `/health` | `app/frontend.py`, `app/main.py` |
+| API address | production builds call the API on the page's own origin; `VITE_API_BASE` still overrides it | `frontend/src/services/api.js` |
+| Page loading | each page is a lazily loaded chunk: initial JavaScript 476 → 211 kB (122 → 66 kB gzipped) | `frontend/src/App.jsx`, `utils/lazyView.js`, `components/ViewLoading.jsx` |
+| Container | two-stage image, non-root user `agro`, listens on `$PORT`, refuses to compile packages from source | `Dockerfile`, `.dockerignore` |
+| Render | service `agrooptimize`, health check `/health`, auto-deploy with `buildFilter` so documentation commits don't rebuild, `AGROOPTIMIZE_NSGA2_MODE=original`, a commented-out persistent disk | `render.yaml` |
+| Verification | smoke test: 34 checks and 17 result fingerprints, recorded from one server and compared against another | `scripts/smoke_test_deployment.py` |
+| Tests | serving, fallback and 404 rules, HEAD requests, results folder setting; API base and lazy loading in the frontend | `tests/test_deployment.py`, `frontend/src/services/api.test.js`, `frontend/src/utils/lazyView.test.js` |
+
+### 3. Deployment history
+
+| Step | Outcome | Fix |
+|---|---|---|
+| First Blueprint sync | build failed after 19 s: `COPY frontend/public` referred to a folder that is not in the repository | the line was removed; Vite copies `public/` into `dist/` anyway when it exists |
+| Second build | live; smoke test 34/34 | — |
+| Fingerprint comparison with a local server | NSGA-II results differ (§4) | an attempt to make the mutation's random draws platform-independent was reverted, because it would have changed every published result |
+| Repeated comparisons | `last_dataset_update`, saved-file names and `-0.0` vs `0.0` caused false differences | the smoke test now ignores the first two and treats the zeros as equal |
+| HEAD requests (used by uptime monitors) | `405 Method Not Allowed` | HEAD is answered for pages and `/health` |
+
+### 4. Result reproducibility
+
+Fingerprints are hashes of the response with timings, ids and dates removed.
+
+| Endpoint group | Render vs local Mac | Render vs Render (redeploys) |
+|---|---|---|
+| Catalog, region profile, soil profile, dashboard, fuzzy vs non-fuzzy comparison, fuzzy audit, fuzzy explanation, the budget farm plan | identical | identical |
+| Farm plans (saved and unsaved), saved result and its explanation, plans, comparison and its explanation, scenario simulation | different | identical |
+| District Intelligence | changes with the date on any server | — |
+
+**Why NSGA-II differs:** the mutation uses NumPy's legacy Gaussian generator. On arm64 NumPy computes `x1² + x2²` with a fused multiply-add, and macOS's `log` is not correctly rounded in about 0.07 % of cases; Linux on x86-64 does neither. The first different bit changes one mutation, and the evolutionary search then takes a different path. The quality is the same: over 12 district-seasons Render's fronts have 0.7 % higher hypervolume on average, within seed-to-seed variation.
+
+**What this means:** results are reproducible per platform. Published tables must be regenerated on the machine they are reported for, or on the deployment itself. Making the random stream platform-independent would be one deliberate change to every result (NSGAII_IMPROVEMENTS.md §7).
+
+### 5. Performance (free plan, warm instance)
+
+| Request | Time |
+|---|---|
+| Health, catalog, pages, saved results | 0.2–0.4 s |
+| Farm plan (one NSGA-II run) | 7–11 s |
+| Comparison, plans | ~11 s |
+| Fuzzy vs non-fuzzy comparison | ~18 s |
+| Scenario simulation (5 seeds) | ~80 s |
+| First request after the service has slept | 30–60 s extra |
+
+The free instance has 0.1 CPU, so optimisation runs are 20–30 times slower than on a laptop. A paid instance (`starter` or higher) brings them close to local times.
+
+### 6. Known limitations
+
+* **Live weather falls back to the dataset.** On Render, `/api/weather/{district}` answers with "Historical CSV average (live weather unavailable)": the call to Open-Meteo fails from the service, and the reason is only in the service logs. Locally the same code returns live weather. The fallback keeps the dashboard working.
+* **Saved runs are temporary on the free plan.** History, Reports and saved simulations are wiped on every redeploy, restart or wake-up. A persistent disk needs a paid plan (DEPLOYMENT_GUIDE.md §2).
+* **Cold starts.** The free service sleeps after about 15 minutes without traffic.
+* **Slow optimisation** on the free CPU (§5); one worker process, so concurrent runs wait.
+* **Platform-dependent NSGA-II results** (§4).
+
+### 7. Future improvements
+
+1. Read the Open-Meteo error from the Render logs and fix live weather (likely an outbound timeout or DNS setting).
+2. A paid instance with a persistent disk, or a small database, for saved runs.
+3. Run the backend and frontend test suites in CI before Render deploys.
+4. Move long simulations to a background job so the request does not wait 80 s.
+5. A platform-independent random stream, if identical results on every machine become a requirement.
 
 ---
 
@@ -4471,6 +4669,21 @@ Why each change was made, how it was verified, and what was deliberately **not**
 All code modifications made during the 2026-09-29 audit. All changes are submitted together on one branch for review. Frontend changes were made in the local working copy `stitch_agrooptimize_app/` and applied to the repo's `frontend/` (whose source was identical before the changes); the pre-change state is also in `_backups/stitch_agrooptimize_app_before_audit_2026-09-29.tar.gz`.
 
 Verification after all changes: backend **205/205 tests pass** (was 165/165); output fingerprint over 48 endpoint/pipeline results is **identical to HEAD** apart from the new additive provenance fields; frontend `oxlint` 0 warnings (was 3 in `src` + noise), `vite build` succeeds; UI flows exercised in Chrome with no console errors.
+
+### [Unreleased] – Render deployment
+
+#### Added
+- One-service deployment: FastAPI serves the built React app (`app/frontend.py`: `/assets` with a one-year cache, SPA fallback, API/docs paths keep JSON 404s); gzip for responses over 1 kB.
+- Two-stage `Dockerfile` (Node build → Python 3.13 runtime, binary wheels only, non-root user, `$PORT`), `.dockerignore`, `render.yaml` Blueprint.
+- `AGROOPTIMIZE_RESULTS_DIR` and `AGROOPTIMIZE_FRONTEND_DIST` settings; `requirements-dev.txt`.
+- `scripts/smoke_test_deployment.py` (34 checks, 17 result fingerprints); `tests/test_deployment.py`; frontend tests for the API base and lazy loading.
+- `DEPLOYMENT_GUIDE.md`, `DEPLOYMENT_REPORT.md`.
+
+#### Changed
+- `requirements.txt` pins exact versions and no longer contains test tools.
+- Production frontend builds call the API on the page origin; `VITE_API_BASE` still overrides it.
+- Each page is a lazily loaded chunk: initial JavaScript 476 → 211 kB (122 → 66 kB gzipped).
+- Optimisation, fuzzy and ranking results are unchanged (identical fingerprints against `main`).
 
 ### [Unreleased] – NSGA-II optimisation engine (second round)
 

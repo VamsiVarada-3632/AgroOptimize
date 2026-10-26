@@ -17,7 +17,7 @@ UI is finalised; this API is designed to be consumed by it (or by Swagger UI
 
 ```bash
 cd agrooptimize-backend
-pip install -r requirements.txt      # add --break-system-packages on some Linux setups
+pip install -r requirements-dev.txt  # runtime + test tools; add --break-system-packages on some Linux setups
 
 # Option A: CLI demo, no server needed -- also saves results/ files
 python3 run_demo.py --location Coimbatore --season Kharif --land 5 --budget 200000

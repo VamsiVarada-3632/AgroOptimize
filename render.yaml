@@ -1,12 +1,43 @@
+# Render Blueprint: one Docker web service that serves both the React
+# frontend and the FastAPI backend (see Dockerfile and app/frontend.py).
+# Guide: docs/handbook/DEPLOYMENT_GUIDE.md
 services:
   - type: web
-    name: agrooptimize-backend
+    name: agrooptimize
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
     plan: free
     region: singapore
-    envVars:
-      - key: CORS_ALLOW_ORIGINS
-        value: https://agrooptimize.vercel.app
     healthCheckPath: /health
+    autoDeploy: true
+    # Rebuild only when something that goes into the image changes.
+    buildFilter:
+      paths:
+        - app/**
+        - data/**
+        - frontend/src/**
+        - frontend/index.html
+        - frontend/package.json
+        - frontend/package-lock.json
+        - frontend/vite.config.js
+        - requirements.txt
+        - Dockerfile
+        - .dockerignore
+    envVars:
+      # "original" reproduces the published NSGA-II results exactly.
+      - key: AGROOPTIMIZE_NSGA2_MODE
+        value: original
+      # CORS_ALLOW_ORIGINS is not needed: the frontend is served from the
+      # same origin. Set it (comma-separated) only for a frontend hosted
+      # elsewhere.
+    # Saved runs and simulations live in /app/results, which on the free
+    # plan is reset whenever the service restarts, sleeps or redeploys.
+    # To keep them, switch to a paid plan and uncomment:
+    #
+    # disk:
+    #   name: agrooptimize-results
+    #   mountPath: /var/data
+    #   sizeGB: 1
+    #
+    # and add the env var AGROOPTIMIZE_RESULTS_DIR=/var/data/results.
