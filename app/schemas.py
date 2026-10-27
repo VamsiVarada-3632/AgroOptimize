@@ -273,6 +273,7 @@ class SavedRunSummaryOut(BaseModel):
     season: str
     year: int
     preference: Optional[str] = None
+    ranking: Optional[str] = None
     saved_at: Optional[str] = None
     n_plans: int
     client_id: Optional[str] = None

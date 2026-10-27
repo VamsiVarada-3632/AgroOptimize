@@ -442,6 +442,7 @@ def get_history(location: str, client_id: str | None = None) -> dict:
             "status": "Completed",
             "num_plans": summary["n_plans"],
             "preference": summary.get("preference") or "balanced",
+            "ranking": summary.get("ranking"),
             "fuzzy_weights": record["fuzzy_assessment"],
             "is_estimated": False,
         })

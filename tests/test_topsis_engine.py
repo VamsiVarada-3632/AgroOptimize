@@ -221,6 +221,12 @@ class TestSavedRuns:
         out = topsis_service.rerank_saved_run(old, "profit")
         assert out["ranked_over"] == "returned_plans" and out["plans_ranked"] == len(saved["plans"])
 
+    def test_summary_names_the_ranking(self, saved):
+        from pathlib import Path as _P
+        assert results_store._run_summary(_P("x.json"), saved)["ranking"] == "Water saving"
+        old = {**saved, "meta": {k: v for k, v in saved["meta"].items() if k != "topsis"}}
+        assert results_store._run_summary(_P("x.json"), old)["ranking"] is None
+
     def test_explanation_section(self, saved):
         exp = es.explain_saved_run(saved, rank=2)
         t = exp["topsis"]

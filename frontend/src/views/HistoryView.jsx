@@ -16,7 +16,7 @@ function adaptHistory(apiHistory) {
     targetYield: h.target_yield,
     estCost: h.est_cost,
     status: h.status,
-    details: `${h.num_plans} Pareto-optimal plan(s) generated (preference: ${h.preference || 'balanced'}).` +
+    details: `${h.num_plans} Pareto-optimal plan(s) generated (ranking: ${h.ranking || h.preference || 'balanced'}).` +
       (h.fuzzy_weights
         ? ` Yield confidence ${Math.round(h.fuzzy_weights.yield_confidence * 100)}%, irrigation risk ${Math.round(h.fuzzy_weights.irrigation_risk * 100)}%.`
         : ''),
