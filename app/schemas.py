@@ -7,9 +7,55 @@ from typing import Any, Dict, List, Literal, Optional
 from pydantic import BaseModel, Field, model_validator
 
 Preference = Literal["balanced", "max_yield", "min_cost", "min_water", "min_env_impact"]
+RankingProfile = Literal["balanced", "profit", "water", "sustainability", "low_cost", "custom"]
 
 
-class FarmPlanRequest(BaseModel):
+class CustomWeightsIn(BaseModel):
+    """TOPSIS weight per decision criterion for profile 'custom'
+    (app/decision/criteria.py). Omitted criteria get 0; the weights must
+    sum to 1."""
+    yield_: Optional[float] = Field(None, ge=0, le=1, alias="yield")
+    market_price: Optional[float] = Field(None, ge=0, le=1)
+    income: Optional[float] = Field(None, ge=0, le=1)
+    cost: Optional[float] = Field(None, ge=0, le=1)
+    water: Optional[float] = Field(None, ge=0, le=1)
+    env: Optional[float] = Field(None, ge=0, le=1)
+    budget: Optional[float] = Field(None, ge=0, le=1)
+    soil: Optional[float] = Field(None, ge=0, le=1)
+    land: Optional[float] = Field(None, ge=0, le=1)
+    rainfall: Optional[float] = Field(None, ge=0, le=1)
+
+    model_config = {"populate_by_name": True, "extra": "forbid"}
+
+    @model_validator(mode="after")
+    def _sum_to_one(self):
+        from app.decision.profiles import validate_custom_weights
+
+        validate_custom_weights(self.as_dict())
+        return self
+
+    def as_dict(self) -> dict:
+        d = self.model_dump(by_alias=True)
+        return {k: v for k, v in d.items() if v is not None}
+
+
+class RankingProfileIn(BaseModel):
+    """Optional ranking profile of a request. Unset keeps the preference
+    ranking (balanced by default)."""
+    profile: Optional[RankingProfile] = Field(
+        None, description="TOPSIS ranking profile. 'balanced' is the default ranking; 'custom' needs custom_weights.")
+    custom_weights: Optional[CustomWeightsIn] = None
+
+    @model_validator(mode="after")
+    def _profile_consistent(self):
+        if self.profile == "custom" and self.custom_weights is None:
+            raise ValueError("profile 'custom' needs custom_weights.")
+        if self.custom_weights is not None and self.profile != "custom":
+            raise ValueError("custom_weights can only be used with profile 'custom'.")
+        return self
+
+
+class FarmPlanRequest(RankingProfileIn):
     location: str = Field(..., examples=["Coimbatore"])
     season: str = Field(..., examples=["Kharif"])
     year: Optional[int] = Field(None, description="Defaults to the latest year in the dataset.")
@@ -43,6 +89,15 @@ class FarmPlanRequest(BaseModel):
     # appearing as another (or a brand-new) visitor's "completed" history.
     # Bounded because it is persisted verbatim into results/<run_id>.json.
     client_id: Optional[str] = Field(None, max_length=128)
+
+    # Also rank the front under every standard profile (meta.profile_comparison).
+    compare_profiles: bool = False
+
+    @model_validator(mode="after")
+    def _one_weighting(self):
+        if self.profile is not None and self.preference != "balanced":
+            raise ValueError("Use either a preference or a ranking profile, not both.")
+        return self
 
 
 class SoilOut(BaseModel):
@@ -143,6 +198,10 @@ class RunMeta(BaseModel):
     # Pareto-front quality indicators of the run (app/optimization/metrics.py).
     # Optional so runs saved before they existed still validate.
     quality_metrics: Optional["QualityMetricsOut"] = None
+    # Weights the ranking used (profile or preference), and the front ranked
+    # under every standard profile when requested (app/services/topsis_service.py).
+    topsis: Optional[Dict[str, Any]] = None
+    profile_comparison: Optional[Dict[str, Any]] = None
 
 
 class MeanObjectivesOut(BaseModel):
@@ -421,3 +480,4 @@ class SavedSimulationOut(BaseModel):
     saved_at: Optional[str] = None
     inputs: Dict[str, Any]
     result: SimulationOut
+

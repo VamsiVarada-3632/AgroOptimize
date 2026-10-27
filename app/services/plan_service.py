@@ -25,7 +25,9 @@ from app.optimization.metrics import run_quality_metrics
 from app.optimization.nsga2_runner import FarmPlan, extract_convergence_history, extract_pareto_plans, run_nsga2
 from app.optimization.problem import FarmPlanProblem
 from app.schemas import FarmPlanRequest
-from app.services import results_store
+from app.services import results_store, topsis_service
+from app.decision.criteria import crop_attributes
+from app.decision.profiles import resolve as resolve_profile
 
 
 def region_profile_payload(profile: pp.RegionSeasonProfile) -> dict:
@@ -149,12 +151,21 @@ def run_pipeline(
     )
 
     crop_confidence_map = dict(zip(problem.crop_vec.names, problem.crop_vec.crop_yield_confidence.tolist()))
-    ranked = ranking.rank_plans(
-        filtered_plans,
-        crop_confidence_map=crop_confidence_map,
-        preference=request.preference,
-        weights=list(adj.topsis_weights) if adj.topsis_weights is not None else None,
-    )
+    region_payload = region_profile_payload(profile)
+    spec = (resolve_profile(request.profile, request.custom_weights.as_dict() if request.custom_weights else None)
+            if request.profile is not None and adj.topsis_weights is None else None)
+    attrs = None
+    if filtered_plans and ((spec is not None and spec.needs_crop_attributes) or request.compare_profiles):
+        attrs = crop_attributes(region_payload, vars(assessment))
+    if spec is not None:
+        ranked = topsis_service.rank_front(filtered_plans, crop_confidence_map, spec, attrs, request.budget_rs)
+    else:
+        ranked = ranking.rank_plans(
+            filtered_plans,
+            crop_confidence_map=crop_confidence_map,
+            preference=request.preference,
+            weights=list(adj.topsis_weights) if adj.topsis_weights is not None else None,
+        )
 
     meta = {
         "algorithm": "NSGA-II",
@@ -176,7 +187,11 @@ def run_pipeline(
         # spread, spacing, constraint satisfaction, effort, mean objectives;
         # see app/optimization/metrics.py). Observes the result only.
         "quality_metrics": run_quality_metrics(result, problem),
+        "topsis": topsis_service.topsis_meta(spec, request.preference, adj.topsis_weights, request.budget_rs),
     }
+    if request.compare_profiles and filtered_plans:
+        reference = spec or resolve_profile("balanced")
+        meta["profile_comparison"] = topsis_service.profile_comparison(filtered_plans, attrs, request.budget_rs, reference)
     if adjustments is not None:
         meta["topsis_weights"] = (
             ranking.normalise_weights(adj.topsis_weights) if adj.topsis_weights is not None
@@ -190,11 +205,14 @@ def run_pipeline(
         }
 
     response = {
-        "region_profile": region_profile_payload(profile),
+        "region_profile": region_payload,
         "fuzzy_assessment": vars(assessment),
         "plans": ranking.to_dict_list(ranked),
         "convergence_history": convergence_history,
         "meta": meta,
+        # The feasible front the plans were ranked from, so a saved run can be
+        # re-ranked under another profile exactly. Not part of FarmPlanResponse.
+        "ranked_front": topsis_service.front_record(filtered_plans),
     }
     return PipelineRun(response=response, feasible_plans=raw_plans, problem=problem)
 
