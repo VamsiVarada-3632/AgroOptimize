@@ -229,6 +229,8 @@ Differences from classical TOPSIS (Hwang & Yoon, 1981): min–max instead of vec
 
 The "balanced" 0.30 was tuned empirically (documented in `ranking.py`) because cost, water and impact are strongly correlated with yield. Alternatives: knee-point selection (no weights), VIKOR (explicit compromise), PROMETHEE II (pairwise outranking), AHP-derived weights elicited from farmers.
 
+Ranking profiles over ten criteria (Profit, Water saving, Sustainability, Low cost, custom weights) rank the same front with the same maths; Balanced is this ranking unchanged. See [TOPSIS_DYNAMIC_ENGINE.md](TOPSIS_DYNAMIC_ENGINE.md) and the weight audit in [TOPSIS_WEIGHT_ANALYSIS.md](TOPSIS_WEIGHT_ANALYSIS.md).
+
 ### 5.3 Per-plan labels
 * **`normalized_scores`** – the flipped min–max values above (0–1, higher = better).
 * **`confidence_label`** – land-weighted crop confidence Σ shareᵢ·crop_confidenceᵢ bucketed ≥0.66 High, ≥0.33 Moderate, else Low. With the observed confidence range (≈0.44–0.88) "Low" never occurs.

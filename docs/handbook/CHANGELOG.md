@@ -4,6 +4,20 @@ All code modifications made during the 2026-09-29 audit. All changes are submitt
 
 Verification after all changes: backend **205/205 tests pass** (was 165/165); output fingerprint over 48 endpoint/pipeline results is **identical to HEAD** apart from the new additive provenance fields; frontend `oxlint` 0 warnings (was 3 in `src` + noise), `vite build` succeeds; UI flows exercised in Chrome with no console errors.
 
+## [Unreleased] – Dynamic TOPSIS engine
+
+### Added
+- Ranking criteria beyond the four objectives: market price, indicative income, budget headroom, soil suitability, land-use diversification, rainfall exposure (`app/decision/criteria.py`).
+- Ranking profiles Balanced (published weights), Profit priority, Water saving, Sustainability, Low cost (rank-sum weights over importance tiers) and custom weights summing to 1 (`app/decision/profiles.py`).
+- TOPSIS explanation and profile comparison (`app/decision/topsis_explain.py`, `app/services/topsis_service.py`); `explanation.topsis` section.
+- `POST /api/farm-plans` `profile`, `custom_weights`, `compare_profiles`; `meta.topsis`, `meta.profile_comparison`; `GET /api/topsis/profiles`; `GET|POST /api/results/{run_id}/topsis`; `ranking` label on saved-run summaries and History.
+- Run Optimization: profile selector with custom weight builder; TOPSIS ranking panel (weights, scores, reasoning, profile comparison, re-ranking the saved front); TOPSIS section in "Why this plan?".
+- `scripts/benchmark_topsis.py`, `benchmarks/topsis_*`; `TOPSIS_ARCHITECTURE.md`, `TOPSIS_WEIGHT_ANALYSIS.md`, `TOPSIS_EXPLAINABILITY.md`, `TOPSIS_DYNAMIC_ENGINE.md`, `TOPSIS_PROFILE_GUIDE.md`, `TOPSIS_COMPARISON.md`; 120 backend and 21 frontend tests.
+
+### Changed
+- Saved runs store the ranked front (`ranked_front`) for exact re-ranking (≈ +70 KB per 80-plan run).
+- Rankings without a profile are unchanged: 120/120 ranking fingerprints identical to `main`; Balanced is bit-identical to the published ranking on 120 benchmark fronts. NSGA-II, objectives and fuzzy outputs are untouched.
+
 ## [Unreleased] – Render deployment
 
 ### Added
