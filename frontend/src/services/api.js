@@ -305,6 +305,9 @@ export const api = {
     land_area_ha = 5.0,
     budget,
     preference = 'balanced',
+    profile,
+    custom_weights,
+    compare_profiles,
   } = {}) =>
     postAPI('/api/farm-plans', {
       location: extractDistrict(location),
@@ -313,9 +316,26 @@ export const api = {
       total_land_ha: land_area_ha,
       budget_rs: budget || undefined,
       preference,
+      profile: profile || undefined,
+      custom_weights: profile === 'custom' ? custom_weights : undefined,
+      compare_profiles: compare_profiles || undefined,
       save_results: true,
       client_id: getOrCreateClientId(),
     }),
+
+  /** GET /api/topsis/profiles -- ranking profiles, criteria and custom-weight rules. */
+  getTopsisProfiles: () => fetchAPI('/api/topsis/profiles'),
+
+  /**
+   * Re-rank a saved run's Pareto front under a ranking profile (only the
+   * TOPSIS stage runs). Standard profiles use GET, custom weights POST.
+   * @param {string} runId
+   * @param {{profile: string, customWeights?: Object, compare?: boolean}} options
+   */
+  rerankResult: (runId, { profile = 'balanced', customWeights, compare = true } = {}) =>
+    profile === 'custom'
+      ? postAPI(`/api/results/${encodeURIComponent(runId)}/topsis`, { profile, custom_weights: customWeights, compare })
+      : fetchAPI(`/api/results/${encodeURIComponent(runId)}/topsis`, { profile, compare }),
 
   /**
    * Scenario Simulation (backend: app/services/simulation_service.py).
