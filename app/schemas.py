@@ -481,3 +481,20 @@ class SavedSimulationOut(BaseModel):
     inputs: Dict[str, Any]
     result: SimulationOut
 
+
+# ---------------------------------------------------------------------------
+# Dynamic TOPSIS (app/services/topsis_service.py)
+# ---------------------------------------------------------------------------
+
+class TopsisRerankIn(RankingProfileIn):
+    profile: RankingProfile = "balanced"
+    compare: bool = True
+
+
+class TopsisRankingOut(BaseModel):
+    topsis: Dict[str, Any]
+    plans: List[RankedPlanOut]
+    ranked_over: str
+    plans_ranked: int
+    explanation: Dict[str, Any]
+    comparison: Optional[Dict[str, Any]] = None

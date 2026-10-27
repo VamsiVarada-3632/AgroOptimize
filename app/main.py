@@ -34,6 +34,8 @@ from app.schemas import (
     SimulationOut,
     SimulationRequest,
     SimulationSaveIn,
+    TopsisRankingOut,
+    TopsisRerankIn,
 )
 
 # Shared query-parameter validation for the dashboard endpoints. Land must
@@ -189,6 +191,47 @@ def get_result_explanation(run_id: str, rank: int = Query(1, ge=1, le=500, descr
         return explanation_service.explain_saved_run(record, rank=rank)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.get("/api/topsis/profiles")
+def get_topsis_profiles():
+    """Ranking profiles (weights per decision criterion, how they were
+    derived), every criterion's definition, and the custom-weight rules."""
+    from app.decision import profiles
+
+    return profiles.catalogue()
+
+
+def _rerank(run_id: str, body: TopsisRerankIn):
+    from app.services import results_store, topsis_service
+
+    record = results_store.load_run(run_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail=f"No saved run with id '{run_id}'.")
+    try:
+        return topsis_service.rerank_saved_run(
+            record, body.profile, body.custom_weights.as_dict() if body.custom_weights else None, compare=body.compare)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.get("/api/results/{run_id}/topsis", response_model=TopsisRankingOut)
+def get_result_topsis(
+    run_id: str,
+    profile: Literal["balanced", "profit", "water", "sustainability", "low_cost"] = Query(
+        "balanced", description="Ranking profile; use POST for custom weights."),
+    compare: bool = Query(True, description="Also rank the front under every standard profile."),
+):
+    """Re-rank a saved run's Pareto front under a ranking profile. Only the
+    TOPSIS stage runs: the plans, objectives and fuzzy assessment are the
+    saved ones."""
+    return _rerank(run_id, TopsisRerankIn(profile=profile, compare=compare))
+
+
+@app.post("/api/results/{run_id}/topsis", response_model=TopsisRankingOut)
+def post_result_topsis(run_id: str, body: TopsisRerankIn):
+    """As GET, with custom weights: {"profile": "custom", "custom_weights": {...}}."""
+    return _rerank(run_id, body)
 
 
 # ---------------------------------------------------------------------------
