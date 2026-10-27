@@ -76,8 +76,10 @@ def _plan_label(plan) -> dict:
     get = (lambda k: plan[k]) if isinstance(plan, dict) else (lambda k: getattr(plan, k))
     area = get("area_ha")
     total = sum(area) or 1.0
-    mix = sorted(((n, a / total) for n, a in zip(get("crop_names"), area)), key=lambda x: -x[1])
-    return {"crop_mix": [{"crop": n, "share_pct": round(100 * s, 1)} for n, s in mix if s >= 0.01][:4],
+    # Same rounding as the ranked plans' allocation_percent, so a plan reads the same everywhere.
+    pcts = ranking._round_percentages_to_100([a / total for a in area])
+    mix = sorted(zip(get("crop_names"), pcts), key=lambda x: -x[1])
+    return {"crop_mix": [{"crop": n, "share_pct": s} for n, s in mix if s >= 1.0][:4],
             "yield_tonnes": get("yield_tonnes"), "cost_rs": get("cost_rs"),
             "water_liters": get("water_liters"), "env_impact_score": get("env_impact_score")}
 

@@ -139,9 +139,11 @@ export function ProfileComparison({ comparison }) {
             ...rows.map((r) => ({ key: r.profile, label: r.label, format: (_, row) => `${row.byProfile[r.profile].toFixed(1)}%` }))],
           rows: weightCats }}
         >
-          <GroupedBarChart unit="%" digits={1} ariaLabel="Weight differences between profiles"
-            series={[{ label: refLabel }, { label: otherLabel }]}
-            categories={weightCats.map((c) => ({ key: c.key, label: c.label, values: [c.reference, c.byProfile[other] ?? 0] }))} />
+          <div className="max-w-2xl">
+            <GroupedBarChart unit="%" digits={1} ariaLabel="Weight differences between profiles"
+              series={[{ label: refLabel }, { label: otherLabel }]}
+              categories={weightCats.map((c) => ({ key: c.key, label: c.label, values: [c.reference, c.byProfile[other] ?? 0] }))} />
+          </div>
         </ChartCard>
       )}
     </div>
@@ -188,7 +190,7 @@ export default function TopsisPanel({ runId, initialProfile = 'balanced', initia
     <section className="space-y-4" aria-label="TOPSIS ranking">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h3 className="font-headline-md text-headline-md text-on-surface font-bold">Ranking profile</h3>
+          <h3 className="font-headline-md text-headline-md text-on-surface font-bold">TOPSIS ranking</h3>
           <p className="text-xs text-on-surface-variant">
             Changing the profile re-ranks this run's {data?.plans_ranked ?? ''} Pareto-optimal plans with TOPSIS. The plans themselves, the
             fuzzy assessment and the optimiser's objectives stay exactly the same.
@@ -266,7 +268,7 @@ export default function TopsisPanel({ runId, initialProfile = 'balanced', initia
           )}
 
           {tab === 'reasoning' && explanation && (
-            <div className="space-y-4">
+            <div className="grid gap-4 lg:grid-cols-2 items-start">
               <section className="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-4">
                 <h4 className="font-headline-md text-[16px] font-bold text-on-surface mb-2">Why the plans are in this order</h4>
                 <ul className="space-y-1.5 text-sm text-on-surface">
