@@ -355,6 +355,9 @@ class ExplanationOut(BaseModel):
     consistency_checks: Dict[str, Any]
     timeline: List[ExplanationItemOut]
     fuzzy_reasoning: Dict[str, Any]
+    # Weight -> contribution -> score of this plan and why it ranks above the
+    # next one (app/decision/topsis_explain.py). Optional for older clients.
+    topsis: Optional[Dict[str, Any]] = None
 
 
 # ---------------------------------------------------------------------------
