@@ -108,8 +108,9 @@ def explain_pair(bd: dict, a: int, b: int) -> dict:
         })
     rows.sort(key=lambda r: -abs(r["weighted_advantage"]))
     ca, cb = float(bd["closeness"][a]), float(bd["closeness"][b])
-    ahead = [r for r in rows if r["weighted_advantage"] > 1e-9]
-    behind = [r for r in rows if r["weighted_advantage"] < -1e-9]
+    # Criteria are named in the sentence only when the advantage shows at 3 decimals.
+    ahead = [r for r in rows if r["weighted_advantage"] >= 5e-4]
+    behind = [r for r in rows if r["weighted_advantage"] <= -5e-4]
     lead = "ranks above" if bd["ranks"][a] < bd["ranks"][b] else "ranks below"
 
     def phrase(items):
