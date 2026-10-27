@@ -1,0 +1,238 @@
+{
+ "available": true,
+ "profile": "profit",
+ "label": "Profit priority",
+ "weights": {
+  "yield": 0.23076923076923078,
+  "cost": 0.15384615384615385,
+  "water": 0.07692307692307693,
+  "env": 0.07692307692307693,
+  "market_price": 0.23076923076923078,
+  "income": 0.23076923076923078,
+  "budget": 0.0,
+  "soil": 0.0,
+  "land": 0.0,
+  "rainfall": 0.0
+ },
+ "criteria": [
+  {
+   "key": "yield",
+   "label": "Yield",
+   "direction": "benefit",
+   "weight": 0.23076923076923078
+  },
+  {
+   "key": "cost",
+   "label": "Production cost",
+   "direction": "cost",
+   "weight": 0.15384615384615385
+  },
+  {
+   "key": "water",
+   "label": "Water",
+   "direction": "cost",
+   "weight": 0.07692307692307693
+  },
+  {
+   "key": "env",
+   "label": "Environmental impact",
+   "direction": "cost",
+   "weight": 0.07692307692307693
+  },
+  {
+   "key": "market_price",
+   "label": "Market price",
+   "direction": "benefit",
+   "weight": 0.23076923076923078
+  },
+  {
+   "key": "income",
+   "label": "Income",
+   "direction": "benefit",
+   "weight": 0.23076923076923078
+  }
+ ],
+ "ranked_over": "ranked_front",
+ "plans_ranked": 40,
+ "plan": {
+  "rank": 1,
+  "closeness": 0.555671,
+  "distance_to_ideal": 0.266062,
+  "distance_to_anti_ideal": 0.332733,
+  "criteria": [
+   {
+    "criterion": "yield",
+    "label": "Yield",
+    "direction": "benefit",
+    "unit": "t",
+    "weight": 0.2308,
+    "value": 69.814,
+    "goodness": 1.0,
+    "weighted": 0.2308,
+    "gap_to_ideal": 0.0,
+    "gap_to_anti_ideal": 0.2308,
+    "share_of_distance_to_ideal_pct": 0.0,
+    "share_of_distance_to_anti_ideal_pct": 48.1
+   },
+   {
+    "criterion": "cost",
+    "label": "Production cost",
+    "direction": "cost",
+    "unit": "\u20b9",
+    "weight": 0.1538,
+    "value": 201301.11,
+    "goodness": 0.2101,
+    "weighted": 0.0323,
+    "gap_to_ideal": 0.1215,
+    "gap_to_anti_ideal": 0.0323,
+    "share_of_distance_to_ideal_pct": 20.9,
+    "share_of_distance_to_anti_ideal_pct": 0.9
+   },
+   {
+    "criterion": "water",
+    "label": "Water",
+    "direction": "cost",
+    "unit": "L",
+    "weight": 0.0769,
+    "value": 22654872.3,
+    "goodness": 0.5155,
+    "weighted": 0.0397,
+    "gap_to_ideal": 0.0373,
+    "gap_to_anti_ideal": 0.0397,
+    "share_of_distance_to_ideal_pct": 2.0,
+    "share_of_distance_to_anti_ideal_pct": 1.4
+   },
+   {
+    "criterion": "env",
+    "label": "Environmental impact",
+    "direction": "cost",
+    "unit": "index",
+    "weight": 0.0769,
+    "value": 198.788,
+    "goodness": 0.5176,
+    "weighted": 0.0398,
+    "gap_to_ideal": 0.0371,
+    "gap_to_anti_ideal": 0.0398,
+    "share_of_distance_to_ideal_pct": 1.9,
+    "share_of_distance_to_anti_ideal_pct": 1.4
+   },
+   {
+    "criterion": "market_price",
+    "label": "Market price",
+    "direction": "benefit",
+    "unit": "\u20b9/quintal",
+    "weight": 0.2308,
+    "value": 721.166,
+    "goodness": 0.0,
+    "weighted": 0.0,
+    "gap_to_ideal": 0.2308,
+    "gap_to_anti_ideal": 0.0,
+    "share_of_distance_to_ideal_pct": 75.2,
+    "share_of_distance_to_anti_ideal_pct": 0.0
+   },
+   {
+    "criterion": "income",
+    "label": "Income",
+    "direction": "benefit",
+    "unit": "\u20b9",
+    "weight": 0.2308,
+    "value": 302173.9527,
+    "goodness": 1.0,
+    "weighted": 0.2308,
+    "gap_to_ideal": 0.0,
+    "gap_to_anti_ideal": 0.2308,
+    "share_of_distance_to_ideal_pct": 0.0,
+    "share_of_distance_to_anti_ideal_pct": 48.1
+   }
+  ]
+ },
+ "versus_next": {
+  "rank_a": 1,
+  "rank_b": 2,
+  "closeness_a": 0.555671,
+  "closeness_b": 0.544982,
+  "criteria": [
+   {
+    "criterion": "water",
+    "label": "Water",
+    "weight": 0.0769,
+    "goodness_a": 0.5155,
+    "goodness_b": 0.0,
+    "weighted_advantage": 0.0397,
+    "d_best_a": 0.001389,
+    "d_best_b": 0.005917,
+    "d_worst_a": 0.001572,
+    "d_worst_b": 0.0
+   },
+   {
+    "criterion": "env",
+    "label": "Environmental impact",
+    "weight": 0.0769,
+    "goodness_a": 0.5176,
+    "goodness_b": 0.4592,
+    "weighted_advantage": 0.0045,
+    "d_best_a": 0.001377,
+    "d_best_b": 0.001731,
+    "d_worst_a": 0.001585,
+    "d_worst_b": 0.001248
+   },
+   {
+    "criterion": "yield",
+    "label": "Yield",
+    "weight": 0.2308,
+    "goodness_a": 1.0,
+    "goodness_b": 0.9963,
+    "weighted_advantage": 0.0008,
+    "d_best_a": 0.0,
+    "d_best_b": 1e-06,
+    "d_worst_a": 0.053254,
+    "d_worst_b": 0.052865
+   },
+   {
+    "criterion": "cost",
+    "label": "Production cost",
+    "weight": 0.1538,
+    "goodness_a": 0.2101,
+    "goodness_b": 0.214,
+    "weighted_advantage": -0.0006,
+    "d_best_a": 0.014768,
+    "d_best_b": 0.014622,
+    "d_worst_a": 0.001045,
+    "d_worst_b": 0.001084
+   },
+   {
+    "criterion": "income",
+    "label": "Income",
+    "weight": 0.2308,
+    "goodness_a": 1.0,
+    "goodness_b": 0.9985,
+    "weighted_advantage": 0.0003,
+    "d_best_a": 0.0,
+    "d_best_b": 0.0,
+    "d_worst_a": 0.053254,
+    "d_worst_b": 0.053097
+   },
+   {
+    "criterion": "market_price",
+    "label": "Market price",
+    "weight": 0.2308,
+    "goodness_a": 0.0,
+    "goodness_b": 0.0003,
+    "weighted_advantage": -0.0001,
+    "d_best_a": 0.053254,
+    "d_best_b": 0.05322,
+    "d_worst_a": 0.0,
+    "d_worst_b": 0.0
+   }
+  ],
+  "summary": "Plan #1 ranks above plan #2 (closeness 0.5557 vs 0.5450). It is better on water (+0.040), environmental impact (+0.004), yield (+0.001) and worse on production cost (-0.001)."
+ },
+ "versus_previous": null,
+ "rank_by_profile": {
+  "balanced": 4,
+  "profit": 1,
+  "water": 25,
+  "sustainability": 27,
+  "low_cost": 31
+ }
+}

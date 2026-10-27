@@ -220,6 +220,48 @@ function TimelineSection({ timeline }) {
   );
 }
 
+export function TopsisSection({ topsis }) {
+  const p = topsis.plan;
+  return (
+    <Section icon="leaderboard" title={`TOPSIS score: ${p.closeness.toFixed(4)} (rank #${p.rank} of ${topsis.plans_ranked})`}
+      subtitle={`Profile: ${topsis.label}. Weight → weighted value → share of the distance to the best plan.`}>
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="text-left text-on-surface-variant border-b border-outline-variant/40">
+              <th scope="col" className="py-1.5 pr-3 font-semibold">Criterion</th>
+              <th scope="col" className="py-1.5 pr-3 font-semibold">Weight</th>
+              <th scope="col" className="py-1.5 pr-3 font-semibold">Normalised</th>
+              <th scope="col" className="py-1.5 pr-3 font-semibold">Contribution</th>
+              <th scope="col" className="py-1.5 pr-3 font-semibold">Share of gap to best</th>
+            </tr>
+          </thead>
+          <tbody>
+            {p.criteria.map((r) => (
+              <tr key={r.criterion} className="border-b border-outline-variant/20">
+                <td className="py-1.5 pr-3">{r.label}</td>
+                <td className="py-1.5 pr-3">{(r.weight * 100).toFixed(1)}%</td>
+                <td className="py-1.5 pr-3">{r.goodness.toFixed(2)}</td>
+                <td className="py-1.5 pr-3">{r.weighted.toFixed(3)}</td>
+                <td className="py-1.5 pr-3">{r.share_of_distance_to_ideal_pct.toFixed(0)}%</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <ul className="mt-3 space-y-1 text-xs text-on-surface-variant list-disc pl-5">
+        {topsis.versus_previous && <li>{topsis.versus_previous.summary}</li>}
+        {topsis.versus_next && <li>{topsis.versus_next.summary}</li>}
+        {topsis.rank_by_profile && (
+          <li>Rank under each profile: {Object.entries(topsis.rank_by_profile).map(([k, v]) => `${PROFILE_LABELS[k] || k} #${v}`).join(', ')}.</li>
+        )}
+      </ul>
+    </Section>
+  );
+}
+
+const PROFILE_LABELS = { balanced: 'Balanced', profit: 'Profit', water: 'Water saving', sustainability: 'Sustainability', low_cost: 'Low cost' };
+
 export function ExplanationPanel({ explanation }) {
   const e = explanation;
   return (
@@ -285,6 +327,8 @@ export function ExplanationPanel({ explanation }) {
           <ItemList items={e.alternatives} empty="" />
         </Section>
       )}
+
+      {e.topsis?.available && <TopsisSection topsis={e.topsis} />}
 
       <TimelineSection timeline={e.timeline} />
 
