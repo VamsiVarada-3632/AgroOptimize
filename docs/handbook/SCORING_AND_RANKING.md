@@ -24,6 +24,8 @@ Important: "High yield" means *high relative to the other plans in this run*, no
 
 Unknown preference strings fall back to balanced (unreachable through the API because `Preference` is a `Literal`).
 
+Ranking profiles (Balanced, Profit priority, Water saving, Sustainability, Low cost, custom) and their weights over ten criteria: [TOPSIS_PROFILE_GUIDE.md](TOPSIS_PROFILE_GUIDE.md). Audit of the weights above: [TOPSIS_WEIGHT_ANALYSIS.md](TOPSIS_WEIGHT_ANALYSIS.md).
+
 ## 3. Comparison page (`GET /api/comparison`, `ComparisonView.jsx`)
 
 ### 3.1 Plan selection

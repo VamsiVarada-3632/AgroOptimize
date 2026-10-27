@@ -10,7 +10,7 @@ import { CHART, niceTicks, formatNumber } from './chartTheme';
  * orientation: 'vertical' (default) | 'horizontal' (better for long labels)
  */
 export default function BarChart({
-  data, unit = '', digits = 0, orientation = 'vertical', referenceLabel, height, ariaLabel,
+  data, unit = '', digits = 0, orientation = 'vertical', referenceLabel, valueLabel = 'Observed', height, ariaLabel,
 }) {
   const [hover, setHover] = useState(null);
   const horizontal = orientation === 'horizontal';
@@ -76,7 +76,7 @@ export default function BarChart({
       </svg>
       {referenceLabel && data.some((d) => d.reference !== undefined && d.reference !== null) && (
         <div className="flex gap-4 text-xs text-on-surface-variant mt-1">
-          <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm" style={{ background: CHART.accent }}></span>Observed</span>
+          <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm" style={{ background: CHART.accent }}></span>{valueLabel}</span>
           <span className="flex items-center gap-1.5"><span className="inline-block w-4 border-t-2" style={{ borderColor: CHART.reference }}></span>{referenceLabel}</span>
         </div>
       )}

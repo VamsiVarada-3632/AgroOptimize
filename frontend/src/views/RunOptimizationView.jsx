@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api, DISTRICTS, SEASONS, PREFERENCES, ApiError, describeApiError } from '../services/api';
 import { ExplanationModal } from '../components/ExplanationPanel';
+import ProfileSelector from '../components/topsis/ProfileSelector';
+import TopsisPanel from '../components/topsis/TopsisPanel';
+import { BALANCED_PERCENT, toFractions, validateCustomPercent } from '../utils/topsisView';
 
 const stages = [
   { step: 1, label: 'Reading soil & rainfall data', progress: 25 },
@@ -30,6 +33,9 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
   const [landArea, setLandArea] = useState(landSizeHa);
   const [budget, setBudget] = useState('');
   const [preference, setPreference] = useState('balanced');
+  const [profile, setProfile] = useState('balanced');
+  const [customPercent, setCustomPercent] = useState({ ...BALANCED_PERCENT });
+  const [rankedWith, setRankedWith] = useState({ profile: 'balanced', customPercent: undefined });
 
   const [isRunning, setIsRunning] = useState(false);
   const [step, setStep] = useState(0);
@@ -98,11 +104,22 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
     return () => clearTimeout(timer);
   }, [isRunning, step]);
 
+  // A classic single-objective preference and a ranking profile are
+  // alternatives; the profile is used unless a classic preference is chosen.
+  const useProfile = preference === 'balanced';
+  const customCheck = validateCustomPercent(customPercent);
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (useProfile && profile === 'custom' && !customCheck.valid) {
+      setError(customCheck.errors.join(' '));
+      return;
+    }
     setError('');
     setResult(null);
     runParamsRef.current = { district, season };
+    const rankProfile = useProfile && profile !== 'balanced' ? profile : undefined;
+    setRankedWith({ profile: useProfile ? profile : 'balanced', customPercent: profile === 'custom' ? { ...customPercent } : undefined });
     pendingRunRef.current = api.runOptimization({
       location: district,
       season,
@@ -110,6 +127,8 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
       land_area_ha: Number(landArea) || 5,
       budget: budget ? Number(budget) : undefined,
       preference,
+      profile: rankProfile,
+      custom_weights: rankProfile === 'custom' ? toFractions(customPercent) : undefined,
     });
     setIsRunning(true);
     setStep(0);
@@ -135,7 +154,7 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
   return (
     <div className="w-full animate-[fadeIn_0.2s_ease-out]">
       {!isRunning ? (
-        <div className="max-w-3xl mx-auto space-y-gutter">
+        <div className={`${result && !error ? 'max-w-5xl' : 'max-w-3xl'} mx-auto space-y-gutter`}>
           <header className="mb-8">
             <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary font-bold">Run Optimization</h2>
             <p className="font-body-md text-body-md text-on-surface-variant mt-2">
@@ -184,6 +203,13 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
                       <p className="font-body-lg text-body-lg font-bold text-on-surface">{topPlan.confidence_label}</p>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {result.run_id && (
+                <div className="mb-6">
+                  <TopsisPanel key={result.run_id} runId={result.run_id}
+                    initialProfile={rankedWith.profile} initialCustomPercent={rankedWith.customPercent} />
                 </div>
               )}
 
@@ -288,15 +314,22 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
                 />
               </div>
 
+              <ProfileSelector profile={profile} onProfileChange={setProfile} customPercent={customPercent} onCustomChange={setCustomPercent} />
+
               <div>
-                <label className="block font-label-sm text-label-sm text-on-surface-variant mb-1 font-semibold">Optimization Preference</label>
+                <label className="block font-label-sm text-label-sm text-on-surface-variant mb-1 font-semibold">Classic preference (optional)</label>
                 <select
                   value={preference}
                   onChange={(e) => setPreference(e.target.value)}
                   className="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-bright text-on-surface font-body-md outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"
                 >
-                  {PREFERENCES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+                  {PREFERENCES.map((p) => <option key={p.value} value={p.value}>{p.value === 'balanced' ? 'None – use the ranking profile' : p.label}</option>)}
                 </select>
+                {!useProfile && (
+                  <p className="text-xs text-on-surface-variant mt-1.5">
+                    Plans will be ranked with the classic '{PREFERENCES.find((p) => p.value === preference)?.label}' weights instead of the ranking profile.
+                  </p>
+                )}
               </div>
 
               <button

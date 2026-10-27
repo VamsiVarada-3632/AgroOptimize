@@ -82,12 +82,28 @@ class ExplanationContext:
     subject: dict = field(default_factory=dict)   # what is being explained (run id / plan key)
     weights: Optional[List[float]] = None         # explicit TOPSIS weights used for the ranking, if any
     price_factor: float = 1.0                     # scenario market-price factor for the indicative economics
+    front: Optional[List[dict]] = None            # the full ranked front, when the saved run stored it
+
+    def ranking_profile(self) -> Optional[dict]:
+        """meta.topsis of a run ranked by a profile other than balanced."""
+        topsis = self.meta.get("topsis") or {}
+        return topsis if topsis.get("profile") not in (None, "balanced") else None
 
     def topsis_weights(self) -> np.ndarray:
-        return ranking.normalise_weights(self.weights) if self.weights is not None else ranking.preference_weights(self.preference)
+        if self.weights is not None:
+            return ranking.normalise_weights(self.weights)
+        profile = self.ranking_profile()
+        if profile is not None:
+            return np.array([profile["weights"][k] for k in ranking.OBJECTIVES])
+        return ranking.preference_weights(self.preference)
 
     def weights_label(self) -> str:
-        return "custom priority weights" if self.weights is not None else f"the '{self.preference}' preference"
+        if self.weights is not None:
+            return "custom priority weights"
+        profile = self.ranking_profile()
+        if profile is not None:
+            return f"the '{profile['label']}' ranking profile"
+        return f"the '{self.preference}' preference"
 
 
 # ---------------------------------------------------------------------------
@@ -117,6 +133,7 @@ def context_from_saved_run(record: dict, rank: int = 1, price_factor: float = 1.
         subject={"kind": "saved_run", "run_id": record.get("run_id"), "rank": rank},
         weights=meta.get("topsis_weights") if (meta.get("adjustments") or {}).get("custom_weights") else None,
         price_factor=price_factor,
+        front=record.get("ranked_front"),
     )
 
 
@@ -816,7 +833,66 @@ def explain(ctx: ExplanationContext) -> dict:
         # importance from fuzzy.engine.explain_inference; existing keys unchanged.
         "fuzzy_reasoning": {"input_memberships": timeline[1]["evidence"]["memberships"], "fired_rules": fired,
                             "inference": fz.explain_inference(*fuzzy_inputs)},
+        "topsis": _topsis_section(ctx, plan),
     }
+
+
+def _ranking_spec(ctx: ExplanationContext):
+    from app.decision.criteria import CRITERIA
+    from app.decision.profiles import WeightSpec
+
+    profile = ctx.ranking_profile()
+    if profile is not None:
+        return WeightSpec(profile["profile"], profile["label"], {c: float(profile["weights"].get(c, 0.0)) for c in CRITERIA})
+    w = dict(zip(ranking.OBJECTIVES, map(float, ctx.topsis_weights())))
+    name = "custom" if ctx.weights is not None else ("balanced" if ctx.preference == "balanced" else "preference")
+    label = "Custom priorities" if ctx.weights is not None else (
+        "Balanced" if ctx.preference == "balanced" else f"Preference '{ctx.preference}'")
+    return WeightSpec(name, label, {c: w.get(c, 0.0) for c in CRITERIA})
+
+
+def _topsis_section(ctx: ExplanationContext, plan: dict) -> dict:
+    """Weight -> contribution -> score of this plan, why it ranks above the
+    next plan and below the previous one, and its rank under every standard
+    ranking profile. Ranked over the run's full front when it was stored."""
+    from app.decision import topsis_explain as tx
+    from app.decision.criteria import crop_attributes
+    from app.services import topsis_service
+
+    spec = _ranking_spec(ctx)
+    plans, source = (ctx.front, "ranked_front") if ctx.front else (ctx.plans, "returned_plans")
+    try:
+        attrs = crop_attributes(ctx.region_profile, ctx.fuzzy)
+    except (KeyError, ValueError):
+        attrs = None
+    if attrs is None and spec.needs_crop_attributes:
+        return {"available": False, "reason": "The crop data this run was ranked with is not available."}
+    values = topsis_service.criteria_for(plans, attrs, ctx.budget_rs, spec.active)
+    bd = tx.breakdown(values, spec)
+    if source == "ranked_front":
+        key = (plan["yield_tonnes"], plan["cost_rs"], plan["water_liters"], plan["env_impact_score"])
+        matches = [i for i, p in enumerate(plans)
+                   if (p["yield_tonnes"], p["cost_rs"], p["water_liters"], p["env_impact_score"]) == key]
+        idx = next((i for i in matches if bd["ranks"][i] == plan["rank"]), matches[0] if matches else None)
+        if idx is None:
+            plans, source, idx = ctx.plans, "returned_plans", ctx.plan_index
+            values = topsis_service.criteria_for(plans, attrs, ctx.budget_rs, spec.active)
+            bd = tx.breakdown(values, spec)
+    else:
+        idx = ctx.plan_index
+    order = sorted(range(len(plans)), key=lambda i: bd["ranks"][i])
+    pos = order.index(idx)
+    out = {
+        "available": True, **spec.as_dict(), "ranked_over": source, "plans_ranked": len(plans),
+        "plan": tx.plan_terms(bd, idx),
+        "versus_next": tx.explain_pair(bd, idx, order[pos + 1]) if pos + 1 < len(order) else None,
+        "versus_previous": tx.explain_pair(bd, idx, order[pos - 1]) if pos > 0 else None,
+    }
+    if attrs is not None:
+        all_values = topsis_service.criteria_for(plans, attrs, ctx.budget_rs)
+        out["rank_by_profile"] = {s.profile: tx.breakdown(all_values, s)["ranks"][idx]
+                                  for s in topsis_service.standard_specs()}
+    return out
 
 
 def explain_saved_run(record: dict, rank: int = 1) -> dict:

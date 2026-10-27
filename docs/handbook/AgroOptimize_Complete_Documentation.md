@@ -1,6 +1,6 @@
 # AgroOptimize — Complete Project Documentation (single file)
 
-All 43 handbook documents combined and grouped into 6 parts. Cross-references point to the section of the same name below.
+All 49 handbook documents combined and grouped into 6 parts. Cross-references point to the section of the same name below.
 
 ## Table of Contents
 
@@ -35,6 +35,12 @@ All 43 handbook documents combined and grouped into 6 parts. Cross-references po
   - [NSGAII_ARCHITECTURE](#doc-nsgaii-architecture)
   - [NSGAII_IMPROVEMENTS](#doc-nsgaii-improvements)
   - [NSGAII_BENCHMARK_RESULTS](#doc-nsgaii-benchmark-results)
+  - [TOPSIS_ARCHITECTURE](#doc-topsis-architecture)
+  - [TOPSIS_WEIGHT_ANALYSIS](#doc-topsis-weight-analysis)
+  - [TOPSIS_DYNAMIC_ENGINE](#doc-topsis-dynamic-engine)
+  - [TOPSIS_PROFILE_GUIDE](#doc-topsis-profile-guide)
+  - [TOPSIS_EXPLAINABILITY](#doc-topsis-explainability)
+  - [TOPSIS_COMPARISON](#doc-topsis-comparison)
   - [EXPLAINABILITY](#doc-explainability)
   - [SCORING_AND_RANKING](#doc-scoring-and-ranking)
   - [OPTIMIZATION_PIPELINE](#doc-optimization-pipeline)
@@ -912,6 +918,8 @@ Base URL: local `http://localhost:8000`; production `https://agrooptimize-backen
 | POST | `/api/farm-plans` | Full pipeline, optionally saved | RunOptimization | ≈300 ms (pop 80 × 200 gen) |
 | GET | `/api/results` | List saved runs | – | O(#runs), cached by mtime |
 | GET | `/api/results/{run_id}` | One saved run | Reports | ~1 ms |
+| GET | `/api/topsis/profiles` | Ranking profiles, weights, criteria, custom-weight rules | – | ~1 ms |
+| GET / POST | `/api/results/{run_id}/topsis` | Re-rank a saved run under a ranking profile or custom weights | Run Optimization | a few ms |
 | GET | `/api/weather/{district}` | Live weather (Open-Meteo) or CSV fallback | Dashboard (×5 calls) | network-bound, ≤5 s timeout |
 | GET | `/api/dashboard/{district}` | KPI cards, actions, crop split | Dashboard | 42 ms |
 | GET | `/api/history/{district}` | This browser's saved runs | History, Reports | ~1 ms |
@@ -984,7 +992,10 @@ Request (`FarmPlanRequest`):
 | year | int | must exist for location | latest (2024) | |
 | total_land_ha | float | > 0 | required | farm size |
 | budget_rs | float | > 0 | none | hard constraint cost ≤ budget |
-| preference | enum | balanced, max_yield, min_cost, min_water, min_env_impact | balanced | TOPSIS weights |
+| preference | enum | balanced, max_yield, min_cost, min_water, min_env_impact | balanced | TOPSIS weights (classic preferences) |
+| profile | enum | balanced, profit, water, sustainability, low_cost, custom | none | ranking profile ([TOPSIS_PROFILE_GUIDE.md](#doc-topsis-profile-guide)); cannot be combined with a preference other than balanced |
+| custom_weights | object | criterion → 0–1, summing to 1; criteria: yield, market_price, income, cost, water, env, budget, soil, land, rainfall | none | required for, and only allowed with, profile custom |
+| compare_profiles | bool | | false | also return `meta.profile_comparison` |
 | max_candidate_crops | int | 2–12 | 6 | top-N by revenue |
 | max_cost_rs, max_water_liters, min_yield_tonnes, max_env_impact | float | ≥ 0 | none | post-hoc filters |
 | pop_size | int | 8–300 | 80 | |
@@ -1015,12 +1026,14 @@ Response (`FarmPlanResponse`, ≈33 KB with 50 plans):
  "run_id": "salem_kharif_2024_<UTC timestamp>",
  "saved_files": {"run_id":"…","json_path":"…/results/….json","plans_csv_path":"…","convergence_csv_path":"…","convergence_plot_path":"…"}}
 ```
+`meta.topsis` (optional; absent in runs saved before it existed) records the weights that ranked the run: `profile` (null for a classic preference other than balanced, or for simulation priorities), `label`, `preference`, `weights` (all ten criteria), `criteria` (those with a positive weight, with label and direction), `method`, `budget_active`. With `compare_profiles: true`, `meta.profile_comparison` holds the front ranked under every standard profile ([TOPSIS_COMPARISON.md](#doc-topsis-comparison)). Saved runs also store the ranked front (`ranked_front`, not returned by the API) so they can be re-ranked exactly.
+
 `meta.quality_metrics` (optional; absent in runs saved before it existed) describes the quality of the run's Pareto front: hypervolume and its ratio to a reference front, generational distance (GD), inverted generational distance (IGD), IGD+, generalised spread and spacing, on objectives normalised to the reference front's ideal and nadir, where the reference is the front plus each plan's copy with irrigation and fertiliser multipliers at 0.7 (never worse in this model). Lower is better for GD, IGD, IGD+, spread and spacing. Values that cannot be computed (no feasible plan, fewer than two plans) are `null`. See [NSGAII_IMPROVEMENTS.md](#doc-nsgaii-improvements) §2.3.
 
 (`convergence_history` values above are placeholders showing the shape; it has one entry per generation when `save_results` is true and is `[]` otherwise. `run_id`/`saved_files` are `null` when not saved.) Units: `yield_tonnes`, `cost_rs`, `water_liters`, `env_impact_score` are **totals over `total_land_ha`**, not per hectare. `saved_files` exposes absolute server paths (minor information disclosure – see [SECURITY_REVIEW.md](#doc-security-review)).
 
 ### GET /api/results
-List of `{run_id, location, season, year, preference, saved_at, n_plans, client_id}` newest-first by filename. `client_id` is **always null** in this response (redacted 2026-09-29).
+List of `{run_id, location, season, year, preference, ranking, saved_at, n_plans, client_id}` (`ranking`: label of the weights that ranked the run, null for runs saved before ranking profiles) newest-first by filename. `client_id` is **always null** in this response (redacted 2026-09-29).
 
 ### GET /api/results/{run_id}
 The stored record validated through `FarmPlanResponse` (so extra stored keys such as `saved_at`, `client_id` are dropped). `run_id` must match `^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$`; anything else, a missing file, or a corrupt file → 404.
@@ -1095,9 +1108,28 @@ Cost/water/impact minima are identical by construction (fuzzy only scales yield)
 ### CORS
 Allowed origins: `http://localhost:5173`, `http://localhost:5174`, `http://localhost:3000` plus comma-separated `CORS_ALLOW_ORIGINS` (production: `https://agrooptimize.vercel.app`). All methods and headers; `allow_credentials=True` (not needed – no cookies are used).
 
+### GET /api/topsis/profiles
+
+`{default_profile, profiles: [{profile, label, summary, weights, tiers?, method}], criteria: [{key, label, direction, unit, source}], custom: {default_weights, sum_to, tolerance, min, max}}`.
+
+### GET /api/results/{run_id}/topsis?profile=&compare=  and  POST /api/results/{run_id}/topsis
+
+Re-ranks a saved run's front with TOPSIS only (no NSGA-II re-run). GET takes a standard `profile` (default balanced) and `compare` (default true). POST takes `{"profile": "custom", "custom_weights": {...}, "compare": true}` (or any standard profile). Response (`TopsisRankingOut`):
+
+| Field | Meaning |
+|---|---|
+| `topsis` | as `meta.topsis` |
+| `plans` | ranked plans (`RankedPlanOut`, top 50) |
+| `ranked_over` | `ranked_front` (the stored front) or `returned_plans` (older runs: the 50 saved plans) |
+| `plans_ranked` | number of plans ranked |
+| `explanation` | `ideal_best`, `ideal_worst`, the top 10 plans with weight → contribution → score per criterion, and `pairs` explaining each plan against the next ([TOPSIS_EXPLAINABILITY.md](#doc-topsis-explainability)) |
+| `comparison` | the front under all five profiles, when `compare` |
+
+Errors: 404 unknown run; 422 invalid profile or weights (e.g. not summing to 1); 400 a run without feasible plans.
+
 ### GET /api/results/{run_id}/explanation  and  GET /api/comparison/{district}/explanation
 
-Structured, data-derived explanation of one recommended plan (`ExplanationOut`, ≈19 KB). Query: `rank` (saved runs, 1–500, default 1) or `plan` = A | B | C plus `total_land_ha`, `budget_rs` (comparison). Top-level keys: `subject, summary, reasons, objectives, trade_offs, constraints, benefits, risks, historical_context, confidence, insights, alternatives, economics, crop_breakdown, consistency_checks, timeline, fuzzy_reasoning`. Every list item has `id, title, detail, source, evidence` (+ `status` for constraints, `severity` for risks). Abbreviated example (Salem Plan A):
+Structured, data-derived explanation of one recommended plan (`ExplanationOut`, ≈19 KB). Query: `rank` (saved runs, 1–500, default 1) or `plan` = A | B | C plus `total_land_ha`, `budget_rs` (comparison). Top-level keys: `subject, summary, reasons, objectives, trade_offs, constraints, benefits, risks, historical_context, confidence, insights, alternatives, economics, crop_breakdown, consistency_checks, timeline, fuzzy_reasoning`, and optional `topsis` (the plan's weight → contribution → score, `versus_previous`, `versus_next`, `rank_by_profile`). Every list item has `id, title, detail, source, evidence` (+ `status` for constraints, `severity` for risks). Abbreviated example (Salem Plan A):
 
 ```json
 {"summary": {"location": "Salem", "season": "Rabi", "year": 2024, "data_year_estimated": true, "preference": "balanced",
@@ -2305,6 +2337,8 @@ Differences from classical TOPSIS (Hwang & Yoon, 1981): min–max instead of vec
 | min_env_impact | 0.15 | 0.15 | 0.15 | 0.55 |
 
 The "balanced" 0.30 was tuned empirically (documented in `ranking.py`) because cost, water and impact are strongly correlated with yield. Alternatives: knee-point selection (no weights), VIKOR (explicit compromise), PROMETHEE II (pairwise outranking), AHP-derived weights elicited from farmers.
+
+Ranking profiles over ten criteria (Profit, Water saving, Sustainability, Low cost, custom weights) rank the same front with the same maths; Balanced is this ranking unchanged. See [TOPSIS_DYNAMIC_ENGINE.md](#doc-topsis-dynamic-engine) and the weight audit in [TOPSIS_WEIGHT_ANALYSIS.md](#doc-topsis-weight-analysis).
 
 #### 5.3 Per-plan labels
 * **`normalized_scores`** – the flipped min–max values above (0–1, higher = better).
@@ -3626,6 +3660,767 @@ Other figures:
 | Parallel evaluation vs serial (1–7 workers, with and without a budget, both modes, population 300) | identical |
 | Re-scored benchmark (shared metrics module vs the old inline functions) | identical HV, IGD+, spread, spacing on all runs |
 
+<a id="doc-topsis-architecture"></a>
+
+## TOPSIS Architecture
+
+How the ranking stage turns NSGA-II's Pareto front into ranked plans: every function, its inputs and outputs, and who calls it. Section 1–4 describe the published ranking as it was before the dynamic engine; section 5 shows what the engine added around it. Weights: [TOPSIS_WEIGHT_ANALYSIS.md](#doc-topsis-weight-analysis). The engine: [TOPSIS_DYNAMIC_ENGINE.md](#doc-topsis-dynamic-engine).
+
+### 1. Position in the pipeline
+
+```
+preprocessing ─► fuzzy assessment ─► NSGA-II (4 objectives) ─► feasible Pareto front (≤ population size plans)
+                                                                      │
+                                         ranking.filter_plans ◄───────┘   optional hard limits from the request
+                                                                      │
+                                         ranking.rank_plans  ◄────────┘   TOPSIS, sort, truncate to 50
+                                                                      │
+                                         RankedPlan list ─► API response, saved run, explanations, reports
+```
+
+TOPSIS never feeds back into the search. It only orders plans that NSGA-II already found, so the ranking stage can change without touching the optimiser, the objectives or the fuzzy outputs.
+
+### 2. Criteria
+
+The published ranking uses exactly the four NSGA-II objectives of each plan (`app/optimization/problem.py`):
+
+| Criterion | Plan field | Type | Meaning |
+|---|---|---|---|
+| yield | `yield_tonnes` | benefit | expected yield after the fuzzy confidence adjustment, tonnes |
+| cost | `cost_rs` | cost | fertiliser + pesticide + labour, ₹ |
+| water | `water_liters` | cost | irrigation water net of effective rainfall, litres |
+| env | `env_impact_score` | cost | √(nitrogen leaching proxy × carbon proxy) |
+
+All four are totals for the farm, so they share the land size and scale together.
+
+### 3. The TOPSIS computation (`app/decision/ranking.py`)
+
+For plans i = 1…m and criteria j = 1…4:
+
+| Step | Formula | Code |
+|---|---|---|
+| 1. Normalisation | n_ij = (x_ij − min_i x_ij) / (max_i x_ij − min_i x_ij); 0.5 for every plan when the column is constant | `_minmax_norm` |
+| 2. Benefit/cost | cost criteria are flipped, g_ij = 1 − n_ij, so 1 is always the best value in the set | `_minmax_norm(higher_is_better=False)` |
+| 3. Weighting | v_ij = w_j · g_ij | `np.column_stack(goodness) * w` |
+| 4. Ideal best | A⁺_j = max_i v_ij (= w_j unless the column is constant) | `M.max(axis=0)` |
+| 5. Ideal worst | A⁻_j = min_i v_ij (= 0 unless the column is constant) | `M.min(axis=0)` |
+| 6. Distances | D⁺_i = √Σ_j (v_ij − A⁺_j)², D⁻_i = √Σ_j (v_ij − A⁻_j)² | Euclidean, `np.sqrt(((M - ideal) ** 2).sum(axis=1))` |
+| 7. Relative closeness | C_i = D⁻_i / (D⁺_i + D⁻_i); 0.5 when both are 0 | `np.divide(..., where=denom > 1e-12)` |
+| 8. Ranking | sort by C_i rounded to 4 places, descending (stable), keep the top `MAX_RETURNED_PLANS` = 50, number 1…n | `rank_plans` |
+
+Differences from textbook TOPSIS (Hwang & Yoon 1981):
+
+* **Min–max instead of vector normalisation.** Every criterion spans exactly [0, 1] within the plan set, so the ideal is w and the anti-ideal 0 on every criterion. With vector normalisation a criterion with a narrow relative range would carry less effective weight than its nominal weight. The cost is that the scores are relative to this plan set only.
+* **Ranking on the rounded score.** Plans whose closeness agrees to 4 decimals keep NSGA-II's order. This keeps the API's `composite_score` and the order consistent.
+
+### 4. Functions and call sites
+
+| Function | Input → output | Called by |
+|---|---|---|
+| `filter_plans(plans, max_cost, max_water_liters, min_yield_tonnes, max_env_impact)` | FarmPlans → FarmPlans within the request's hard limits | `plan_service.run_pipeline` |
+| `preference_weights(preference)` | name → [yield, cost, water, env] weights (unknown → balanced) | `rank_plans`, `plan_service` (meta), `explanation_service`, `district_service`, `topsis_service` |
+| `normalise_weights(weights)` | 4 non-negative numbers → weights summing to 1 | `rank_plans` (simulation priority sliders), `plan_service`, `explanation_service` |
+| `topsis_scores(yields, costs, waters, envs, w)` | four columns + weights → (closeness, goodness columns) | `rank_plans`, `explanation_service._rank_under_all_preferences`, `district_service` (goodness only), `simulation_service` (goodness only, equal weights) |
+| `rank_plans(plans, crop_confidence_map, preference, max_plans, weights)` | FarmPlans → RankedPlans: rank, composite_score (C rounded to 4), `normalized_scores` (the goodness columns), `confidence_label`, `trade_off_summary`, rounded allocation | `plan_service`, `dashboard_service` (Analytics front, Comparison plans A/B/C), `explanation_service` (comparison context), benchmark and profiling scripts |
+| `to_dict_list(ranked)` | RankedPlans → dicts | everything that returns plans |
+
+Outputs per plan besides the score:
+
+* `normalized_scores`: the four goodness values (1 = best in this set).
+* `confidence_label`: land-weighted crop confidence, bucketed.
+* `trade_off_summary`: raw (unflipped) min–max position of each objective, worded High/Moderate/Low.
+* `allocation_percent`: largest-remainder rounding so shares sum to 100.00.
+
+#### Where weights come from
+
+| Source | Weights |
+|---|---|
+| `FarmPlanRequest.preference` (API, Run Optimization) | `_PREFERENCE_WEIGHTS[preference]` |
+| Scenario Simulation priorities (0–100 sliders) | `normalise_weights([yield, cost, water, env])` via `PipelineAdjustments.topsis_weights` |
+| Comparison page | balanced, max_yield and min_cost on one front (plans A, B, C) |
+| Analytics, District Intelligence | balanced |
+
+### 5. What the dynamic engine adds
+
+```
+                    ┌─────────────── app/decision/profiles.py ───────────────┐
+request.profile ───►│ resolve(profile, custom_weights) → WeightSpec          │
+                    └────────────────────────────────────────────────────────┘
+                                         │ weights over 10 criteria
+feasible front ──► app/decision/criteria.py plan_criteria() ──► raw criterion columns
+                                         │
+                   ranking.criteria_closeness() ──► closeness (same maths as §3)
+                                         │
+                   ranking.rank_plans(criteria_values, criteria_weights, criteria_directions)
+                                         │
+     app/decision/topsis_explain.py: breakdown · plan_terms · explain_pair · compare_profiles
+                                         │
+     app/services/topsis_service.py: rank_front · topsis_meta · profile_comparison · rerank_saved_run
+```
+
+* **`weighted_closeness(goodness, w)`** holds steps 3–7, unchanged. `topsis_scores` now calls it, and so does the new **`criteria_closeness(values, directions, weights)`**, which ranks over any criteria with a positive weight in the order given. With the four objectives and the balanced weights it returns exactly `topsis_scores`' array (tested bit for bit on real and random fronts).
+* **`rank_plans`** gains `criteria_values`, `criteria_weights` and `criteria_directions`. Without them it runs the original code path. `normalized_scores` always report the four objectives.
+* **Balanced is routed through the original path.** `topsis_service.rank_front` calls `rank_plans(preference="balanced")` for the Balanced profile, so its output is the published ranking by construction, not just by equivalence.
+* **The ranked front is stored** with saved runs (`ranked_front`, not part of the API response), so a run can be re-ranked later over exactly the plans it was ranked from.
+
+Every original call site in §4 is unchanged: Comparison, Analytics, District Intelligence and Scenario Simulation keep their preferences and slider weights.
+
+<a id="doc-topsis-weight-analysis"></a>
+
+## TOPSIS Weight Analysis
+
+An audit of the weights the published ranking uses: why each exists, how it was chosen, whether it is hard-coded or configurable, and whether it is justified. Numbers come from `scripts/benchmark_topsis.py` (120 Pareto fronts: 4 districts × 3 seasons, with and without a budget, seeds 0–4, published NSGA-II settings) unless stated otherwise. Raw results: `benchmarks/topsis_benchmark.json`.
+
+### 1. The weights
+
+| Preference | yield | cost | water | env | Defined in |
+|---|---|---|---|---|---|
+| balanced (default) | 0.300 | 0.2333 | 0.2333 | 0.2333 | `ranking._PREFERENCE_WEIGHTS`, from `_YIELD_GROUP_WEIGHT = 0.30` |
+| max_yield | 0.55 | 0.15 | 0.15 | 0.15 | same dict |
+| min_cost | 0.15 | 0.55 | 0.15 | 0.15 | same dict |
+| min_water | 0.15 | 0.15 | 0.55 | 0.15 | same dict |
+| min_env_impact | 0.15 | 0.15 | 0.15 | 0.55 | same dict |
+| Scenario Simulation priorities | user sliders 0–100, normalised | | | | `PrioritiesIn` → `normalise_weights` |
+
+### 2. Findings per weight
+
+#### 2.1 Balanced: yield 0.30, the others 0.70/3 each
+
+**Why it exists.** Balanced is the default recommendation: one plan that is good on all four objectives, like the reference paper's "Plan #1 (Best)".
+
+**How it was chosen.** By hand, against real Pareto fronts. The code comment and `notes/methodology_notes.md` give the reason: yield is strongly correlated with the other three objectives, so equal weights let the three "footprint" objectives outvote yield and push the #1 plan to a low-input corner.
+
+**Is the reason right?** Yes. Median Spearman correlation across the 120 fronts:
+
+| pair | ρ |
+|---|---|
+| yield ~ cost | +0.96 |
+| yield ~ water | +0.90 |
+| yield ~ env | +0.90 |
+| water ~ env | +0.72 |
+
+On a Pareto front more yield almost always means more of everything else, so the three cost-type objectives act largely as one criterion.
+
+**Does 0.30 do what it claims?** Measured on 72 fronts (seeds 0–2), as the position of the #1 plan's yield within its front:
+
+| yield weight | #1 plan's yield percentile (median) | #1 is a corner plan (≤ 5th or ≥ 95th percentile) |
+|---|---|---|
+| 0.25 (equal) | 25th | 11 % |
+| **0.30 (balanced)** | **41st** | **6 %** |
+| 0.40 | 91st | 40 % |
+
+0.30 gives the most central pick and the fewest corner plans of the three. It does what it was tuned to do.
+
+**How stable is it?** Not very, at the level of the single #1 plan. Moving the yield weight to 0.27 or 0.33 (±10 %) changes the #1 plan on 97 % of fronts. The replacement is close: its median rank under 0.30 is 4 (worst 37), and its closeness is 0.0028 lower (median). But it differs by up to 17.8 % (median) on at least one objective. The front is dense (80 plans along a near-continuous surface), so the closeness surface near the top is flat. This is a property of the problem, not of the weight. It is the main reason the dynamic engine shows the top plans, the reasoning between neighbours and a profile comparison, not a single answer.
+
+**Is it scientifically justified?** Partly. The direction (more weight on yield than on any single footprint objective) is justified by the measured correlations and the centrality result above. The exact value 0.30 is a hand-tuned choice: there is no elicitation from farmers and no derivation from a weighting method.
+
+For reference, two objective weighting methods applied to the same fronts' normalised objectives (median over fronts):
+
+| method | yield | cost | water | env |
+|---|---|---|---|---|
+| entropy (Hwang & Yoon 1981) | 0.278 | 0.298 | 0.195 | 0.200 |
+| CRITIC (Diakoulaki et al. 1995) | 0.457 | 0.182 | 0.188 | 0.172 |
+| balanced | 0.300 | 0.233 | 0.233 | 0.233 |
+
+CRITIC rewards criteria that conflict with the others; because yield conflicts with all three footprint objectives, it gives yield the largest weight. The balanced weights sit between the two methods, which supports giving yield more weight than equal shares without pinning down 0.30.
+
+#### 2.2 Single-objective preferences: 0.55 / 0.15
+
+**Why they exist.** Comparison plans B (max_yield) and C (min_cost), and the Run Optimization drop-down.
+
+**How they were chosen.** Convention: one criterion gets a clear majority, and the rest keep enough weight to break ties. No tuning is documented.
+
+**Justified?** As a tie-breaking convention, yes. With 0.55 the named objective dominates, but a plan that is marginally better on it and much worse elsewhere does not automatically win. The value itself is arbitrary.
+
+#### 2.3 Hard-coded or configurable?
+
+| Weight | Status before this work | Status now |
+|---|---|---|
+| balanced, preferences | hard-coded in `ranking.py`, not in `config.py`, not exposed through the API | unchanged (the published ranking) |
+| Scenario Simulation priorities | user-configurable, 4 objectives | unchanged |
+| any other criteria | did not exist | ranking profiles and custom weights over 10 criteria ([TOPSIS_PROFILE_GUIDE.md](#doc-topsis-profile-guide)) |
+
+### 3. Problems found
+
+1. **The weights could only express the optimiser's objectives.** A farmer could not ask for "profit" or "suits my soil". Price, rainfall dependency and soil status are in the dataset, but did not reach the ranking.
+2. **No explanation of the weights' effect.** The explanation reported the weights and the closeness, but not how each criterion contributed or why one plan beat the next.
+3. **The single #1 is sensitive** (§2.1). The interface presented it as *the* plan.
+4. **Redundancy among the extra criteria** (measured for the new ones; see [TOPSIS_DYNAMIC_ENGINE.md](#doc-topsis-dynamic-engine) §3.3):
+   * income ranks plans like yield (ρ = +1.00);
+   * budget headroom ranks them exactly opposite to cost (ρ = −1.00);
+   * soil suitability is close to the reverse of environmental impact (ρ = −0.86).
+
+   Weight on two redundant criteria acts like extra weight on one.
+
+### 4. What the dynamic engine does about it
+
+* **Balanced is untouched.** It is still the default, and still the exact published ranking (120/120 fronts identical, bit for bit).
+* **Profiles state their weights' origin.** Each profile is three importance tiers turned into weights with one published rule: rank-sum weights (Stillwell, Seaver & Edwards 1981). They are not tuned numbers.
+* **Custom weights are validated.** Each must be between 0 and 1, and they must sum to 1.
+* **Explanations show the effect of the weights:** weight → contribution → score, why each plan beats the next, and the rank under every profile.
+* **The interface shows the top plans and the profile comparison,** so the sensitivity of the single #1 is visible rather than hidden.
+* **Redundancy is documented** with each criterion's definition and kept out of the standard profiles where it would double-count. For example, Profit does not weight budget, and Low cost uses budget only as a deliberate emphasis on cost.
+
+<a id="doc-topsis-dynamic-engine"></a>
+
+## Dynamic TOPSIS Engine
+
+The ranking stage, made user-adaptive. A farmer chooses what matters (a ranking profile or their own weights), and the same Pareto front is ranked with those weights, explained criterion by criterion, and compared across profiles. NSGA-II, its four objectives and the fuzzy assessment are inputs and are never changed. Balanced, the default, is the published ranking bit for bit.
+
+Related documents:
+* [TOPSIS_ARCHITECTURE.md](#doc-topsis-architecture): the ranking code before this work.
+* [TOPSIS_WEIGHT_ANALYSIS.md](#doc-topsis-weight-analysis): audit of the published weights.
+* [TOPSIS_PROFILE_GUIDE.md](#doc-topsis-profile-guide): the profiles and custom weights.
+* [TOPSIS_EXPLAINABILITY.md](#doc-topsis-explainability): how rankings are explained.
+* [TOPSIS_COMPARISON.md](#doc-topsis-comparison): comparison mode and benchmark.
+
+### 1. Summary
+
+| | Before | After |
+|---|---|---|
+| Criteria | yield, cost, water, environmental impact | the same four plus market price, income, budget, soil suitability, land use, rainfall exposure |
+| Weights | 5 fixed preferences, or 4 simulation sliders | the same, plus 5 ranking profiles and custom weights over 10 criteria |
+| Default | balanced preference | Balanced profile = the balanced preference, identical output |
+| Explanation | weights and closeness | weight → normalised value → contribution → distances → closeness per criterion; why each plan beats the next; rank under every profile |
+| Comparison | Comparison page: 3 preferences | any run under all 5 profiles: best plan, rank changes, Kendall's τ, top-5 overlap, weight differences |
+| Re-ranking a saved run | not possible | `GET/POST /api/results/{run_id}/topsis`, exact, no NSGA-II re-run |
+
+### 2. Architecture
+
+```
+app/decision/criteria.py        CRITERIA, CRITERIA_META, crop_attributes(), plan_criteria(), soil_fit()
+app/decision/profiles.py        PROFILES, rank_sum_weights(), validate_custom_weights(), resolve() → WeightSpec, catalogue()
+app/decision/ranking.py         weighted_closeness(), criteria_closeness(), rank_plans(criteria_*) — plus the unchanged original path
+app/decision/topsis_explain.py  breakdown(), plan_terms(), explain_pair(), compare_profiles(), ranks_from_closeness()
+app/services/topsis_service.py  rank_front(), topsis_meta(), profile_comparison(), ranking_explanation(), rerank_saved_run()
+app/services/plan_service.py    request.profile / custom_weights / compare_profiles; meta.topsis; ranked_front
+app/services/explanation_service.py  explanation.topsis section; profile-aware weights and wording
+app/main.py                     GET /api/topsis/profiles; GET|POST /api/results/{run_id}/topsis
+frontend/src/components/topsis/ ProfileSelector.jsx (selector + custom builder), TopsisPanel.jsx (ranking, reasoning, comparison)
+frontend/src/utils/topsisView.js     validation and formatting
+```
+
+Data flow of a run with a profile:
+
+1. NSGA-II returns the feasible front.
+2. `filter_plans` applies the request's hard limits.
+3. `resolve(profile, custom_weights)` gives a `WeightSpec` (weights over the 10 criteria, summing to 1).
+4. If the spec weights any criterion beyond the four objectives, `crop_attributes(region_profile, fuzzy)` reads each candidate crop's price, N/P/K doses and rainfall dependency from the crop rows the run used. `plan_criteria` then computes the criterion columns.
+5. `rank_plans` ranks over the criteria with a positive weight.
+6. `meta.topsis` records the spec, and the filtered front is stored with the saved run as `ranked_front`.
+
+Balanced skips steps 3–5 and calls the original `rank_plans(preference="balanced")`.
+
+### 3. Criteria
+
+#### 3.1 Definitions
+
+For a plan with crop areas aᵢ (shares sᵢ = aᵢ/Σa), expected tonnes tᵢ = aᵢ · yieldᵢ · confidenceᵢ (exactly the NSGA-II yield, per crop), price pᵢ (dataset `MSP_Rs_Qtl`, ₹/quintal):
+
+| Criterion | Direction | Value | Source |
+|---|---|---|---|
+| Yield | benefit | Σ tᵢ (t) | NSGA-II f1 |
+| Production cost | cost | ₹ | NSGA-II f2 |
+| Water | cost | irrigation litres | NSGA-II f3 |
+| Environmental impact | cost | index | NSGA-II f4 |
+| Market price | benefit | Σ tᵢ pᵢ / Σ tᵢ, the tonnage-weighted price (₹/qtl) | crop.csv `MSP_Rs_Qtl` |
+| Income | benefit | 10 Σ tᵢ pᵢ − cost, indicative net income (₹) | as the explanation's indicative economics |
+| Budget | benefit | budget − cost (₹); 0 for every plan without a budget | request |
+| Soil suitability | benefit | Σ sᵢ · fitᵢ, fitᵢ = 1 − ⅓ Σ_{N,P,K} (doseᵢ / max dose) × deficit(status) | crop.csv doses, land.csv N/P/K status: Low 1, Medium 0.5, High 0 |
+| Land use | benefit | Shannon evenness −Σ sᵢ ln sᵢ / ln n (0 = one crop, 1 = equal shares) | allocation |
+| Rainfall exposure | cost | Σ sᵢ · RAINFALL_DEPENDENCY_FACTORᵢ (Very Low 0.1 … High 1.0) | crop.csv `Rainfall_Dependency`, config |
+
+#### 3.2 Rationale and sources
+
+* **Market price** captures which crops fetch more per quintal, independent of tonnage. **Income** combines tonnage and price minus cost. Both use the dataset's unvalidated price column; the explanation service already flags those prices (some crops have no notified MSP).
+* **Budget headroom** lets a profile prefer plans well under the cap. Every ranked plan already satisfies the budget, because NSGA-II enforces it as a hard constraint.
+* **Soil suitability** follows the FAO land-evaluation idea of matching crop requirements to land qualities (FAO 1976; Sys et al. 1993), with nutrient availability as the quality. It is a proxy built from the data the project has (no per-crop soil data exists), not a validated suitability class.
+* **Land use** rewards crop diversification, which spreads production risk (Di Falco & Perrings 2005; Lin 2011).
+* **Rainfall exposure** penalises land in rain-dependent crops. It is the same dependency factor the fuzzy layer uses for crop confidence.
+
+#### 3.3 Correlations: read before weighting
+
+Median Spearman ρ over 120 fronts (`benchmarks/topsis_benchmark.json`):
+
+| pair | ρ | consequence |
+|---|---|---|
+| income ~ yield | +1.00 | on one front, income orders plans like yield |
+| budget ~ cost | −1.00 | budget headroom orders plans exactly opposite to cost, i.e. it is extra cost weight |
+| soil ~ env | −0.86 | soil-suited plans are the low-impact ones |
+| rainfall ~ water | −0.74 | rain-fed crops need less irrigation, but are more exposed to rainfall shortfalls |
+| income ~ market price | −0.39 | high-tonnage crops in this data are the cheaper ones per quintal |
+| land ~ yield | −0.16 | diversification is nearly independent of yield |
+
+Weighting two strongly correlated criteria acts like extra weight on one. Rainfall exposure deliberately pulls against water saving: a farmer can trade irrigation water against rainfall risk.
+
+### 4. Mathematics
+
+Identical to the published ranking (TOPSIS_ARCHITECTURE.md §3) over the criteria with wⱼ > 0:
+
+```
+gᵢⱼ  = (xᵢⱼ − minᵢ xᵢⱼ) / (maxᵢ xᵢⱼ − minᵢ xᵢⱼ)      flipped (1 − ·) for cost criteria; 0.5 if constant
+vᵢⱼ  = wⱼ gᵢⱼ
+A⁺ⱼ = maxᵢ vᵢⱼ,  A⁻ⱼ = minᵢ vᵢⱼ
+D⁺ᵢ = √Σⱼ (vᵢⱼ − A⁺ⱼ)²,  D⁻ᵢ = √Σⱼ (vᵢⱼ − A⁻ⱼ)²
+Cᵢ  = D⁻ᵢ / (D⁺ᵢ + D⁻ᵢ)
+```
+
+Properties the tests check:
+
+* Zero-weight criteria do not enter the matrix.
+* A constant criterion (for example budget without a budget) contributes nothing.
+* Scaling all weights leaves C unchanged.
+* C ∈ [0, 1], and identical plans score 0.5.
+* A hand-computed three-plan example gives C = (0.25, 0.5, 0.75).
+
+**Mathematical validation of Balanced.** `criteria_closeness` with the four objectives and the balanced weights returns `topsis_scores`' array bit for bit:
+
+* on 5 preferences × a real front, and on 50 random sets (`tests/test_topsis_ranking.py`);
+* on all 120 benchmark fronts.
+
+The full API response of `profile=balanced` equals the default request's apart from wall-clock timings, and the 120 recorded ranking fingerprints of the default request match `main` exactly (all districts × seasons × preferences, with and without a budget).
+
+### 5. API
+
+| Endpoint | Change |
+|---|---|
+| `POST /api/farm-plans` | optional `profile` (balanced, profit, water, sustainability, low_cost, custom), `custom_weights` (criterion → weight, required for custom, must sum to 1), `compare_profiles`. A profile and a non-balanced `preference` cannot be combined (422). Response: `meta.topsis` always; `meta.profile_comparison` when requested |
+| `GET /api/topsis/profiles` | new: profiles, weights, tiers, criteria definitions, custom-weight rules and defaults |
+| `GET /api/results/{run_id}/topsis?profile=…&compare=…` | new: re-rank a saved run's front under a standard profile |
+| `POST /api/results/{run_id}/topsis` | new: the same with `{"profile": "custom", "custom_weights": {...}}` |
+| `GET /api/results/{run_id}/explanation`, `GET /api/comparison/{district}/explanation` | new optional `topsis` section |
+| `GET /api/results`, `GET /api/history/{district}` | new optional `ranking` label |
+
+Everything is additive: requests without the new fields get the same plans as before, and no field was removed or renamed. Reference: [API_REFERENCE.md](#doc-api-reference).
+
+### 6. Before and after: an example
+
+Salem Kharif 2024, 5 ha, budget ₹400,000, one NSGA-II run (80 Pareto-optimal plans), ranked under each profile. The plans are the same 80 in every row:
+
+| Profile | #1 plan | TOPSIS score | its rank under Balanced |
+|---|---|---|---|
+| Balanced (before and after) | Tapioca 91 %, Groundnut 5 %, Maize 3 % | 0.6319 | 1 |
+| Profit priority | Tapioca 96 %, Maize 3 % | 0.5613 | 8 |
+| Water saving | Groundnut 89 %, Maize 11 % | 0.7522 | 34 |
+| Sustainability | Groundnut 89 %, Maize 11 % | 0.6412 | 34 |
+| Low cost | Groundnut 67 %, Maize 32 % | 0.7565 | 32 |
+
+Profit picks the high-tonnage tapioca plan (13.6 t/ha, ₹39,895/ha). Water saving picks a groundnut-maize plan using a fraction of the water (1.4 t/ha, ₹33,492/ha). Both are on the same Pareto front: the profile only decides which trade-off comes first.
+
+Across the 120 benchmark fronts ([TOPSIS_COMPARISON.md](#doc-topsis-comparison)), each profile moves the #1 plan in the direction it claims (paired against Balanced's #1):
+
+| Profile | Moves the #1 plan towards | better / worse fronts |
+|---|---|---|
+| Profit | higher income | 112 / 0 |
+| Water saving | less water | 110 / 4 |
+| Sustainability | less water | 107 / 5 |
+| Sustainability | lower impact | 93 / 19 |
+| Sustainability | better soil fit | 68 / 21 |
+| Low cost | lower cost | 94 / 7 |
+
+### 7. Performance
+
+Median per 80-plan front (benchmark, one laptop):
+
+| Operation | Time |
+|---|---|
+| published ranking (`rank_plans`, balanced) | 0.48 ms |
+| ranking with a 10-criterion profile | 0.59 ms |
+| five-profile comparison | 1.36 ms |
+| ranking explanation (top 10, pairs) | 0.76 ms |
+| whole `POST /api/farm-plans` (unsaved, Salem Kharif) | ≈ 0.29 s with or without a profile or comparison (NSGA-II dominates) |
+
+A saved run grows by the stored front: 134 KB → 207 KB for 80 plans.
+
+### 8. Screenshots
+
+| | |
+|---|---|
+| Profile selector with the custom weight builder | ![custom weights](screenshots/topsis_custom_weights.jpg) |
+| Ranking: selected profile, weight distribution, TOPSIS scores | ![ranking](screenshots/topsis_ranking.jpg) |
+| Reasoning: why each plan beats the next; weight → contribution → score | ![reasoning](screenshots/topsis_reasoning.jpg) |
+| Compare profiles: best plan per profile, ranking changes | ![compare](screenshots/topsis_compare_profiles.jpg) |
+| Weight differences between profiles | ![weights](screenshots/topsis_weight_differences.jpg) |
+| "Why this plan?": TOPSIS score section | ![explanation](screenshots/topsis_explanation.jpg) |
+
+### 9. Testing
+
+| Suite | Tests | Covers |
+|---|---|---|
+| `tests/test_topsis_ranking.py` | 16 | bit-identity with the published maths, hand-computed example, TOPSIS properties |
+| `tests/test_topsis_criteria.py` | 19 | each criterion against its definition and against the pipeline's own numbers |
+| `tests/test_topsis_profiles.py` | 30 | weights, tiers, the brief's priorities, custom weight validation, catalogue |
+| `tests/test_topsis_engine.py` | 55 | Balanced unchanged; profile switching changes only the ranking; explanation maths; comparison; saved-run re-ranking; request validation; API; explanation section; speed |
+| `frontend/src/utils/topsisView.test.js` | 14 | builder validation, fractions, rows |
+| `frontend/src/components/topsis/topsis.test.jsx` | 7 | selector, builder, weight chart, contribution card, comparison, explanation section |
+
+All earlier suites pass unchanged: 797 backend tests (677 before) and 89 frontend tests (68 before).
+
+### 10. Limitations
+
+* **Scores are relative to the plan set.** Min–max normalisation makes every score relative to the front being ranked, as before. A re-ranked older run without a stored front is ranked over its 50 returned plans and says so (`ranked_over: returned_plans`).
+* **The #1 plan is sensitive to small weight changes** (TOPSIS_WEIGHT_ANALYSIS.md §2.1). The interface shows the top plans and the comparison for that reason.
+* **Prices are unvalidated.** Market price and income use the dataset's price column, flagged elsewhere as unvalidated.
+* **Soil suitability is a nutrient-demand proxy,** not a validated FAO suitability class.
+* **Some criteria are redundant on one front** (§3.3). The standard profiles avoid double-counting, but a custom profile can still do it.
+* **Profile weights come from importance tiers,** not from eliciting farmers' preferences.
+* **Rank reversal.** TOPSIS can reverse ranks when plans are added or removed (García-Cascales & Lamata 2012), so the order depends on the filters applied before ranking.
+* **Classic preferences are a separate path.** max_yield and the other classic preferences rank over the four objectives only, and cannot be combined with a profile.
+
+### 11. Future improvements
+
+1. Elicit weights from farmers with AHP or swing weighting, and store them per user.
+2. A robust recommendation: the plan that stays in the top k under weight perturbations (stochastic multicriteria acceptability analysis, Lahdelma & Salminen 2001).
+3. Validated prices (Agmarknet modal prices) for market price and income.
+4. Crop-specific soil suitability from soil-survey data.
+5. Show the profile comparison on the Comparison page as well, in place of the fixed plans A/B/C.
+6. A rank-reversal-free variant (for example a fixed reference point) for comparisons across runs.
+
+### References
+
+* Barron, F. H. & Barrett, B. E. (1996). Decision quality using ranked attribute weights. *Management Science* 42(11).
+* Di Falco, S. & Perrings, C. (2005). Crop biodiversity, risk management and the implications of agricultural assessments. *Ecological Economics* 55(4).
+* Diakoulaki, D., Mavrotas, G. & Papayannakis, L. (1995). Determining objective weights in multiple criteria problems: the CRITIC method. *Computers & Operations Research* 22(7).
+* FAO (1976). *A Framework for Land Evaluation.* FAO Soils Bulletin 32.
+* García-Cascales, M. S. & Lamata, M. T. (2012). On rank reversal and TOPSIS method. *Mathematical and Computer Modelling* 56(5–6).
+* Hwang, C.-L. & Yoon, K. (1981). *Multiple Attribute Decision Making: Methods and Applications.* Springer.
+* Lahdelma, R. & Salminen, P. (2001). SMAA-2: stochastic multicriteria acceptability analysis for group decision making. *Operations Research* 49(3).
+* Lin, B. B. (2011). Resilience in agriculture through crop diversification. *BioScience* 61(3).
+* Stillwell, W. G., Seaver, D. A. & Edwards, W. (1981). A comparison of weight approximation techniques in multiattribute utility decision making. *Organizational Behavior and Human Performance* 28(1).
+* Sys, C., Van Ranst, E., Debaveye, J. & Beernaert, F. (1993). *Land Evaluation, Part III: Crop Requirements.* General Administration for Development Cooperation, Brussels.
+
+<a id="doc-topsis-profile-guide"></a>
+
+## TOPSIS Profile Guide
+
+Which ranking profile to choose, what each one weights, and how to build your own. Profiles change only the order of the Pareto-optimal plans: every profile ranks the same plans, found by the same NSGA-II run. Criterion definitions: [TOPSIS_DYNAMIC_ENGINE.md](#doc-topsis-dynamic-engine) §3.
+
+### 1. Choosing a profile
+
+| If you want… | Choose | What usually happens to the top plan (vs Balanced) |
+|---|---|---|
+| the published recommendation, a central trade-off | **Balanced** | — |
+| the most income from the season | **Profit priority** | yield +37 %, income +78 %, but water +59 % and cost +21 % |
+| to save irrigation water | **Water saving** | water −54 %, impact −31 %, yield −56 % |
+| low impact, low water use and crops that suit your soil | **Sustainability** | water −40 %, impact −12 %, yield −41 % |
+| to spend as little as possible | **Low cost** | cost −18 %, yield −71 % |
+| your own priorities | **Custom** | whatever your weights imply |
+
+Percentages compare the median #1 plan of each profile with Balanced's median #1 over the same 120 fronts (`benchmarks/topsis_benchmark.json`, chart `benchmarks/topsis_top_plan_objectives.png`). Sustainability's #1 also has a better soil fit (+8 %) at slightly higher rainfall exposure (+9 %).
+
+### 2. Profile definitions
+
+Each profile except Balanced lists criteria in three importance tiers. The weights follow from one rule, **rank-sum weights over the tiers**: high = 3 points, medium = 2, low = 1, divided by the total (Stillwell, Seaver & Edwards 1981). Unlisted criteria get 0.
+
+| Profile | High | Medium | Low |
+|---|---|---|---|
+| Balanced | published weights: yield 0.30; cost, water, impact 0.70/3 each ([TOPSIS_WEIGHT_ANALYSIS.md](#doc-topsis-weight-analysis)) | | |
+| Profit priority | income, market price, yield | production cost | water, environmental impact |
+| Water saving | water, environmental impact | production cost | yield, income |
+| Sustainability | environmental impact, water, soil suitability | yield, production cost, rainfall exposure | income |
+| Low cost | production cost, budget | water, environmental impact | yield |
+
+Design choices:
+
+* **Every profile keeps all four optimiser objectives.** Production cost and the other footprint objectives always count for something, so no profile can pick a plan that is absurd on an objective the optimiser traded off.
+* **Profit includes cost (medium).** Income already subtracts cost, but cost also stands for the money at risk before harvest.
+* **Sustainability includes rainfall exposure (medium).** Saving irrigation water pushes towards rain-fed crops. Rainfall exposure keeps the cost of that, dependence on the monsoon, in view (ρ(rainfall, water) = −0.74).
+* **Low cost includes budget (high).** On one front budget headroom ranks plans exactly like cost, so it doubles the emphasis on cost when a budget is set. Without a budget it is constant and neutral.
+
+### 3. Weight table (percent)
+
+| Criterion | Balanced | Profit | Water saving | Sustainability | Low cost |
+|---|---|---|---|---|---|
+| Yield | 30.0 | 23.1 | 10.0 | 12.5 | 9.1 |
+| Market price | – | 23.1 | – | – | – |
+| Income | – | 23.1 | 10.0 | 6.2 | – |
+| Production cost | 23.3 | 15.4 | 20.0 | 12.5 | 27.3 |
+| Water | 23.3 | 7.7 | 30.0 | 18.8 | 18.2 |
+| Environmental impact | 23.3 | 7.7 | 30.0 | 18.8 | 18.2 |
+| Budget | – | – | – | – | 27.3 |
+| Soil suitability | – | – | – | 18.8 | – |
+| Land use | – | – | – | – | – |
+| Rainfall exposure | – | – | – | 12.5 | – |
+
+Chart: `benchmarks/topsis_profile_weights.png`. Machine-readable: `GET /api/topsis/profiles`.
+
+**Sensitivity to the weighting rule.** A different rule for the same tiers, rank-order-centroid weights (Barron & Barrett 1996), gives the same #1 plan on:
+
+| Profile | same #1 | ROC's #1 under rank-sum (median rank) | closeness gap (median) | largest objective difference (median) |
+|---|---|---|---|---|
+| Profit | 76 % of fronts | 1 | 0.0000 | 0 % |
+| Low cost | 45 % | 2 | 0.0002 | 1.3 % |
+| Water saving | 22 % | 3 | 0.0019 | 12 % |
+| Sustainability | 5 % | 6.5 | 0.0035 | 25 % |
+
+The tiers decide the kind of plan, and the rule decides between close neighbours. For Sustainability, with seven weighted criteria, the rule matters most.
+
+### 4. Custom weights
+
+Give each of the ten criteria a weight.
+
+| Rule | Detail |
+|---|---|
+| Range | each weight between 0 and 1 (0–100 % in the app) |
+| Sum | the weights must sum to 1 (tolerance 10⁻⁶; the app requires 100.0 % ± 0.01) |
+| Omitted criteria | weight 0 |
+| Unknown criteria | rejected |
+| Defaults | the Balanced weights (`custom.default_weights` in `GET /api/topsis/profiles`; "Reset to Balanced" in the app) |
+| Errors | `422` with the reason, e.g. "Custom weights must sum to 1 (they sum to 0.9)" |
+
+In the app, **Scale to 100%** rescales the sliders proportionally.
+
+API:
+
+```json
+POST /api/farm-plans
+{"location": "Salem", "season": "Kharif", "total_land_ha": 5,
+ "profile": "custom", "custom_weights": {"yield": 0.3, "water": 0.3, "soil": 0.2, "rainfall": 0.2}}
+```
+
+Tips:
+
+* **Avoid redundant pairs.** Weighting income and yield together, or budget and cost together, counts one thing twice (ρ = +1.00 and −1.00).
+* **Expect large swings from one criterion.** A single criterion with a large weight usually picks a corner of the front: the best plan for that criterion, whatever the rest.
+* **Land use is nearly independent of the other criteria** (ρ with yield −0.16). It is the criterion for "don't put everything in one crop".
+
+### 5. Profiles and classic preferences
+
+The five classic preferences (balanced, max yield, min cost, min water, min environmental impact) still work in the API and in the app's "Classic preference" drop-down. They weight the four objectives only (0.55 on the named one). A request may use a preference or a profile, not both. Balanced is the same in both.
+
+<a id="doc-topsis-explainability"></a>
+
+## TOPSIS Explainability
+
+Every ranked plan can be explained from its weights to its score with numbers that reproduce the ranking exactly. This document defines what is reported, how it is computed (`app/decision/topsis_explain.py`), and where it appears.
+
+### 1. What is explained
+
+For every recommendation:
+
+| Question | Answer given | Field |
+|---|---|---|
+| Which profile was used? | profile name and label (or the classic preference / custom priorities) | `meta.topsis.profile`, `.label` |
+| Which weights were applied? | weight of every criterion, summing to 1 | `meta.topsis.weights`, `.criteria` |
+| How did the weights affect this plan? | per criterion: weight → normalised value → weighted contribution → gap to the best and worst plan → share of the distance to the best plan | `plan.criteria[]` |
+| What is the final score? | distances to the ideal and anti-ideal plan and the closeness | `plan.closeness`, `distance_to_ideal`, `distance_to_anti_ideal` |
+| Why does plan A rank above plan B? | criteria sorted by weighted advantage, with a sentence | `pairs[]`, `versus_next`, `versus_previous` |
+| Would another profile agree? | rank of the plan under every standard profile | `rank_by_profile` |
+
+### 2. Weight → contribution → score
+
+For plan i and criterion j with weight wⱼ and normalised value gᵢⱼ (1 = best in the set):
+
+```
+weighted value        vᵢⱼ = wⱼ · gᵢⱼ
+gap to the ideal      √d⁺ᵢⱼ = A⁺ⱼ − vᵢⱼ        (A⁺ⱼ = best weighted value in the set)
+gap to the anti-ideal √d⁻ᵢⱼ = vᵢⱼ − A⁻ⱼ        (A⁻ⱼ = worst weighted value in the set)
+distances             D⁺ᵢ = √Σⱼ d⁺ᵢⱼ,  D⁻ᵢ = √Σⱼ d⁻ᵢⱼ
+score                 Cᵢ = D⁻ᵢ / (D⁺ᵢ + D⁻ᵢ)
+share of the distance to the ideal = d⁺ᵢⱼ / Σⱼ d⁺ᵢⱼ
+```
+
+The squared distances add up over criteria, so each criterion's share of D⁺ᵢ² says exactly how much of the plan's shortfall comes from it. The tests rebuild D⁺, D⁻ and C from the reported terms.
+
+#### Worked example
+
+Salem Kharif, 5 ha, budget ₹400,000, Profit priority, the #1 plan when the run is re-ranked (tapioca on all the land):
+
+| Criterion | Weight | Value | Normalised | Weighted | Gap to best | Share of distance to best |
+|---|---|---|---|---|---|---|
+| Yield | 0.2308 | 69.81 t | 1.00 | 0.2308 | 0.0000 | 0 % |
+| Production cost | 0.1538 | ₹201,301 | 0.21 | 0.0323 | 0.1215 | 20.9 % |
+| Water | 0.0769 | 22.65 ML | 0.52 | 0.0397 | 0.0373 | 2.0 % |
+| Environmental impact | 0.0769 | 198.8 | 0.52 | 0.0398 | 0.0371 | 1.9 % |
+| Market price | 0.2308 | ₹721/qtl | 0.00 | 0.0000 | 0.2308 | 75.2 % |
+| Income | 0.2308 | ₹302,174 | 1.00 | 0.2308 | 0.0000 | 0 % |
+
+D⁺ = 0.2661, D⁻ = 0.3327, so C = 0.3327 / (0.2661 + 0.3327) = 0.5557.
+
+Reading:
+* The plan has the best yield and income in the set, which together carry 46 % of the weight.
+* It has the lowest price per quintal (tapioca is cheap per quintal), which is three quarters of its distance from the ideal plan.
+* Its cost accounts for the remaining fifth.
+
+Why it ranks above #2, as the engine words it:
+
+> Plan #1 ranks above plan #2 (closeness 0.5557 vs 0.5450). It is better on water (+0.040), environmental impact (+0.004), yield (+0.001) and worse on production cost (-0.001).
+
+The number in brackets is the **weighted advantage** wⱼ(gₐⱼ − g_bⱼ). Both plans are measured against the same ideal and anti-ideal, so the plan with the larger weighted value is closer to the ideal and farther from the anti-ideal on that criterion. Criteria are listed by the size of the advantage. Advantages that round to 0.000 stay in the table but are left out of the sentence. The exact squared-distance terms of both plans are in `pairs[].criteria`.
+
+### 3. Where it appears
+
+| Place | Content |
+|---|---|
+| Run Optimization → TOPSIS ranking → **Ranking** | selected profile, weight distribution chart, top plans with TOPSIS scores |
+| Run Optimization → **Reasoning** | why each of the top plans beats the next; the #1 plan's contribution chart (weighted value against the best in the set) with a table view |
+| Run Optimization → **Compare profiles** | [TOPSIS_COMPARISON.md](#doc-topsis-comparison) |
+| "Why this plan?" (saved runs and the Comparison page) | TOPSIS score section: weight, normalised value, contribution and share of the gap per criterion; the sentences against the previous and next plan; the rank under every profile |
+| Reasons in every explanation | "Ranked #k of n plans under the '…' ranking profile …" for profile runs; unchanged wording for preference runs |
+| API | `GET/POST /api/results/{run_id}/topsis` → `explanation` (top 10 plans and their pairs); `…/explanation` → `topsis` |
+
+### 4. Guarantees
+
+* **Exact.** The breakdown uses the ranking's own normalisation and distance code (`ranking.criteria_closeness`). Its closeness, rounded to 4 places, equals each ranked plan's `composite_score`, and its ranks equal the ranked order. This is tested for every profile.
+* **Same plan set.** A saved run is explained over the front it was ranked from (`ranked_over: ranked_front`). Runs saved before the front was stored are explained over their returned plans and say so (`ranked_over: returned_plans`).
+* **Nothing invented.** If the crop data a profile needs is missing, the section says it is unavailable instead of falling back to other numbers.
+* **Older explanations unchanged.** Explanations of runs ranked by a preference are identical to before, apart from the new optional `topsis` section (checked against `main`).
+
+### 5. Limits of the explanation
+
+* **Relative scores.** "Normalised 1.00" means the best in this set, not good in absolute terms.
+* **The weighted advantage is a per-criterion reading.** The ranking itself comes from the Euclidean distances, so a plan can lead on the sum of advantages and still rank lower when its distances are unbalanced. The reported closeness values always decide.
+* **Neighbouring plans are often near-ties.** Close neighbours can differ by less than 0.001 in closeness. The sentence states the gap so the reader can see when the order is marginal.
+
+<a id="doc-topsis-comparison"></a>
+
+## TOPSIS Profile Comparison
+
+Comparison mode ranks one Pareto front under all five profiles at once: Balanced, Profit priority, Water saving, Sustainability and Low cost (plus the custom profile when one is used). This document describes what it reports and the benchmark of the profiles over 120 fronts.
+
+### 1. Comparison mode
+
+Available as:
+* `POST /api/farm-plans` with `compare_profiles: true` (`meta.profile_comparison`);
+* `GET/POST /api/results/{run_id}/topsis` (`comparison`, on by default);
+* the **Compare profiles** tab of the TOPSIS ranking panel on Run Optimization.
+
+The **reference** is the profile the run (or re-rank) used.
+
+| Output | Meaning |
+|---|---|
+| `profiles[].best_plan` | each profile's #1 plan: crop mix, objectives, TOPSIS score, and its rank under the reference |
+| `profiles[].reference_top_plan_rank` | where the reference's #1 lands under this profile |
+| `profiles[].kendall_tau_vs_reference` | Kendall's τ between this profile's order and the reference's over all plans (1 = same order, −1 = reversed) |
+| `profiles[].top_n_overlap` | how many of the reference's top 5 are also in this profile's top 5 |
+| `profiles[].top_plans` | this profile's top 5 with scores |
+| `profiles[].weights`, `weight_differences` | the profile's weights and their difference from the reference's |
+| `rank_changes` | the reference's top 5 plans with their rank and score under every profile |
+| `distinct_best_plans` | how many different plans come out on top across the profiles |
+
+In the app this is shown as three things:
+* a "Best plan under each profile" table;
+* a "Ranking changes" table with ↑/↓ markers;
+* a "Weight differences" chart comparing the reference with any other profile (with a table view).
+
+Screenshots: [TOPSIS_DYNAMIC_ENGINE.md](#doc-topsis-dynamic-engine) §8.
+
+#### Example
+
+Salem Kharif, 5 ha, budget ₹400,000, reference Water saving, 80 plans:
+
+| Profile | Best plan | Score | Its rank under Water saving | Water saving's #1 ranks | τ | Top-5 overlap |
+|---|---|---|---|---|---|---|
+| Balanced | Tapioca 91 %, Groundnut 5 %, Maize 3 % | 0.6319 | 32 | 34 | 0.52 | 0/5 |
+| Profit priority | Tapioca 96 %, Maize 3 % | 0.5613 | 42 | 63 | −0.48 | 0/5 |
+| **Water saving** | Groundnut 89 %, Maize 11 % | 0.7522 | 1 | 1 | 1.00 | 5/5 |
+| Sustainability | Groundnut 89 %, Maize 11 % | 0.6412 | 1 | 1 | 0.95 | 5/5 |
+| Low cost | Groundnut 67 %, Maize 32 % | 0.7565 | 6 | 3 | 0.83 | 3/5 |
+
+Four different plans come out on top. Water saving and Sustainability agree almost completely (τ 0.95). Profit orders the plans nearly in reverse (τ −0.48).
+
+### 2. Benchmark
+
+#### 2.1 Method
+
+`python scripts/benchmark_topsis.py --seeds 5 --json … --charts docs/handbook/benchmarks`:
+
+* **Fronts:** 120 Pareto fronts. That is 4 districts × 3 seasons, each without a budget and with a budget of 5 ha × the median single-crop cost, seeds 0–4. All fronts have 80 plans.
+* **NSGA-II settings:** the published engine (population 80, 200 generations).
+* **Ranking:** each front is ranked under each profile; NSGA-II runs once per front.
+* **Statistics:** paired comparisons against Balanced's #1 on the same front with the Wilcoxon signed-rank test. There is no multiple-comparison correction; the effects below are far beyond any correction.
+
+Results: `benchmarks/topsis_benchmark.json`. Charts:
+* `benchmarks/topsis_profile_weights.png`
+* `benchmarks/topsis_top_plan_changes.png`
+* `benchmarks/topsis_top_plan_objectives.png`
+
+#### 2.2 Balanced reproduces the published ranking
+
+| Check | Result |
+|---|---|
+| Balanced profile vs `rank_plans(preference="balanced")` (plans, order, scores) | identical on 120/120 fronts |
+| General criteria path with the balanced weights | identical on 120/120 fronts |
+| `POST /api/farm-plans` without a profile vs `main` (12 district-seasons × 5 preferences × with/without budget) | 120/120 ranking fingerprints identical |
+
+#### 2.3 How much each profile changes the ranking
+
+| Profile | Fronts whose #1 differs from Balanced's | Kendall's τ with Balanced (median) | Top-5 overlap with Balanced (median) | Balanced's #1 ranks (median) |
+|---|---|---|---|---|
+| Profit priority | 93 % | −0.22 | 0 | 41 |
+| Water saving | 95 % | 0.61 | 0 | 26 |
+| Sustainability | 93 % | 0.75 | 0 | 17 |
+| Low cost | 84 % | 0.67 | 0 | 19 |
+
+Every profile picks a different plan from Balanced on most fronts, from a different part of the front (no overlap in the top 5). Profit runs opposite to the three footprint-oriented profiles, which agree with Balanced on the overall order more than on the top.
+
+#### 2.4 Does each profile deliver what it promises?
+
+Paired against Balanced's #1 on the same front. "better/worse" counts the fronts where the profile's #1 is better or worse on that criterion. Only criteria the profile weights are shown.
+
+| Profile | Criterion | better/worse | p |
+|---|---|---|---|
+| Profit priority | income | **112/0** | 4 × 10⁻²⁰ |
+| | yield | 112/0 | 4 × 10⁻²⁰ |
+| | market price | 49/63 | 0.07 |
+| | cost | 24/88 | 1 × 10⁻¹⁶ |
+| | water | 0/112 | 4 × 10⁻²⁰ |
+| | environmental impact | 18/94 | 3 × 10⁻¹⁶ |
+| Water saving | water | **110/4** | 6 × 10⁻²⁰ |
+| | environmental impact | 97/17 | 4 × 10⁻¹⁶ |
+| | cost | 80/34 | 3 × 10⁻⁶ |
+| | yield | 0/114 | 2 × 10⁻²⁰ |
+| | income | 4/110 | 3 × 10⁻²⁰ |
+| Sustainability | water | **107/5** | 3 × 10⁻¹⁸ |
+| | environmental impact | **93/19** | 4 × 10⁻¹⁵ |
+| | soil suitability | **68/21** | 7 × 10⁻¹² |
+| | cost | 71/41 | 2 × 10⁻⁵ |
+| | rainfall exposure | 29/62 | 0.005 |
+| | yield | 1/111 | 1 × 10⁻¹⁹ |
+| | income | 5/107 | 5 × 10⁻¹⁹ |
+| Low cost | cost | **94/7** | 2 × 10⁻¹⁷ |
+| | budget headroom | 49/0 (budget fronts) | 1 × 10⁻⁹ |
+| | water | 91/10 | 6 × 10⁻¹⁷ |
+| | environmental impact | 84/17 | 1 × 10⁻¹⁴ |
+| | yield | 10/91 | 5 × 10⁻¹⁷ |
+
+Each profile improves its high-tier criteria on the large majority of fronts and gives up its low-tier ones, as designed. Two results need saying explicitly:
+
+* **Profit does not raise the market price.** Its #1 has a higher price per quintal on only 49 of 112 fronts, not significant. On these fronts income comes from tonnage, and the high-tonnage crops (tapioca, sugarcane) are cheap per quintal (ρ(income, price) = −0.39).
+* **Sustainability increases rainfall exposure.** It worsens on 62 fronts against 29, even though the profile weights rainfall exposure (medium). Saving irrigation water favours rain-fed crops, and the high-tier water weight outweighs the medium-tier rainfall weight. A farmer who cares more about monsoon risk can raise rainfall exposure in a custom profile.
+
+#### 2.5 Sensitivity of the weighting rule
+
+Rank-sum weights (used) against rank-order-centroid weights (Barron & Barrett 1996) for the same tiers:
+
+| Profile | Same #1 | ROC's #1 under rank-sum (median rank) | Closeness gap (median) | Largest objective difference (median) |
+|---|---|---|---|---|
+| Profit | 76 % | 1 | 0.0000 | 0 % |
+| Low cost | 45 % | 2 | 0.0002 | 1.3 % |
+| Water saving | 22 % | 3 | 0.0019 | 12 % |
+| Sustainability | 5 % | 6.5 | 0.0035 | 25 % |
+
+Balanced's #1 under a yield weight of 0.27 or 0.33 (±10 %):
+* it is unchanged on 3 % of fronts;
+* the new #1 ranks 4th under 0.30 (median; worst 37th), with a closeness gap of 0.0028;
+* it differs by up to 17.8 % on one objective (median).
+
+Conclusion: the tiers decide the region of the front a profile recommends. The exact weights decide between close neighbours there, as for the published Balanced weights. This is why the panel shows the top plans and their scores, not a single plan.
+
+#### 2.6 Performance
+
+Median per 80-plan front:
+
+| Operation | Time |
+|---|---|
+| published ranking | 0.48 ms |
+| profile ranking | 0.59 ms |
+| five-profile comparison | 1.36 ms |
+| ranking explanation | 0.76 ms |
+
+A whole `POST /api/farm-plans` takes ≈ 0.29 s with or without a profile or the comparison; NSGA-II dominates.
+
 <a id="doc-explainability"></a>
 
 ## Explainable Recommendation Engine
@@ -3812,6 +4607,8 @@ Important: "High yield" means *high relative to the other plans in this run*, no
 | max_yield / min_cost / min_water / min_env_impact | 0.55 on the named objective, 0.15 on the others | | | | convention |
 
 Unknown preference strings fall back to balanced (unreachable through the API because `Preference` is a `Literal`).
+
+Ranking profiles (Balanced, Profit priority, Water saving, Sustainability, Low cost, custom) and their weights over ten criteria: [TOPSIS_PROFILE_GUIDE.md](#doc-topsis-profile-guide). Audit of the weights above: [TOPSIS_WEIGHT_ANALYSIS.md](#doc-topsis-weight-analysis).
 
 ### 3. Comparison page (`GET /api/comparison`, `ComparisonView.jsx`)
 
@@ -4669,6 +5466,20 @@ Why each change was made, how it was verified, and what was deliberately **not**
 All code modifications made during the 2026-09-29 audit. All changes are submitted together on one branch for review. Frontend changes were made in the local working copy `stitch_agrooptimize_app/` and applied to the repo's `frontend/` (whose source was identical before the changes); the pre-change state is also in `_backups/stitch_agrooptimize_app_before_audit_2026-09-29.tar.gz`.
 
 Verification after all changes: backend **205/205 tests pass** (was 165/165); output fingerprint over 48 endpoint/pipeline results is **identical to HEAD** apart from the new additive provenance fields; frontend `oxlint` 0 warnings (was 3 in `src` + noise), `vite build` succeeds; UI flows exercised in Chrome with no console errors.
+
+### [Unreleased] – Dynamic TOPSIS engine
+
+#### Added
+- Ranking criteria beyond the four objectives: market price, indicative income, budget headroom, soil suitability, land-use diversification, rainfall exposure (`app/decision/criteria.py`).
+- Ranking profiles Balanced (published weights), Profit priority, Water saving, Sustainability, Low cost (rank-sum weights over importance tiers) and custom weights summing to 1 (`app/decision/profiles.py`).
+- TOPSIS explanation and profile comparison (`app/decision/topsis_explain.py`, `app/services/topsis_service.py`); `explanation.topsis` section.
+- `POST /api/farm-plans` `profile`, `custom_weights`, `compare_profiles`; `meta.topsis`, `meta.profile_comparison`; `GET /api/topsis/profiles`; `GET|POST /api/results/{run_id}/topsis`; `ranking` label on saved-run summaries and History.
+- Run Optimization: profile selector with custom weight builder; TOPSIS ranking panel (weights, scores, reasoning, profile comparison, re-ranking the saved front); TOPSIS section in "Why this plan?".
+- `scripts/benchmark_topsis.py`, `benchmarks/topsis_*`; `TOPSIS_ARCHITECTURE.md`, `TOPSIS_WEIGHT_ANALYSIS.md`, `TOPSIS_EXPLAINABILITY.md`, `TOPSIS_DYNAMIC_ENGINE.md`, `TOPSIS_PROFILE_GUIDE.md`, `TOPSIS_COMPARISON.md`; 120 backend and 21 frontend tests.
+
+#### Changed
+- Saved runs store the ranked front (`ranked_front`) for exact re-ranking (≈ +70 KB per 80-plan run).
+- Rankings without a profile are unchanged: 120/120 ranking fingerprints identical to `main`; Balanced is bit-identical to the published ranking on 120 benchmark fronts. NSGA-II, objectives and fuzzy outputs are untouched.
 
 ### [Unreleased] – Render deployment
 

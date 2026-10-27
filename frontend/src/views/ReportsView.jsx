@@ -65,7 +65,7 @@ function buildReportText(result, explanation) {
     '',
     'OPTIMISATION',
     `  ${meta.algorithm}, population ${meta.pop_size}, ${meta.n_gen} generations; ${meta.n_pareto_solutions_found} feasible Pareto-optimal plans found`,
-    `  Ranked by TOPSIS with preference "${meta.preference}"; top ${Math.min(3, result.plans.length)} shown below`,
+    `  Ranked by TOPSIS with ${meta.topsis ? `the "${meta.topsis.label}" weights` : `preference "${meta.preference}"`}; top ${Math.min(3, result.plans.length)} shown below`,
     '',
     ...qualityReportLines(meta.quality_metrics),
   );
@@ -315,7 +315,7 @@ export default function ReportsView({ userLocation, onNavigate }) {
                     </div>
                     <div>
                       <h4 className="font-label-md text-label-md text-on-surface font-semibold">
-                        {run.season} Optimization Run ({run.num_plans} plans, {run.preference || 'balanced'})
+                        {run.season} Optimization Run ({run.num_plans} plans, {run.ranking || run.preference || 'balanced'})
                       </h4>
                       <p className="font-label-sm text-label-sm text-on-surface-variant">Generated {run.date}</p>
                     </div>

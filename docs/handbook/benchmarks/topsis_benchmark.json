@@ -1,0 +1,679 @@
+{
+ "fronts": 120,
+ "seeds": 5,
+ "front_sizes": [
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80,
+  80
+ ],
+ "identity": {
+  "balanced_profile_identical": 120,
+  "generic_path_identical": 120,
+  "fronts": 120
+ },
+ "profiles": {
+  "balanced": {
+   "top_differs_share": 0.0,
+   "tau_median": 0.9999999999999999,
+   "overlap_median": 5.0,
+   "balanced_top_rank_median": 1.0,
+   "top_values_median": {
+    "yield": 10.7849,
+    "cost": 37309.313,
+    "water": 4439097.76,
+    "env": 43.4024,
+    "market_price": 3151.8361532997774,
+    "income": 292854.95435120794,
+    "budget": 2231.5029999999997,
+    "soil": 0.7713075082868892,
+    "land": 0.42969043692776426,
+    "rainfall": 0.5227315437294544
+   }
+  },
+  "profit": {
+   "top_differs_share": 0.9333333333333333,
+   "tau_median": -0.22373417721518984,
+   "overlap_median": 0.0,
+   "balanced_top_rank_median": 41.0,
+   "top_values_median": {
+    "yield": 14.799500000000002,
+    "cost": 45165.03600000001,
+    "water": 7073318.08,
+    "env": 58.2846,
+    "market_price": 3107.5500968028023,
+    "income": 521066.18015123124,
+    "budget": 0.01500000000523869,
+    "soil": 0.710395633393166,
+    "land": 0.010272157879457273,
+    "rainfall": 0.30000000000000004
+   }
+  },
+  "water": {
+   "top_differs_share": 0.95,
+   "tau_median": 0.6136075949367088,
+   "overlap_median": 0.0,
+   "balanced_top_rank_median": 26.0,
+   "top_values_median": {
+    "yield": 4.720000000000001,
+    "cost": 33872.221999999994,
+    "water": 2063503.5,
+    "env": 30.0501,
+    "market_price": 4168.177396257622,
+    "income": 131167.4342229665,
+    "budget": 1795.260500000004,
+    "soil": 0.8540103571283071,
+    "land": 0.26994425026628377,
+    "rainfall": 0.5907778728980412
+   }
+  },
+  "sustainability": {
+   "top_differs_share": 0.9333333333333333,
+   "tau_median": 0.7487341772151899,
+   "overlap_median": 0.0,
+   "balanced_top_rank_median": 17.0,
+   "top_values_median": {
+    "yield": 6.3123,
+    "cost": 33719.475000000006,
+    "water": 2641444.18,
+    "env": 38.016,
+    "market_price": 3717.320433064283,
+    "income": 151311.58448253997,
+    "budget": 605.2512500000012,
+    "soil": 0.8354519828232416,
+    "land": 0.3908870011848634,
+    "rainfall": 0.5676344305056857
+   }
+  },
+  "low_cost": {
+   "top_differs_share": 0.8416666666666667,
+   "tau_median": 0.6749999999999999,
+   "overlap_median": 0.0,
+   "balanced_top_rank_median": 19.0,
+   "top_values_median": {
+    "yield": 3.1626000000000003,
+    "cost": 30498.088,
+    "water": 2134257.51,
+    "env": 32.8916,
+    "market_price": 3459.6484907666522,
+    "income": 85428.28855006074,
+    "budget": 3294.292999999998,
+    "soil": 0.8499516666710154,
+    "land": 0.1200680569401176,
+    "rainfall": 0.59984000002559
+   }
+  }
+ },
+ "top_plan_shift_vs_balanced": {
+  "profit": {
+   "yield": {
+    "median_change": 3.3678999999999992,
+    "better": 112,
+    "worse": 0,
+    "p": 4.096357955947719e-20
+   },
+   "cost": {
+    "median_change": 9340.671999999995,
+    "better": 24,
+    "worse": 88,
+    "p": 1.3945564210722842e-16
+   },
+   "water": {
+    "median_change": 2191310.9499999993,
+    "better": 0,
+    "worse": 112,
+    "p": 4.096357955947719e-20
+   },
+   "env": {
+    "median_change": 17.045200000000005,
+    "better": 18,
+    "worse": 94,
+    "p": 2.682190668211755e-16
+   },
+   "market_price": {
+    "median_change": -9.047660415913242,
+    "better": 49,
+    "worse": 63,
+    "p": 0.06916233045233372
+   },
+   "income": {
+    "median_change": 95616.34020343429,
+    "better": 112,
+    "worse": 0,
+    "p": 4.096357955947719e-20
+   },
+   "budget": {
+    "median_change": 0.0,
+    "better": 10,
+    "worse": 45,
+    "p": 2.0898861377998814e-09
+   },
+   "soil": {
+    "median_change": -0.021168181970133704,
+    "better": 24,
+    "worse": 64,
+    "p": 1.4106048158162777e-10
+   },
+   "land": {
+    "median_change": -0.331959759121662,
+    "better": 33,
+    "worse": 79,
+    "p": 1.500491610214486e-09
+   },
+   "rainfall": {
+    "median_change": -0.13609099331515007,
+    "better": 80,
+    "worse": 12,
+    "p": 7.655357272570772e-13
+   }
+  },
+  "water": {
+   "yield": {
+    "median_change": -3.6527,
+    "better": 0,
+    "worse": 114,
+    "p": 1.9183556738165432e-20
+   },
+   "cost": {
+    "median_change": -3530.6800000000003,
+    "better": 80,
+    "worse": 34,
+    "p": 3.0620086116813043e-06
+   },
+   "water": {
+    "median_change": -1624176.9800000002,
+    "better": 110,
+    "worse": 4,
+    "p": 5.797715352398091e-20
+   },
+   "env": {
+    "median_change": -8.436700000000004,
+    "better": 97,
+    "worse": 17,
+    "p": 4.2867032758235803e-16
+   },
+   "market_price": {
+    "median_change": 78.85833929249554,
+    "better": 68,
+    "worse": 46,
+    "p": 0.00036142332422332845
+   },
+   "income": {
+    "median_change": -112064.06431183135,
+    "better": 4,
+    "worse": 110,
+    "p": 3.4299260471163765e-20
+   },
+   "budget": {
+    "median_change": 0.0,
+    "better": 35,
+    "worse": 19,
+    "p": 0.12431194299369296
+   },
+   "soil": {
+    "median_change": 0.012346459089685069,
+    "better": 70,
+    "worse": 20,
+    "p": 3.3331183443517365e-07
+   },
+   "land": {
+    "median_change": -0.21551226339630403,
+    "better": 42,
+    "worse": 72,
+    "p": 0.07792056589369685
+   },
+   "rainfall": {
+    "median_change": 0.05082079573442644,
+    "better": 18,
+    "worse": 76,
+    "p": 1.4075338825863924e-10
+   }
+  },
+  "sustainability": {
+   "yield": {
+    "median_change": -1.8574999999999997,
+    "better": 1,
+    "worse": 111,
+    "p": 9.669799642730128e-20
+   },
+   "cost": {
+    "median_change": -2209.050000000003,
+    "better": 71,
+    "worse": 41,
+    "p": 1.780124542233234e-05
+   },
+   "water": {
+    "median_change": -819085.95,
+    "better": 107,
+    "worse": 5,
+    "p": 2.6878400050918755e-18
+   },
+   "env": {
+    "median_change": -6.719600000000002,
+    "better": 93,
+    "worse": 19,
+    "p": 4.355457028255037e-15
+   },
+   "market_price": {
+    "median_change": 31.739250167861428,
+    "better": 64,
+    "worse": 48,
+    "p": 0.0002878360877785142
+   },
+   "income": {
+    "median_change": -26274.871581106083,
+    "better": 5,
+    "worse": 107,
+    "p": 5.117144126498111e-19
+   },
+   "budget": {
+    "median_change": 0.0,
+    "better": 33,
+    "worse": 21,
+    "p": 0.11609794095275622
+   },
+   "soil": {
+    "median_change": 0.010247676951966045,
+    "better": 68,
+    "worse": 21,
+    "p": 7.070528565752462e-12
+   },
+   "land": {
+    "median_change": -0.05176262993356684,
+    "better": 45,
+    "worse": 65,
+    "p": 0.12566755305547733
+   },
+   "rainfall": {
+    "median_change": 0.012782193308936735,
+    "better": 29,
+    "worse": 62,
+    "p": 0.004661097453350529
+   }
+  },
+  "low_cost": {
+   "yield": {
+    "median_change": -2.3324,
+    "better": 10,
+    "worse": 91,
+    "p": 4.882876416086272e-17
+   },
+   "cost": {
+    "median_change": -4496.261000000002,
+    "better": 94,
+    "worse": 7,
+    "p": 1.821255181776858e-17
+   },
+   "water": {
+    "median_change": -1034913.0599999999,
+    "better": 91,
+    "worse": 10,
+    "p": 6.325556520906174e-17
+   },
+   "env": {
+    "median_change": -6.867399999999998,
+    "better": 84,
+    "worse": 17,
+    "p": 1.3417112276175686e-14
+   },
+   "market_price": {
+    "median_change": 1.85020816141855,
+    "better": 62,
+    "worse": 39,
+    "p": 0.013210031899282262
+   },
+   "income": {
+    "median_change": -42253.6995478753,
+    "better": 10,
+    "worse": 91,
+    "p": 9.716108294666133e-16
+   },
+   "budget": {
+    "median_change": 0.0,
+    "better": 49,
+    "worse": 0,
+    "p": 1.1100954635085597e-09
+   },
+   "soil": {
+    "median_change": 0.004465930701891219,
+    "better": 70,
+    "worse": 11,
+    "p": 1.4150057978576784e-12
+   },
+   "land": {
+    "median_change": -0.26155110137974025,
+    "better": 15,
+    "worse": 86,
+    "p": 1.614924259871415e-14
+   },
+   "rainfall": {
+    "median_change": 0.03482924682034677,
+    "better": 18,
+    "worse": 68,
+    "p": 6.981682681575646e-06
+   }
+  }
+ },
+ "spearman_median": {
+  "yield|yield": 1.0,
+  "yield|cost": 0.9635303472877443,
+  "yield|water": 0.8999604422987173,
+  "yield|env": 0.8995973677478022,
+  "yield|market_price": -0.657793849809357,
+  "yield|income": 0.9994432627528442,
+  "yield|budget": -0.9376117270308755,
+  "yield|soil": -0.6826185086832963,
+  "yield|land": -0.1601283307399898,
+  "yield|rainfall": -0.8570155969011983,
+  "cost|yield": 0.9635303472877443,
+  "cost|cost": 1.0,
+  "cost|water": 0.7272442246158533,
+  "cost|env": 0.9312431325761388,
+  "cost|market_price": -0.7946153604145767,
+  "cost|income": 0.808860759493671,
+  "cost|budget": -1.0,
+  "cost|soil": -0.9400723164268108,
+  "cost|land": 0.004784902155433779,
+  "cost|rainfall": -0.8904047727375459,
+  "water|yield": 0.8999604422987173,
+  "water|cost": 0.7272442246158533,
+  "water|water": 1.0,
+  "water|env": 0.7153560731204812,
+  "water|market_price": -0.729843854669644,
+  "water|income": 0.8952988261658787,
+  "water|budget": -0.7658779701919969,
+  "water|soil": -0.4882982949245074,
+  "water|land": -0.056680988941354676,
+  "water|rainfall": -0.7445211966717955,
+  "env|yield": 0.8995973677478021,
+  "env|cost": 0.9312431325761388,
+  "env|water": 0.7153560731204812,
+  "env|env": 1.0,
+  "env|market_price": -0.501503193319736,
+  "env|income": 0.8589779653070793,
+  "env|budget": -0.835617900465184,
+  "env|soil": -0.8646466244470238,
+  "env|land": -0.07463483444061644,
+  "env|rainfall": -0.8939347438207017,
+  "market_price|yield": -0.657793849809357,
+  "market_price|cost": -0.7946153604145767,
+  "market_price|water": -0.7298438546696441,
+  "market_price|env": -0.501503193319736,
+  "market_price|market_price": 1.0,
+  "market_price|income": -0.39383025716179143,
+  "market_price|budget": 0.7318004227403032,
+  "market_price|soil": 0.6416192239484644,
+  "market_price|land": 0.011978626215315253,
+  "market_price|rainfall": 0.2445629680941423,
+  "income|yield": 0.9994432627528441,
+  "income|cost": 0.808860759493671,
+  "income|water": 0.8952988261658787,
+  "income|env": 0.8589779653070793,
+  "income|market_price": -0.3938302571617914,
+  "income|income": 1.0,
+  "income|budget": -0.7049736578511694,
+  "income|soil": -0.5206037228152887,
+  "income|land": -0.17005542074023874,
+  "income|rainfall": -0.6598667351834453,
+  "budget|yield": -0.9376117270308754,
+  "budget|cost": -1.0,
+  "budget|water": -0.7658779701919969,
+  "budget|env": -0.835617900465184,
+  "budget|market_price": 0.7318004227403032,
+  "budget|income": -0.7049736578511694,
+  "budget|budget": 1.0,
+  "budget|soil": 0.7890551287370974,
+  "budget|land": -0.5049065369968562,
+  "budget|rainfall": 0.8618387523944295,
+  "soil|yield": -0.6826185086832963,
+  "soil|cost": -0.9400723164268108,
+  "soil|water": -0.4882982949245074,
+  "soil|env": -0.8646466244470239,
+  "soil|market_price": 0.6416192239484644,
+  "soil|income": -0.5206037228152887,
+  "soil|budget": 0.7890551287370974,
+  "soil|soil": 1.0,
+  "soil|land": 0.06289818055917716,
+  "soil|rainfall": 0.8460366389667013,
+  "land|yield": -0.1601283307399898,
+  "land|cost": 0.004784902155433779,
+  "land|water": -0.056680988941354676,
+  "land|env": -0.07463483444061644,
+  "land|market_price": 0.011978626215315253,
+  "land|income": -0.17005542074023874,
+  "land|budget": -0.5049065369968562,
+  "land|soil": 0.06289818055917717,
+  "land|land": 0.9999999999999999,
+  "land|rainfall": 0.04816325287202059,
+  "rainfall|yield": -0.8570155969011983,
+  "rainfall|cost": -0.8904047727375459,
+  "rainfall|water": -0.7445211966717955,
+  "rainfall|env": -0.8939347438207017,
+  "rainfall|market_price": 0.24456296809414227,
+  "rainfall|income": -0.6598667351834453,
+  "rainfall|budget": 0.8618387523944296,
+  "rainfall|soil": 0.8460366389667013,
+  "rainfall|land": 0.0481632528720206,
+  "rainfall|rainfall": 1.0
+ },
+ "sensitivity_detail": {
+  "yield_weight_pm10pct": {
+   "top_unchanged_share": 0.03333333333333333,
+   "alternative_top_rank_median": 4.0,
+   "alternative_top_rank_max": 37,
+   "closeness_gap_median": 0.002759705761985809,
+   "max_objective_change_pct_median": 17.751822860672007
+  }
+ },
+ "sensitivity": {
+  "rank_sum_vs_roc": {
+   "profit": {
+    "roc_weights": {
+     "yield": 0.26944444444444443,
+     "cost": 0.10277777777777779,
+     "water": 0.044444444444444446,
+     "env": 0.044444444444444446,
+     "market_price": 0.26944444444444443,
+     "income": 0.26944444444444443,
+     "budget": 0.0,
+     "soil": 0.0,
+     "land": 0.0,
+     "rainfall": 0.0
+    },
+    "top_agreement": 0.7583333333333333,
+    "roc_top_rank_median": 1.0,
+    "closeness_gap_median": 0.0,
+    "max_objective_change_pct_median": 0.0
+   },
+   "water": {
+    "roc_weights": {
+     "yield": 0.065,
+     "cost": 0.15666666666666668,
+     "water": 0.3566666666666667,
+     "env": 0.3566666666666667,
+     "market_price": 0.0,
+     "income": 0.065,
+     "budget": 0.0,
+     "soil": 0.0,
+     "land": 0.0,
+     "rainfall": 0.0
+    },
+    "top_agreement": 0.21666666666666667,
+    "roc_top_rank_median": 3.0,
+    "closeness_gap_median": 0.0018570580452669794,
+    "max_objective_change_pct_median": 11.971624991830527
+   },
+   "sustainability": {
+    "roc_weights": {
+     "yield": 0.07517006802721088,
+     "cost": 0.07517006802721088,
+     "water": 0.25136054421768705,
+     "env": 0.25136054421768705,
+     "market_price": 0.0,
+     "income": 0.02040816326530612,
+     "budget": 0.0,
+     "soil": 0.25136054421768705,
+     "land": 0.0,
+     "rainfall": 0.07517006802721088
+    },
+    "top_agreement": 0.05,
+    "roc_top_rank_median": 6.5,
+    "closeness_gap_median": 0.0035026447301059194,
+    "max_objective_change_pct_median": 25.021080531317835
+   },
+   "low_cost": {
+    "roc_weights": {
+     "yield": 0.04,
+     "cost": 0.3566666666666667,
+     "water": 0.12333333333333334,
+     "env": 0.12333333333333334,
+     "market_price": 0.0,
+     "income": 0.0,
+     "budget": 0.3566666666666667,
+     "soil": 0.0,
+     "land": 0.0,
+     "rainfall": 0.0
+    },
+    "top_agreement": 0.45,
+    "roc_top_rank_median": 2.0,
+    "closeness_gap_median": 0.00018124516720896544,
+    "max_objective_change_pct_median": 1.2607461810395804
+   }
+  },
+  "balanced_top_stable_under_yield_weight_pm10pct": 0.03333333333333333,
+  "entropy_weights_median": {
+   "yield": 0.2784,
+   "cost": 0.2978,
+   "water": 0.1953,
+   "env": 0.2004
+  },
+  "critic_weights_median": {
+   "yield": 0.4573,
+   "cost": 0.1823,
+   "water": 0.1879,
+   "env": 0.1716
+  }
+ },
+ "runtime_ms": {
+  "published_ranking": 0.4832937498576939,
+  "profile_ranking": 0.5880208249436691,
+  "five_profile_comparison": 1.3571239498560317,
+  "ranking_explanation": 0.7647437247214839
+ }
+}

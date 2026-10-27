@@ -154,16 +154,39 @@ def topsis_scores(yields, costs, waters, envs, w: np.ndarray):
         _minmax_norm(list(waters), higher_is_better=False),
         _minmax_norm(list(envs), higher_is_better=False),
     )
+    return weighted_closeness(goodness, w), goodness
+
+
+def weighted_closeness(goodness, w: np.ndarray) -> np.ndarray:
+    """TOPSIS relative closeness C = d-/(d+ + d-) of every plan, from 0-1
+    goodness columns (1 = best in the set) and their weights."""
     # Weighted, normalised decision matrix; every column already points
-    # "higher = better" thanks to _minmax_norm's good/bad flip above.
+    # "higher = better" thanks to _minmax_norm's good/bad flip.
     M = np.column_stack(goodness) * w
     ideal_best = M.max(axis=0)
     ideal_worst = M.min(axis=0)
     dist_best = np.sqrt(((M - ideal_best) ** 2).sum(axis=1))
     dist_worst = np.sqrt(((M - ideal_worst) ** 2).sum(axis=1))
     denom = dist_best + dist_worst
-    closeness = np.divide(dist_worst, denom, out=np.full_like(denom, 0.5), where=denom > 1e-12)
-    return closeness, goodness
+    return np.divide(dist_worst, denom, out=np.full_like(denom, 0.5), where=denom > 1e-12)
+
+
+def criteria_goodness(values: Dict[str, List[float]], directions: Dict[str, str]) -> Dict[str, List[float]]:
+    """0-1 goodness (1 = best in the set) of each criterion column."""
+    return {k: _minmax_norm(list(v), higher_is_better=directions[k] == "benefit") for k, v in values.items()}
+
+
+def criteria_closeness(values: Dict[str, List[float]], directions: Dict[str, str], weights: Dict[str, float]):
+    """TOPSIS closeness over any criteria. Only criteria with a positive
+    weight enter the matrix, in the order of `values`, so the four
+    optimiser objectives with the balanced weights give exactly
+    topsis_scores' result."""
+    active = [k for k in values if weights.get(k, 0.0) > 0]
+    if not active:
+        raise ValueError("At least one criterion needs a positive weight.")
+    goodness = criteria_goodness({k: values[k] for k in active}, directions)
+    w = np.array([weights[k] for k in active])
+    return weighted_closeness([goodness[k] for k in active], w), goodness
 
 
 def filter_plans(
@@ -193,6 +216,9 @@ def rank_plans(
     preference: Preference = "balanced",
     max_plans: int = config.MAX_RETURNED_PLANS,
     weights: Optional[List[float]] = None,
+    criteria_values: Optional[Dict[str, List[float]]] = None,
+    criteria_weights: Optional[Dict[str, float]] = None,
+    criteria_directions: Optional[Dict[str, str]] = None,
 ) -> List[RankedPlan]:
     """Rank the Pareto front with TOPSIS (Technique for Order Preference by
     Similarity to Ideal Solution).
@@ -209,16 +235,25 @@ def rank_plans(
     if not plans:
         return []
 
-    # Explicit [yield, cost, water, env] weights (Scenario Simulation priority
-    # sliders) override the named preference; they are normalised to sum to 1.
-    w = normalise_weights(weights) if weights is not None else preference_weights(preference)
-
     yields = [p.yield_tonnes for p in plans]
     costs = [p.cost_rs for p in plans]
     waters = [p.water_liters for p in plans]
     envs = [p.env_impact_score for p in plans]
 
-    closeness, (yield_n, cost_n, water_n, env_n) = topsis_scores(yields, costs, waters, envs, w)
+    if criteria_weights is not None:
+        # A ranking profile (app/decision/profiles.py): TOPSIS over every
+        # criterion with a positive weight. normalized_scores still report
+        # the four optimiser objectives.
+        if criteria_values is None or criteria_directions is None:
+            raise ValueError("criteria_weights need criteria_values and criteria_directions.")
+        closeness, _ = criteria_closeness(criteria_values, criteria_directions, criteria_weights)
+        yield_n, cost_n, water_n, env_n = (
+            _minmax_norm(yields, True), _minmax_norm(costs, False), _minmax_norm(waters, False), _minmax_norm(envs, False))
+    else:
+        # Explicit [yield, cost, water, env] weights (Scenario Simulation priority
+        # sliders) override the named preference; they are normalised to sum to 1.
+        w = normalise_weights(weights) if weights is not None else preference_weights(preference)
+        closeness, (yield_n, cost_n, water_n, env_n) = topsis_scores(yields, costs, waters, envs, w)
 
     # Raw-magnitude buckets (no good/bad flip) purely for wording the
     # plain-language trade-off sentence -- see _plain_minmax docstring.

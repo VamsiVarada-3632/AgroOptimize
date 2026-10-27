@@ -10,6 +10,8 @@ Base URL: local `http://localhost:8000`; production `https://agrooptimize-backen
 | POST | `/api/farm-plans` | Full pipeline, optionally saved | RunOptimization | ≈300 ms (pop 80 × 200 gen) |
 | GET | `/api/results` | List saved runs | – | O(#runs), cached by mtime |
 | GET | `/api/results/{run_id}` | One saved run | Reports | ~1 ms |
+| GET | `/api/topsis/profiles` | Ranking profiles, weights, criteria, custom-weight rules | – | ~1 ms |
+| GET / POST | `/api/results/{run_id}/topsis` | Re-rank a saved run under a ranking profile or custom weights | Run Optimization | a few ms |
 | GET | `/api/weather/{district}` | Live weather (Open-Meteo) or CSV fallback | Dashboard (×5 calls) | network-bound, ≤5 s timeout |
 | GET | `/api/dashboard/{district}` | KPI cards, actions, crop split | Dashboard | 42 ms |
 | GET | `/api/history/{district}` | This browser's saved runs | History, Reports | ~1 ms |
@@ -82,7 +84,10 @@ Request (`FarmPlanRequest`):
 | year | int | must exist for location | latest (2024) | |
 | total_land_ha | float | > 0 | required | farm size |
 | budget_rs | float | > 0 | none | hard constraint cost ≤ budget |
-| preference | enum | balanced, max_yield, min_cost, min_water, min_env_impact | balanced | TOPSIS weights |
+| preference | enum | balanced, max_yield, min_cost, min_water, min_env_impact | balanced | TOPSIS weights (classic preferences) |
+| profile | enum | balanced, profit, water, sustainability, low_cost, custom | none | ranking profile ([TOPSIS_PROFILE_GUIDE.md](TOPSIS_PROFILE_GUIDE.md)); cannot be combined with a preference other than balanced |
+| custom_weights | object | criterion → 0–1, summing to 1; criteria: yield, market_price, income, cost, water, env, budget, soil, land, rainfall | none | required for, and only allowed with, profile custom |
+| compare_profiles | bool | | false | also return `meta.profile_comparison` |
 | max_candidate_crops | int | 2–12 | 6 | top-N by revenue |
 | max_cost_rs, max_water_liters, min_yield_tonnes, max_env_impact | float | ≥ 0 | none | post-hoc filters |
 | pop_size | int | 8–300 | 80 | |
@@ -113,12 +118,14 @@ Response (`FarmPlanResponse`, ≈33 KB with 50 plans):
  "run_id": "salem_kharif_2024_<UTC timestamp>",
  "saved_files": {"run_id":"…","json_path":"…/results/….json","plans_csv_path":"…","convergence_csv_path":"…","convergence_plot_path":"…"}}
 ```
+`meta.topsis` (optional; absent in runs saved before it existed) records the weights that ranked the run: `profile` (null for a classic preference other than balanced, or for simulation priorities), `label`, `preference`, `weights` (all ten criteria), `criteria` (those with a positive weight, with label and direction), `method`, `budget_active`. With `compare_profiles: true`, `meta.profile_comparison` holds the front ranked under every standard profile ([TOPSIS_COMPARISON.md](TOPSIS_COMPARISON.md)). Saved runs also store the ranked front (`ranked_front`, not returned by the API) so they can be re-ranked exactly.
+
 `meta.quality_metrics` (optional; absent in runs saved before it existed) describes the quality of the run's Pareto front: hypervolume and its ratio to a reference front, generational distance (GD), inverted generational distance (IGD), IGD+, generalised spread and spacing, on objectives normalised to the reference front's ideal and nadir, where the reference is the front plus each plan's copy with irrigation and fertiliser multipliers at 0.7 (never worse in this model). Lower is better for GD, IGD, IGD+, spread and spacing. Values that cannot be computed (no feasible plan, fewer than two plans) are `null`. See [NSGAII_IMPROVEMENTS.md](NSGAII_IMPROVEMENTS.md) §2.3.
 
 (`convergence_history` values above are placeholders showing the shape; it has one entry per generation when `save_results` is true and is `[]` otherwise. `run_id`/`saved_files` are `null` when not saved.) Units: `yield_tonnes`, `cost_rs`, `water_liters`, `env_impact_score` are **totals over `total_land_ha`**, not per hectare. `saved_files` exposes absolute server paths (minor information disclosure – see [SECURITY_REVIEW.md](SECURITY_REVIEW.md)).
 
 ## GET /api/results
-List of `{run_id, location, season, year, preference, saved_at, n_plans, client_id}` newest-first by filename. `client_id` is **always null** in this response (redacted 2026-09-29).
+List of `{run_id, location, season, year, preference, ranking, saved_at, n_plans, client_id}` (`ranking`: label of the weights that ranked the run, null for runs saved before ranking profiles) newest-first by filename. `client_id` is **always null** in this response (redacted 2026-09-29).
 
 ## GET /api/results/{run_id}
 The stored record validated through `FarmPlanResponse` (so extra stored keys such as `saved_at`, `client_id` are dropped). `run_id` must match `^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$`; anything else, a missing file, or a corrupt file → 404.
@@ -193,9 +200,28 @@ Cost/water/impact minima are identical by construction (fuzzy only scales yield)
 ## CORS
 Allowed origins: `http://localhost:5173`, `http://localhost:5174`, `http://localhost:3000` plus comma-separated `CORS_ALLOW_ORIGINS` (production: `https://agrooptimize.vercel.app`). All methods and headers; `allow_credentials=True` (not needed – no cookies are used).
 
+## GET /api/topsis/profiles
+
+`{default_profile, profiles: [{profile, label, summary, weights, tiers?, method}], criteria: [{key, label, direction, unit, source}], custom: {default_weights, sum_to, tolerance, min, max}}`.
+
+## GET /api/results/{run_id}/topsis?profile=&compare=  and  POST /api/results/{run_id}/topsis
+
+Re-ranks a saved run's front with TOPSIS only (no NSGA-II re-run). GET takes a standard `profile` (default balanced) and `compare` (default true). POST takes `{"profile": "custom", "custom_weights": {...}, "compare": true}` (or any standard profile). Response (`TopsisRankingOut`):
+
+| Field | Meaning |
+|---|---|
+| `topsis` | as `meta.topsis` |
+| `plans` | ranked plans (`RankedPlanOut`, top 50) |
+| `ranked_over` | `ranked_front` (the stored front) or `returned_plans` (older runs: the 50 saved plans) |
+| `plans_ranked` | number of plans ranked |
+| `explanation` | `ideal_best`, `ideal_worst`, the top 10 plans with weight → contribution → score per criterion, and `pairs` explaining each plan against the next ([TOPSIS_EXPLAINABILITY.md](TOPSIS_EXPLAINABILITY.md)) |
+| `comparison` | the front under all five profiles, when `compare` |
+
+Errors: 404 unknown run; 422 invalid profile or weights (e.g. not summing to 1); 400 a run without feasible plans.
+
 ## GET /api/results/{run_id}/explanation  and  GET /api/comparison/{district}/explanation
 
-Structured, data-derived explanation of one recommended plan (`ExplanationOut`, ≈19 KB). Query: `rank` (saved runs, 1–500, default 1) or `plan` = A | B | C plus `total_land_ha`, `budget_rs` (comparison). Top-level keys: `subject, summary, reasons, objectives, trade_offs, constraints, benefits, risks, historical_context, confidence, insights, alternatives, economics, crop_breakdown, consistency_checks, timeline, fuzzy_reasoning`. Every list item has `id, title, detail, source, evidence` (+ `status` for constraints, `severity` for risks). Abbreviated example (Salem Plan A):
+Structured, data-derived explanation of one recommended plan (`ExplanationOut`, ≈19 KB). Query: `rank` (saved runs, 1–500, default 1) or `plan` = A | B | C plus `total_land_ha`, `budget_rs` (comparison). Top-level keys: `subject, summary, reasons, objectives, trade_offs, constraints, benefits, risks, historical_context, confidence, insights, alternatives, economics, crop_breakdown, consistency_checks, timeline, fuzzy_reasoning`, and optional `topsis` (the plan's weight → contribution → score, `versus_previous`, `versus_next`, `rank_by_profile`). Every list item has `id, title, detail, source, evidence` (+ `status` for constraints, `severity` for risks). Abbreviated example (Salem Plan A):
 
 ```json
 {"summary": {"location": "Salem", "season": "Rabi", "year": 2024, "data_year_estimated": true, "preference": "balanced",

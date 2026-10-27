@@ -1,0 +1,2067 @@
+{
+ "topsis": {
+  "profile": "profit",
+  "label": "Profit priority",
+  "weights": {
+   "yield": 0.23076923076923078,
+   "cost": 0.15384615384615385,
+   "water": 0.07692307692307693,
+   "env": 0.07692307692307693,
+   "market_price": 0.23076923076923078,
+   "income": 0.23076923076923078,
+   "budget": 0.0,
+   "soil": 0.0,
+   "land": 0.0,
+   "rainfall": 0.0
+  },
+  "criteria": [
+   {
+    "key": "yield",
+    "label": "Yield",
+    "direction": "benefit",
+    "weight": 0.23076923076923078
+   },
+   {
+    "key": "cost",
+    "label": "Production cost",
+    "direction": "cost",
+    "weight": 0.15384615384615385
+   },
+   {
+    "key": "water",
+    "label": "Water",
+    "direction": "cost",
+    "weight": 0.07692307692307693
+   },
+   {
+    "key": "env",
+    "label": "Environmental impact",
+    "direction": "cost",
+    "weight": 0.07692307692307693
+   },
+   {
+    "key": "market_price",
+    "label": "Market price",
+    "direction": "benefit",
+    "weight": 0.23076923076923078
+   },
+   {
+    "key": "income",
+    "label": "Income",
+    "direction": "benefit",
+    "weight": 0.23076923076923078
+   }
+  ],
+  "preference": "balanced",
+  "method": "TOPSIS: min\u2013max normalisation, weighted Euclidean distance to the ideal and anti-ideal plan",
+  "budget_active": true
+ },
+ "plans": [
+  {
+   "rank": 1,
+   "crop_names": [
+    "Paddy",
+    "Tapioca",
+    "Maize",
+    "Groundnut",
+    "Cotton"
+   ],
+   "allocation_percent": [
+    0.01,
+    99.96,
+    0.01,
+    0.01,
+    0.01
+   ],
+   "area_ha": [
+    0.001,
+    4.998,
+    0.001,
+    0.001,
+    0.001
+   ],
+   "irrigation_multiplier": [
+    0.768,
+    0.7,
+    0.767,
+    0.7,
+    0.758
+   ],
+   "fertilizer_multiplier": [
+    0.753,
+    0.7,
+    0.7,
+    0.892,
+    1.001
+   ],
+   "yield_tonnes": 69.814,
+   "cost_rs": 201301.11,
+   "water_liters": 22654872.3,
+   "env_impact_score": 198.788,
+   "feasible": true,
+   "composite_score": 0.5557,
+   "normalized_scores": {
+    "yield": 1.0,
+    "cost": 0.21,
+    "water": 0.515,
+    "env": 0.518
+   },
+   "confidence_label": "Moderate",
+   "trade_off_summary": "High yield, High cost, Moderate water use, Moderate environmental impact (confidence: moderate)"
+  },
+  {
+   "rank": 2,
+   "crop_names": [
+    "Paddy",
+    "Tapioca",
+    "Maize",
+    "Groundnut",
+    "Cotton"
+   ],
+   "allocation_percent": [
+    0.01,
+    99.48,
+    0.49,
+    0.01,
+    0.01
+   ],
+   "area_ha": [
+    0.001,
+    4.974,
+    0.024,
+    0.001,
+    0.001
+   ],
+   "irrigation_multiplier": [
+    0.9,
+    1.177,
+    1.078,
+    1.055,
+    0.872
+   ],
+   "fertilizer_multiplier": [
+    0.899,
+    0.7,
+    0.7,
+    0.769,
+    0.873
+   ],
+   "yield_tonnes": 69.579,
+   "cost_rs": 201059.79,
+   "water_liters": 37989710.6,
+   "env_impact_score": 212.781,
+   "feasible": true,
+   "composite_score": 0.545,
+   "normalized_scores": {
+    "yield": 0.996,
+    "cost": 0.214,
+    "water": 0.0,
+    "env": 0.459
+   },
+   "confidence_label": "Moderate",
+   "trade_off_summary": "High yield, High cost, High water use, Moderate environmental impact (confidence: moderate)"
+  },
+  {
+   "rank": 3,
+   "crop_names": [
+    "Paddy",
+    "Tapioca",
+    "Maize",
+    "Groundnut",
+    "Cotton"
+   ],
+   "allocation_percent": [
+    0.01,
+    99.48,
+    0.49,
+    0.01,
+    0.01
+   ],
+   "area_ha": [
+    0.001,
+    4.974,
+    0.024,
+    0.001,
+    0.001
+   ],
+   "irrigation_multiplier": [
+    0.9,
+    1.177,
+    0.757,
+    0.7,
+    0.857
+   ],
+   "fertilizer_multiplier": [
+    0.7,
+    0.704,
+    0.7,
+    0.714,
+    1.079
+   ],
+   "yield_tonnes": 69.579,
+   "cost_rs": 201236.31,
+   "water_liters": 37964311.7,
+   "env_impact_score": 213.867,
+   "feasible": true,
+   "composite_score": 0.5445,
+   "normalized_scores": {
+    "yield": 0.996,
+    "cost": 0.211,
+    "water": 0.001,
+    "env": 0.455
+   },
+   "confidence_label": "Moderate",
+   "trade_off_summary": "High yield, High cost, High water use, Moderate environmental impact (confidence: moderate)"
+  },
+  {
+   "rank": 4,
+   "crop_names": [
+    "Paddy",
+    "Tapioca",
+    "Maize",
+    "Groundnut",
+    "Cotton"
+   ],
+   "allocation_percent": [
+    0.02,
+    82.01,
+    17.95,
+    0.01,
+    0.01
+   ],
+   "area_ha": [
+    0.001,
+    4.1,
+    0.897,
+    0.001,
+    0.001
+   ],
+   "irrigation_multiplier": [
+    0.81,
+    1.26,
+    0.757,
+    0.7,
+    0.758
+   ],
+   "fertilizer_multiplier": [
+    0.7,
+    0.7,
+    0.7,
+    0.714,
+    1.079
+   ],
+   "yield_tonnes": 61.017,
+   "cost_rs": 192280.74,
+   "water_liters": 35623592.9,
+   "env_impact_score": 221.481,
+   "feasible": true,
+   "composite_score": 0.5336,
+   "normalized_scores": {
+    "yield": 0.863,
+    "cost": 0.356,
+    "water": 0.08,
+    "env": 0.423
+   },
+   "confidence_label": "Moderate",
+   "trade_off_summary": "High yield, Moderate cost, High water use, Moderate environmental impact (confidence: moderate)"
+  },
+  {
+   "rank": 5,
+   "crop_names": [
+    "Paddy",
+    "Tapioca",
+    "Maize",
+    "Groundnut",
+    "Cotton"
+   ],
+   "allocation_percent": [
+    0.01,
+    92.8,
+    0.45,
+    6.73,
+    0.01
+   ],
+   "area_ha": [
+    0.0,
+    4.64,
+    0.023,
+    0.336,
+    0.0
+   ],
+   "irrigation_multiplier": [
+    0.9,
+    1.148,
+    1.082,
+    1.055,
+    0.881
+   ],
+   "fertilizer_multiplier": [
+    0.899,
+    0.7,
+    0.7,
+    0.769,
+    0.888
+   ],
+   "yield_tonnes": 65.281,
+   "cost_rs": 199061.29,
+   "water_liters": 35394172.9,
+   "env_impact_score": 204.286,
+   "feasible": true,
+   "composite_score": 0.5329,
+   "normalized_scores": {
+    "yield": 0.929,
+    "cost": 0.246,
+    "water": 0.087,
+    "env": 0.495
+   },
+   "confidence_label": "Moderate",
+   "trade_off_summary": "High yield, High cost, High water use, Moderate environmental impact (confidence: moderate)"
+  },
+  {
+   "rank": 6,
+   "crop_names": [
+    "Paddy",
+    "Tapioca",
+    "Maize",
+    "Groundnut",
+    "Cotton"
+   ],
+   "allocation_percent": [
+    0.02,
+    83.05,
+    16.91,
+    0.01,
+    0.01
+   ],
+   "area_ha": [
+    0.001,
+    4.153,
+    0.845,
+    0.001,
+    0.0
+   ],
+   "irrigation_multiplier": [
+    0.81,
+    1.26,
+    1.113,
+    1.122,
+    0.857
+   ],
+   "fertilizer_multiplier": [
+    0.718,
+    0.757,
+    0.751,
+    0.704,
+    0.859
+   ],
+   "yield_tonnes": 61.53,
+   "cost_rs": 195052.86,
+   "water_liters": 36882967.5,
+   "env_impact_score": 237.096,
+   "feasible": true,
+   "composite_score": 0.5263,
+   "normalized_scores": {
+    "yield": 0.871,
+    "cost": 0.311,
+    "water": 0.037,
+    "env": 0.358
+   },
+   "confidence_label": "Moderate",
+   "trade_off_summary": "High yield, High cost, High water use, Moderate environmental impact (confidence: moderate)"
+  }
+ ],
+ "ranked_over": "ranked_front",
+ "plans_ranked": 40,
+ "explanation": {
+  "profile": "profit",
+  "label": "Profit priority",
+  "plans_ranked": 40,
+  "ideal_best": {
+   "yield": 0.2308,
+   "cost": 0.1538,
+   "water": 0.0769,
+   "env": 0.0769,
+   "market_price": 0.2308,
+   "income": 0.2308
+  },
+  "ideal_worst": {
+   "yield": 0.0,
+   "cost": 0.0,
+   "water": 0.0,
+   "env": 0.0,
+   "market_price": 0.0,
+   "income": 0.0
+  },
+  "plans": [
+   {
+    "crop_mix": [
+     {
+      "crop": "Tapioca",
+      "share_pct": 100.0
+     }
+    ],
+    "yield_tonnes": 69.814,
+    "cost_rs": 201301.11,
+    "water_liters": 22654872.3,
+    "env_impact_score": 198.788,
+    "rank": 1,
+    "closeness": 0.555671,
+    "distance_to_ideal": 0.266062,
+    "distance_to_anti_ideal": 0.332733,
+    "criteria": [
+     {
+      "criterion": "yield",
+      "label": "Yield",
+      "direction": "benefit",
+      "unit": "t",
+      "weight": 0.2308,
+      "value": 69.814,
+      "goodness": 1.0,
+      "weighted": 0.2308,
+      "gap_to_ideal": 0.0,
+      "gap_to_anti_ideal": 0.2308,
+      "share_of_distance_to_ideal_pct": 0.0,
+      "share_of_distance_to_anti_ideal_pct": 48.1
+     },
+     {
+      "criterion": "cost",
+      "label": "Production cost",
+      "direction": "cost",
+      "unit": "\u20b9",
+      "weight": 0.1538,
+      "value": 201301.11,
+      "goodness": 0.2101,
+      "weighted": 0.0323,
+      "gap_to_ideal": 0.1215,
+      "gap_to_anti_ideal": 0.0323,
+      "share_of_distance_to_ideal_pct": 20.9,
+      "share_of_distance_to_anti_ideal_pct": 0.9
+     },
+     {
+      "criterion": "water",
+      "label": "Water",
+      "direction": "cost",
+      "unit": "L",
+      "weight": 0.0769,
+      "value": 22654872.3,
+      "goodness": 0.5155,
+      "weighted": 0.0397,
+      "gap_to_ideal": 0.0373,
+      "gap_to_anti_ideal": 0.0397,
+      "share_of_distance_to_ideal_pct": 2.0,
+      "share_of_distance_to_anti_ideal_pct": 1.4
+     },
+     {
+      "criterion": "env",
+      "label": "Environmental impact",
+      "direction": "cost",
+      "unit": "index",
+      "weight": 0.0769,
+      "value": 198.788,
+      "goodness": 0.5176,
+      "weighted": 0.0398,
+      "gap_to_ideal": 0.0371,
+      "gap_to_anti_ideal": 0.0398,
+      "share_of_distance_to_ideal_pct": 1.9,
+      "share_of_distance_to_anti_ideal_pct": 1.4
+     },
+     {
+      "criterion": "market_price",
+      "label": "Market price",
+      "direction": "benefit",
+      "unit": "\u20b9/quintal",
+      "weight": 0.2308,
+      "value": 721.166,
+      "goodness": 0.0,
+      "weighted": 0.0,
+      "gap_to_ideal": 0.2308,
+      "gap_to_anti_ideal": 0.0,
+      "share_of_distance_to_ideal_pct": 75.2,
+      "share_of_distance_to_anti_ideal_pct": 0.0
+     },
+     {
+      "criterion": "income",
+      "label": "Income",
+      "direction": "benefit",
+      "unit": "\u20b9",
+      "weight": 0.2308,
+      "value": 302173.9527,
+      "goodness": 1.0,
+      "weighted": 0.2308,
+      "gap_to_ideal": 0.0,
+      "gap_to_anti_ideal": 0.2308,
+      "share_of_distance_to_ideal_pct": 0.0,
+      "share_of_distance_to_anti_ideal_pct": 48.1
+     }
+    ]
+   },
+   {
+    "crop_mix": [
+     {
+      "crop": "Tapioca",
+      "share_pct": 99.5
+     }
+    ],
+    "yield_tonnes": 69.579,
+    "cost_rs": 201059.79,
+    "water_liters": 37989710.6,
+    "env_impact_score": 212.781,
+    "rank": 2,
+    "closeness": 0.544982,
+    "distance_to_ideal": 0.274757,
+    "distance_to_anti_ideal": 0.329081,
+    "criteria": [
+     {
+      "criterion": "yield",
+      "label": "Yield",
+      "direction": "benefit",
+      "unit": "t",
+      "weight": 0.2308,
+      "value": 69.579,
+      "goodness": 0.9963,
+      "weighted": 0.2299,
+      "gap_to_ideal": 0.0008,
+      "gap_to_anti_ideal": 0.2299,
+      "share_of_distance_to_ideal_pct": 0.0,
+      "share_of_distance_to_anti_ideal_pct": 48.8
+     },
+     {
+      "criterion": "cost",
+      "label": "Production cost",
+      "direction": "cost",
+      "unit": "\u20b9",
+      "weight": 0.1538,
+      "value": 201059.79,
+      "goodness": 0.214,
+      "weighted": 0.0329,
+      "gap_to_ideal": 0.1209,
+      "gap_to_anti_ideal": 0.0329,
+      "share_of_distance_to_ideal_pct": 19.4,
+      "share_of_distance_to_anti_ideal_pct": 1.0
+     },
+     {
+      "criterion": "water",
+      "label": "Water",
+      "direction": "cost",
+      "unit": "L",
+      "weight": 0.0769,
+      "value": 37989710.6,
+      "goodness": 0.0,
+      "weighted": 0.0,
+      "gap_to_ideal": 0.0769,
+      "gap_to_anti_ideal": 0.0,
+      "share_of_distance_to_ideal_pct": 7.8,
+      "share_of_distance_to_anti_ideal_pct": 0.0
+     },
+     {
+      "criterion": "env",
+      "label": "Environmental impact",
+      "direction": "cost",
+      "unit": "index",
+      "weight": 0.0769,
+      "value": 212.781,
+      "goodness": 0.4592,
+      "weighted": 0.0353,
+      "gap_to_ideal": 0.0416,
+      "gap_to_anti_ideal": 0.0353,
+      "share_of_distance_to_ideal_pct": 2.3,
+      "share_of_distance_to_anti_ideal_pct": 1.2
+     },
+     {
+      "criterion": "market_price",
+      "label": "Market price",
+      "direction": "benefit",
+      "unit": "\u20b9/quintal",
+      "weight": 0.2308,
+      "value": 723.0346,
+      "goodness": 0.0003,
+      "weighted": 0.0001,
+      "gap_to_ideal": 0.2307,
+      "gap_to_anti_ideal": 0.0001,
+      "share_of_distance_to_ideal_pct": 70.5,
+      "share_of_distance_to_anti_ideal_pct": 0.0
+     },
+     {
+      "criterion": "income",
+      "label": "Income",
+      "direction": "benefit",
+      "unit": "\u20b9",
+      "weight": 0.2308,
+      "value": 302020.5447,
+      "goodness": 0.9985,
+      "weighted": 0.2304,
+      "gap_to_ideal": 0.0003,
+      "gap_to_anti_ideal": 0.2304,
+      "share_of_distance_to_ideal_pct": 0.0,
+      "share_of_distance_to_anti_ideal_pct": 49.0
+     }
+    ]
+   },
+   {
+    "crop_mix": [
+     {
+      "crop": "Tapioca",
+      "share_pct": 99.5
+     }
+    ],
+    "yield_tonnes": 69.579,
+    "cost_rs": 201236.31,
+    "water_liters": 37964311.7,
+    "env_impact_score": 213.867,
+    "rank": 3,
+    "closeness": 0.544507,
+    "distance_to_ideal": 0.274987,
+    "distance_to_anti_ideal": 0.328725,
+    "criteria": [
+     {
+      "criterion": "yield",
+      "label": "Yield",
+      "direction": "benefit",
+      "unit": "t",
+      "weight": 0.2308,
+      "value": 69.579,
+      "goodness": 0.9963,
+      "weighted": 0.2299,
+      "gap_to_ideal": 0.0008,
+      "gap_to_anti_ideal": 0.2299,
+      "share_of_distance_to_ideal_pct": 0.0,
+      "share_of_distance_to_anti_ideal_pct": 48.9
+     },
+     {
+      "criterion": "cost",
+      "label": "Production cost",
+      "direction": "cost",
+      "unit": "\u20b9",
+      "weight": 0.1538,
+      "value": 201236.31,
+      "goodness": 0.2111,
+      "weighted": 0.0325,
+      "gap_to_ideal": 0.1214,
+      "gap_to_anti_ideal": 0.0325,
+      "share_of_distance_to_ideal_pct": 19.5,
+      "share_of_distance_to_anti_ideal_pct": 1.0
+     },
+     {
+      "criterion": "water",
+      "label": "Water",
+      "direction": "cost",
+      "unit": "L",
+      "weight": 0.0769,
+      "value": 37964311.7,
+      "goodness": 0.0009,
+      "weighted": 0.0001,
+      "gap_to_ideal": 0.0769,
+      "gap_to_anti_ideal": 0.0001,
+      "share_of_distance_to_ideal_pct": 7.8,
+      "share_of_distance_to_anti_ideal_pct": 0.0
+     },
+     {
+      "criterion": "env",
+      "label": "Environmental impact",
+      "direction": "cost",
+      "unit": "index",
+      "weight": 0.0769,
+      "value": 213.867,
+      "goodness": 0.4546,
+      "weighted": 0.035,
+      "gap_to_ideal": 0.042,
+      "gap_to_anti_ideal": 0.035,
+      "share_of_distance_to_ideal_pct": 2.3,
+      "share_of_distance_to_anti_ideal_pct": 1.1
+     },
+     {
+      "criterion": "market_price",
+      "label": "Market price",
+      "direction": "benefit",
+      "unit": "\u20b9/quintal",
+      "weight": 0.2308,
+      "value": 723.0346,
+      "goodness": 0.0003,
+      "weighted": 0.0001,
+      "gap_to_ideal": 0.2307,
+      "gap_to_anti_ideal": 0.0001,
+      "share_of_distance_to_ideal_pct": 70.4,
+      "share_of_distance_to_anti_ideal_pct": 0.0
+     },
+     {
+      "criterion": "income",
+      "label": "Income",
+      "direction": "benefit",
+      "unit": "\u20b9",
+      "weight": 0.2308,
+      "value": 301844.0247,
+      "goodness": 0.9968,
+      "weighted": 0.23,
+      "gap_to_ideal": 0.0007,
+      "gap_to_anti_ideal": 0.23,
+      "share_of_distance_to_ideal_pct": 0.0,
+      "share_of_distance_to_anti_ideal_pct": 49.0
+     }
+    ]
+   }
+  ],
+  "pairs": [
+   {
+    "rank_a": 1,
+    "rank_b": 2,
+    "closeness_a": 0.555671,
+    "closeness_b": 0.544982,
+    "criteria": [
+     {
+      "criterion": "water",
+      "label": "Water",
+      "weight": 0.0769,
+      "goodness_a": 0.5155,
+      "goodness_b": 0.0,
+      "weighted_advantage": 0.0397,
+      "d_best_a": 0.001389,
+      "d_best_b": 0.005917,
+      "d_worst_a": 0.001572,
+      "d_worst_b": 0.0
+     },
+     {
+      "criterion": "env",
+      "label": "Environmental impact",
+      "weight": 0.0769,
+      "goodness_a": 0.5176,
+      "goodness_b": 0.4592,
+      "weighted_advantage": 0.0045,
+      "d_best_a": 0.001377,
+      "d_best_b": 0.001731,
+      "d_worst_a": 0.001585,
+      "d_worst_b": 0.001248
+     },
+     {
+      "criterion": "yield",
+      "label": "Yield",
+      "weight": 0.2308,
+      "goodness_a": 1.0,
+      "goodness_b": 0.9963,
+      "weighted_advantage": 0.0008,
+      "d_best_a": 0.0,
+      "d_best_b": 1e-06,
+      "d_worst_a": 0.053254,
+      "d_worst_b": 0.052865
+     },
+     {
+      "criterion": "cost",
+      "label": "Production cost",
+      "weight": 0.1538,
+      "goodness_a": 0.2101,
+      "goodness_b": 0.214,
+      "weighted_advantage": -0.0006,
+      "d_best_a": 0.014768,
+      "d_best_b": 0.014622,
+      "d_worst_a": 0.001045,
+      "d_worst_b": 0.001084
+     },
+     {
+      "criterion": "income",
+      "label": "Income",
+      "weight": 0.2308,
+      "goodness_a": 1.0,
+      "goodness_b": 0.9985,
+      "weighted_advantage": 0.0003,
+      "d_best_a": 0.0,
+      "d_best_b": 0.0,
+      "d_worst_a": 0.053254,
+      "d_worst_b": 0.053097
+     },
+     {
+      "criterion": "market_price",
+      "label": "Market price",
+      "weight": 0.2308,
+      "goodness_a": 0.0,
+      "goodness_b": 0.0003,
+      "weighted_advantage": -0.0001,
+      "d_best_a": 0.053254,
+      "d_best_b": 0.05322,
+      "d_worst_a": 0.0,
+      "d_worst_b": 0.0
+     }
+    ],
+    "summary": "Plan #1 ranks above plan #2 (closeness 0.5557 vs 0.5450). It is better on water (+0.040), environmental impact (+0.004), yield (+0.001) and worse on production cost (-0.001)."
+   },
+   {
+    "rank_a": 2,
+    "rank_b": 3,
+    "closeness_a": 0.544982,
+    "closeness_b": 0.544507,
+    "criteria": [
+     {
+      "criterion": "cost",
+      "label": "Production cost",
+      "weight": 0.1538,
+      "goodness_a": 0.214,
+      "goodness_b": 0.2111,
+      "weighted_advantage": 0.0004,
+      "d_best_a": 0.014622,
+      "d_best_b": 0.014729,
+      "d_worst_a": 0.001084,
+      "d_worst_b": 0.001055
+     },
+     {
+      "criterion": "income",
+      "label": "Income",
+      "weight": 0.2308,
+      "goodness_a": 0.9985,
+      "goodness_b": 0.9968,
+      "weighted_advantage": 0.0004,
+      "d_best_a": 0.0,
+      "d_best_b": 1e-06,
+      "d_worst_a": 0.053097,
+      "d_worst_b": 0.052917
+     },
+     {
+      "criterion": "env",
+      "label": "Environmental impact",
+      "weight": 0.0769,
+      "goodness_a": 0.4592,
+      "goodness_b": 0.4546,
+      "weighted_advantage": 0.0003,
+      "d_best_a": 0.001731,
+      "d_best_b": 0.00176,
+      "d_worst_a": 0.001248,
+      "d_worst_b": 0.001223
+     },
+     {
+      "criterion": "water",
+      "label": "Water",
+      "weight": 0.0769,
+      "goodness_a": 0.0,
+      "goodness_b": 0.0009,
+      "weighted_advantage": -0.0001,
+      "d_best_a": 0.005917,
+      "d_best_b": 0.005907,
+      "d_worst_a": 0.0,
+      "d_worst_b": 0.0
+     },
+     {
+      "criterion": "yield",
+      "label": "Yield",
+      "weight": 0.2308,
+      "goodness_a": 0.9963,
+      "goodness_b": 0.9963,
+      "weighted_advantage": 0.0,
+      "d_best_a": 1e-06,
+      "d_best_b": 1e-06,
+      "d_worst_a": 0.052865,
+      "d_worst_b": 0.052865
+     },
+     {
+      "criterion": "market_price",
+      "label": "Market price",
+      "weight": 0.2308,
+      "goodness_a": 0.0003,
+      "goodness_b": 0.0003,
+      "weighted_advantage": 0.0,
+      "d_best_a": 0.05322,
+      "d_best_b": 0.05322,
+      "d_worst_a": 0.0,
+      "d_worst_b": 0.0
+     }
+    ],
+    "summary": "Plan #2 ranks above plan #3 (closeness 0.5450 vs 0.5445)."
+   },
+   {
+    "rank_a": 3,
+    "rank_b": 4,
+    "closeness_a": 0.544507,
+    "closeness_b": 0.533556,
+    "criteria": [
+     {
+      "criterion": "yield",
+      "label": "Yield",
+      "weight": 0.2308,
+      "goodness_a": 0.9963,
+      "goodness_b": 0.863,
+      "weighted_advantage": 0.0308,
+      "d_best_a": 1e-06,
+      "d_best_b": 0.001,
+      "d_worst_a": 0.052865,
+      "d_worst_b": 0.03966
+     },
+     {
+      "criterion": "cost",
+      "label": "Production cost",
+      "weight": 0.1538,
+      "goodness_a": 0.2111,
+      "goodness_b": 0.3564,
+      "weighted_advantage": -0.0224,
+      "d_best_a": 0.014729,
+      "d_best_b": 0.009803,
+      "d_worst_a": 0.001055,
+      "d_worst_b": 0.003007
+     },
+     {
+      "criterion": "income",
+      "label": "Income",
+      "weight": 0.2308,
+      "goodness_a": 0.9968,
+      "goodness_b": 0.9445,
+      "weighted_advantage": 0.0121,
+      "d_best_a": 1e-06,
+      "d_best_b": 0.000164,
+      "d_worst_a": 0.052917,
+      "d_worst_b": 0.047506
+     },
+     {
+      "criterion": "water",
+      "label": "Water",
+      "weight": 0.0769,
+      "goodness_a": 0.0009,
+      "goodness_b": 0.0795,
+      "weighted_advantage": -0.0061,
+      "d_best_a": 0.005907,
+      "d_best_b": 0.005013,
+      "d_worst_a": 0.0,
+      "d_worst_b": 3.7e-05
+     },
+     {
+      "criterion": "market_price",
+      "label": "Market price",
+      "weight": 0.2308,
+      "goodness_a": 0.0003,
+      "goodness_b": 0.0137,
+      "weighted_advantage": -0.0031,
+      "d_best_a": 0.05322,
+      "d_best_b": 0.051809,
+      "d_worst_a": 0.0,
+      "d_worst_b": 1e-05
+     },
+     {
+      "criterion": "env",
+      "label": "Environmental impact",
+      "weight": 0.0769,
+      "goodness_a": 0.4546,
+      "goodness_b": 0.4229,
+      "weighted_advantage": 0.0024,
+      "d_best_a": 0.00176,
+      "d_best_b": 0.001971,
+      "d_worst_a": 0.001223,
+      "d_worst_b": 0.001058
+     }
+    ],
+    "summary": "Plan #3 ranks above plan #4 (closeness 0.5445 vs 0.5336). It is better on yield (+0.031), income (+0.012), environmental impact (+0.002) and worse on production cost (-0.022), water (-0.006), market price (-0.003)."
+   },
+   {
+    "rank_a": 4,
+    "rank_b": 5,
+    "closeness_a": 0.533556,
+    "closeness_b": 0.53289,
+    "criteria": [
+     {
+      "criterion": "cost",
+      "label": "Production cost",
+      "weight": 0.1538,
+      "goodness_a": 0.3564,
+      "goodness_b": 0.2464,
+      "weighted_advantage": 0.0169,
+      "d_best_a": 0.009803,
+      "d_best_b": 0.013441,
+      "d_worst_a": 0.003007,
+      "d_worst_b": 0.001437
+     },
+     {
+      "criterion": "yield",
+      "label": "Yield",
+      "weight": 0.2308,
+      "goodness_a": 0.863,
+      "goodness_b": 0.9294,
+      "weighted_advantage": -0.0153,
+      "d_best_a": 0.001,
+      "d_best_b": 0.000265,
+      "d_worst_a": 0.03966,
+      "d_worst_b": 0.046
+     },
+     {
+      "criterion": "env",
+      "label": "Environmental impact",
+      "weight": 0.0769,
+      "goodness_a": 0.4229,
+      "goodness_b": 0.4946,
+      "weighted_advantage": -0.0055,
+      "d_best_a": 0.001971,
+      "d_best_b": 0.001511,
+      "d_worst_a": 0.001058,
+      "d_worst_b": 0.001448
+     },
+     {
+      "criterion": "income",
+      "label": "Income",
+      "weight": 0.2308,
+      "goodness_a": 0.9445,
+      "goodness_b": 0.9303,
+      "weighted_advantage": 0.0033,
+      "d_best_a": 0.000164,
+      "d_best_b": 0.000258,
+      "d_worst_a": 0.047506,
+      "d_worst_b": 0.046093
+     },
+     {
+      "criterion": "market_price",
+      "label": "Market price",
+      "weight": 0.2308,
+      "goodness_a": 0.0137,
+      "goodness_b": 0.0061,
+      "weighted_advantage": 0.0017,
+      "d_best_a": 0.051809,
+      "d_best_b": 0.052607,
+      "d_worst_a": 1e-05,
+      "d_worst_b": 2e-06
+     },
+     {
+      "criterion": "water",
+      "label": "Water",
+      "weight": 0.0769,
+      "goodness_a": 0.0795,
+      "goodness_b": 0.0873,
+      "weighted_advantage": -0.0006,
+      "d_best_a": 0.005013,
+      "d_best_b": 0.00493,
+      "d_worst_a": 3.7e-05,
+      "d_worst_b": 4.5e-05
+     }
+    ],
+    "summary": "Plan #4 ranks above plan #5 (closeness 0.5336 vs 0.5329). It is better on production cost (+0.017), income (+0.003), market price (+0.002) and worse on yield (-0.015), environmental impact (-0.005), water (-0.001)."
+   }
+  ]
+ },
+ "comparison": {
+  "reference": "profit",
+  "plans_compared": 40,
+  "top_n": 5,
+  "profiles": [
+   {
+    "profile": "balanced",
+    "label": "Balanced",
+    "weights": {
+     "yield": 0.3,
+     "cost": 0.2333333333333333,
+     "water": 0.2333333333333333,
+     "env": 0.2333333333333333,
+     "market_price": 0.0,
+     "income": 0.0,
+     "budget": 0.0,
+     "soil": 0.0,
+     "land": 0.0,
+     "rainfall": 0.0
+    },
+    "criteria": [
+     {
+      "key": "yield",
+      "label": "Yield",
+      "direction": "benefit",
+      "weight": 0.3
+     },
+     {
+      "key": "cost",
+      "label": "Production cost",
+      "direction": "cost",
+      "weight": 0.2333333333333333
+     },
+     {
+      "key": "water",
+      "label": "Water",
+      "direction": "cost",
+      "weight": 0.2333333333333333
+     },
+     {
+      "key": "env",
+      "label": "Environmental impact",
+      "direction": "cost",
+      "weight": 0.2333333333333333
+     }
+    ],
+    "best_plan": {
+     "plan_index": 28,
+     "crop_mix": [
+      {
+       "crop": "Tapioca",
+       "share_pct": 63.1
+      },
+      {
+       "crop": "Groundnut",
+       "share_pct": 36.5
+      }
+     ],
+     "yield_tonnes": 46.164,
+     "cost_rs": 189448.41,
+     "water_liters": 17476932.0,
+     "env_impact_score": 157.983,
+     "closeness": 0.601754,
+     "rank_under_reference": 19
+    },
+    "reference_top_plan_rank": 4,
+    "kendall_tau_vs_reference": -0.2513,
+    "top_n_overlap": 1,
+    "top_plans": [
+     {
+      "plan_index": 28,
+      "crop_mix": [
+       {
+        "crop": "Tapioca",
+        "share_pct": 63.1
+       },
+       {
+        "crop": "Groundnut",
+        "share_pct": 36.5
+       }
+      ],
+      "yield_tonnes": 46.164,
+      "cost_rs": 189448.41,
+      "water_liters": 17476932.0,
+      "env_impact_score": 157.983,
+      "rank": 1,
+      "closeness": 0.601754
+     },
+     {
+      "plan_index": 19,
+      "crop_mix": [
+       {
+        "crop": "Tapioca",
+        "share_pct": 70.4
+       },
+       {
+        "crop": "Maize",
+        "share_pct": 23.7
+       },
+       {
+        "crop": "Groundnut",
+        "share_pct": 5.9
+       }
+      ],
+      "yield_tonnes": 54.421,
+      "cost_rs": 187658.18,
+      "water_liters": 19958194.4,
+      "env_impact_score": 205.329,
+      "rank": 2,
+      "closeness": 0.591661
+     },
+     {
+      "plan_index": 13,
+      "crop_mix": [
+       {
+        "crop": "Tapioca",
+        "share_pct": 46.4
+       },
+       {
+        "crop": "Maize",
+        "share_pct": 32.1
+       },
+       {
+        "crop": "Groundnut",
+        "share_pct": 21.5
+       }
+      ],
+      "yield_tonnes": 40.287,
+      "cost_rs": 178461.88,
+      "water_liters": 16143336.4,
+      "env_impact_score": 191.383,
+      "rank": 3,
+      "closeness": 0.590218
+     },
+     {
+      "plan_index": 5,
+      "crop_mix": [
+       {
+        "crop": "Tapioca",
+        "share_pct": 100.0
+       }
+      ],
+      "yield_tonnes": 69.814,
+      "cost_rs": 201301.11,
+      "water_liters": 22654872.3,
+      "env_impact_score": 198.788,
+      "rank": 4,
+      "closeness": 0.588417
+     },
+     {
+      "plan_index": 39,
+      "crop_mix": [
+       {
+        "crop": "Groundnut",
+        "share_pct": 55.2
+       },
+       {
+        "crop": "Tapioca",
+        "share_pct": 44.6
+       }
+      ],
+      "yield_tonnes": 34.256,
+      "cost_rs": 183724.56,
+      "water_liters": 15308823.3,
+      "env_impact_score": 136.983,
+      "rank": 5,
+      "closeness": 0.587152
+     }
+    ],
+    "weight_differences": {
+     "yield": 0.0692,
+     "cost": 0.0795,
+     "water": 0.1564,
+     "env": 0.1564,
+     "market_price": -0.2308,
+     "income": -0.2308,
+     "budget": 0.0,
+     "soil": 0.0,
+     "land": 0.0,
+     "rainfall": 0.0
+    }
+   },
+   {
+    "profile": "profit",
+    "label": "Profit priority",
+    "weights": {
+     "yield": 0.23076923076923078,
+     "cost": 0.15384615384615385,
+     "water": 0.07692307692307693,
+     "env": 0.07692307692307693,
+     "market_price": 0.23076923076923078,
+     "income": 0.23076923076923078,
+     "budget": 0.0,
+     "soil": 0.0,
+     "land": 0.0,
+     "rainfall": 0.0
+    },
+    "criteria": [
+     {
+      "key": "yield",
+      "label": "Yield",
+      "direction": "benefit",
+      "weight": 0.23076923076923078
+     },
+     {
+      "key": "cost",
+      "label": "Production cost",
+      "direction": "cost",
+      "weight": 0.15384615384615385
+     },
+     {
+      "key": "water",
+      "label": "Water",
+      "direction": "cost",
+      "weight": 0.07692307692307693
+     },
+     {
+      "key": "env",
+      "label": "Environmental impact",
+      "direction": "cost",
+      "weight": 0.07692307692307693
+     },
+     {
+      "key": "market_price",
+      "label": "Market price",
+      "direction": "benefit",
+      "weight": 0.23076923076923078
+     },
+     {
+      "key": "income",
+      "label": "Income",
+      "direction": "benefit",
+      "weight": 0.23076923076923078
+     }
+    ],
+    "best_plan": {
+     "plan_index": 5,
+     "crop_mix": [
+      {
+       "crop": "Tapioca",
+       "share_pct": 100.0
+      }
+     ],
+     "yield_tonnes": 69.814,
+     "cost_rs": 201301.11,
+     "water_liters": 22654872.3,
+     "env_impact_score": 198.788,
+     "closeness": 0.555671,
+     "rank_under_reference": 1
+    },
+    "reference_top_plan_rank": 1,
+    "kendall_tau_vs_reference": 1.0,
+    "top_n_overlap": 5,
+    "top_plans": [
+     {
+      "plan_index": 5,
+      "crop_mix": [
+       {
+        "crop": "Tapioca",
+        "share_pct": 100.0
+       }
+      ],
+      "yield_tonnes": 69.814,
+      "cost_rs": 201301.11,
+      "water_liters": 22654872.3,
+      "env_impact_score": 198.788,
+      "rank": 1,
+      "closeness": 0.555671
+     },
+     {
+      "plan_index": 0,
+      "crop_mix": [
+       {
+        "crop": "Tapioca",
+        "share_pct": 99.5
+       }
+      ],
+      "yield_tonnes": 69.579,
+      "cost_rs": 201059.79,
+      "water_liters": 37989710.6,
+      "env_impact_score": 212.781,
+      "rank": 2,
+      "closeness": 0.544982
+     },
+     {
+      "plan_index": 36,
+      "crop_mix": [
+       {
+        "crop": "Tapioca",
+        "share_pct": 99.5
+       }
+      ],
+      "yield_tonnes": 69.579,
+      "cost_rs": 201236.31,
+      "water_liters": 37964311.7,
+      "env_impact_score": 213.867,
+      "rank": 3,
+      "closeness": 0.544507
+     },
+     {
+      "plan_index": 29,
+      "crop_mix": [
+       {
+        "crop": "Tapioca",
+        "share_pct": 82.0
+       },
+       {
+        "crop": "Maize",
+        "share_pct": 17.9
+       }
+      ],
+      "yield_tonnes": 61.017,
+      "cost_rs": 192280.74,
+      "water_liters": 35623592.9,
+      "env_impact_score": 221.481,
+      "rank": 4,
+      "closeness": 0.533556
+     },
+     {
+      "plan_index": 30,
+      "crop_mix": [
+       {
+        "crop": "Tapioca",
+        "share_pct": 92.8
+       },
+       {
+        "crop": "Groundnut",
+        "share_pct": 6.7
+       }
+      ],
+      "yield_tonnes": 65.281,
+      "cost_rs": 199061.29,
+      "water_liters": 35394172.9,
+      "env_impact_score": 204.286,
+      "rank": 5,
+      "closeness": 0.53289
+     }
+    ],
+    "weight_differences": {
+     "yield": 0.0,
+     "cost": 0.0,
+     "water": 0.0,
+     "env": 0.0,
+     "market_price": 0.0,
+     "income": 0.0,
+     "budget": 0.0,
+     "soil": 0.0,
+     "land": 0.0,
+     "rainfall": 0.0
+    }
+   },
+   {
+    "profile": "water",
+    "label": "Water saving",
+    "weights": {
+     "yield": 0.1,
+     "cost": 0.2,
+     "water": 0.3,
+     "env": 0.3,
+     "market_price": 0.0,
+     "income": 0.1,
+     "budget": 0.0,
+     "soil": 0.0,
+     "land": 0.0,
+     "rainfall": 0.0
+    },
+    "criteria": [
+     {
+      "key": "yield",
+      "label": "Yield",
+      "direction": "benefit",
+      "weight": 0.1
+     },
+     {
+      "key": "cost",
+      "label": "Production cost",
+      "direction": "cost",
+      "weight": 0.2
+     },
+     {
+      "key": "water",
+      "label": "Water",
+      "direction": "cost",
+      "weight": 0.3
+     },
+     {
+      "key": "env",
+      "label": "Environmental impact",
+      "direction": "cost",
+      "weight": 0.3
+     },
+     {
+      "key": "income",
+      "label": "Income",
+      "direction": "benefit",
+      "weight": 0.1
+     }
+    ],
+    "best_plan": {
+     "plan_index": 3,
+     "crop_mix": [
+      {
+       "crop": "Groundnut",
+       "share_pct": 100.0
+      }
+     ],
+     "yield_tonnes": 5.612,
+     "cost_rs": 169355.09,
+     "water_liters": 8241704.6,
+     "env_impact_score": 83.19,
+     "closeness": 0.747757,
+     "rank_under_reference": 20
+    },
+    "reference_top_plan_rank": 25,
+    "kendall_tau_vs_reference": -0.5154,
+    "top_n_overlap": 0,
+    "top_plans": [
+     {
+      "plan_index": 3,
+      "crop_mix": [
+       {
+        "crop": "Groundnut",
+        "share_pct": 100.0
+       }
+      ],
+      "yield_tonnes": 5.612,
+      "cost_rs": 169355.09,
+      "water_liters": 8241704.6,
+      "env_impact_score": 83.19,
+      "rank": 1,
+      "closeness": 0.747757
+     },
+     {
+      "plan_index": 4,
+      "crop_mix": [
+       {
+        "crop": "Groundnut",
+        "share_pct": 100.0
+       }
+      ],
+      "yield_tonnes": 5.612,
+      "cost_rs": 169354.15,
+      "water_liters": 8241885.7,
+      "env_impact_score": 83.184,
+      "rank": 2,
+      "closeness": 0.747761
+     },
+     {
+      "plan_index": 14,
+      "crop_mix": [
+       {
+        "crop": "Groundnut",
+        "share_pct": 95.6
+       },
+       {
+        "crop": "Tapioca",
+        "share_pct": 4.3
+       }
+      ],
+      "yield_tonnes": 8.387,
+      "cost_rs": 171125.7,
+      "water_liters": 9191101.4,
+      "env_impact_score": 91.415,
+      "rank": 3,
+      "closeness": 0.744462
+     },
+     {
+      "plan_index": 22,
+      "crop_mix": [
+       {
+        "crop": "Groundnut",
+        "share_pct": 92.7
+       },
+       {
+        "crop": "Maize",
+        "share_pct": 5.3
+       },
+       {
+        "crop": "Paddy",
+        "share_pct": 1.0
+       }
+      ],
+      "yield_tonnes": 7.087,
+      "cost_rs": 169186.46,
+      "water_liters": 9317268.1,
+      "env_impact_score": 97.373,
+      "rank": 4,
+      "closeness": 0.743414
+     },
+     {
+      "plan_index": 23,
+      "crop_mix": [
+       {
+        "crop": "Groundnut",
+        "share_pct": 56.6
+       },
+       {
+        "crop": "Maize",
+        "share_pct": 43.4
+       }
+      ],
+      "yield_tonnes": 12.22,
+      "cost_rs": 161419.08,
+      "water_liters": 9884106.5,
+      "env_impact_score": 156.911,
+      "rank": 5,
+      "closeness": 0.723217
+     }
+    ],
+    "weight_differences": {
+     "yield": -0.1308,
+     "cost": 0.0462,
+     "water": 0.2231,
+     "env": 0.2231,
+     "market_price": -0.2308,
+     "income": -0.1308,
+     "budget": 0.0,
+     "soil": 0.0,
+     "land": 0.0,
+     "rainfall": 0.0
+    }
+   },
+   {
+    "profile": "sustainability",
+    "label": "Sustainability",
+    "weights": {
+     "yield": 0.125,
+     "cost": 0.125,
+     "water": 0.1875,
+     "env": 0.1875,
+     "market_price": 0.0,
+     "income": 0.0625,
+     "budget": 0.0,
+     "soil": 0.1875,
+     "land": 0.0,
+     "rainfall": 0.125
+    },
+    "criteria": [
+     {
+      "key": "yield",
+      "label": "Yield",
+      "direction": "benefit",
+      "weight": 0.125
+     },
+     {
+      "key": "cost",
+      "label": "Production cost",
+      "direction": "cost",
+      "weight": 0.125
+     },
+     {
+      "key": "water",
+      "label": "Water",
+      "direction": "cost",
+      "weight": 0.1875
+     },
+     {
+      "key": "env",
+      "label": "Environmental impact",
+      "direction": "cost",
+      "weight": 0.1875
+     },
+     {
+      "key": "income",
+      "label": "Income",
+      "direction": "benefit",
+      "weight": 0.0625
+     },
+     {
+      "key": "soil",
+      "label": "Soil suitability",
+      "direction": "benefit",
+      "weight": 0.1875
+     },
+     {
+      "key": "rainfall",
+      "label": "Rainfall exposure",
+      "direction": "cost",
+      "weight": 0.125
+     }
+    ],
+    "best_plan": {
+     "plan_index": 3,
+     "crop_mix": [
+      {
+       "crop": "Groundnut",
+       "share_pct": 100.0
+      }
+     ],
+     "yield_tonnes": 5.612,
+     "cost_rs": 169355.09,
+     "water_liters": 8241704.6,
+     "env_impact_score": 83.19,
+     "closeness": 0.639062,
+     "rank_under_reference": 20
+    },
+    "reference_top_plan_rank": 27,
+    "kendall_tau_vs_reference": -0.559,
+    "top_n_overlap": 0,
+    "top_plans": [
+     {
+      "plan_index": 3,
+      "crop_mix": [
+       {
+        "crop": "Groundnut",
+        "share_pct": 100.0
+       }
+      ],
+      "yield_tonnes": 5.612,
+      "cost_rs": 169355.09,
+      "water_liters": 8241704.6,
+      "env_impact_score": 83.19,
+      "rank": 1,
+      "closeness": 0.639062
+     },
+     {
+      "plan_index": 4,
+      "crop_mix": [
+       {
+        "crop": "Groundnut",
+        "share_pct": 100.0
+       }
+      ],
+      "yield_tonnes": 5.612,
+      "cost_rs": 169354.15,
+      "water_liters": 8241885.7,
+      "env_impact_score": 83.184,
+      "rank": 2,
+      "closeness": 0.639065
+     },
+     {
+      "plan_index": 22,
+      "crop_mix": [
+       {
+        "crop": "Groundnut",
+        "share_pct": 92.7
+       },
+       {
+        "crop": "Maize",
+        "share_pct": 5.3
+       },
+       {
+        "crop": "Paddy",
+        "share_pct": 1.0
+       }
+      ],
+      "yield_tonnes": 7.087,
+      "cost_rs": 169186.46,
+      "water_liters": 9317268.1,
+      "env_impact_score": 97.373,
+      "rank": 3,
+      "closeness": 0.635515
+     },
+     {
+      "plan_index": 14,
+      "crop_mix": [
+       {
+        "crop": "Groundnut",
+        "share_pct": 95.6
+       },
+       {
+        "crop": "Tapioca",
+        "share_pct": 4.3
+       }
+      ],
+      "yield_tonnes": 8.387,
+      "cost_rs": 171125.7,
+      "water_liters": 9191101.4,
+      "env_impact_score": 91.415,
+      "rank": 4,
+      "closeness": 0.635042
+     },
+     {
+      "plan_index": 11,
+      "crop_mix": [
+       {
+        "crop": "Groundnut",
+        "share_pct": 93.2
+       },
+       {
+        "crop": "Maize",
+        "share_pct": 6.7
+       }
+      ],
+      "yield_tonnes": 6.638,
+      "cost_rs": 173215.99,
+      "water_liters": 8497822.5,
+      "env_impact_score": 114.831,
+      "rank": 5,
+      "closeness": 0.626181
+     }
+    ],
+    "weight_differences": {
+     "yield": -0.1058,
+     "cost": -0.0288,
+     "water": 0.1106,
+     "env": 0.1106,
+     "market_price": -0.2308,
+     "income": -0.1683,
+     "budget": 0.0,
+     "soil": 0.1875,
+     "land": 0.0,
+     "rainfall": 0.125
+    }
+   },
+   {
+    "profile": "low_cost",
+    "label": "Low cost",
+    "weights": {
+     "yield": 0.09090909090909091,
+     "cost": 0.2727272727272727,
+     "water": 0.18181818181818182,
+     "env": 0.18181818181818182,
+     "market_price": 0.0,
+     "income": 0.0,
+     "budget": 0.2727272727272727,
+     "soil": 0.0,
+     "land": 0.0,
+     "rainfall": 0.0
+    },
+    "criteria": [
+     {
+      "key": "yield",
+      "label": "Yield",
+      "direction": "benefit",
+      "weight": 0.09090909090909091
+     },
+     {
+      "key": "cost",
+      "label": "Production cost",
+      "direction": "cost",
+      "weight": 0.2727272727272727
+     },
+     {
+      "key": "water",
+      "label": "Water",
+      "direction": "cost",
+      "weight": 0.18181818181818182
+     },
+     {
+      "key": "env",
+      "label": "Environmental impact",
+      "direction": "cost",
+      "weight": 0.18181818181818182
+     },
+     {
+      "key": "budget",
+      "label": "Budget",
+      "direction": "benefit",
+      "weight": 0.2727272727272727
+     }
+    ],
+    "best_plan": {
+     "plan_index": 23,
+     "crop_mix": [
+      {
+       "crop": "Groundnut",
+       "share_pct": 56.6
+      },
+      {
+       "crop": "Maize",
+       "share_pct": 43.4
+      }
+     ],
+     "yield_tonnes": 12.22,
+     "cost_rs": 161419.08,
+     "water_liters": 9884106.5,
+     "env_impact_score": 156.911,
+     "closeness": 0.775851,
+     "rank_under_reference": 30
+    },
+    "reference_top_plan_rank": 31,
+    "kendall_tau_vs_reference": -0.4051,
+    "top_n_overlap": 0,
+    "top_plans": [
+     {
+      "plan_index": 23,
+      "crop_mix": [
+       {
+        "crop": "Groundnut",
+        "share_pct": 56.6
+       },
+       {
+        "crop": "Maize",
+        "share_pct": 43.4
+       }
+      ],
+      "yield_tonnes": 12.22,
+      "cost_rs": 161419.08,
+      "water_liters": 9884106.5,
+      "env_impact_score": 156.911,
+      "rank": 1,
+      "closeness": 0.775851
+     },
+     {
+      "plan_index": 12,
+      "crop_mix": [
+       {
+        "crop": "Maize",
+        "share_pct": 80.0
+       },
+       {
+        "crop": "Groundnut",
+        "share_pct": 20.0
+       }
+      ],
+      "yield_tonnes": 17.796,
+      "cost_rs": 154803.49,
+      "water_liters": 11617380.3,
+      "env_impact_score": 214.588,
+      "rank": 2,
+      "closeness": 0.766093
+     },
+     {
+      "plan_index": 2,
+      "crop_mix": [
+       {
+        "crop": "Maize",
+        "share_pct": 91.5
+       },
+       {
+        "crop": "Groundnut",
+        "share_pct": 8.5
+       }
+      ],
+      "yield_tonnes": 19.547,
+      "cost_rs": 152615.7,
+      "water_liters": 10992153.1,
+      "env_impact_score": 230.27,
+      "rank": 3,
+      "closeness": 0.761403
+     },
+     {
+      "plan_index": 26,
+      "crop_mix": [
+       {
+        "crop": "Groundnut",
+        "share_pct": 67.2
+       },
+       {
+        "crop": "Maize",
+        "share_pct": 28.3
+       },
+       {
+        "crop": "Tapioca",
+        "share_pct": 4.5
+       }
+      ],
+      "yield_tonnes": 12.796,
+      "cost_rs": 165999.14,
+      "water_liters": 12256979.4,
+      "env_impact_score": 143.097,
+      "rank": 4,
+      "closeness": 0.742425
+     },
+     {
+      "plan_index": 3,
+      "crop_mix": [
+       {
+        "crop": "Groundnut",
+        "share_pct": 100.0
+       }
+      ],
+      "yield_tonnes": 5.612,
+      "cost_rs": 169355.09,
+      "water_liters": 8241704.6,
+      "env_impact_score": 83.19,
+      "rank": 5,
+      "closeness": 0.733036
+     }
+    ],
+    "weight_differences": {
+     "yield": -0.1399,
+     "cost": 0.1189,
+     "water": 0.1049,
+     "env": 0.1049,
+     "market_price": -0.2308,
+     "income": -0.2308,
+     "budget": 0.2727,
+     "soil": 0.0,
+     "land": 0.0,
+     "rainfall": 0.0
+    }
+   }
+  ],
+  "rank_changes": [
+   {
+    "plan_index": 5,
+    "crop_mix": [
+     {
+      "crop": "Tapioca",
+      "share_pct": 100.0
+     }
+    ],
+    "yield_tonnes": 69.814,
+    "cost_rs": 201301.11,
+    "water_liters": 22654872.3,
+    "env_impact_score": 198.788,
+    "reference_rank": 1,
+    "ranks": {
+     "balanced": 4,
+     "profit": 1,
+     "water": 25,
+     "sustainability": 27,
+     "low_cost": 31
+    },
+    "closeness": {
+     "balanced": 0.588417,
+     "profit": 0.555671,
+     "water": 0.505039,
+     "sustainability": 0.438221,
+     "low_cost": 0.353845
+    }
+   },
+   {
+    "plan_index": 0,
+    "crop_mix": [
+     {
+      "crop": "Tapioca",
+      "share_pct": 99.5
+     }
+    ],
+    "yield_tonnes": 69.579,
+    "cost_rs": 201059.79,
+    "water_liters": 37989710.6,
+    "env_impact_score": 212.781,
+    "reference_rank": 2,
+    "ranks": {
+     "balanced": 33,
+     "profit": 2,
+     "water": 38,
+     "sustainability": 37,
+     "low_cost": 37
+    },
+    "closeness": {
+     "balanced": 0.499167,
+     "profit": 0.544982,
+     "water": 0.349477,
+     "sustainability": 0.354701,
+     "low_cost": 0.287809
+    }
+   },
+   {
+    "plan_index": 36,
+    "crop_mix": [
+     {
+      "crop": "Tapioca",
+      "share_pct": 99.5
+     }
+    ],
+    "yield_tonnes": 69.579,
+    "cost_rs": 201236.31,
+    "water_liters": 37964311.7,
+    "env_impact_score": 213.867,
+    "reference_rank": 3,
+    "ranks": {
+     "balanced": 34,
+     "profit": 3,
+     "water": 39,
+     "sustainability": 38,
+     "low_cost": 39
+    },
+    "closeness": {
+     "balanced": 0.498309,
+     "profit": 0.544507,
+     "water": 0.347823,
+     "sustainability": 0.353766,
+     "low_cost": 0.28573
+    }
+   },
+   {
+    "plan_index": 29,
+    "crop_mix": [
+     {
+      "crop": "Tapioca",
+      "share_pct": 82.0
+     },
+     {
+      "crop": "Maize",
+      "share_pct": 17.9
+     }
+    ],
+    "yield_tonnes": 61.017,
+    "cost_rs": 192280.74,
+    "water_liters": 35623592.9,
+    "env_impact_score": 221.481,
+    "reference_rank": 4,
+    "ranks": {
+     "balanced": 36,
+     "profit": 4,
+     "water": 37,
+     "sustainability": 39,
+     "low_cost": 30
+    },
+    "closeness": {
+     "balanced": 0.493509,
+     "profit": 0.533556,
+     "water": 0.35758,
+     "sustainability": 0.351364,
+     "low_cost": 0.357394
+    }
+   },
+   {
+    "plan_index": 30,
+    "crop_mix": [
+     {
+      "crop": "Tapioca",
+      "share_pct": 92.8
+     },
+     {
+      "crop": "Groundnut",
+      "share_pct": 6.7
+     }
+    ],
+    "yield_tonnes": 65.281,
+    "cost_rs": 199061.29,
+    "water_liters": 35394172.9,
+    "env_impact_score": 204.286,
+    "reference_rank": 5,
+    "ranks": {
+     "balanced": 31,
+     "profit": 5,
+     "water": 35,
+     "sustainability": 34,
+     "low_cost": 35
+    },
+    "closeness": {
+     "balanced": 0.505597,
+     "profit": 0.53289,
+     "water": 0.372126,
+     "sustainability": 0.368705,
+     "low_cost": 0.310826
+    }
+   }
+  ],
+  "distinct_best_plans": 4
+ }
+}

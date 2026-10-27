@@ -200,6 +200,9 @@ def _run_summary(json_path: Path, record: dict) -> dict:
         "season": record["region_profile"]["season"],
         "year": record["region_profile"]["year"],
         "preference": record.get("meta", {}).get("preference"),
+        # Label of the weights that ranked the run (profile or preference);
+        # None for runs saved before ranking profiles existed.
+        "ranking": (record.get("meta", {}).get("topsis") or {}).get("label"),
         "saved_at": record.get("saved_at"),
         "n_plans": len(record.get("plans", [])),
         "client_id": record.get("client_id"),
