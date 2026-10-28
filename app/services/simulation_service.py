@@ -146,7 +146,8 @@ def resolve(request: dict) -> dict:
     step = market_price_step_pct(location)
     price_factor = {"decrease": 1 - step / 100, "stable": 1.0, "increase": 1 + step / 100}[market]
 
-    common = {"location": location, "season": season, "year": base.get("year"), "save_results": False}
+    common = {"location": location, "season": season, "year": base.get("year"), "save_results": False,
+              "fuzzy_model": base.get("fuzzy_model")}
     base_req = FarmPlanRequest(**common, total_land_ha=base["total_land_ha"], budget_rs=base.get("budget_rs"),
                                preference=base.get("preference", "balanced"))
     scen_req = FarmPlanRequest(**common,
@@ -855,7 +856,8 @@ def simulate(request: dict) -> dict:
     br, sr = ctx["base_request"], ctx["scenario_request"]
     impact = _impact(base, scen, sr.total_land_ha != br.total_land_ha) if scen["available"] else None
     crop_effects = _crop_effects(base, scen, shares)
-    fuzzy = _fuzzy_changes(base, scen)
+    with fz.using_model(br.fuzzy_model):
+        fuzzy = _fuzzy_changes(base, scen)
     optimization = _optimization(base_runs, scen_runs, base, scen)
     constraints = _constraints(base, scen, optimization)
     historical = _historical(br.location, br.season, base, scen)
@@ -887,7 +889,8 @@ def simulate(request: dict) -> dict:
                     "data_year_estimated": base["region_profile"]["data_year_estimated"]},
         "meta": {"pipeline": ["preprocessing", "fuzzy", "NSGA-II", "TOPSIS", "explanation", "scenario analysis"],
                  "runs_per_side": len(ENSEMBLE_SEEDS), "seeds": list(ENSEMBLE_SEEDS),
-                 "significance_p": SIGNIFICANCE_P, "seconds": round(time.time() - t0, 2), "cached": False},
+                 "significance_p": SIGNIFICANCE_P, "seconds": round(time.time() - t0, 2), "cached": False,
+                 "fuzzy_model": fz.resolve_model(br.fuzzy_model).name},
     }
 
 

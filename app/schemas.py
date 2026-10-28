@@ -416,6 +416,13 @@ class SimulationBaseIn(BaseModel):
     total_land_ha: float = Field(..., gt=0, le=100_000, examples=[5.0])
     budget_rs: Optional[float] = Field(None, gt=0)
     preference: Preference = "balanced"
+    # Fuzzy model for both sides of the simulation (GET /api/fuzzy/models).
+    fuzzy_model: Optional[str] = None
+
+    @model_validator(mode="after")
+    def _known_fuzzy_model(self):
+        _check_fuzzy_model(self.fuzzy_model)
+        return self
 
 
 class PrioritiesIn(BaseModel):
