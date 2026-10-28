@@ -20,7 +20,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
 from app.data import preprocessing as pp
-from typing import Literal
+from typing import Literal, Optional
 
 from app.schemas import (
     CatalogOut,
@@ -469,11 +469,40 @@ def delete_simulation(simulation_id: str, client_id: str = _REQUIRED_CLIENT_ID):
 # Fuzzy system transparency (read-only)
 # ---------------------------------------------------------------------------
 
+def _fuzzy_model_or_400(name: Optional[str]):
+    from app.fuzzy import engine as fz
+
+    try:
+        return fz.resolve_model(name)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.get("/api/fuzzy/models")
+def fuzzy_models():
+    """The fuzzy models the engine can run: the published one, each
+    improvement on its own, and their switches, rule numbers and membership
+    functions. `default` is the model used when a request names none."""
+    from app.fuzzy import engine as fz
+
+    return {
+        "default": fz.resolve_model().name,
+        "models": [{"name": m.name, "description": m.description,
+                    "switches": {"strong_partition": m.strong_partition, "imd_rainfall": m.imd_rainfall,
+                                 "prune_inert": m.prune_inert},
+                    "rules": list(fz.rule_numbers(m)),
+                    "membership_functions": {v: {t: list(p) for t, p in sets.items()}
+                                             for v, sets in fz.membership_functions(m).items()}}
+                   for m in fz.MODELS.values()],
+    }
+
+
 @app.get("/api/fuzzy/explain")
 def explain_fuzzy(
     rainfall_dev: float = Query(..., description="Season rainfall deviation from normal, %."),
     water_storage: float = Query(..., description="Seasonal reservoir storage, %."),
     soil_fert: float = Query(..., description="Soil fertility index, 0-100."),
+    model: Optional[str] = Query(None, description="Fuzzy model (GET /api/fuzzy/models); default if omitted."),
 ):
     """Rule-level explanation of the Mamdani engine for one input triple:
     memberships, every rule's firing strength, status (decisive / masked /
@@ -485,16 +514,16 @@ def explain_fuzzy(
 
     if not all(math.isfinite(v) for v in (rainfall_dev, water_storage, soil_fert)):
         raise HTTPException(status_code=422, detail="Inputs must be finite numbers.")
-    return fz.explain_inference(rainfall_dev, water_storage, soil_fert)
+    return fz.explain_inference(rainfall_dev, water_storage, soil_fert, model=_fuzzy_model_or_400(model))
 
 
 @app.get("/api/fuzzy/audit")
-def audit_fuzzy():
+def audit_fuzzy(model: Optional[str] = Query(None, description="Fuzzy model (GET /api/fuzzy/models); default if omitted.")):
     """Static audit of the rule base and membership functions plus rule
-    firing statistics on the dataset's region profiles (cached)."""
+    firing statistics on the dataset's region profiles (cached per model)."""
     from app.fuzzy import audit
 
-    return audit.summary()
+    return audit.summary(_fuzzy_model_or_400(model))
 
 
 # ---------------------------------------------------------------------------
