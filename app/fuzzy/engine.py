@@ -20,6 +20,8 @@ inputs for the multiple objective optimization module".
 
 from __future__ import annotations
 
+import contextvars
+from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import lru_cache
 
@@ -60,8 +62,71 @@ MEMBERSHIP_FUNCTIONS = {
 }
 
 
-@lru_cache(maxsize=1)
-def _build_system() -> tuple[ctrl.ControlSystem, ctrl.Antecedent, ctrl.Antecedent, ctrl.Antecedent]:
+# ---------------------------------------------------------------------------
+# Fuzzy models
+#
+# The published system is the "original" model. Every change that alters
+# the fuzzy outputs is a separate switch on FuzzyModel, so each one can be
+# enabled, disabled and benchmarked on its own
+# (scripts/benchmark_fuzzy_models.py); MODELS names the combinations the API
+# accepts. config.FUZZY_MODEL picks the default, using_model() overrides it
+# for one request.
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class FuzzyModel:
+    name: str
+    description: str = ""
+
+
+ORIGINAL = FuzzyModel("original", "Published Mamdani system: 26 rules, original membership functions.")
+MODELS = {m.name: m for m in (ORIGINAL,)}
+
+_ACTIVE_MODEL: contextvars.ContextVar = contextvars.ContextVar("fuzzy_model", default=None)
+
+
+def resolve_model(model=None) -> FuzzyModel:
+    """A FuzzyModel from a model, a name, or None (the model selected by
+    using_model, else config.FUZZY_MODEL)."""
+    if isinstance(model, FuzzyModel):
+        return model
+    name = model or _ACTIVE_MODEL.get() or config.FUZZY_MODEL
+    if isinstance(name, FuzzyModel):
+        return name
+    try:
+        return MODELS[name]
+    except KeyError:
+        raise ValueError(f"Unknown fuzzy model '{name}'. Choose one of {sorted(MODELS)}.") from None
+
+
+@contextmanager
+def using_model(model=None):
+    """Run the enclosed engine calls with `model` (None keeps the current one)."""
+    token = _ACTIVE_MODEL.set(resolve_model(model))
+    try:
+        yield _ACTIVE_MODEL.get()
+    finally:
+        _ACTIVE_MODEL.reset(token)
+
+
+def membership_functions(model=None) -> dict:
+    """Membership-function parameters of every variable under `model`:
+    (a, b, c) triangles or (a, b, c, d) trapezoids."""
+    resolve_model(model)
+    return {var: dict(sets) for var, sets in MEMBERSHIP_FUNCTIONS.items()}
+
+
+def _mf(universe, params):
+    return fuzz.trimf(universe, list(params)) if len(params) == 3 else fuzz.trapmf(universe, list(params))
+
+
+def build_system(model=None):
+    """Compiled scikit-fuzzy system of `model` (cached per model)."""
+    return _build_system(resolve_model(model))
+
+
+@lru_cache(maxsize=None)
+def _build_system(model: FuzzyModel = ORIGINAL) -> tuple[ctrl.ControlSystem, ctrl.Antecedent, ctrl.Antecedent, ctrl.Antecedent]:
     # --- Antecedents (inputs) ---
     rainfall_dev = ctrl.Antecedent(np.arange(-60, 60.1, 1), "rainfall_dev")
     water_storage = ctrl.Antecedent(np.arange(0, 100.1, 1), "water_storage")
@@ -71,11 +136,13 @@ def _build_system() -> tuple[ctrl.ControlSystem, ctrl.Antecedent, ctrl.Anteceden
     yield_conf = ctrl.Consequent(np.arange(0, 100.1, 1), "yield_conf")
     irrigation_risk = ctrl.Consequent(np.arange(0, 100.1, 1), "irrigation_risk")
 
-    # Membership functions come from MEMBERSHIP_FUNCTIONS (same triangles as
-    # before, now in one table that the audit and docs read as well).
+    # Membership functions come from membership_functions(model): for the
+    # original model, MEMBERSHIP_FUNCTIONS (same triangles as before, in one
+    # table that the audit and docs read as well).
+    table = membership_functions(model)
     for variable in (rainfall_dev, water_storage, soil_fert, yield_conf, irrigation_risk):
-        for label, abc in MEMBERSHIP_FUNCTIONS[variable.label].items():
-            variable[label] = fuzz.trimf(variable.universe, list(abc))
+        for label, params in table[variable.label].items():
+            variable[label] = _mf(variable.universe, params)
 
     # --- Mamdani rule base (domain-expert-style heuristics) ---
     # Rules 1-14 below are the original 3x3 rainfall x water_storage grid
@@ -196,8 +263,17 @@ def _build_system() -> tuple[ctrl.ControlSystem, ctrl.Antecedent, ctrl.Anteceden
                   [yield_conf["low"], irrigation_risk["high"]]),
     ]
 
-    system = ctrl.ControlSystem(rules)
+    system = ctrl.ControlSystem([rule for number, rule in enumerate(rules, start=1) if number in rule_numbers(model)])
     return system, rainfall_dev, water_storage, soil_fert
+
+
+RULE_COUNT = 26
+
+
+def rule_numbers(model=None) -> tuple:
+    """Numbers (1-26, the original numbering) of the rules `model` keeps."""
+    resolve_model(model)
+    return tuple(range(1, RULE_COUNT + 1))
 
 
 # Input universes (the clipping range of every crisp input). Previously the
@@ -235,13 +311,18 @@ class RuleSpec:
     scenario: str | None
 
 
-@lru_cache(maxsize=1)
-def rule_specs() -> tuple:
-    """The rule base as plain data, built once from the compiled system so
-    explanations, audits and fired_rules all read the same definition."""
-    system, *_ = _build_system()
+def rule_specs(model=None) -> tuple:
+    """The rule base of `model` as plain data, built once from the compiled
+    system so explanations, audits and fired_rules all read the same
+    definition. Rules keep their original numbers."""
+    return _rule_specs(resolve_model(model))
+
+
+@lru_cache(maxsize=None)
+def _rule_specs(model: FuzzyModel) -> tuple:
+    system, *_ = _build_system(model)
     specs = []
-    for number, rule in enumerate(system.rules, start=1):
+    for number, rule in zip(rule_numbers(model), system.rules):
         terms = list(rule.antecedent_terms)
         specs.append(RuleSpec(
             number=number,
@@ -266,6 +347,7 @@ def evaluate_uncertainty(
     rainfall_deviation_percent: float,
     water_storage_percent: float,
     soil_fertility_index: float,
+    model=None,
 ) -> UncertaintyAssessment:
     """Run the Mamdani fuzzy inference engine for one region/season snapshot.
 
@@ -278,10 +360,13 @@ def evaluate_uncertainty(
     region profile is evaluated repeatedly (dashboard, comparison,
     explanations, the ten runs of a scenario simulation). Each call still
     returns a new UncertaintyAssessment, so callers can never share state.
+
+    `model` selects the fuzzy model (default: the active one, see
+    resolve_model).
     """
     x = _clipped_inputs(rainfall_deviation_percent, water_storage_percent, soil_fertility_index)
     yield_conf, irr_risk, rain_label, water_label, soil_label = _evaluate_cached(
-        x["rainfall_dev"], x["water_storage"], x["soil_fert"])
+        x["rainfall_dev"], x["water_storage"], x["soil_fert"], resolve_model(model))
     return UncertaintyAssessment(
         yield_confidence=yield_conf,
         irrigation_risk=irr_risk,
@@ -292,11 +377,11 @@ def evaluate_uncertainty(
 
 
 @lru_cache(maxsize=4096)
-def _evaluate_cached(r: float, w: float, s: float) -> tuple:
+def _evaluate_cached(r: float, w: float, s: float, model: FuzzyModel = ORIGINAL) -> tuple:
     """scikit-fuzzy Mamdani inference for already-clipped inputs. Unchanged
     from the original evaluate_uncertainty body; only moved here so its
     result can be memoised."""
-    system, rainfall_dev, water_storage, soil_fert = _build_system()
+    system, rainfall_dev, water_storage, soil_fert = _build_system(model)
     sim = ctrl.ControlSystemSimulation(system)
 
     sim.input["rainfall_dev"] = r
@@ -321,9 +406,9 @@ def _evaluate_cached(r: float, w: float, s: float) -> tuple:
     )
 
 
-def _raw_memberships(x: dict) -> dict:
+def _raw_memberships(x: dict, model=None) -> dict:
     """Unrounded membership degrees of clipped inputs (the values the engine uses)."""
-    _, rainfall_dev, water_storage, soil_fert = _build_system()
+    _, rainfall_dev, water_storage, soil_fert = build_system(model)
     return {
         antecedent.label: {
             label: float(fuzz.interp_membership(antecedent.universe, term.mf, x[antecedent.label]))
@@ -334,24 +419,25 @@ def _raw_memberships(x: dict) -> dict:
 
 
 @lru_cache(maxsize=4096)
-def _memberships_cached(r: float, w: float, s: float) -> tuple:
-    raw = _raw_memberships({"rainfall_dev": r, "water_storage": w, "soil_fert": s})
+def _memberships_cached(r: float, w: float, s: float, model: FuzzyModel = ORIGINAL) -> tuple:
+    raw = _raw_memberships({"rainfall_dev": r, "water_storage": w, "soil_fert": s}, model)
     return tuple((var, tuple((label, round(v, 3)) for label, v in terms.items())) for var, terms in raw.items())
 
 
-def input_memberships(rainfall_deviation_percent, water_storage_percent, soil_fertility_index) -> dict:
+def input_memberships(rainfall_deviation_percent, water_storage_percent, soil_fertility_index, model=None) -> dict:
     """Membership degree of each input in each of its fuzzy sets, using the
     same membership functions and clipping as evaluate_uncertainty
     (rounded to 3 decimals). Memoised; returns a fresh dict each call."""
     x = _clipped_inputs(rainfall_deviation_percent, water_storage_percent, soil_fertility_index)
-    return {var: dict(terms) for var, terms in _memberships_cached(x["rainfall_dev"], x["water_storage"], x["soil_fert"])}
+    return {var: dict(terms) for var, terms in
+            _memberships_cached(x["rainfall_dev"], x["water_storage"], x["soil_fert"], resolve_model(model))}
 
 
 @lru_cache(maxsize=4096)
-def _fired_cached(r: float, w: float, s: float) -> tuple:
-    degrees = {var: dict(terms) for var, terms in _memberships_cached(r, w, s)}
+def _fired_cached(r: float, w: float, s: float, model: FuzzyModel = ORIGINAL) -> tuple:
+    degrees = {var: dict(terms) for var, terms in _memberships_cached(r, w, s, model)}
     fired = []
-    for spec in rule_specs():
+    for spec in rule_specs(model):
         strength = min(degrees[var][term] for var, term in spec.antecedents)
         if strength <= 0:
             continue
@@ -359,7 +445,7 @@ def _fired_cached(r: float, w: float, s: float) -> tuple:
     return tuple(sorted(fired, key=lambda r: (-r[3], r[0])))
 
 
-def fired_rules(rainfall_deviation_percent, water_storage_percent, soil_fertility_index) -> list:
+def fired_rules(rainfall_deviation_percent, water_storage_percent, soil_fertility_index, model=None) -> list:
     """Firing strength of every rule (min over its AND-ed antecedent
     memberships, using the 3-decimal memberships of input_memberships),
     strongest first; rule numbers match _build_system's order (1-26).
@@ -367,14 +453,14 @@ def fired_rules(rainfall_deviation_percent, water_storage_percent, soil_fertilit
     dicts each call."""
     x = _clipped_inputs(rainfall_deviation_percent, water_storage_percent, soil_fertility_index)
     return [{"rule": n, "if": i, "then": t, "strength": st}
-            for n, i, t, st in _fired_cached(x["rainfall_dev"], x["water_storage"], x["soil_fert"])]
+            for n, i, t, st in _fired_cached(x["rainfall_dev"], x["water_storage"], x["soil_fert"], resolve_model(model))]
 
 
-def output_term(variable: str, value01: float) -> tuple:
+def output_term(variable: str, value01: float, model=None) -> tuple:
     """Dominant linguistic term (and all membership degrees) of a fuzzy
     OUTPUT value in [0, 1], read off the model's own output sets
     ("yield_conf" or "irrigation_risk")."""
-    system, *_ = _build_system()
+    system, *_ = build_system(model)
     consequent = next(c for c in system.consequents if c.label == variable)
     x = float(np.clip(value01, 0, 1)) * 100
     degrees = {
@@ -426,15 +512,15 @@ from skfuzzy.fuzzymath.fuzzy_ops import _interp_universe_fast  # noqa: E402
 CONSISTENCY_TOLERANCE = 1e-9   # explanation centroid vs engine output (0-1 scale)
 
 
-def _consequent(variable: str):
-    system, *_ = _build_system()
+def _consequent(variable: str, model=None):
+    system, *_ = build_system(model)
     return next(c for c in system.consequents if c.label == variable)
 
 
-def _aggregate(variable: str, cuts: dict):
+def _aggregate(variable: str, cuts: dict, model=None):
     """Aggregated output set for `cuts` ({term: cut or None}), exactly as
     skfuzzy builds it. Returns (universe, output_mf, {term: clipped mf})."""
-    consequent = _consequent(variable)
+    consequent = _consequent(variable, model)
     new_values = []
     for label, term in consequent.terms.items():
         if cuts.get(label) is None:
@@ -451,19 +537,19 @@ def _aggregate(variable: str, cuts: dict):
     return universe, output, term_mfs
 
 
-def _centroid01(variable: str, cuts: dict):
+def _centroid01(variable: str, cuts: dict, model=None):
     """Crisp output in [0, 1], or None when the aggregated set is empty
     (the engine then falls back to 0.5)."""
-    universe, output, _ = _aggregate(variable, cuts)
+    universe, output, _ = _aggregate(variable, cuts, model)
     if not np.any(output > 0):
         return None
     return float(fuzz.defuzz(universe, output, "centroid")) / 100.0
 
 
-def _term_cuts(firing: dict, exclude: int | None = None) -> dict:
+def _term_cuts(firing: dict, exclude: int | None = None, model=None) -> dict:
     """{variable: {term: (cut, [setting rules])}} from rule firing strengths."""
     cuts = {v: {} for v in OUTPUT_VARIABLES}
-    for spec in rule_specs():
+    for spec in rule_specs(model):
         if spec.number == exclude:
             continue
         for var, term in spec.consequents:
@@ -480,7 +566,7 @@ def _area(universe, mf) -> float:
     return float(np.trapezoid(mf, universe))
 
 
-def explain_inference(rainfall_deviation_percent, water_storage_percent, soil_fertility_index) -> dict:
+def explain_inference(rainfall_deviation_percent, water_storage_percent, soil_fertility_index, model=None) -> dict:
     """Why the fuzzy engine produced its outputs for these inputs.
 
     Returns the clipped inputs and their memberships; for every rule its
@@ -489,21 +575,23 @@ def explain_inference(rainfall_deviation_percent, water_storage_percent, soil_fe
     importance; rules ranked by importance; per output the term cuts, the
     rules setting them, each term's area share, the crisp value, its
     linguistic term and membership (a confidence for the label), and a
-    consistency check against evaluate_uncertainty.
+    consistency check against evaluate_uncertainty. `model` selects the
+    fuzzy model (default: the active one); its name is returned as "model".
     """
+    model = resolve_model(model)
     x = _clipped_inputs(rainfall_deviation_percent, water_storage_percent, soil_fertility_index)
-    memberships = _raw_memberships(x)
-    firing = {spec.number: min(memberships[v][t] for v, t in spec.antecedents) for spec in rule_specs()}
-    cuts = _term_cuts(firing)
-    engine = vars(evaluate_uncertainty(x["rainfall_dev"], x["water_storage"], x["soil_fert"]))
+    memberships = _raw_memberships(x, model)
+    firing = {spec.number: min(memberships[v][t] for v, t in spec.antecedents) for spec in rule_specs(model)}
+    cuts = _term_cuts(firing, model=model)
+    engine = vars(evaluate_uncertainty(x["rainfall_dev"], x["water_storage"], x["soil_fert"], model=model))
     engine_key = {"yield_conf": "yield_confidence", "irrigation_risk": "irrigation_risk"}
 
-    outputs, crisp_values, rule_share = {}, {}, {spec.number: {} for spec in rule_specs()}
+    outputs, crisp_values, rule_share = {}, {}, {spec.number: {} for spec in rule_specs(model)}
     for var in OUTPUT_VARIABLES:
         plain = {term: c for term, (c, _) in cuts[var].items()}
-        universe, output, term_mfs = _aggregate(var, plain)
+        universe, output, term_mfs = _aggregate(var, plain, model)
         total = _area(universe, output)
-        crisp = _centroid01(var, plain)
+        crisp = _centroid01(var, plain, model)
         # Split the aggregated area between the terms that form it (ties split equally).
         winners = {t: np.isclose(mf, output) & (output > 0) for t, mf in term_mfs.items()}
         n_win = np.maximum(sum(w.astype(int) for w in winners.values()), 1)
@@ -515,7 +603,7 @@ def explain_inference(rainfall_deviation_percent, water_storage_percent, soil_fe
                     rule_share[n][var] = rule_share[n].get(var, 0.0) + shares.get(term, 0.0) / len(setters)
         value = crisp if crisp is not None else 0.5
         crisp_values[var] = value
-        label, degrees = output_term(var, value)
+        label, degrees = output_term(var, value, model)
         rounded = round(_clip01(value), 3)
         outputs[var] = {
             "value": rounded,
@@ -529,14 +617,14 @@ def explain_inference(rainfall_deviation_percent, water_storage_percent, soil_fe
         }
 
     rules = []
-    for spec in rule_specs():
+    for spec in rule_specs(model):
         f = firing[spec.number]
         decisive = {var: share for var, share in rule_share[spec.number].items()}
         loo = {}
         if f > 0 and decisive:
-            without = _term_cuts(firing, exclude=spec.number)
+            without = _term_cuts(firing, exclude=spec.number, model=model)
             for var in decisive:
-                alt = _centroid01(var, {t: c for t, (c, _) in without[var].items()})
+                alt = _centroid01(var, {t: c for t, (c, _) in without[var].items()}, model)
                 # Unrounded on both sides, so a rule whose removal changes
                 # nothing (e.g. one tied with the rule that subsumes it) shows 0.
                 loo[var] = round(crisp_values[var] - (alt if alt is not None else 0.5), 4)
@@ -565,6 +653,7 @@ def explain_inference(rainfall_deviation_percent, water_storage_percent, soil_fe
     ranked = sorted((r for r in rules if r["status"] != "not fired"),
                     key=lambda r: (-r["importance"], -sum(r["contribution_pct"].values()), -r["strength"], r["rule"]))
     return {
+        "model": model.name,
         "inputs": {var: {"value": x[var], "memberships": {t: round(v, 4) for t, v in memberships[var].items()},
                          "dominant": max(memberships[var], key=memberships[var].get)} for var in INPUT_BOUNDS},
         "outputs": outputs,
