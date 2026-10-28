@@ -39,6 +39,13 @@ class CustomWeightsIn(BaseModel):
         return {k: v for k, v in d.items() if v is not None}
 
 
+def _check_fuzzy_model(name: Optional[str]) -> None:
+    from app.fuzzy.engine import MODELS
+
+    if name is not None and name not in MODELS:
+        raise ValueError(f"Unknown fuzzy model '{name}'. Choose one of {sorted(MODELS)}.")
+
+
 class RankingProfileIn(BaseModel):
     """Optional ranking profile of a request. Unset keeps the preference
     ranking (balanced by default)."""
@@ -93,10 +100,19 @@ class FarmPlanRequest(RankingProfileIn):
     # Also rank the front under every standard profile (meta.profile_comparison).
     compare_profiles: bool = False
 
+    # Fuzzy model for this run (GET /api/fuzzy/models). None = the server's
+    # default (config.FUZZY_MODEL, "original" unless configured).
+    fuzzy_model: Optional[str] = Field(None, examples=["original"])
+
     @model_validator(mode="after")
     def _one_weighting(self):
         if self.profile is not None and self.preference != "balanced":
             raise ValueError("Use either a preference or a ranking profile, not both.")
+        return self
+
+    @model_validator(mode="after")
+    def _known_fuzzy_model(self):
+        _check_fuzzy_model(self.fuzzy_model)
         return self
 
 
@@ -202,6 +218,8 @@ class RunMeta(BaseModel):
     # under every standard profile when requested (app/services/topsis_service.py).
     topsis: Optional[Dict[str, Any]] = None
     profile_comparison: Optional[Dict[str, Any]] = None
+    # Fuzzy model that produced the run; absent on runs saved before models existed (= "original").
+    fuzzy_model: Optional[str] = None
 
 
 class MeanObjectivesOut(BaseModel):
