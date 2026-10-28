@@ -118,3 +118,32 @@ def test_strong_partition_reduces_monotonicity_violations():
         assert after[key]["largest_violation"] <= before[key]["largest_violation"]
         assert after[key]["violating_steps_pct"] <= before[key]["violating_steps_pct"]
     assert after[("yield_conf", "soil_fert")]["violating_steps_pct"] == 0
+
+
+# ---------------------------------------------------------------------------
+# Improvement 2: rainfall sets aligned to the IMD categories
+# ---------------------------------------------------------------------------
+
+def test_imd_rainfall_sets_cross_at_the_imd_boundary():
+    cov = audit.membership_coverage(model="imd_rainfall")["rainfall_dev"]
+    assert cov["epsilon_completeness"] == 0.5
+    assert cov["membership_sum_range"] == [1.0, 1.0]
+    assert [c["at"] for c in cov["crossings"]] == [-19.75, 19.75]
+    assert all(c["membership"] == 0.5 for c in cov["crossings"])
+    sets = fz.membership_functions("imd_rainfall")
+    assert sets["water_storage"] == fz.MEMBERSHIP_FUNCTIONS["water_storage"]
+    assert sets["soil_fert"] == fz.MEMBERSHIP_FUNCTIONS["soil_fert"]
+
+
+@pytest.mark.parametrize("dev,category", [(-60, "deficit"), (-39.5, "deficit"), (-20, "deficit"), (-19, "normal"),
+                                          (0, "normal"), (19, "normal"), (20, "surplus"), (121.1, "surplus")])
+def test_imd_rainfall_labels_follow_the_imd_category(dev, category):
+    assert fz.imd_category(dev) == category
+    assert fz.evaluate_uncertainty(dev, 60, 70, model="imd_rainfall").rainfall_label == category
+
+
+def test_imd_rainfall_labels_every_dataset_profile_like_imd():
+    profiles = audit.dataset_points()
+    agree = {m: sum(fz.evaluate_uncertainty(*p["inputs"], model=m).rainfall_label == fz.imd_category(p["inputs"][0])
+                    for p in profiles) for m in ("original", "imd_rainfall")}
+    assert agree == {"original": 51, "imd_rainfall": len(profiles)}
