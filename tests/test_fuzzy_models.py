@@ -147,3 +147,49 @@ def test_imd_rainfall_labels_every_dataset_profile_like_imd():
     agree = {m: sum(fz.evaluate_uncertainty(*p["inputs"], model=m).rainfall_label == fz.imd_category(p["inputs"][0])
                     for p in profiles) for m in ("original", "imd_rainfall")}
     assert agree == {"original": 51, "imd_rainfall": len(profiles)}
+
+
+# ---------------------------------------------------------------------------
+# Improvement 3: provably inert rules left out
+# ---------------------------------------------------------------------------
+
+def test_subsumed_rules_are_the_audited_inert_rules():
+    assert fz.subsumed_rules() == (13, 15, 19, 21, 25, 26)
+    assert [r["rule"] for r in audit.rule_dominance()["inert"]] == list(fz.subsumed_rules())
+
+
+def test_pruned_model_keeps_the_original_numbering():
+    numbers = fz.rule_numbers("pruned_rules")
+    assert len(numbers) == 20 and not set(numbers) & set(fz.subsumed_rules())
+    assert [s.number for s in fz.rule_specs("pruned_rules")] == list(numbers)
+    original = {s.number: s for s in fz.rule_specs()}
+    assert all(original[s.number] == s for s in fz.rule_specs("pruned_rules"))
+    dominance = audit.rule_dominance("pruned_rules")
+    assert dominance["inert"] == [] and dominance["effective_rules"] == 20
+
+
+def test_pruned_model_outputs_are_identical_to_the_original():
+    points = POINTS + [tuple(p) for p in audit.grid(7)] + [p["inputs"] for p in audit.dataset_points()]
+    for p in points:
+        assert fz.evaluate_uncertainty(*p, model="pruned_rules") == fz.evaluate_uncertainty(*p)
+
+
+def test_pruned_model_reports_fewer_fired_rules_and_unmasks_their_twins():
+    """A subsumed rule tied with its general rule hides the general rule's
+    leave-one-out importance (removing either leaves the other setting the
+    cut). Without the subsumed rules that importance shows: on the data it
+    rises in 29 of 60 profiles, from 0 in 18 rule readings, and never falls."""
+    raised = from_zero = 0
+    for p in [p["inputs"] for p in audit.dataset_points()]:
+        full = fz.explain_inference(*p)
+        pruned = fz.explain_inference(*p, model="pruned_rules")
+        assert all(pruned["outputs"][v]["value"] == full["outputs"][v]["value"] for v in fz.OUTPUT_VARIABLES)
+        assert pruned["summary"]["fired"] == full["summary"]["fired"] - sum(
+            r["status"] != "not fired" for r in full["rules"] if r["rule"] in fz.subsumed_rules())
+        assert all(r["importance"] == 0 for r in full["rules"] if r["rule"] in fz.subsumed_rules())
+        before = {r["rule"]: r["importance"] for r in full["rules"]}
+        changed = [(before[r["rule"]], r["importance"]) for r in pruned["rules"] if r["importance"] != before[r["rule"]]]
+        assert all(new > old for old, new in changed)
+        raised += bool(changed)
+        from_zero += sum(old == 0 for old, _ in changed)
+    assert (raised, from_zero) == (29, 18)
