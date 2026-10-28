@@ -77,10 +77,32 @@ MEMBERSHIP_FUNCTIONS = {
 class FuzzyModel:
     name: str
     description: str = ""
+    # Improvement 1: storage and fertility sets form a strong (Ruspini)
+    # partition on the original modal values 0 / 50 / 100.
+    strong_partition: bool = False
 
+
+# Improvement 1. The original storage and fertility triangles keep their
+# modal values (0, 50, 100) but overlap so little that neighbouring sets
+# cross at membership 0.231 (epsilon-completeness 0.231; Lee 1990 asks for
+# >= 0.5) and the memberships of a reading sum to as little as 0.375. A
+# value such as fertility 70 is then only 0.2 "medium" and 0.25 "good", and
+# outputs move against their inputs on 12-14 % of grid steps. Stretching
+# each triangle to its neighbours' modal values gives the strong fuzzy
+# partition of Ruspini (1969): memberships sum to 1, neighbours cross at
+# 0.5, and Pedrycz (1994) shows this is the triangular partition with zero
+# reconstruction error. Only the overlap changes; no new threshold is
+# introduced.
+STRONG_PARTITION_SETS = {
+    "water_storage": {"low": (0, 0, 50), "medium": (0, 50, 100), "high": (50, 100, 100)},
+    "soil_fert": {"poor": (0, 0, 50), "medium": (0, 50, 100), "good": (50, 100, 100)},
+}
 
 ORIGINAL = FuzzyModel("original", "Published Mamdani system: 26 rules, original membership functions.")
-MODELS = {m.name: m for m in (ORIGINAL,)}
+STRONG_PARTITION = FuzzyModel(
+    "strong_partition", "Improvement 1 only: storage and fertility sets form a strong partition (cross at 0.5).",
+    strong_partition=True)
+MODELS = {m.name: m for m in (ORIGINAL, STRONG_PARTITION)}
 
 _ACTIVE_MODEL: contextvars.ContextVar = contextvars.ContextVar("fuzzy_model", default=None)
 
@@ -112,8 +134,11 @@ def using_model(model=None):
 def membership_functions(model=None) -> dict:
     """Membership-function parameters of every variable under `model`:
     (a, b, c) triangles or (a, b, c, d) trapezoids."""
-    resolve_model(model)
-    return {var: dict(sets) for var, sets in MEMBERSHIP_FUNCTIONS.items()}
+    model = resolve_model(model)
+    table = {var: dict(sets) for var, sets in MEMBERSHIP_FUNCTIONS.items()}
+    if model.strong_partition:
+        table.update({var: dict(sets) for var, sets in STRONG_PARTITION_SETS.items()})
+    return table
 
 
 def _mf(universe, params):
