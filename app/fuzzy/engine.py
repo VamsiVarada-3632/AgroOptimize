@@ -80,6 +80,8 @@ class FuzzyModel:
     # Improvement 1: storage and fertility sets form a strong (Ruspini)
     # partition on the original modal values 0 / 50 / 100.
     strong_partition: bool = False
+    # Improvement 2: rainfall sets centred on the IMD category midpoints.
+    imd_rainfall: bool = False
 
 
 # Improvement 1. The original storage and fertility triangles keep their
@@ -98,11 +100,37 @@ STRONG_PARTITION_SETS = {
     "soil_fert": {"poor": (0, 0, 50), "medium": (0, 50, 100), "good": (50, 100, 100)},
 }
 
+# Improvement 2. The India Meteorological Department calls a season
+# "normal" within -19 % .. +19 % of the long-period average, "deficient"
+# from -20 % to -59 % and "excess" from +20 % to +59 %. The original
+# rainfall sets cross at +/-12.9 % with membership 0.143, so 9 of the 60
+# dataset profiles that IMD calls normal get a dominant deficit or surplus
+# label, and 42 % of the universe has no membership above 0.5. Here each
+# set peaks at the midpoint of its IMD band (-39.5, 0, +39.5) and the sets
+# form a strong partition, so neighbours cross at 0.5 at +/-19.75 % -- the
+# IMD boundary. Deficit and surplus stay at 1 out to the +/-60 % edge of
+# the universe, where IMD's "large" categories begin.
+IMD_RAINFALL_SETS = {
+    "rainfall_dev": {"deficit": (-60, -60, -39.5, 0), "normal": (-39.5, 0, 39.5), "surplus": (0, 39.5, 60, 60)},
+}
+IMD_NORMAL_LIMIT = 19.5   # |deviation| below this is IMD "normal" (bands are whole percents)
+
 ORIGINAL = FuzzyModel("original", "Published Mamdani system: 26 rules, original membership functions.")
 STRONG_PARTITION = FuzzyModel(
     "strong_partition", "Improvement 1 only: storage and fertility sets form a strong partition (cross at 0.5).",
     strong_partition=True)
-MODELS = {m.name: m for m in (ORIGINAL, STRONG_PARTITION)}
+IMD_RAINFALL = FuzzyModel(
+    "imd_rainfall", "Improvement 2 only: rainfall sets centred on the IMD categories (cross at 0.5 at +/-19.75 %).",
+    imd_rainfall=True)
+MODELS = {m.name: m for m in (ORIGINAL, STRONG_PARTITION, IMD_RAINFALL)}
+
+
+def imd_category(rainfall_deviation_percent: float) -> str:
+    """IMD category of a seasonal deviation, in the rainfall sets' labels
+    ("large" categories folded into deficit / surplus)."""
+    if rainfall_deviation_percent <= -IMD_NORMAL_LIMIT:
+        return "deficit"
+    return "surplus" if rainfall_deviation_percent >= IMD_NORMAL_LIMIT else "normal"
 
 _ACTIVE_MODEL: contextvars.ContextVar = contextvars.ContextVar("fuzzy_model", default=None)
 
@@ -138,6 +166,8 @@ def membership_functions(model=None) -> dict:
     table = {var: dict(sets) for var, sets in MEMBERSHIP_FUNCTIONS.items()}
     if model.strong_partition:
         table.update({var: dict(sets) for var, sets in STRONG_PARTITION_SETS.items()})
+    if model.imd_rainfall:
+        table.update({var: dict(sets) for var, sets in IMD_RAINFALL_SETS.items()})
     return table
 
 
