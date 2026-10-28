@@ -82,6 +82,8 @@ class FuzzyModel:
     strong_partition: bool = False
     # Improvement 2: rainfall sets centred on the IMD category midpoints.
     imd_rainfall: bool = False
+    # Improvement 3: leave out the rules subsumed by a more general rule.
+    prune_inert: bool = False
 
 
 # Improvement 1. The original storage and fertility triangles keep their
@@ -122,7 +124,19 @@ STRONG_PARTITION = FuzzyModel(
 IMD_RAINFALL = FuzzyModel(
     "imd_rainfall", "Improvement 2 only: rainfall sets centred on the IMD categories (cross at 0.5 at +/-19.75 %).",
     imd_rainfall=True)
-MODELS = {m.name: m for m in (ORIGINAL, STRONG_PARTITION, IMD_RAINFALL)}
+# Improvement 3. With AND = min and max aggregation, a rule whose
+# conditions include all of another rule's conditions never fires more
+# strongly than it; if every term it concludes is also concluded by such a
+# more general rule, it can never set a term's cut and so never changes an
+# output (FUZZY_SYSTEM_ANALYSIS.md 4.1: rules 13, 15, 19, 21, 25, 26, each
+# with leave-one-out change 0). Such rules still appear among the fired
+# rules and in the rule count. Removing them (rule-base simplification,
+# Guillaume 2001) leaves every output identical under any membership
+# functions, because the argument uses only the rule structure.
+PRUNED_RULES = FuzzyModel(
+    "pruned_rules", "Improvement 3 only: the 6 provably inert rules are left out (outputs identical).",
+    prune_inert=True)
+MODELS = {m.name: m for m in (ORIGINAL, STRONG_PARTITION, IMD_RAINFALL, PRUNED_RULES)}
 
 
 def imd_category(rainfall_deviation_percent: float) -> str:
@@ -327,8 +341,27 @@ RULE_COUNT = 26
 
 def rule_numbers(model=None) -> tuple:
     """Numbers (1-26, the original numbering) of the rules `model` keeps."""
-    resolve_model(model)
-    return tuple(range(1, RULE_COUNT + 1))
+    model = resolve_model(model)
+    dropped = set(subsumed_rules()) if model.prune_inert else set()
+    return tuple(n for n in range(1, RULE_COUNT + 1) if n not in dropped)
+
+
+@lru_cache(maxsize=1)
+def subsumed_rules() -> tuple:
+    """Rules of the full rule base every one of whose conclusions is also
+    drawn by another rule with a subset of its conditions (ties between
+    identical rules keep the lower number). Depends only on the rule
+    structure, so it holds for every model's membership functions."""
+    specs = _rule_specs(ORIGINAL)
+    out = []
+    for spec in specs:
+        ants = set(spec.antecedents)
+        def covers(o):
+            other = set(o.antecedents)
+            return o.number != spec.number and other <= ants and (other < ants or o.number < spec.number)
+        if all(any(covers(o) and cons in o.consequents for o in specs) for cons in spec.consequents):
+            out.append(spec.number)
+    return tuple(out)
 
 
 # Input universes (the clipping range of every crisp input). Previously the
