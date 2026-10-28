@@ -280,7 +280,8 @@ def test_fuzzy_endpoints():
     assert client.get("/api/fuzzy/explain", params={"rainfall_dev": "nan", "water_storage": 1, "soil_fert": 1}).status_code == 422
     assert client.get("/api/fuzzy/explain", params={"rainfall_dev": 1}).status_code == 422
     a = client.get("/api/fuzzy/audit").json()
-    assert set(a) == {"dominance", "coverage", "output_bounds", "dataset_firing"}
+    assert set(a) == {"model", "dominance", "coverage", "output_bounds", "dataset_firing"}
+    assert a["model"] == "original"
     assert not math.isnan(a["coverage"]["soil_fert"]["epsilon_completeness"])
 
 
