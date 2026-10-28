@@ -193,3 +193,82 @@ def test_pruned_model_reports_fewer_fired_rules_and_unmasks_their_twins():
         raised += bool(changed)
         from_zero += sum(old == 0 for old, _ in changed)
     assert (raised, from_zero) == (29, 18)
+
+
+# ---------------------------------------------------------------------------
+# API: model catalogue, model parameters, per-request model
+# ---------------------------------------------------------------------------
+
+from fastapi.testclient import TestClient  # noqa: E402
+
+from app.main import app  # noqa: E402
+
+client = TestClient(app)
+FAST = {"pop_size": config.NSGA2_FAST_POP_SIZE, "n_gen": config.NSGA2_FAST_N_GEN}
+
+
+def salem_kharif_inputs():
+    """Fuzzy inputs of the default-year Salem Kharif profile the API uses."""
+    from app.data import preprocessing as pp
+    p = pp.get_region_season_profile("Salem", "Kharif")
+    return p.rainfall.avg_deviation_percent, p.water.avg_storage_percent, p.soil.fertility_index
+
+
+def test_models_endpoint_lists_every_model_and_the_default():
+    body = client.get("/api/fuzzy/models").json()
+    assert body["default"] == "original"
+    by_name = {m["name"]: m for m in body["models"]}
+    assert set(by_name) == set(fz.MODELS)
+    assert by_name["original"]["rules"] == list(range(1, 27))
+    assert by_name["pruned_rules"]["rules"] == list(fz.rule_numbers("pruned_rules"))
+    assert by_name["imd_rainfall"]["switches"] == {"strong_partition": False, "imd_rainfall": True, "prune_inert": False}
+    assert by_name["imd_rainfall"]["membership_functions"]["rainfall_dev"]["normal"] == [-39.5, 0, 39.5]
+
+
+def test_explain_and_audit_take_a_model():
+    params = dict(zip(("rainfall_dev", "water_storage", "soil_fert"), SALEM_KHARIF))
+    assert client.get("/api/fuzzy/explain", params=params).json()["model"] == "original"
+    e = client.get("/api/fuzzy/explain", params={**params, "model": "strong_partition"}).json()
+    assert e["model"] == "strong_partition"
+    assert e["outputs"]["yield_conf"]["value"] == fz.evaluate_uncertainty(*SALEM_KHARIF, model="strong_partition").yield_confidence
+    a = client.get("/api/fuzzy/audit", params={"model": "pruned_rules"}).json()
+    assert a["model"] == "pruned_rules" and a["dominance"]["inert"] == []
+    assert client.get("/api/fuzzy/explain", params={**params, "model": "nope"}).status_code == 400
+    assert client.get("/api/fuzzy/audit", params={"model": "nope"}).status_code == 400
+
+
+def test_farm_plan_runs_with_the_requested_model_and_records_it():
+    base = {"location": "Salem", "season": "Kharif", "total_land_ha": 5, "save_results": False, **FAST}
+    default = client.post("/api/farm-plans", json=base).json()
+    chosen = client.post("/api/farm-plans", json={**base, "fuzzy_model": "imd_rainfall"}).json()
+    assert default["meta"]["fuzzy_model"] == "original"
+    assert chosen["meta"]["fuzzy_model"] == "imd_rainfall"
+    assert chosen["fuzzy_assessment"] == vars(fz.evaluate_uncertainty(*salem_kharif_inputs(), model="imd_rainfall"))
+    assert client.post("/api/farm-plans", json={**base, "fuzzy_model": "nope"}).status_code == 422
+
+
+def test_saved_run_is_explained_with_its_own_model():
+    from app.services import explanation_service as es
+    from app.services import plan_service as ps
+    from app.schemas import FarmPlanRequest
+
+    run = ps.run_pipeline(FarmPlanRequest(location="Salem", season="Kharif", total_land_ha=5, save_results=False,
+                                          fuzzy_model="strong_partition", **FAST)).response
+    inference = es.explain(es.context_from_saved_run(run, 1))["fuzzy_reasoning"]["inference"]
+    assert inference["model"] == "strong_partition"
+    assert inference["outputs"]["yield_conf"]["value"] == run["fuzzy_assessment"]["yield_confidence"]
+    # A run saved before models existed has no meta.fuzzy_model: explained with the original model,
+    # whatever the server default is.
+    old = {**run, "meta": {k: v for k, v in run["meta"].items() if k != "fuzzy_model"}}
+    with fz.using_model("imd_rainfall"):
+        assert es.explain(es.context_from_saved_run(old, 1))["fuzzy_reasoning"]["inference"]["model"] == "original"
+
+
+def test_simulation_runs_both_sides_with_the_requested_model():
+    from app.services import simulation_service as sim
+
+    out = sim.simulate({"base": {"location": "Salem", "season": "Kharif", "total_land_ha": 5,
+                                 "fuzzy_model": "imd_rainfall"},
+                        "scenario": {"rainfall_change_pct": -20}})
+    assert out["meta"]["fuzzy_model"] == "imd_rainfall"
+    assert out["baseline"]["fuzzy_assessment"] == vars(fz.evaluate_uncertainty(*salem_kharif_inputs(), model="imd_rainfall"))
