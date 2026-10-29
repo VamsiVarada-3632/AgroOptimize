@@ -122,6 +122,10 @@ def main():
          "Peak memory: build the system + 60 inferences", "KB", None, "{:.0f}"),
         ("pipeline_hypervolume.png", col(lambda r: r["pipeline"]["hypervolume"], engine),
          "NSGA-II hypervolume (each model vs. its own reference front)", "Hypervolume (higher is better)", None, "{:.4f}"),
+        ("pipeline_hypervolume_ratio.png",
+         col(lambda r: float(np.mean([x["hypervolume_ratio"] for x in r["pipeline"]["per_run"]])), engine),
+         "NSGA-II hypervolume ÷ hypervolume of the model's reference front", "HV ratio (1 = reaches the reference)",
+         None, "{:.4f}"),
         ("pipeline_igd_plus.png", col(lambda r: r["pipeline"]["igd_plus"], engine),
          "NSGA-II IGD+ (each model vs. its own reference front)", "IGD+ (lower is better)", None, "{:.4f}"),
         ("pipeline_runtime.png", col(lambda r: r["pipeline"]["runtime_s_mean"], engine),
@@ -171,12 +175,14 @@ def main():
         row([m, r["inference_ms_per_call"], r["explanation_ms_per_call"], r["peak_memory_kb_build_and_60_inferences"]])
     if all("pipeline" in M[m] for m in engine):
         print("\n### Pipeline (NSGA-II original engine, TOPSIS balanced)\n")
-        row(["Model", "Runtime (s)", "HV", "GD", "IGD", "IGD+", "Spread", "Spacing", "Feasible pop. (%)",
+        row(["Model", "Runtime (s)", "HV", "HV ratio", "GD", "IGD", "IGD+", "Spread", "Spacing", "Feasible pop. (%)",
              "Front size", "TOPSIS τ mean / min", "Land moved (%)", "Top crop kept (%)"])
-        row(["---"] * 13)
+        row(["---"] * 14)
         for m in engine:
             p = M[m]["pipeline"]
-            row([m, p["runtime_s_mean"], p["hypervolume"], p["gd"], p["igd"], p["igd_plus"], p["spread"], p["spacing"],
+            ratio = np.mean([r["hypervolume_ratio"] for r in p["per_run"]])
+            row([m, p["runtime_s_mean"], p["hypervolume"], f"{ratio:.4f}", p["gd"], p["igd"], p["igd_plus"], p["spread"],
+                 p["spacing"],
                  p["population_feasible_pct"], p["feasible_front_mean"],
                  f"{p['topsis_kendall_tau_mean']} / {p['topsis_kendall_tau_min']}",
                  p["top_plan_land_moved_pct_mean"], p["top_crop_unchanged_pct"]])
@@ -201,7 +207,7 @@ def paired_tests(M, engine, row):
         p = M[m]["pipeline"]
         runs = [(keyed[(r["problem"], r["seed"])], r) for r in p["per_run"]]
         series = [(k, [a[k] for a, _ in runs], [b[k] for _, b in runs]) for k in
-                  ("seconds", "hypervolume", "gd", "igd", "igd_plus", "spread", "spacing")]
+                  ("seconds", "hypervolume", "hypervolume_ratio", "gd", "igd", "igd_plus", "spread", "spacing")]
         series += [(k, base["stability_cases"][k], p["stability_cases"][k])
                    for k in ("topsis_kendall_tau", "top_plan_land_moved_pct")]
         for k, a, b in series:
