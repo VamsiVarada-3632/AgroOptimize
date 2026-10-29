@@ -64,6 +64,7 @@ All modelling constants live in `agrooptimize-backend/app/config.py`; a few more
 | `NSGA2_SEED` | 42 | Convention |
 | `NSGA2_FAST_POP_SIZE / FAST_N_GEN` | 24 / 15 | tests only |
 | `NSGA2_ENGINE_MODE` | `"original"` (env `AGROOPTIMIZE_NSGA2_MODE`) | `original` reproduces published results; `enhanced` is experimental ([NSGAII_IMPROVEMENTS.md](NSGAII_IMPROVEMENTS.md)) |
+| `FUZZY_MODEL` | `"original"` (env `AGROOPTIMIZE_FUZZY_MODEL`) | `original` reproduces published results; `improved` (and the single-improvement models) change the fuzzy outputs ([FUZZY_MODEL_IMPROVEMENTS.md](FUZZY_MODEL_IMPROVEMENTS.md)); a request's `fuzzy_model` overrides it |
 | `NSGA2_ENGINE_FEATURES` | per-mode switches | enhanced: smart initialisation, adaptive mutation, constraint-aware initialisation, duplicate avoidance; available but off: adaptive crossover, tolerance duplicate removal, early stopping, LHS initialisation, parallel evaluation ([NSGAII_BENCHMARK_RESULTS.md](NSGAII_BENCHMARK_RESULTS.md)) |
 | `NSGA2_ENGINE_MUTATION_PROB` | original 0.12, enhanced 0.05 | Parameter study (NSGAII_PROFILE.md §4) |
 | `NSGA2_ADAPTIVE_MUTATION` | min 0.02, max 0.30, diversity floor 0.5, converged scale 0.2 | Tuned on seeds 100–104 |
@@ -110,7 +111,7 @@ All modelling constants live in `agrooptimize-backend/app/config.py`; a few more
 | `render.yaml` | one Docker web service `agrooptimize` (frontend + API), free plan, Singapore, health `/health`, auto-deploy with build filters, `AGROOPTIMIZE_NSGA2_MODE=original`; optional persistent disk documented in comments |
 | `vercel.json` | `npm run build`, output `dist`, SPA rewrite |
 | `.github/workflows/deploy-backend.yml` | on push to `main` under `agrooptimize-backend/**`: `test` job (Python 3.11, pytest) → `deploy` job (`needs: test`) |
-| Environment | `AGROOPTIMIZE_RESULTS_DIR` (saved runs/simulations folder, default `results/`), `AGROOPTIMIZE_FRONTEND_DIST` (frontend build served by the API, default `frontend/dist`), `AGROOPTIMIZE_NSGA2_MODE`, `CORS_ALLOW_ORIGINS`, `PORT`; frontend build: `VITE_API_BASE` (optional; production default is the page origin) |
+| Environment | `AGROOPTIMIZE_RESULTS_DIR` (saved runs/simulations folder, default `results/`), `AGROOPTIMIZE_FRONTEND_DIST` (frontend build served by the API, default `frontend/dist`), `AGROOPTIMIZE_NSGA2_MODE`, `AGROOPTIMIZE_FUZZY_MODEL`, `CORS_ALLOW_ORIGINS`, `PORT`; frontend build: `VITE_API_BASE` (optional; production default is the page origin) |
 | `requirements.txt` / `requirements-dev.txt` | pinned runtime dependencies / runtime + pytest, httpx |
 | `pytest.ini` | testpaths `tests`, `-v --tb=short`, ignore Deprecation/User warnings |
 | `.oxlintrc.json` | react + oxc plugins; `rules-of-hooks` error; ignores `dist/**`, `*/code.html` |
