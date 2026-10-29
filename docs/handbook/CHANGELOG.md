@@ -4,6 +4,24 @@ All code modifications made during the 2026-09-29 audit. All changes are submitt
 
 Verification after all changes: backend **205/205 tests pass** (was 165/165); output fingerprint over 48 endpoint/pipeline results is **identical to HEAD** apart from the new additive provenance fields; frontend `oxlint` 0 warnings (was 3 in `src` + noise), `vite build` succeeds; UI flows exercised in Chrome with no console errors.
 
+## [Unreleased] – Fuzzy model improvements
+
+### Added
+- Fuzzy models with independent switches (`app/fuzzy/engine.py` `FuzzyModel`, `MODELS`): `strong_partition` (I1: storage and fertility sets cross at 0.5 on the original modal values), `imd_rainfall` (I2: rainfall sets centred on the IMD categories, crossing at ±19.75 %), `pruned_rules` (I3: the six provably inert rules left out, outputs identical) and `improved` (all three). `using_model()`, `resolve_model()`, `membership_functions()`, `rule_numbers()`, `subsumed_rules()`, `imd_category()`; every engine and audit function takes `model`.
+- `FUZZY_MODEL` setting (`AGROOPTIMIZE_FUZZY_MODEL`, default `original`); `fuzzy_model` on `POST /api/farm-plans` and the simulation base; `meta.fuzzy_model`; `GET /api/fuzzy/models`; `model` on `/api/fuzzy/explain` and `/api/fuzzy/audit`.
+- Run Optimization: fuzzy model selector (published / improved).
+- `scripts/benchmark_fuzzy_models.py`, `scripts/report_fuzzy_benchmark.py`, `benchmarks/fuzzy_models/`; `FUZZY_MODEL_IMPROVEMENTS.md`, `FUZZY_BENCHMARK_RESULTS.md`; 39 backend and 2 frontend tests.
+
+### Changed
+- Saved-run explanations recompute the fuzzy reasoning with the run's own model (runs saved earlier: `original`).
+- The audit summary names its model.
+- With the default model every output is unchanged: 2,595 fuzzy inputs (assessment, memberships, fired rules, explanation, output term), the audit and 12 API runs are bit-identical to `main`. Selecting `improved` changes the fuzzy outputs and therefore the optimisation results (see FUZZY_MODEL_IMPROVEMENTS.md §4).
+
+### Measured (improved vs original)
+- ε-completeness 0.143 / 0.231 / 0.231 → 0.5 on every input; IMD label agreement 51 → 60/60; largest monotonicity violation 0.065 → 0.023; mean output change under input noise −67 % (yield) and −54 % (risk); 26 → 20 rules, all effective; inference 3.08 → 2.28 ms, peak memory −27 %.
+- NSGA-II HV ratio 0.9611 vs 0.9598 (p = 0.54); TOPSIS τ under noise 0.9991 → 0.9996 (p < 0.001).
+- Screened and rejected: capping rules as implicative constraints, product AND.
+
 ## [Unreleased] – Dynamic TOPSIS engine
 
 ### Added
