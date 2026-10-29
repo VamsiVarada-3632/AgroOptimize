@@ -83,6 +83,7 @@ class ExplanationContext:
     weights: Optional[List[float]] = None         # explicit TOPSIS weights used for the ranking, if any
     price_factor: float = 1.0                     # scenario market-price factor for the indicative economics
     front: Optional[List[dict]] = None            # the full ranked front, when the saved run stored it
+    fuzzy_model: Optional[str] = None             # fuzzy model that produced the run (None = the default)
 
     def ranking_profile(self) -> Optional[dict]:
         """meta.topsis of a run ranked by a profile other than balanced."""
@@ -134,6 +135,8 @@ def context_from_saved_run(record: dict, rank: int = 1, price_factor: float = 1.
         weights=meta.get("topsis_weights") if (meta.get("adjustments") or {}).get("custom_weights") else None,
         price_factor=price_factor,
         front=record.get("ranked_front"),
+        # Runs saved before fuzzy models existed were produced by the original model.
+        fuzzy_model=meta.get("fuzzy_model", "original"),
     )
 
 
@@ -671,6 +674,13 @@ def indicative_economics(ctx: ExplanationContext, plan: dict, crops: Optional[di
 
 
 def explain(ctx: ExplanationContext) -> dict:
+    """Full explanation of one plan; the fuzzy reasoning is recomputed with
+    the fuzzy model that produced the run."""
+    with fz.using_model(ctx.fuzzy_model):
+        return _explain(ctx)
+
+
+def _explain(ctx: ExplanationContext) -> dict:
     plan = ctx.plans[ctx.plan_index]
     rp, fzd = ctx.region_profile, ctx.fuzzy
     crops = _crop_breakdown(ctx, plan)

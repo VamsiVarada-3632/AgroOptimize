@@ -37,6 +37,24 @@ export const PREFERENCES = [
 ];
 
 /**
+ * Fuzzy models a run can use (backend: GET /api/fuzzy/models). "original" is
+ * the published model and the server default; "improved" changes the fuzzy
+ * outputs (docs/handbook/FUZZY_MODEL_IMPROVEMENTS.md).
+ */
+export const FUZZY_MODELS = [
+  { value: 'original', label: 'Original (published)', hint: 'The fuzzy model behind the published results.' },
+  {
+    value: 'improved',
+    label: 'Improved',
+    hint: 'Rainfall sets follow the IMD categories, storage and fertility sets overlap fully, and rules that never change an output are removed.',
+  },
+];
+
+/** Display name of a fuzzy model; runs saved before models existed used the original one. */
+export const fuzzyModelLabel = (name) =>
+  FUZZY_MODELS.find((m) => m.value === (name || 'original'))?.label ?? name;
+
+/**
  * The backend only knows about the 4 districts above. The frontend's user
  * profile stores `location` as one of those 4 names (e.g. "Coimbatore"),
  * chosen from a dropdown during profile setup -- never free text. This
@@ -308,6 +326,7 @@ export const api = {
     profile,
     custom_weights,
     compare_profiles,
+    fuzzy_model,
   } = {}) =>
     postAPI('/api/farm-plans', {
       location: extractDistrict(location),
@@ -319,6 +338,7 @@ export const api = {
       profile: profile || undefined,
       custom_weights: profile === 'custom' ? custom_weights : undefined,
       compare_profiles: compare_profiles || undefined,
+      fuzzy_model: fuzzy_model || undefined,
       save_results: true,
       client_id: getOrCreateClientId(),
     }),

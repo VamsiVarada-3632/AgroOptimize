@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { api, DISTRICTS, SEASONS, PREFERENCES, ApiError, describeApiError } from '../services/api';
+import { api, DISTRICTS, SEASONS, PREFERENCES, FUZZY_MODELS, fuzzyModelLabel, ApiError, describeApiError } from '../services/api';
 import { ExplanationModal } from '../components/ExplanationPanel';
 import ProfileSelector from '../components/topsis/ProfileSelector';
 import TopsisPanel from '../components/topsis/TopsisPanel';
@@ -33,6 +33,7 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
   const [landArea, setLandArea] = useState(landSizeHa);
   const [budget, setBudget] = useState('');
   const [preference, setPreference] = useState('balanced');
+  const [fuzzyModel, setFuzzyModel] = useState('original');
   const [profile, setProfile] = useState('balanced');
   const [customPercent, setCustomPercent] = useState({ ...BALANCED_PERCENT });
   const [rankedWith, setRankedWith] = useState({ profile: 'balanced', customPercent: undefined });
@@ -129,6 +130,7 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
       preference,
       profile: rankProfile,
       custom_weights: rankProfile === 'custom' ? toFractions(customPercent) : undefined,
+      fuzzy_model: fuzzyModel,
     });
     setIsRunning(true);
     setStep(0);
@@ -179,6 +181,7 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
                   <p className="font-label-sm text-label-sm text-on-surface-variant">
                     {result.region_profile.location} · {result.region_profile.season} {result.region_profile.year}
                     {result.region_profile.data_year_estimated && ' (estimated-year inputs)'}
+                    {result.meta?.fuzzy_model && result.meta.fuzzy_model !== 'original' && ` · ${fuzzyModelLabel(result.meta.fuzzy_model)} fuzzy model`}
                   </p>
                 </div>
               </div>
@@ -330,6 +333,19 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
                     Plans will be ranked with the classic '{PREFERENCES.find((p) => p.value === preference)?.label}' weights instead of the ranking profile.
                   </p>
                 )}
+              </div>
+
+              <div>
+                <label htmlFor="fuzzy-model" className="block font-label-sm text-label-sm text-on-surface-variant mb-1 font-semibold">Fuzzy model</label>
+                <select
+                  id="fuzzy-model"
+                  value={fuzzyModel}
+                  onChange={(e) => setFuzzyModel(e.target.value)}
+                  className="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-bright text-on-surface font-body-md outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"
+                >
+                  {FUZZY_MODELS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                </select>
+                <p className="text-xs text-on-surface-variant mt-1.5">{FUZZY_MODELS.find((m) => m.value === fuzzyModel)?.hint}</p>
               </div>
 
               <button

@@ -158,6 +158,13 @@ RAINFALL_DEPENDENCY_FACTOR = {
     "High": 1.0,
 }
 
+# Fuzzy model (see docs/handbook/FUZZY_MODEL_IMPROVEMENTS.md). "original" is
+# the published Mamdani system and reproduces every published result; other
+# models in app/fuzzy/engine.MODELS change the fuzzy outputs and must be
+# selected here, with the AGROOPTIMIZE_FUZZY_MODEL environment variable, or
+# per request (FarmPlanRequest.fuzzy_model).
+FUZZY_MODEL = os.environ.get("AGROOPTIMIZE_FUZZY_MODEL", "original")
+
 # ---------------------------------------------------------------------------
 # Decision variable bounds (chromosome design, Section III-D)
 # ---------------------------------------------------------------------------

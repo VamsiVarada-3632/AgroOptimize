@@ -108,10 +108,12 @@ def run_pipeline(
     )
 
     # ---- Stage 2: fuzzy uncertainty modelling ----
+    fuzzy_model = fz.resolve_model(request.fuzzy_model)
     assessment = fz.evaluate_uncertainty(
         rainfall_deviation_percent=profile.rainfall.avg_deviation_percent,
         water_storage_percent=profile.water.avg_storage_percent,
         soil_fertility_index=profile.soil.fertility_index,
+        model=fuzzy_model,
     )
 
     # ---- Stage 3: multi-objective NSGA-II optimisation ----
@@ -188,6 +190,7 @@ def run_pipeline(
         # see app/optimization/metrics.py). Observes the result only.
         "quality_metrics": run_quality_metrics(result, problem),
         "topsis": topsis_service.topsis_meta(spec, request.preference, adj.topsis_weights, request.budget_rs),
+        "fuzzy_model": fuzzy_model.name,
     }
     if request.compare_profiles and filtered_plans:
         reference = spec or resolve_profile("balanced")

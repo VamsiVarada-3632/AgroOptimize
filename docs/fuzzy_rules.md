@@ -15,6 +15,8 @@ write-up and `tests/test_fuzzy.py` for the tests that check this behaviour.
 
 ## Overview
 
+> **Fuzzy models.** This page documents the published (`original`) model, which is the default. Opt-in models change the membership functions or leave out the six inert rules — `strong_partition`, `imd_rainfall`, `pruned_rules` and `improved`; their sets, measurements and decisions are in [handbook/FUZZY_MODEL_IMPROVEMENTS.md](handbook/FUZZY_MODEL_IMPROVEMENTS.md), and `GET /api/fuzzy/models` lists them.
+
 The fuzzy uncertainty module converts three crisp, region-level readings
 (rainfall deviation, water storage, soil fertility) into two scenario-weight
 outputs -- `yield_confidence` and `irrigation_risk` -- which the NSGA-II
