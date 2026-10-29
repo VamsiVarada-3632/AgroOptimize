@@ -272,3 +272,34 @@ def test_simulation_runs_both_sides_with_the_requested_model():
                         "scenario": {"rainfall_change_pct": -20}})
     assert out["meta"]["fuzzy_model"] == "imd_rainfall"
     assert out["baseline"]["fuzzy_assessment"] == vars(fz.evaluate_uncertainty(*salem_kharif_inputs(), model="imd_rainfall"))
+
+
+# ---------------------------------------------------------------------------
+# The improved model: improvements 1+2+3 together
+# ---------------------------------------------------------------------------
+
+def test_improved_model_combines_the_three_switches():
+    m = fz.MODELS["improved"]
+    assert (m.strong_partition, m.imd_rainfall, m.prune_inert) == (True, True, True)
+    sets = fz.membership_functions(m)
+    assert sets["rainfall_dev"] == fz.IMD_RAINFALL_SETS["rainfall_dev"]
+    assert sets["water_storage"] == fz.STRONG_PARTITION_SETS["water_storage"]
+    assert sets["soil_fert"] == fz.STRONG_PARTITION_SETS["soil_fert"]
+    assert sets["yield_conf"] == fz.MEMBERSHIP_FUNCTIONS["yield_conf"]
+    assert fz.rule_numbers(m) == fz.rule_numbers("pruned_rules")
+
+
+def test_pruning_stays_exact_under_the_new_partitions():
+    unpruned = fz.FuzzyModel("check", strong_partition=True, imd_rainfall=True)
+    for p in POINTS + [p["inputs"] for p in audit.dataset_points()]:
+        assert fz.evaluate_uncertainty(*p, model="improved") == fz.evaluate_uncertainty(*p, model=unpruned)
+
+
+def test_improved_model_coverage_labels_and_monotonicity():
+    cov = audit.membership_coverage(model="improved")
+    assert all(cov[v]["epsilon_completeness"] == 0.5 for v in fz.INPUT_BOUNDS)
+    assert all(fz.evaluate_uncertainty(*p["inputs"], model="improved").rainfall_label == fz.imd_category(p["inputs"][0])
+               for p in audit.dataset_points())
+    before = {(r["output"], r["input"]): r["largest_violation"] for r in audit.monotonicity(11)}
+    after = {(r["output"], r["input"]): r["largest_violation"] for r in audit.monotonicity(11, model="improved")}
+    assert all(after[k] < before[k] for k in before)
