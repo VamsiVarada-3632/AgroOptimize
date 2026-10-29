@@ -136,7 +136,13 @@ IMD_RAINFALL = FuzzyModel(
 PRUNED_RULES = FuzzyModel(
     "pruned_rules", "Improvement 3 only: the 6 provably inert rules are left out (outputs identical).",
     prune_inert=True)
-MODELS = {m.name: m for m in (ORIGINAL, STRONG_PARTITION, IMD_RAINFALL, PRUNED_RULES)}
+# The accepted improvements together (docs/handbook/FUZZY_BENCHMARK_RESULTS.md).
+# Opt-in: it changes every fuzzy output, so the published results need the
+# original model.
+IMPROVED = FuzzyModel(
+    "improved", "Improvements 1+2+3: strong storage/fertility partition, IMD rainfall partition, inert rules removed.",
+    strong_partition=True, imd_rainfall=True, prune_inert=True)
+MODELS = {m.name: m for m in (ORIGINAL, STRONG_PARTITION, IMD_RAINFALL, PRUNED_RULES, IMPROVED)}
 
 
 def imd_category(rainfall_deviation_percent: float) -> str:
