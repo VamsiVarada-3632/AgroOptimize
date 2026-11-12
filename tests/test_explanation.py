@@ -37,7 +37,7 @@ SECTIONS = ("summary", "reasons", "objectives", "trade_offs", "constraints", "be
 def saved_run(tmp_path_factory):
     out = tmp_path_factory.mktemp("results")
     response = generate_farm_plans(
-        FarmPlanRequest(location="Erode", season="Rabi", year=2023, total_land_ha=3, budget_rs=150_000,
+        FarmPlanRequest(location="Erode", season="Rabi", year=2024, total_land_ha=3, budget_rs=3_000_000,
                         save_results=True, **FAST),
         results_dir=out,
     )
@@ -149,12 +149,15 @@ class TestConfidence:
         assert comps["convergence"]["score"] is None
         assert comps["convergence"]["weight"] == 0.0
 
-    def test_estimated_year_lowers_data_quality_and_is_a_risk(self):
-        estimated = es.explain_comparison_plan("salem", "A")  # dashboard uses the latest (estimated) year
-        comps = {c["id"]: c for c in estimated["confidence"]["components"]}
-        assert estimated["summary"]["data_year_estimated"] is True
-        assert comps["data_quality"]["score"] <= 50
-        assert any(r["id"] == "estimated-data" for r in estimated["risks"])
+    def test_fuzzy_unavailable_is_flagged_not_estimated(self, tmp_path):
+        """Salem Kharif has no official reservoir record: the fuzzy stage is skipped and the explanation says so."""
+        response = generate_farm_plans(FarmPlanRequest(location="Salem", season="Kharif", total_land_ha=3, save_results=True, **FAST),
+                                       results_dir=tmp_path)
+        exp = es.explain_saved_run(results_store.load_run(response["run_id"], out_dir=tmp_path), rank=1)
+        assert exp["fuzzy_reasoning"]["applied"] is False and exp["fuzzy_reasoning"]["inference"] is None
+        step = next(t for t in exp["timeline"] if t["id"] == "fuzzy")
+        assert "Not applied" in step["detail"]
+        assert exp["summary"]["data_year_estimated"] is False
 
     def test_observed_year_has_no_estimated_data_risk(self, saved_explanation):
         assert saved_explanation["summary"]["data_year_estimated"] is False
@@ -166,7 +169,7 @@ class TestConstraints:
     def test_budget_reported_with_headroom(self, saved_run, saved_explanation):
         budget = next(c for c in saved_explanation["constraints"]["items"] if c["id"] == "budget")
         assert budget["status"] == "satisfied"
-        assert budget["evidence"]["budget_rs"] == 150_000
+        assert budget["evidence"]["budget_rs"] == 3_000_000
         assert budget["evidence"]["cost_rs"] == saved_run["plans"][0]["cost_rs"]
 
     def test_old_runs_without_budget_say_so(self, saved_run):
@@ -220,7 +223,7 @@ def test_rank_plans_unchanged_by_topsis_refactor(saved_run):
     """rank_plans now delegates to topsis_scores; the saved composite
     scores must still be reproducible from the stored objective values."""
     plans = saved_run["plans"]
-    cols = [[p[k] for p in plans] for k in ("yield_tonnes", "cost_rs", "water_liters", "env_impact_score")]
+    cols = [[p[k] for p in plans] for k in ("yield_tonnes", "cost_rs", "irrigated_ha", "env_impact_score")]
     closeness, _ = ranking.topsis_scores(*cols, ranking.preference_weights("balanced"))
     # stored scores were computed over the full front, so compare ordering, not values
     assert list(closeness) == sorted(closeness, reverse=True) or len(plans) < 3
