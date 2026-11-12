@@ -154,3 +154,29 @@ Rank #1 of 100, closeness 0.6152, confidence 74.9 % → "Recommended". Sugarcane
 4. Validated price data → promote economics from reference to a first-class objective and explanation.
 5. Localised wording (English/Tamil) generated from the same evidence.
 6. Store the explanation snapshot in the saved run for audit, alongside a version number of the explainer.
+
+## Per-crop evidence (`crop_evidence`)
+
+`GET /api/results/{run_id}/explanation` and `GET /api/comparison/{location}/explanation` now also return
+`crop_evidence`: one entry per crop shown in the plan (land share >= 1 %), each with ten criteria. This field is
+additive; every existing key is unchanged. Code: `app/services/crop_evidence.py`.
+
+| Criterion | What is stated | Official dataset cited |
+|---|---|---|
+| Rainfall suitability | season rainfall vs IMD normal (mm, % deviation); the crop's rainfall requirement quoted from TNAU | `rainfall_by_district.csv`; TNAU Crop Production Guide |
+| Soil suitability | Soil Health Card class counts and fertility index; the crop's soil / pH text quoted from TNAU | `soil_health_tn.csv`, `soil_master.csv`; TNAU |
+| Water availability | share of the crop's area that is irrigated; reservoir storage (where published); TNAU water/irrigation text | `irrigation.csv`, `reservoir_daily.csv`; TNAU |
+| Budget suitability | CACP cost per quintal x expected quintals = crop cost, its share of the plan, plan vs user budget | MSP/CACP notification (`msp_extracted.csv`); crop statistics |
+| Fertiliser requirement | TNAU N-P2O5-K2O dose (with PDF page) and the plan's multiplier | TNAU (`agronomy_tnau.csv`) |
+| Market price | **always "Official data unavailable"** - no official mandi price dataset is loaded | Agmarknet (not loaded) |
+| MSP | notified MSP, CACP cost, margin computed from those two figures | PIB MSP release / `msp_extracted.csv` |
+| Cultivation duration | TNAU duration text, quoted as printed | `agronomy_master.csv` |
+| Expected yield | official district yield; plan yield after the fuzzy reliability check (or "not applied" with the reason); TNAU reference text | crop statistics; TNAU |
+| Risks | only risks that follow from the figures above (rainfall >= 20 % below normal, irrigation risk >= 0.5, MSP <= cost, fuzzy not applied) plus every criterion that was unavailable | as cited |
+
+Each criterion is `{id, label, status, statement, sources[], evidence{}}`.
+`status` is `supported | caution | concern | info | unavailable`. Anything the official data does not publish
+produces `status = "unavailable"` and a statement starting **"Official data unavailable"**; no value is estimated.
+TNAU text is quoted verbatim (cut at 260 characters with " ..."). Thresholds that set a status are named constants
+in `crop_evidence.py` (`YIELD_CUT_CAUTION_PCT`) or are the sign/size of a number shown in the same sentence.
+Tests: `tests/test_crop_evidence.py`.

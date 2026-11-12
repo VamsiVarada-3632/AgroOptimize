@@ -11,7 +11,7 @@ Design rules
 ------------
 * Every statement is computed from data the pipeline already produced
   (region profile, fuzzy assessment, the ranked Pareto set, convergence
-  history, request constraints) or from data/raw/*.csv. Nothing is
+  history, request constraints) or from the official database. Nothing is
   hard-coded per crop, district or plan.
 * Every item carries `evidence` (the numbers behind it) and `source`
   (which stage produced them), so any sentence can be traced back.
@@ -38,6 +38,7 @@ from app.data import preprocessing as pp
 from app.data.loader import load_all
 from app.decision import ranking
 from app.fuzzy import engine as fz
+from app.services import crop_evidence
 
 # ---------------------------------------------------------------------------
 # Wording thresholds (documented in EXPLAINABILITY.md). They only decide
@@ -59,10 +60,10 @@ CONSISTENCY_TOLERANCE = 0.01  # recomputed vs reported objective (relative)
 OBJECTIVE_META = {
     "yield": {"label": "Yield", "unit": "t/ha", "better": "higher", "key": "yield_tonnes", "scale": 1.0, "strength": "High yield"},
     "cost": {"label": "Cost", "unit": "₹/ha", "better": "lower", "key": "cost_rs", "scale": 1.0, "strength": "Low cost"},
-    "water": {"label": "Irrigation water", "unit": "ML/ha", "better": "lower", "key": "water_liters", "scale": 1e-6,
-              "strength": "Low water use"},
-    "env": {"label": "Environmental impact", "unit": "index/ha", "better": "lower", "key": "env_impact_score", "scale": 1.0,
-            "strength": "Low environmental impact"},
+    "water": {"label": "Irrigation demand", "unit": "irrigated ha per ha", "better": "lower", "key": "irrigated_ha", "scale": 1.0,
+              "strength": "Low irrigation demand"},
+    "env": {"label": "Fertiliser nutrient load", "unit": "kg NPK/ha", "better": "lower", "key": "env_impact_score", "scale": 1.0,
+            "strength": "Low fertiliser load"},
 }
 PREFERENCES = ["balanced", "max_yield", "min_cost", "min_water", "min_env_impact"]
 
@@ -167,7 +168,7 @@ def context_from_comparison(location: str, plan_key: str, total_land_ha: float =
     )
     return ExplanationContext(
         region_profile=region_profile_payload(profile),
-        fuzzy=vars(assessment),
+        fuzzy=fz.assessment_payload(assessment, profile),
         plans=ranked,
         plan_index=0,
         preference=preference,
@@ -248,11 +249,6 @@ def _crop_breakdown(ctx: ExplanationContext, plan: dict) -> dict:
     consistency check against the plan's reported totals."""
     rp, fzd = ctx.region_profile, ctx.fuzzy
     crops = {c["name"]: c for c in rp["candidate_crops"]}
-    eff_rain = rp["rainfall"]["effective_rainfall_mm"]
-    crop_df = load_all()["crop"]
-    rows = crop_df[(crop_df["Location"] == rp["location"]) & (crop_df["Year"] == rp["year"])
-                   & (crop_df["Season"] == rp["season"])].set_index("Crop_Name")
-
     details, tonnes_total, water_total = [], 0.0, 0.0
     revenue_total, revenue_known = 0.0, True
     for name, share, area, irr, fert in zip(plan["crop_names"], plan["allocation_percent"], plan["area_ha"],
@@ -260,13 +256,12 @@ def _crop_breakdown(ctx: ExplanationContext, plan: dict) -> dict:
         c = crops.get(name)
         if c is None:
             continue
-        conf = fz.crop_yield_confidence(fzd["yield_confidence"], fzd["irrigation_risk"], c["rainfall_dependency"])
+        conf = fz.crop_yield_confidence(fzd["yield_confidence"], fzd["irrigation_risk"], c["rainfed_share"])
         tonnes = area * c["yield_kg_ha"] / 1000 * conf
-        net_mm = max(c["water_req_mm"] - eff_rain, 0.0)
-        water = area * irr * net_mm * config.LITERS_PER_MM_PER_HA
+        irrigated = area * irr * c["irrigated_share"] if c.get("irrigated_share") is not None else area * irr * (1 - c["rainfed_share"])
         tonnes_total += tonnes
-        water_total += water
-        msp = float(rows.loc[name, "MSP_Rs_Qtl"]) if name in rows.index else None
+        water_total += irrigated
+        msp = c.get("msp_rs_qtl")
         revenue = tonnes * 10 * msp if msp is not None else None   # 1 t = 10 quintals
         if revenue is None:
             revenue_known = False
@@ -276,10 +271,13 @@ def _crop_breakdown(ctx: ExplanationContext, plan: dict) -> dict:
             "crop": name, "share_pct": round(share, 2), "area_ha": round(area, 3),
             "book_yield_t_ha": round(c["yield_kg_ha"] / 1000, 2), "crop_confidence": round(conf, 3),
             "expected_yield_t_ha": round(c["yield_kg_ha"] / 1000 * conf, 2), "expected_tonnes": round(tonnes, 2),
-            "water_req_mm": c["water_req_mm"], "net_irrigation_mm": round(net_mm, 1),
+            "irrigated_share": c.get("irrigated_share"), "irrigated_ha": round(irrigated, 3),
             "irrigation_multiplier": round(irr, 3), "fertilizer_multiplier": round(fert, 3),
-            "rainfall_dependency": c["rainfall_dependency"], "irrigation_type": c["irrigation_type"],
-            "duration_days": c["crop_duration_days"], "msp_rs_qtl": msp,
+            "rainfall_dependency": c["rainfall_dependency"], "rainfed_share": c["rainfed_share"],
+            "irrigation_type": c["irrigation_type"], "duration_days": c.get("crop_duration_days"),
+            "msp_rs_qtl": msp, "cost_rs_qtl": c.get("cost_rs_qtl"),
+            "npk_kg_ha": [c.get("fert_n_kg_ha"), c.get("fert_p_kg_ha"), c.get("fert_k_kg_ha")],
+            "dose_rule": c.get("dose_rule"), "sources": c.get("sources", {}),
             "indicative_revenue_rs": round(revenue, 0) if revenue is not None else None,
         })
     for d in details:
@@ -294,7 +292,7 @@ def _crop_breakdown(ctx: ExplanationContext, plan: dict) -> dict:
         "crops": details,
         "shown": [d for d in details if d["share_pct"] >= MIN_SHARE_PCT],
         "consistency": {"yield_tonnes": check(plan["yield_tonnes"], tonnes_total),
-                        "water_liters": check(plan["water_liters"], water_total)},
+                        "irrigated_ha": check(plan["irrigated_ha"], water_total)},
         "revenue_rs": round(revenue_total, 0) if revenue_known and details else None,
     }
 
@@ -416,32 +414,41 @@ def _constraints(ctx: ExplanationContext, plan: dict, crops: dict) -> dict:
 
     dev = rp["rainfall"]["avg_deviation_percent"]
     rain_label = fzd["rainfall_label"]
-    weighted_req = sum(d["share_pct"] / 100 * d["water_req_mm"] for d in crops["crops"])
-    eff = rp["rainfall"]["effective_rainfall_mm"]
-    coverage = min(100.0, eff / weighted_req * 100) if weighted_req else None
+    act, nor = rp["rainfall"].get("season_actual_mm"), rp["rainfall"].get("season_normal_mm")
     items.append(make_item("rainfall", "Rainfall",
-                       f"Season rainfall is {dev:+.1f}% vs normal (fuzzy set: {rain_label}); effective rainfall of {eff:.0f} mm"
-                       + (f" covers {coverage:.0f}% of this plan's land-weighted crop water need ({weighted_req:.0f} mm)."
-                          if coverage is not None else "."),
-                       "dataset + fuzzy", {"deviation_pct": dev, "fuzzy_label": rain_label, "effective_rainfall_mm": eff,
-                                           "weighted_water_req_mm": round(weighted_req, 1),
-                                           "rainfall_coverage_pct": None if coverage is None else round(coverage, 1)},
+                       f"Season rainfall is {dev:+.1f}% vs the IMD normal ({act:.0f} mm actual vs {nor:.0f} mm normal; fuzzy set: {rain_label}). "
+                       f"Crop water requirement in mm is not published in the official data, so rainfall coverage of crop need is not computed.",
+                       "dataset + fuzzy", {"deviation_pct": dev, "fuzzy_label": rain_label, "season_actual_mm": act, "season_normal_mm": nor,
+                                           "dataset": "IMD district rainfall, TN Season & Crop Report 2024-25", "rainfall_coverage_pct": None},
                        status={"normal": "satisfied", "surplus": "moderate", "deficit": "risk"}.get(rain_label, "unknown")))
 
     fert = rp["soil"]["fertility_index"]
     soil_label = fzd["soil_label"]
-    items.append(make_item("soil", "Soil", f"{rp['soil']['soil_type']}, pH {rp['soil']['avg_ph']}, fertility index {fert}/100 (fuzzy set: {soil_label}).",
-                       "dataset + fuzzy", {"fertility_index": fert, "fuzzy_label": soil_label, "ph": rp["soil"]["avg_ph"],
-                                           "npk": [rp["soil"]["n_status"], rp["soil"]["p_status"], rp["soil"]["k_status"]]},
+    npk = [rp["soil"]["n_status"], rp["soil"]["p_status"], rp["soil"]["k_status"]]
+    from app.datasets import soil_master as _sm
+    try:
+        sm_support = _sm.explanation_support(rp.get("location") or ctx.subject.get("location") or "")
+    except ValueError:
+        sm_support = {"available": False, "text": f"Soil: {_sm.UNAVAILABLE}.", "evidence": None}
+    items.append(make_item("soil", "Soil",
+                       ((f"Soil Health Card: dominant classes N {npk[0]}, P {npk[1]}, K {npk[2]}; fertility index {fert}/100 (fuzzy set: {soil_label}). "
+                         if fert is not None else "") + sm_support["text"]),
+                       "dataset + fuzzy", {"fertility_index": fert, "fuzzy_label": soil_label, "npk": npk,
+                                           "class_shares": rp["soil"].get("shares"), "samples_tested": rp["soil"].get("samples_tested"),
+                                           "dataset": "Soil Health Card portal (soilhealth.dac.gov.in)",
+                                           "soil_master": sm_support["evidence"] if sm_support["available"] else _sm.UNAVAILABLE},
                        status={"good": "satisfied", "medium": "moderate", "poor": "risk"}.get(soil_label, "unknown")))
 
     risk = fzd["irrigation_risk"]
     term, degrees = fz.output_term("irrigation_risk", risk)
-    items.append(make_item("water", "Water / irrigation", f"Irrigation risk {risk:.3f} falls in the '{term}' output set; reservoir storage "
-                       f"{rp['water']['avg_storage_percent']}% (fuzzy set: {fzd['water_label']}).", "fuzzy",
-                       {"irrigation_risk": risk, "risk_set": term, "membership": degrees,
-                        "storage_pct": rp["water"]["avg_storage_percent"]},
-                       status={"low": "satisfied", "medium": "moderate", "high": "risk"}[term]))
+    storage = rp["water"]["avg_storage_percent"]
+    items.append(make_item("water", "Water / irrigation",
+                       (f"Irrigation risk {risk:.3f} falls in the '{term}' output set; reservoir storage {storage}% (fuzzy set: {fzd['water_label']})."
+                        if fzd.get("applied", True) else
+                        f"The fuzzy stage was not applied: {fzd.get('reason')}. Yields are the unadjusted official figures."),
+                       "fuzzy", {"irrigation_risk": risk, "risk_set": term, "membership": degrees, "storage_pct": storage,
+                                 "fuzzy_applied": fzd.get("applied", True), "dataset": "TN Water Resources Dept daily reservoir levels"},
+                       status={"low": "satisfied", "medium": "moderate", "high": "risk"}[term] if fzd.get("applied", True) else "unknown"))
     items.append(make_item("feasible", "Optimiser feasibility", "The plan satisfies every constraint given to NSGA-II." if plan["feasible"]
                        else "The plan violates at least one optimiser constraint.", "nsga2", {"feasible": plan["feasible"]},
                        status="satisfied" if plan["feasible"] else "violated"))
@@ -449,58 +456,41 @@ def _constraints(ctx: ExplanationContext, plan: dict, crops: dict) -> dict:
 
 
 def _historical(ctx: ExplanationContext, crops: dict) -> dict:
+    """Context from the OFFICIAL multi-year state series (Season & Crop Report, 1965-2024) and this year's district ranking.
+    District data is a single report year, so there is no district year-on-year history."""
+    from app.datasets import service as svc
     rp = ctx.region_profile
-    data = load_all()
-    crop_df = pp.observed_rows(data["crop"])
-    sl = crop_df[(crop_df["Location"] == rp["location"]) & (crop_df["Season"] == rp["season"])]
-    years = sorted(int(y) for y in sl["Year"].unique())
-    ranks = {}
-    for y in years:
-        yr = sl[sl["Year"] == y].sort_values("Revenue_Rs_Lakh", ascending=False)
-        for pos, name in enumerate(yr["Crop_Name"], start=1):
-            ranks.setdefault(name, {})[y] = pos
+    cand = {c["name"]: c for c in rp["candidate_crops"]}
+    by_rev = sorted(cand.values(), key=lambda c: -(c["area_ha"] or 0) * c["yield_kg_ha"] * c["msp_rs_qtl"])
+    rank = {c["name"]: i for i, c in enumerate(by_rev, start=1)}
     per_crop = []
     for d in crops["shown"]:
-        hist = sl[sl["Crop_Name"] == d["crop"]]
-        if hist.empty:
-            per_crop.append({"crop": d["crop"], "observed_years": 0,
-                             "detail": f"{d['crop']} has no observed {rp['season']} records for {rp['location']}."})
+        ser = svc.state_series(d["crop"], "yield")
+        ser = ser[ser.year_start >= ser.year_start.max() - 9] if len(ser) else ser
+        if ser.empty:
+            per_crop.append({"crop": d["crop"], "observed_years": 0, "detail": f"No official state yield series for {d['crop']}."})
             continue
-        mean_y = float(hist["Yield_Kg_Ha"].mean()) / 1000
-        top = sum(1 for y in years if ranks.get(d["crop"], {}).get(y, 99) <= HISTORICAL_TOP_N)
-        n = len(set(hist["Year"]))
+        mean_y = float(ser.value_std.mean()) / 1000
         diff = _pct_diff(d["expected_yield_t_ha"], mean_y)
         per_crop.append({
-            "crop": d["crop"], "observed_years": n, "years_in_top_n": top, "top_n": HISTORICAL_TOP_N,
+            "crop": d["crop"], "observed_years": int(len(ser)), "district_revenue_rank": rank.get(d["crop"]), "top_n": HISTORICAL_TOP_N,
             "historical_mean_yield_t_ha": round(mean_y, 2),
-            "historical_yield_range_t_ha": [round(hist["Yield_Kg_Ha"].min() / 1000, 2), round(hist["Yield_Kg_Ha"].max() / 1000, 2)],
+            "historical_yield_range_t_ha": [round(ser.value_std.min() / 1000, 2), round(ser.value_std.max() / 1000, 2)],
             "expected_yield_t_ha": d["expected_yield_t_ha"], "difference_pct": None if diff is None else round(diff, 1),
-            "detail": (f"{d['crop']} was among the top {HISTORICAL_TOP_N} {rp['season']} crops in {rp['location']} by revenue in "
-                       f"{top} of {n} observed years; historical mean yield {mean_y:.2f} t/ha vs {d['expected_yield_t_ha']:.2f} t/ha "
-                       f"expected here" + (f" ({_signed_pct(diff)}, the fuzzy confidence adjustment)." if diff is not None else ".")),
+            "dataset": "TN Season & Crop Report, state-level yield series",
+            "detail": (f"{d['crop']} ranks #{rank.get(d['crop'])} of {len(cand)} candidate crops in {rp['location']} by area x yield x MSP; the "
+                       f"state's mean yield over the last {len(ser)} reported years is {mean_y:.2f} t/ha vs {d['expected_yield_t_ha']:.2f} t/ha "
+                       f"expected here" + (f" ({_signed_pct(diff)})." if diff is not None else ".")),
         })
-
-    rain = pp.observed_rows(data["rainfall"])
-    months = _season_months(rp["season"])
-    rs = rain[(rain["Location"] == rp["location"]) & (rain["Month"].isin(months))]
-    totals = rs.groupby("Year")["Monthly_Rainfall_mm"].sum()
-    devs = rs.groupby("Year")["Deviation_Percent"].mean()
-    cv = float(totals.std() / totals.mean()) if len(totals) > 1 and totals.mean() else None
-    this_total = rp["rainfall"]["avg_monthly_rainfall_mm"] * len(months)
-    rainfall = {
-        "observed_years": [int(y) for y in totals.index],
-        "seasonal_total_mm_mean": round(float(totals.mean()), 1) if len(totals) else None,
-        "seasonal_total_mm_cv": None if cv is None else round(cv, 3),
-        "deviation_pct_mean": round(float(devs.mean()), 1) if len(devs) else None,
-        "this_year_total_mm": round(this_total, 1), "this_year_deviation_pct": rp["rainfall"]["avg_deviation_percent"],
-    }
-    established = sum(d["share_pct"] for d, h in zip(crops["shown"], per_crop)
-                      if h.get("observed_years") and h["years_in_top_n"] / h["observed_years"] >= HISTORICAL_HIT_RATE)
-    hit = [(d["share_pct"], h["years_in_top_n"] / h["observed_years"] if h.get("observed_years") else 0.0)
-           for d, h in zip(crops["shown"], per_crop)]
+    hit = [(d["share_pct"], 1.0 if rank.get(d["crop"], 99) <= HISTORICAL_TOP_N else 0.0) for d in crops["shown"]]
     share_sum = sum(s for s, _ in hit) or 1.0
-    return {"crops": per_crop, "rainfall": rainfall, "observed_years": years,
-            "established_land_pct": round(established, 1),
+    established = sum(s for s, r in hit if r)
+    return {"crops": per_crop,
+            "rainfall": {"observed_years": [rp["year"]], "seasonal_total_mm_mean": rp["rainfall"].get("season_actual_mm"),
+                         "seasonal_total_mm_cv": None, "deviation_pct_mean": rp["rainfall"]["avg_deviation_percent"],
+                         "this_year_total_mm": rp["rainfall"].get("season_actual_mm"),
+                         "this_year_deviation_pct": rp["rainfall"]["avg_deviation_percent"]},
+            "observed_years": [rp["year"]], "established_land_pct": round(established, 1),
             "land_weighted_top_n_rate": round(sum(s * r for s, r in hit) / share_sum, 3)}
 
 
@@ -522,12 +512,10 @@ def _confidence(ctx: ExplanationContext, plan: dict, crops: dict, constraints: d
         df = data[kind]
         present += int(df[(df["Location"] == rp["location"]) & (df["Year"] == rp["year"]) & (df["Month"].isin(months))]["Month"].nunique())
     completeness = present / (2 * len(months))
-    estimated = pp.is_estimated_year(rp["location"], rp["year"])
-    quality = 100 * completeness * (0.5 if estimated else 1.0)
+    quality = 100 * completeness
     comps.append({"id": "data_quality", "label": "Data quality", "score": round(quality, 1),
-                  "detail": f"{completeness:.0%} of the season's monthly rainfall/water records present; "
-                            + (f"{rp['year']} values are estimates carried forward from the previous year (×0.5)."
-                               if estimated else f"{rp['year']} values are observed records."),
+                  "detail": f"{completeness:.0%} of the season's monthly official rainfall and reservoir records are present for "
+                            f"{rp['location']}; all values are official {rp['year']}-{str(rp['year'] + 1)[-2:]} records.",
                   "source": "dataset"})
 
     hv = [g["hypervolume"] for g in ctx.convergence_history]
@@ -550,8 +538,8 @@ def _confidence(ctx: ExplanationContext, plan: dict, crops: dict, constraints: d
 
     rate = history["land_weighted_top_n_rate"]
     comps.append({"id": "historical", "label": "Historical consistency", "score": round(100 * rate, 1),
-                  "detail": f"Land-weighted share of observed years in which the plan's crops were top-{HISTORICAL_TOP_N} "
-                            f"by district revenue: {rate:.0%}.", "source": "dataset"})
+                  "detail": f"Land-weighted share of the plan in crops that rank top-{HISTORICAL_TOP_N} in the district by area x yield x MSP "
+                            f"(single official report year): {rate:.0%}.", "source": "dataset"})
 
     cv = history["rainfall"]["seasonal_total_mm_cv"]
     if cv is not None:
@@ -594,11 +582,11 @@ def _risks(ctx, plan, crops, constraints, objectives, history, economics) -> Lis
                          f"{_per_ha(plan, 'water'):.2f} ML/ha of irrigation.", "dataset + nsga2",
                          {"rainfall_coverage_pct": cov, "irrigation_ml_per_ha": round(_per_ha(plan, "water"), 3)},
                          severity="medium"))
-    exposed = sum(d["share_pct"] for d in crops["shown"] if d["rainfall_dependency"] in ("High", "Medium"))
+    exposed = sum(d["share_pct"] for d in crops["shown"] if d["rainfed_share"] >= 0.5)
     if exposed > 0 and fzd["irrigation_risk"] > 0:
         out.append(make_item("rain-dependent-crops", "Rain-dependent crops",
-                         f"{exposed:.0f}% of the land is in crops with Medium/High rainfall dependency "
-                         f"({', '.join(d['crop'] for d in crops['shown'] if d['rainfall_dependency'] in ('High', 'Medium'))}), "
+                         f"{exposed:.0f}% of the land is in crops that are mostly rainfed (at least half of their area unirrigated) "
+                         f"({', '.join(d['crop'] for d in crops['shown'] if d['rainfed_share'] >= 0.5)}), "
                          f"the crops the fuzzy model penalises most at irrigation risk {fzd['irrigation_risk']}.",
                          "dataset + fuzzy", {"exposed_land_pct": round(exposed, 1), "irrigation_risk": fzd["irrigation_risk"]},
                          severity="medium" if exposed >= 50 else "low"))
@@ -609,7 +597,7 @@ def _risks(ctx, plan, crops, constraints, objectives, history, economics) -> Lis
                          f"{top['share_pct']:.0f}% of the land is in {top['crop']} (Herfindahl index {hhi:.2f}); a crop-specific "
                          f"pest, price or water shock would affect most of the farm.", "nsga2", {"hhi": round(hhi, 3)},
                          severity="medium"))
-    perennial = [d for d in crops["shown"] if d["duration_days"] >= PERENNIAL_DAYS]
+    perennial = [d for d in crops["shown"] if (d["duration_days"] or 0) >= PERENNIAL_DAYS]
     if perennial:
         out.append(make_item("perennial", "Long-duration crops in a single-season plan",
                          f"{', '.join(d['crop'] for d in perennial)} ({', '.join(str(d['duration_days']) + ' days' for d in perennial)}) "
@@ -663,7 +651,7 @@ def indicative_economics(ctx: ExplanationContext, plan: dict, crops: Optional[di
             "indicative_profit_rs_per_ha": round(profit / (sum(plan["area_ha"]) or 1), 0),
             "price_sensitivity_pct": round(PRICE_SHOCK * revenue / profit * 100, 1) if profit > 0 else None,
             "validated": False,
-            "caveat": "Revenue = expected tonnes × the dataset's MSP_Rs_Qtl column. Those prices have not been validated "
+            "caveat": "Revenue = expected tonnes × the dataset's official CACP/MSP KMS 2024-25 price. Those prices have not been validated "
                       "(several crops have no government-notified MSP, and some values look implausibly high), and cost covers "
                       "only fertiliser, pesticide and labour. Profit is not an optimiser objective, so it is shown for reference "
                       "only and is not used in any reason, benefit, risk or the confidence score.",
@@ -720,10 +708,10 @@ def _explain(ctx: ExplanationContext) -> dict:
     by_id = {c["id"]: c for c in constraints["items"]}
     if by_id["soil"]["status"] in ("satisfied", "moderate"):
         reasons.append(make_item("soil", "Soil supports the crops", by_id["soil"]["detail"], "dataset + fuzzy", by_id["soil"]["evidence"]))
-    resilient = sum(d["share_pct"] for d in crops["shown"] if d["rainfall_dependency"] in ("Low", "Very Low"))
+    resilient = sum(d["share_pct"] for d in crops["shown"] if d["rainfed_share"] <= 0.2)
     if resilient >= 50:
         reasons.append(make_item("resilience", "Mostly rain-resilient crops",
-                             f"{resilient:.0f}% of the land is in crops with Low/Very Low rainfall dependency, which the fuzzy model "
+                             f"{resilient:.0f}% of the land is in crops that are mostly irrigated (at most a fifth of their area unirrigated), which the fuzzy model "
                              f"penalises least at irrigation risk {fzd['irrigation_risk']}.", "dataset + fuzzy",
                              {"resilient_land_pct": round(resilient, 1)}))
     if by_id["budget"]["status"] == "satisfied":
@@ -789,16 +777,23 @@ def _explain(ctx: ExplanationContext) -> dict:
     hv = ctx.convergence_history
     meta = ctx.meta
     fuzzy_inputs = (rp["rainfall"]["avg_deviation_percent"], rp["water"]["avg_storage_percent"], rp["soil"]["fertility_index"])
-    fired = fz.fired_rules(*fuzzy_inputs)
+    fuzzy_on = all(v is not None for v in fuzzy_inputs)
+    fired = fz.fired_rules(*fuzzy_inputs) if fuzzy_on else []
+    if fuzzy_on:
+        fuzzy_step = make_item("fuzzy", "2 · Fuzzy uncertainty", f"Inputs: rainfall deviation {rp['rainfall']['avg_deviation_percent']}%, storage "
+              f"{rp['water']['avg_storage_percent']}%, soil fertility {rp['soil']['fertility_index']} → yield confidence "
+              f"{fzd['yield_confidence']}, irrigation risk {fzd['irrigation_risk']} ({len(fired)} rules fired).", "fuzzy",
+              {"memberships": fz.input_memberships(*fuzzy_inputs), "fired_rules": fired[:5]})
+    else:
+        fuzzy_step = make_item("fuzzy", "2 · Fuzzy uncertainty",
+              f"Not applied: {fzd.get('reason') or 'an official fuzzy input is unavailable'}. Yields are the unadjusted official figures "
+              f"(confidence 1.0, irrigation risk 0.0 are neutral placeholders, not estimates).", "fuzzy",
+              {"memberships": None, "fired_rules": [], "applied": False, "reason": fzd.get("reason")})
     timeline = [
         make_item("data", "1 · District data", f"{rp['location']} {rp['season']} {rp['year']}: months {', '.join(rp['rainfall']['months_used'])}; "
               f"{len(rp['candidate_crops'])} candidate crops ranked by historical revenue.", "dataset",
               {"year_estimated": bool(rp.get("data_year_estimated")), "candidate_crops": [c["name"] for c in rp["candidate_crops"]]}),
-        make_item("fuzzy", "2 · Fuzzy uncertainty", f"Inputs: rainfall deviation {rp['rainfall']['avg_deviation_percent']}%, storage "
-              f"{rp['water']['avg_storage_percent']}%, soil fertility {rp['soil']['fertility_index']} → yield confidence "
-              f"{fzd['yield_confidence']}, irrigation risk {fzd['irrigation_risk']} ({len(fired)} rules fired).", "fuzzy",
-              {"memberships": fz.input_memberships(rp["rainfall"]["avg_deviation_percent"], rp["water"]["avg_storage_percent"],
-                                                   rp["soil"]["fertility_index"]), "fired_rules": fired[:5]}),
+        fuzzy_step,
         make_item("nsga2", "3 · NSGA-II search", f"Population {meta.get('pop_size')}, {meta.get('n_gen')} generations → "
               f"{meta.get('n_pareto_solutions_found')} non-dominated plans"
               + (f"; hypervolume {hv[0]['hypervolume']:.3f} → {hv[-1]['hypervolume']:.3f}." if hv else "."), "nsga2",
@@ -842,8 +837,13 @@ def _explain(ctx: ExplanationContext) -> dict:
         # `inference` (added): per-rule status, contribution and leave-one-out
         # importance from fuzzy.engine.explain_inference; existing keys unchanged.
         "fuzzy_reasoning": {"input_memberships": timeline[1]["evidence"]["memberships"], "fired_rules": fired,
-                            "inference": fz.explain_inference(*fuzzy_inputs)},
+                            "inference": fz.explain_inference(*fuzzy_inputs) if fuzzy_on else None,
+                            "applied": fuzzy_on, "reason": fzd.get("reason")},
         "topsis": _topsis_section(ctx, plan),
+        # Per-crop, source-cited evidence for the ten recommendation criteria (app/services/crop_evidence.py).
+        "crop_evidence": crop_evidence.build_crop_evidence(
+            rp, fzd, crops["shown"], {c["name"]: c for c in rp["candidate_crops"]}, plan["cost_rs"],
+            ctx.budget_rs, ctx.budget_recorded),
     }
 
 
@@ -880,9 +880,9 @@ def _topsis_section(ctx: ExplanationContext, plan: dict) -> dict:
     values = topsis_service.criteria_for(plans, attrs, ctx.budget_rs, spec.active)
     bd = tx.breakdown(values, spec)
     if source == "ranked_front":
-        key = (plan["yield_tonnes"], plan["cost_rs"], plan["water_liters"], plan["env_impact_score"])
+        key = (plan["yield_tonnes"], plan["cost_rs"], plan["irrigated_ha"], plan["env_impact_score"])
         matches = [i for i, p in enumerate(plans)
-                   if (p["yield_tonnes"], p["cost_rs"], p["water_liters"], p["env_impact_score"]) == key]
+                   if (p["yield_tonnes"], p["cost_rs"], p["irrigated_ha"], p["env_impact_score"]) == key]
         idx = next((i for i in matches if bd["ranks"][i] == plan["rank"]), matches[0] if matches else None)
         if idx is None:
             plans, source, idx = ctx.plans, "returned_plans", ctx.plan_index
