@@ -1,5 +1,7 @@
 # Architecture
 
+> **Written for the v1 data layer.** This document describes the system as it was on the synthetic v1 data (tag `published-v1`). Since 2026-11 the runtime reads only the official datasets: 38 districts, Kharif/Rabi, objectives yield / cultivation cost / irrigated area / nutrient load, `irrigated_ha` instead of `water_liters`, the `official` fuzzy model by default, and live weather disabled. Where this document disagrees, the code and [DATASETS.md](DATASETS.md), [API_REFERENCE.md](API_REFERENCE.md) and [MIGRATION_REPORT.md](../data_architecture/MIGRATION_REPORT.md) are authoritative.
+
 AgroOptimize is a two-tier web application: a **React SPA** (`stitch_agrooptimize_app/`) talking JSON over HTTPS to a **stateless FastAPI service** (`agrooptimize-backend/`) that runs a data → fuzzy → NSGA-II → TOPSIS pipeline over 16 CSV files. There is **no database** and **no server-side user model**: user profiles live in browser `localStorage`, saved optimisation runs live as files on a disk volume.
 
 ## 1. System context

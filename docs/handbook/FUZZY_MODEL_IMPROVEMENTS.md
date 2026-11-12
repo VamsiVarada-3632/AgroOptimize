@@ -1,5 +1,7 @@
 # Fuzzy Model Improvements
 
+> **v1 results.** The measurements in this document were made on the synthetic v1 data (tag `published-v1`, now archived in `legacy/`). They have not been re-run on the official datasets that the runtime uses since 2026-11. The server default is now the `official` model (calibrated on the official data, `app/fuzzy/calibration.py`), not `original`; see [MIGRATION_REPORT.md](../data_architecture/MIGRATION_REPORT.md) and [OFFICIAL_DATA_PERFORMANCE.md](OFFICIAL_DATA_PERFORMANCE.md).
+
 Research record of the second round of work on the Mamdani fuzzy system: what was audited, which improvements were ranked, which three were implemented, and why each was accepted or rejected. The baseline is the earlier audit ([FUZZY_SYSTEM_ANALYSIS.md](FUZZY_SYSTEM_ANALYSIS.md), [FUZZY_RESEARCH_REVIEW.md](FUZZY_RESEARCH_REVIEW.md)); its findings are not repeated here, only used. All measurements are in [FUZZY_BENCHMARK_RESULTS.md](FUZZY_BENCHMARK_RESULTS.md) and reproduce with `scripts/benchmark_fuzzy_models.py`.
 
 **Summary.** Three improvements were implemented as independent switches on `FuzzyModel` (`app/fuzzy/engine.py`) and accepted:

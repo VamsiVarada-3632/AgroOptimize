@@ -1,5 +1,7 @@
 # NSGA-II Benchmark Results
 
+> **v1 results.** The measurements in this document were made on the synthetic v1 data (tag `published-v1`, now archived in `legacy/`). They have not been re-run on the official datasets that the runtime uses since 2026-11; see [MIGRATION_REPORT.md](../data_architecture/MIGRATION_REPORT.md) and [OFFICIAL_DATA_PERFORMANCE.md](OFFICIAL_DATA_PERFORMANCE.md).
+
 Evidence for every engine change in [NSGAII_IMPROVEMENTS.md](NSGAII_IMPROVEMENTS.md). Produced with:
 * `scripts/benchmark_nsga2.py`: quality and ablation study
 * `scripts/benchmark_tight_budget.py`: constraint study

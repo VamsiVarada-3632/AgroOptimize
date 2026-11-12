@@ -1,5 +1,7 @@
 # Fuzzy Research Review
 
+> **v1 results.** The measurements in this document were made on the synthetic v1 data (tag `published-v1`, now archived in `legacy/`). They have not been re-run on the official datasets that the runtime uses since 2026-11; see [MIGRATION_REPORT.md](../data_architecture/MIGRATION_REPORT.md) and [OFFICIAL_DATA_PERFORMANCE.md](OFFICIAL_DATA_PERFORMANCE.md).
+
 Comparison of the AgroOptimize Mamdani system with established fuzzy-systems literature and agricultural reference standards. Only recommendations supported by these sources are made; no rule or agronomic relationship is invented. Measurements quoted are from [FUZZY_SYSTEM_ANALYSIS.md](FUZZY_SYSTEM_ANALYSIS.md). References are well-known foundational works; confirm page numbers against the publisher's record before citing them in the paper.
 
 ## 1. Inference scheme
