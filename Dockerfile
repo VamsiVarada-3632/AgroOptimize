@@ -32,6 +32,9 @@ RUN pip install --only-binary=:all: -r requirements.txt
 
 COPY app ./app
 COPY data ./data
+# The official-data database is a build artefact (gitignored), so rebuild it
+# from the raw files in data/official/raw. Same as scripts/preprocess_all.py.
+RUN python -c "from app.datasets.pipeline import build_database; build_database()"
 COPY --from=frontend /frontend/dist ./frontend/dist
 
 # Run as an unprivileged user; it owns only the results folder (saved runs
