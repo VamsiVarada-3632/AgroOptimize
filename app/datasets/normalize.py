@@ -16,6 +16,7 @@ _DISTRICT_ALIASES = {
     "thiruvallur": "tiruvallur", "thiruvarur": "tiruvarur", "thanjavur": "thanjavur", "tirunelveli": "tirunelveli", "coimbatore": "coimbatore",
 }
 _CROP_ALIASES = {
+    "cumbu": "bajra", "bengalgram": "bengal gram", "blackgram": "black gram", "greengram": "green gram",
     "paddy": "rice", "sorghum": "jowar", "pearl millet": "bajra", "finger millet": "ragi", "redgram": "red gram",
     "tur": "red gram", "arhar": "red gram", "moong": "green gram", "greengram": "green gram", "urad": "black gram",
     "blackgram": "black gram", "gram": "bengal gram", "chickpea": "bengal gram", "sesamum": "gingelly", "sesame": "gingelly",

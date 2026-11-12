@@ -110,3 +110,23 @@ def district_storage_pct(district: str, start: Optional[str] = None, end: Option
             continue
         num += float(s.storage_mcft.sum()); den += float(s.capacity_mcft.sum())
     return None if den == 0 else round(min(100.0, num / den * 100.0), 2)
+
+
+# ---------------------------------------------------------------- MSP / agronomy / soil health
+@ttl_cache()
+def msp_table() -> pd.DataFrame:
+    """All official MSP rows (marketing_season, crop key, variety, msp, cost = CACP projected cost A2+FL)."""
+    return _q("select crop, variety, marketing_season, msp_rs_qtl, cost_rs_qtl, margin_pct, source_file, source_page from msp")
+
+
+@ttl_cache()
+def agronomy_table() -> pd.DataFrame:
+    """TNAU crop-guide blanket doses (NPK, S) with page citations; water requirement/duration are NULL (not published)."""
+    return _q("select crop, condition, n_kg_ha, p_kg_ha, k_kg_ha, s_kg_ha, pdf_page, printed_page, evidence, note, source_url from agronomy_reference")
+
+
+@ttl_cache()
+def soil_health(district: str) -> Optional[dict]:
+    """Soil Health Card class counts for the district (latest cycle in the database) or None when the portal has no row."""
+    df = _q("select * from soil_health where district = :d order by cycle desc", d=district_key(district))
+    return None if df.empty else df.iloc[0].to_dict()
