@@ -1,5 +1,7 @@
 # Dynamic TOPSIS Engine
 
+> **v1 results.** The measurements in this document were made on the synthetic v1 data (tag `published-v1`, now archived in `legacy/`). They have not been re-run on the official datasets that the runtime uses since 2026-11; see [MIGRATION_REPORT.md](../data_architecture/MIGRATION_REPORT.md) and [OFFICIAL_DATA_PERFORMANCE.md](OFFICIAL_DATA_PERFORMANCE.md).
+
 The ranking stage, made user-adaptive. A farmer chooses what matters (a ranking profile or their own weights), and the same Pareto front is ranked with those weights, explained criterion by criterion, and compared across profiles. NSGA-II, its four objectives and the fuzzy assessment are inputs and are never changed. Balanced, the default, is the published ranking bit for bit.
 
 Related documents:

@@ -1,5 +1,9 @@
 # TODO – Remaining Work
 
+> **Written for the v1 data layer.** This document describes the system as it was on the synthetic v1 data (tag `published-v1`). Since 2026-11 the runtime reads only the official datasets: 38 districts, Kharif/Rabi, objectives yield / cultivation cost / irrigated area / nutrient load, `irrigated_ha` instead of `water_liters`, the `official` fuzzy model by default, and live weather disabled. Where this document disagrees, the code and [DATASETS.md](DATASETS.md), [API_REFERENCE.md](API_REFERENCE.md) and [MIGRATION_REPORT.md](../data_architecture/MIGRATION_REPORT.md) are authoritative.
+
+**Official-data migration TODOs** (frontend migration, datasets still to load, disabled features): [MIGRATION_REPORT.md](../data_architecture/MIGRATION_REPORT.md) §3–4.
+
 Ordered by priority. IDs are referenced from the other documents. "Decision" items need the team/guide, not code.
 
 ## P0 – before the next review / viva

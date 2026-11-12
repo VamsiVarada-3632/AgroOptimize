@@ -1,5 +1,7 @@
 # NSGA-II Analysis
 
+> **v1 results.** The measurements in this document were made on the synthetic v1 data (tag `published-v1`, now archived in `legacy/`). They have not been re-run on the official datasets that the runtime uses since 2026-11; see [MIGRATION_REPORT.md](../data_architecture/MIGRATION_REPORT.md) and [OFFICIAL_DATA_PERFORMANCE.md](OFFICIAL_DATA_PERFORMANCE.md).
+
 A study of the AgroOptimize NSGA-II engine as published: how it works, what it does well, where it falls short, and where it spends its time. Measurements come from `scripts/profile_nsga2.py` (phase profile) and `scripts/benchmark_nsga2.py` (quality study); see [NSGAII_PROFILE.md](NSGAII_PROFILE.md) for the numbers in full and [NSGAII_IMPROVEMENT_SUMMARY.md](NSGAII_IMPROVEMENT_SUMMARY.md) for what was changed.
 
 ## 1. Execution flow

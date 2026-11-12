@@ -1,5 +1,7 @@
 # NSGA-II Improvements
 
+> **v1 results.** The measurements in this document were made on the synthetic v1 data (tag `published-v1`, now archived in `legacy/`). They have not been re-run on the official datasets that the runtime uses since 2026-11; see [MIGRATION_REPORT.md](../data_architecture/MIGRATION_REPORT.md) and [OFFICIAL_DATA_PERFORMANCE.md](OFFICIAL_DATA_PERFORMANCE.md).
+
 What changed in the NSGA-II engine in this round, why, and what it does. Evidence: [NSGAII_BENCHMARK_RESULTS.md](NSGAII_BENCHMARK_RESULTS.md). Structure: [NSGAII_ARCHITECTURE.md](NSGAII_ARCHITECTURE.md). Previous round (PR #12): [NSGAII_IMPROVEMENT_SUMMARY.md](NSGAII_IMPROVEMENT_SUMMARY.md).
 
 ## 1. Summary

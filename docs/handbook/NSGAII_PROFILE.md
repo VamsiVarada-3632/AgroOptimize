@@ -1,5 +1,7 @@
 # NSGA-II Profile
 
+> **v1 results.** The measurements in this document were made on the synthetic v1 data (tag `published-v1`, now archived in `legacy/`). They have not been re-run on the official datasets that the runtime uses since 2026-11; see [MIGRATION_REPORT.md](../data_architecture/MIGRATION_REPORT.md) and [OFFICIAL_DATA_PERFORMANCE.md](OFFICIAL_DATA_PERFORMANCE.md).
+
 Measured runtime, memory, diversity and quality of the NSGA-II engine. Sections 1–6 profile the first round of work (PR #12: "main" = the engine before it). Section 7 profiles the second round ([NSGAII_IMPROVEMENTS.md](NSGAII_IMPROVEMENTS.md)), whose full benchmark is in [NSGAII_BENCHMARK_RESULTS.md](NSGAII_BENCHMARK_RESULTS.md). Context: [NSGAII_ANALYSIS.md](NSGAII_ANALYSIS.md). PR #12 decisions: [NSGAII_IMPROVEMENT_SUMMARY.md](NSGAII_IMPROVEMENT_SUMMARY.md).
 
 **Machine and method.** One Apple-silicon laptop, Python 3.13, pymoo 0.6.2, NumPy, single process, no other load (the quality study ran alone). Timings are medians of repeated runs; run-to-run noise is about ±10 %. "main" is the code before this work, checked out separately.
