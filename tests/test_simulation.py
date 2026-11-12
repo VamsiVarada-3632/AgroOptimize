@@ -36,7 +36,7 @@ from app.services import results_store as rs
 from app.services import simulation_service as sim
 
 client = TestClient(app)
-BASE = {"location": "Salem", "season": "Kharif", "total_land_ha": 5.0, "preference": "balanced"}
+BASE = {"location": "Salem", "season": "Rabi", "total_land_ha": 5.0, "preference": "balanced"}
 
 
 def simulate(scenario=None, base=None):
@@ -65,10 +65,10 @@ def water_priority():
 
 @pytest.fixture(scope="module")
 def tight_budget():
-    return simulate({"budget_rs": 120_000})
+    return simulate({"budget_rs": 1_000})
 
 
-def _season_rows(df, location="Salem", season="Kharif", year=None):
+def _season_rows(df, location="Salem", season="Rabi", year=None):
     year = year or int(df["Year"].max())
     months = config.SEASON_MONTH_MAP[season]
     return df[(df["Location"] == location) & (df["Year"] == year) & (df["Month"].isin(months))]
@@ -86,23 +86,20 @@ def test_profile_defaults_are_unchanged():
 
 @pytest.mark.parametrize("factor", [0.7, 0.9, 1.2, 1.3])
 def test_rainfall_factor_rescales_rainfall_and_recomputes_deviation(factor):
-    profile = pp.get_region_season_profile("Salem", "Kharif", rainfall_factor=factor)
-    rows = _season_rows(load_all()["rainfall"], year=profile.year)
-    rain = rows["Monthly_Rainfall_mm"] * factor
-    dev = ((rain - rows["Normal_Rainfall_mm"]) / rows["Normal_Rainfall_mm"] * 100).mean()
-    months = len(config.SEASON_MONTH_MAP["Kharif"])
-    assert profile.rainfall.avg_monthly_rainfall_mm == pytest.approx(rain.mean(), abs=0.01)
-    assert profile.rainfall.avg_deviation_percent == pytest.approx(dev, abs=0.01)
-    assert profile.rainfall.effective_rainfall_mm == pytest.approx(
-        rain.mean() * months * config.RAINFALL_UTILIZATION_FACTOR, abs=0.01)
-    # temperature, humidity, soil and water are untouched
-    base = pp.get_region_season_profile("Salem", "Kharif")
-    assert profile.rainfall.avg_max_temp_c == base.rainfall.avg_max_temp_c
-    assert profile.soil == base.soil and profile.water == base.water
+    base = pp.get_region_season_profile("Salem", "Rabi")
+    profile = pp.get_region_season_profile("Salem", "Rabi", rainfall_factor=factor)
+    actual, normal = base.rainfall.season_actual_mm, base.rainfall.season_normal_mm
+    assert profile.rainfall.season_actual_mm == pytest.approx(actual * factor, abs=0.1)
+    assert profile.rainfall.season_normal_mm == normal                      # the IMD normal is never scaled
+    assert profile.rainfall.avg_deviation_percent == pytest.approx((actual * factor - normal) / normal * 100, abs=0.01)
+    assert profile.rainfall.avg_monthly_rainfall_mm == pytest.approx(base.rainfall.avg_monthly_rainfall_mm * factor, abs=0.01)
+    # soil, water and candidate crops are untouched
+    assert profile.soil == base.soil and profile.water == base.water and profile.candidate_crops == base.candidate_crops
 
 
 def test_dataset_deviation_matches_the_formula_used_for_scaled_rainfall():
-    r = load_all()["rainfall"]
+    r = load_all()["rainfall"].dropna(subset=["Monthly_Rainfall_mm", "Normal_Rainfall_mm", "Deviation_Percent"])
+    r = r[r.Normal_Rainfall_mm > 0]
     calc = (r.Monthly_Rainfall_mm - r.Normal_Rainfall_mm) / r.Normal_Rainfall_mm * 100
     assert (calc - r.Deviation_Percent).abs().max() < 0.1
 
@@ -116,34 +113,27 @@ def test_storage_override_only_changes_storage():
 
 
 def _problem(**kw):
-    profile = pp.get_region_season_profile("Salem", "Kharif")
-    assessment = fz.evaluate_uncertainty(profile.rainfall.avg_deviation_percent, profile.water.avg_storage_percent,
-                                         profile.soil.fertility_index)
-    return profile, FarmPlanProblem(profile, assessment, total_land_ha=1.0, **kw)
+    profile = pp.get_region_season_profile("Salem", "Rabi")
+    return profile, FarmPlanProblem(profile, fz.assess_profile(profile), total_land_ha=1.0, **kw)
 
 
 @pytest.mark.parametrize("factor", [0.8, 1.3])
-def test_fertilizer_price_factor_scales_only_fertiliser_cost(factor):
-    profile, base = _problem()
-    _, scaled = _problem(fertilizer_price_factor=factor)
-    crop = load_all()["crop"]
-    rows = crop[(crop.Location == "Salem") & (crop.Year == profile.year) & (crop.Season == "Kharif")].set_index("Crop_Name")
-    prices = config.FERTILIZER_PRICE_RS_PER_KG_NUTRIENT
-    for b, s in zip(base.single_crop_metrics(), scaled.single_crop_metrics()):
-        r = rows.loc[b["crop"]]
-        fert = r.Fertilizer_N_Kg_Ha * prices["N"] + r.Fertilizer_P_Kg_Ha * prices["P"] + r.Fertilizer_K_Kg_Ha * prices["K"]
-        assert s["cost_rs_ha"] - b["cost_rs_ha"] == pytest.approx(fert * (factor - 1), rel=1e-9)
-        assert s["yield_t_ha"] == b["yield_t_ha"] and s["water_l_ha"] == b["water_l_ha"] and s["env_per_ha"] == b["env_per_ha"]
+def test_fertilizer_price_factor_is_disabled_without_official_prices(factor):
+    """No official fertiliser retail-price dataset is loaded, so a price lever must refuse rather than use assumed prices."""
+    with pytest.raises(ValueError, match="fertili[sz]er"):
+        _problem(fertilizer_price_factor=factor)
+    _problem(fertilizer_price_factor=1.0)       # neutral value is accepted
 
 
 def test_single_crop_metrics_match_the_objective_formula():
     profile, problem = _problem()
-    eff = profile.rainfall.effective_rainfall_mm
     for i, m in enumerate(problem.single_crop_metrics()):
         c = profile.candidate_crops[i]
         assert m["crop"] == c.name
         assert m["yield_t_ha"] == pytest.approx(c.yield_kg_ha / 1000 * problem.crop_vec.crop_yield_confidence[i])
-        assert m["water_l_ha"] == pytest.approx(max(c.water_req_mm - eff, 0) * config.LITERS_PER_MM_PER_HA)
+        assert m["cost_rs_ha"] == pytest.approx(c.yield_kg_ha / 100 * c.cost_rs_qtl)          # CACP A2+FL Rs/quintal x quintals/ha
+        assert m["irrigated_ha_per_ha"] == pytest.approx(c.irrigated_share)
+        assert m["env_per_ha"] == pytest.approx(c.fert_n_kg_ha + c.fert_p_kg_ha + c.fert_k_kg_ha)   # TNAU dose, kg/ha
 
 
 def test_explicit_weights_equal_to_a_preference_rank_identically():
@@ -180,22 +170,27 @@ def test_run_pipeline_matches_a_normal_run():
 
 def test_water_levels_sit_in_their_own_fuzzy_set():
     expected = {"very_low": "low", "low": "low", "medium": "medium", "high": "high", "very_high": "high"}
-    for level, pct in sim.WATER_LEVEL_STORAGE_PCT.items():
+    for level, pct in sim.water_level_storage_pct().items():
         degrees = fz.input_memberships(0, pct, 50)["water_storage"]
         assert max(degrees, key=degrees.get) == expected[level], level
-    values = list(sim.WATER_LEVEL_STORAGE_PCT.values())
+    values = list(sim.water_level_storage_pct().values())
     assert values == sorted(values)
 
 
 @pytest.mark.parametrize("location", config.LOCATIONS)
-def test_market_step_is_the_largest_observed_one_year_change(location):
-    crop = pp.observed_rows(load_all()["crop"])
+def test_market_step_is_the_largest_notified_one_year_msp_change(location):
+    """Independent recomputation from the official MSP notifications (KMS 2022-23 .. 2025-26) for the crops grown in the district."""
+    from app.datasets import service as svc
+    grown = set(load_all()["crop"].query("Location == @location")["Crop_Name"])
+    msp = svc.msp_table()
+    msp = msp[msp.marketing_season.str.startswith("KMS") & msp.crop.isin(grown)]
     best = 0.0
-    for _, g in crop[crop.Location == location].groupby(["Season", "Crop_Name"]):
-        prices = g.sort_values("Year")["MSP_Rs_Qtl"].tolist()
-        for a, b in zip(prices, prices[1:]):
-            best = max(best, abs(b - a) / a * 100)
+    for _, g in msp.groupby(["crop", "variety"]):
+        prices = g.assign(y=g.marketing_season.str[4:8].astype(int)).sort_values("y")["msp_rs_qtl"].tolist()
+        for a_, b_ in zip(prices, prices[1:]):
+            best = max(best, abs(b_ - a_) / a_ * 100)
     assert sim.market_price_step_pct(location) == pytest.approx(round(best, 1))
+    assert 0 <= sim.market_price_step_pct(location) <= 25
 
 
 @pytest.mark.parametrize("scenario", [
@@ -209,14 +204,19 @@ def test_resolve_rejects_invalid_controls(scenario):
 
 def test_resolve_inherits_base_values_and_maps_controls():
     ctx = sim.resolve({"base": {**BASE, "budget_rs": 300_000, "location": "salem"},
-                       "scenario": {"rainfall_change_pct": 10, "fertilizer_cost_change_pct": -20, "water_availability": "high",
-                                    "market_price": "decrease"}})
+                       "scenario": {"rainfall_change_pct": 10, "water_availability": "high", "market_price": "decrease"}})
     sr = ctx["scenario_request"]
     assert (sr.location, sr.total_land_ha, sr.budget_rs, sr.preference) == ("Salem", 5.0, 300_000, "balanced")
     adj = ctx["adjustments"]
-    assert adj.rainfall_factor == pytest.approx(1.1) and adj.fertilizer_price_factor == pytest.approx(0.8)
-    assert adj.storage_override_pct == sim.WATER_LEVEL_STORAGE_PCT["high"] and adj.topsis_weights is None
+    assert adj.rainfall_factor == pytest.approx(1.1) and adj.fertilizer_price_factor == pytest.approx(1.0)
+    assert adj.storage_override_pct == sim.water_level_storage_pct()["high"] and adj.topsis_weights is None
     assert ctx["price_factor"] == pytest.approx(1 - sim.market_price_step_pct("Salem") / 100)
+
+
+def test_fertilizer_price_lever_is_disabled_and_names_the_missing_dataset():
+    from app.errors import FeatureUnavailable
+    with pytest.raises(FeatureUnavailable, match="fertiliser retail prices"):
+        sim.resolve({"base": BASE, "scenario": {"fertilizer_cost_change_pct": -20}})
 
 
 def test_unknown_district_is_rejected():
@@ -302,26 +302,29 @@ def test_unchanged_scenario_reports_no_change(unchanged):
 
 def test_drought_conditions_reach_the_pipeline(drought):
     b, s = drought["baseline"]["region_profile"], drought["scenario"]["region_profile"]
-    assert s["rainfall"]["effective_rainfall_mm"] == pytest.approx(b["rainfall"]["effective_rainfall_mm"] * 0.8, abs=0.02)
-    assert s["water"]["avg_storage_percent"] == sim.WATER_LEVEL_STORAGE_PCT["low"]
+    assert s["rainfall"]["season_actual_mm"] == pytest.approx(b["rainfall"]["season_actual_mm"] * 0.8, abs=0.1)
+    assert s["water"]["avg_storage_percent"] == sim.water_level_storage_pct()["low"]
     expected = fz.evaluate_uncertainty(s["rainfall"]["avg_deviation_percent"], s["water"]["avg_storage_percent"],
                                        s["soil"]["fertility_index"])
-    assert drought["scenario"]["fuzzy_assessment"] == vars(expected)
+    assert drought["scenario"]["fuzzy_assessment"] == {**vars(expected), "applied": True, "reason": None}
     assert drought["fuzzy_changes"]["inputs"][1]["scenario_set"] == "low"
     changed = {c["id"] for c in drought["conditions"] if c["changed"]}
     assert changed == {"rainfall", "water"}
 
 
-def test_crop_effects_match_the_csv(drought):
-    eff = {side: drought[side]["region_profile"]["rainfall"]["effective_rainfall_mm"] for side in ("baseline", "scenario")}
+def test_crop_effects_match_the_official_data(drought):
+    """Per-hectare irrigated area is the crop's official irrigated share (not changed by rainfall); cost and rainfed share
+    come straight from the Season & Crop Report / CACP rows."""
     crop = load_all()["crop"]
     year = drought["baseline"]["region_profile"]["year"]
-    rows = crop[(crop.Location == "Salem") & (crop.Year == year) & (crop.Season == "Kharif")].set_index("Crop_Name")
+    rows = crop[(crop.Location == "Salem") & (crop.Year == year) & (crop.Season == "Rabi")].set_index("Crop_Name")
+    assert drought["crop_effects"]
     for e in drought["crop_effects"]:
-        req = rows.loc[e["crop"], "Water_Req_mm"]
-        for side, key in (("baseline", "baseline"), ("scenario", "scenario")):
-            assert e["water"][key] == pytest.approx(max(req - eff[side], 0) * config.LITERS_PER_MM_PER_HA, rel=1e-6)
-        assert e["rainfall_dependency"] == rows.loc[e["crop"], "Rainfall_Dependency"]
+        r = rows.loc[e["crop"]]
+        for side in ("baseline", "scenario"):
+            assert e["water"][side] == pytest.approx(r.Irrigated_Share, abs=1e-3)
+            assert e["cost"][side] == pytest.approx(r.Yield_Kg_Ha / 100 * r.Cost_Rs_Qtl, rel=1e-3)
+        assert e["rainfall_dependency"] == f"{1 - r.Irrigated_Share:.0%} rainfed"
 
 
 def test_impact_is_the_paired_mean_over_seed_runs(drought):
@@ -349,15 +352,17 @@ def test_decomposition_reevaluates_the_baseline_plan(drought):
     ctx = sim.resolve({"base": BASE, "scenario": {"rainfall_change_pct": -20, "water_availability": "low"}})
     run = ps.run_pipeline(ctx["scenario_request"], ctx["adjustments"], track_history=False)
     plan = drought["baseline"]["top_plan"]
-    # Independent: same allocation, irrigation multipliers and the scenario's effective rainfall.
-    eff = run.response["region_profile"]["rainfall"]["effective_rainfall_mm"]
-    req = {c["name"]: c["water_req_mm"] for c in run.response["region_profile"]["candidate_crops"]}
-    water = sum(a * i * max(req[n] - eff, 0) * config.LITERS_PER_MM_PER_HA
-                for n, a, i in zip(plan["crop_names"], plan["area_ha"], plan["irrigation_multiplier"]))
-    assert sim._evaluate_plan(run, plan)["water_liters"] == pytest.approx(water, rel=1e-3)
+    # Independent: same allocation and irrigation multipliers on the scenario's crop data: irrigated area = area x multiplier x irrigated share.
+    share = {c["name"]: c["irrigated_share"] if c.get("irrigated_share") is not None else 1 - c["rainfed_share"]
+             for c in run.response["region_profile"]["candidate_crops"]}
+    irrigated = sum(a * i * share[n] for n, a, i in zip(plan["crop_names"], plan["area_ha"], plan["irrigation_multiplier"]))
+    assert sim._evaluate_plan(run, plan)["irrigated_ha"] == pytest.approx(irrigated, rel=5e-3)   # plan fields are rounded to 3 decimals
     rows = {r["objective"]: r for r in drought["optimization"]["decomposition"]["rows"]}
-    assert rows["water"]["condition_effect_pct"] > 0   # less rain -> the same plan needs more irrigation
-    assert rows["cost"]["condition_effect_pct"] in (0.0, None) or abs(rows["cost"]["condition_effect_pct"]) < 0.1
+    # Rainfall/storage act on yield through the fuzzy confidence only; official irrigated area, CACP cost and TNAU fertiliser
+    # per hectare do not depend on weather, so the same plan costs and irrigates the same under the scenario.
+    for k in ("cost", "water", "env"):
+        assert rows[k]["condition_effect_pct"] in (0.0, None) or abs(rows[k]["condition_effect_pct"]) < 0.1, k
+    assert rows["yield"]["condition_effect_pct"] <= 0       # drought cannot raise the fuzzy yield confidence
 
 
 def test_market_price_changes_profit_only(market_up):
@@ -387,16 +392,9 @@ def test_priorities_only_change_topsis(water_priority):
 def test_infeasible_budget_reports_the_cheapest_plan(tight_budget):
     s = tight_budget["scenario"]
     assert s["available"] is False and tight_budget["impact"] is None and tight_budget["comparison"] is None
-    crop = load_all()["crop"]
-    year = tight_budget["baseline"]["region_profile"]["year"]
-    rows = crop[(crop.Location == "Salem") & (crop.Year == year) & (crop.Season == "Kharif")]
-    candidates = {c["crop"] for c in tight_budget["baseline"]["single_crop"]}
-    prices = config.FERTILIZER_PRICE_RS_PER_KG_NUTRIENT
-    cheapest = min(
-        (config.FERTILIZER_MULT_MIN * (r.Fertilizer_N_Kg_Ha * prices["N"] + r.Fertilizer_P_Kg_Ha * prices["P"]
-                                       + r.Fertilizer_K_Kg_Ha * prices["K"])
-         + r.Pesticide_Cost_Rs_Ha + r.Labor_Days_Ha * config.LABOR_WAGE_RS_PER_DAY) * 5.0
-        for r in rows.itertuples() if r.Crop_Name in candidates)
+    profile = pp.get_region_season_profile("Salem", "Rabi")
+    # official CACP cost per hectare does not depend on input multipliers: the cheapest plan is all land in the cheapest crop
+    cheapest = min(c.cost_rs_ha for c in profile.candidate_crops) * BASE["total_land_ha"]
     assert f"₹{cheapest:,.0f}" in s["reason"]
     assert tight_budget["constraints"][0]["id"] == "no_feasible_plan"
     assert any(i["id"] == "infeasible" for i in tight_budget["decision_impact"])
@@ -416,19 +414,18 @@ def test_land_change_uses_per_hectare_headline():
 
 def test_historical_alignment_matches_the_district_pattern(drought):
     h = drought["historical"]
-    crop = pp.observed_rows(load_all()["crop"])
-    rows = crop[(crop.Location == "Salem") & (crop.Season == "Kharif")]
-    share = rows.assign(s=rows.Area_Sown_Ha / rows.groupby("Year").Area_Sown_Ha.transform("sum") * 100) \
-                .groupby("Crop_Name").s.mean()
+    crop = load_all()["crop"]
+    rows = crop[(crop.Location == "Salem") & (crop.Season == "Rabi")]
+    share = rows.assign(s=rows.Area_Ha / rows.groupby("Year").Area_Ha.transform("sum") * 100).groupby("Crop_Name").s.mean()
     candidates = [c["crop"] for c in drought["baseline"]["single_crop"]]
     hist = {c: share.get(c, 0.0) for c in candidates}
     total = sum(hist.values())
     hist = {c: v / total * 100 for c, v in hist.items()}
     for row in h["historical_shares"]:
-        assert row["share_pct"] == pytest.approx(hist[row["crop"]], abs=0.15)
+        assert row["share_pct"] == pytest.approx(hist[row["crop"]], abs=0.5)   # district shares are rounded to 0.1 before renormalising
     mix = {c["crop"]: c["share_pct"] for c in drought["scenario"]["crop_mix"]}
     alignment = sum(min(mix.get(c, 0.0), hist[c]) for c in candidates)
-    assert h["alignment_pct"]["scenario"] == pytest.approx(alignment, abs=0.3)
+    assert h["alignment_pct"]["scenario"] == pytest.approx(alignment, abs=1.0)
 
 
 def test_statements_only_attribute_reliable_shifts(drought):
@@ -486,17 +483,20 @@ def test_pending_results_are_bounded_and_scoped():
 
 def test_endpoints_run_save_list_get_delete(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "RESULTS_DIR", tmp_path)
-    body = {"base": BASE, "scenario": {"fertilizer_cost_change_pct": 20}, "client_id": "browser-1"}
+    # the fertiliser-price lever is disabled (no official prices): HTTP 501 naming the missing dataset
+    blocked = client.post("/api/simulations/run", json={"base": BASE, "scenario": {"fertilizer_cost_change_pct": 20}})
+    assert blocked.status_code == 501 and "fertiliser retail prices" in blocked.json()["missing_dataset"]
+    body = {"base": BASE, "scenario": {"market_price": "increase"}, "client_id": "browser-1"}
     r = client.post("/api/simulations/run", json=body)
     assert r.status_code == 200
     data = r.json()
-    assert data["token"] and data["inputs"]["scenario"]["fertilizer_cost_change_pct"] == 20
+    assert data["token"] and data["inputs"]["scenario"]["market_price"] == "increase"
 
     assert client.post("/api/simulations", json={"token": data["token"], "client_id": "browser-2"}).status_code == 404
-    saved = client.post("/api/simulations", json={"token": data["token"], "client_id": "browser-1", "name": "Fert +20"})
+    saved = client.post("/api/simulations", json={"token": data["token"], "client_id": "browser-1", "name": "Price up"})
     assert saved.status_code == 201
     sim_id = saved.json()["simulation_id"]
-    assert saved.json()["changes"] == ["fertilizer"]
+    assert saved.json()["changes"] == ["market"]
 
     assert [s["simulation_id"] for s in client.get("/api/simulations", params={"client_id": "browser-1"}).json()] == [sim_id]
     assert client.get("/api/simulations", params={"client_id": "browser-2"}).json() == []

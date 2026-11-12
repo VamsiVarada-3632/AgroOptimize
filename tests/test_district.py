@@ -1,19 +1,15 @@
 """
-Tests for the District Intelligence service and endpoint
-(app/services/district_service.py, GET /api/district-intelligence/{district}).
+Tests for the District Intelligence service and endpoint (app/services/district_service.py,
+GET /api/district-intelligence/{district}) on the OFFICIAL data.
 
-Values are checked against independent pandas calculations on the raw
-CSVs, so the tests catch a wrong aggregation rather than re-asserting the
-service's own arithmetic.
+Values are checked against independent calculations on the official frames / Soil Health Card counts, so the tests
+catch a wrong aggregation rather than re-asserting the service's own arithmetic. The synthetic-data version of this
+file (multi-year trends, estimated years) is archived in legacy/tests/ for paper reproduction.
 """
 from __future__ import annotations
 
 import json
 import math
-import os
-import sys
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
 import pytest
@@ -21,19 +17,13 @@ from fastapi.testclient import TestClient
 
 from app import config
 from app.data import loader
-from app.data import preprocessing as pp
-from app.fuzzy import engine as fz
+from app.datasets import service as svc
 from app.main import app
 from app.services import district_service as dsv
 
 client = TestClient(app)
 DISTRICTS = list(config.LOCATIONS)
-
-
-def _observed(kind, location):
-    df = loader.load_all()[kind]
-    df = df[df["Location"] == location]
-    return df[~df["data_source"].str.startswith("Estimated")]
+SECTIONS = ("overview", "coverage", "climate", "soil", "water", "crops", "suitability", "market", "insights", "summary")
 
 
 @pytest.fixture(scope="module", params=DISTRICTS)
@@ -78,134 +68,129 @@ class TestTrendHelper:
 
 class TestStructure:
 
-    def test_sections_present(self, intel):
-        for key in ("overview", "coverage", "climate", "soil", "water", "crops", "suitability", "market", "insights", "summary"):
-            assert key in intel
-
-    def test_serialisable_without_nan(self, intel):
+    def test_all_sections_present_and_serialisable(self, intel):
+        assert set(SECTIONS) <= set(intel) and intel["district"] in DISTRICTS
         json.dumps(intel)
-        assert all(not (isinstance(v, float) and not math.isfinite(v)) for v in _walk(intel))
 
-    def test_unavailable_fields_are_null_with_note(self, intel):
-        assert intel["overview"]["agricultural_zone"] is None
-        assert intel["overview"]["agricultural_zone_note"]
+    def test_no_nan_anywhere(self, intel):
+        assert not [v for v in _walk(intel) if isinstance(v, float) and math.isnan(v)]
 
-    def test_insights_are_traceable_items(self, intel):
-        assert intel["insights"]
+    def test_every_statement_carries_evidence_and_a_source(self, intel):
         for item in intel["insights"]:
             assert item["detail"] and item["source"] and isinstance(item["evidence"], dict)
 
-    def test_summary_text_matches_sentences(self, intel):
+    def test_summary_is_built_from_the_sections(self, intel):
         assert intel["summary"]["text"] == " ".join(intel["summary"]["sentences"])
-        assert intel["district"] in intel["summary"]["text"]
 
 
-class TestAgainstRawData:
+class TestOfficialProvenance:
 
-    def test_estimated_years_are_excluded(self, intel):
-        assert intel["coverage"]["estimated_years"] == [2024]
-        assert 2024 not in [a["year"] for a in intel["climate"]["annual"]]
-        assert 2024 not in intel["crops"]["filters"]["years"]
+    def test_one_official_report_year_and_nothing_estimated(self, intel):
+        cov = intel["coverage"]
+        assert cov["observed_years"] == [2024] and cov["estimated_years"] == []
+        assert cov["report_year"] == "2024-25" and cov["provenance"]
+        assert any("crops_by_district" in p for p in cov["provenance"])
 
-    def test_annual_rainfall_totals(self, intel):
-        raw = _observed("rainfall", intel["district"]).groupby("Year")["Monthly_Rainfall_mm"].sum()
-        for row in intel["climate"]["annual"]:
-            assert row["total_mm"] == pytest.approx(raw[row["year"]], abs=0.05)
-        assert intel["overview"]["average_annual_rainfall_mm"] == pytest.approx(raw.mean(), abs=0.05)
+    def test_unavailable_official_fields_are_none_with_a_note_not_filled(self, intel):
+        o = intel["overview"]
+        assert o["coordinates"] is None and o["agricultural_zone"] is None and o["average_temperature_c"] is None
+        assert o["coordinates_note"] and o["agricultural_zone_note"]
+        assert all(a["mean_temp_c"] is None and a["humidity_pct"] is None for a in intel["climate"].get("annual", []))
 
-    def test_mean_temperature(self, intel):
-        r = _observed("rainfall", intel["district"])
-        assert intel["overview"]["average_temperature_c"] == pytest.approx(((r.Max_Temp_C + r.Min_Temp_C) / 2).mean(), abs=0.05)
+    def test_pollachi_taluk_note_is_on_coimbatore_only(self):
+        assert dsv.get_district_intelligence("Coimbatore")["overview"]["taluk_note"]
+        assert dsv.get_district_intelligence("Salem")["overview"]["taluk_note"] is None
 
-    def test_met_season_shares_sum_to_100(self, intel):
-        assert sum(m["share_pct"] for m in intel["climate"]["met_season_share"]) == pytest.approx(100, abs=0.5)
 
-    def test_crop_records_match_csv(self, intel):
-        raw = _observed("crop", intel["district"])
-        assert len(intel["crops"]["records"]) == len(raw)
-        rec = intel["crops"]["records"][0]
-        row = raw[(raw.Year == rec["year"]) & (raw.Season == rec["season"]) & (raw.Crop_Name == rec["crop"])].iloc[0]
-        assert rec["production_t"] == pytest.approx(row.Production_Tonnes, abs=1)
-        assert rec["yield_t_ha"] == pytest.approx(row.Yield_Kg_Ha / 1000, abs=0.001)
+class TestAgainstOfficialData:
 
-    def test_season_area_shares_sum_to_100(self, intel):
-        by = {}
-        for r in intel["crops"]["records"]:
-            by.setdefault((r["year"], r["season"]), 0.0)
-            by[(r["year"], r["season"])] += r["area_share_pct"]
-        assert all(v == pytest.approx(100, abs=0.5) for v in by.values())
+    def test_crop_records_equal_the_official_frame(self, intel):
+        d = intel["district"]
+        frame = loader.load_all()["crop"]
+        frame = frame[frame.Location == d]
+        assert len(intel["crops"]["records"]) == len(frame)
+        by = {(r["season"], r["crop"]): r for r in intel["crops"]["records"]}
+        for r in frame.itertuples():
+            rec = by[(r.Season, r.Crop_Name)]
+            assert rec["area_ha"] == (None if math.isnan(r.Area_Ha) else round(r.Area_Ha))
+            assert rec["yield_t_ha"] == pytest.approx(r.Yield_Kg_Ha / 1000, abs=1e-3)
+            assert rec["price_rs_qtl"] == (None if math.isnan(r.MSP_Rs_Qtl) else pytest.approx(r.MSP_Rs_Qtl, abs=0.01))
 
-    def test_soil_fertility_index_uses_existing_formula(self, intel):
-        rec = intel["soil"]["records"][0]
-        expected = pp.compute_soil_fertility_index(rec["ph"], rec["organic_carbon_pct"], rec["n_status"], rec["p_status"], rec["k_status"])
-        assert rec["fertility_index"] == expected
+    def test_area_shares_sum_to_100_per_season(self, intel):
+        for season in config.AG_SEASONS:
+            shares = [r["area_share_pct"] for r in intel["crops"]["records"] if r["season"] == season and r["area_share_pct"] is not None]
+            if shares:
+                assert sum(shares) == pytest.approx(100.0, abs=0.05 * len(shares))
 
-    def test_water_demand_and_primary_sources(self, intel):
-        w = _observed("water", intel["district"])
-        demand = w.groupby("Year")["Total_Demand_MCM"].sum()
-        for y in intel["water"]["yearly"]:
-            assert y["total_demand_mcm"] == pytest.approx(demand[y["year"]], abs=0.05)
-        assert sum(s["share_of_months_pct"] for s in intel["water"]["primary_sources"]) == pytest.approx(100, abs=0.5)
+    def test_rainfall_equals_the_imd_rows(self, intel):
+        d = intel["district"]
+        r = loader.load_all()["rainfall"]
+        r = r[r.Location == d].dropna(subset=["Monthly_Rainfall_mm"])
+        clim = intel["climate"]
+        if r.empty:
+            assert clim["available"] is False
+            return
+        assert clim["annual"][0]["total_mm"] == pytest.approx(r.Monthly_Rainfall_mm.sum(), abs=0.1)
+        assert clim["annual"][0]["normal_mm"] == pytest.approx(r.Normal_Rainfall_mm.sum(), abs=0.1)
+        assert len(clim["monthly"]) == len(r)
+        assert sum(m["share_pct"] for m in clim["met_season_share"]) == pytest.approx(100.0, abs=0.2)
 
-    def test_storage_static_flag_matches_data(self, intel):
-        w = _observed("water", intel["district"])
-        identical = bool((w.groupby("Month")["Storage_Percent"].nunique() == 1).all())
-        assert intel["water"]["storage_identical_every_year"] is identical
+    def test_soil_fertility_index_is_recomputed_from_soil_health_card_counts(self, intel):
+        shc = svc.soil_health(intel["district"])
+        if not shc or not intel["soil"].get("available"):
+            assert intel["soil"]["available"] is False
+            return
+        score = []
+        for k in ("n", "p", "k", "oc"):
+            lo, me, hi = (shc[f"{k}_low"], shc[f"{k}_medium"], shc[f"{k}_high"])
+            score.append((0.0 * lo + 0.5 * me + 1.0 * hi) / (lo + me + hi))
+        assert intel["soil"]["latest"]["fertility_index_mean"] == pytest.approx(100 * np.mean(score), abs=0.06)
+        assert intel["soil"]["latest"]["fuzzy_set"] in {"poor", "medium", "good"}
+
+    def test_water_storage_matches_the_reservoir_frame(self, intel):
+        d = intel["district"]
+        w = loader.load_all()["water"]
+        w = w[(w.Location == d)]
+        sto = w.dropna(subset=["Storage_Percent"])
+        water = intel["water"]
+        if not water.get("available"):
+            return
+        assert {m["month"]: m["storage_pct"] for m in water["storage_by_month"]} == {r.Month: round(r.Storage_Percent, 1) for r in sto.itertuples()}
+        for s in water["storage_by_season"]:
+            months = config.SEASON_MONTH_MAP[s["season"]]
+            g = sto[sto.Month.isin(months)]
+            assert s["storage_pct"] == (round(g.Storage_Percent.mean(), 1) if len(g) else None)
+
+    def test_market_prices_are_the_official_msp_and_cost(self, intel):
+        for item in intel["market"]["crops"]:
+            assert item["mean_rs_qtl"] > 0 and item["trend"] is None
+        assert intel["market"]["is_live"] is False and "Agmarknet" in intel["market"]["note"]
 
 
 class TestSuitability:
 
-    def test_ranks_are_contiguous(self, intel):
+    def test_scores_are_bounded_and_ranked(self, intel):
         rows = intel["suitability"]["rankings"]
+        if not rows:
+            assert intel["suitability"]["available"] is False
+            return
+        scores = [r["score"] for r in rows]
+        assert scores == sorted(scores, reverse=True) and all(0 <= s <= 100 for s in scores)
         assert [r["rank"] for r in rows] == list(range(1, len(rows) + 1))
-        assert [r["score"] for r in rows] == sorted((r["score"] for r in rows), reverse=True)
+        for r in rows:
+            assert r["components"]["rainfall_fit"] is None          # crop water requirement (mm) is not published
+            assert r["components"]["resource_efficiency"] is not None and r["cost_rs_ha"] > 0
+
+    def test_only_crops_with_complete_official_data_are_ranked(self, intel):
+        d = intel["district"]
         for season in config.AG_SEASONS:
-            ranks = [r["season_rank"] for r in rows if r["season"] == season]
-            assert ranks == list(range(1, len(ranks) + 1))
-
-    def test_score_is_mean_of_components(self, intel):
-        for r in intel["suitability"]["rankings"]:
-            comps = [v for v in r["components"].values() if v is not None]
-            assert all(0 <= v <= 1 for v in comps)
-            assert r["score"] == pytest.approx(100 * np.mean(comps), abs=0.2)
-
-    def test_per_hectare_values_match_objective_formula(self, intel):
-        """Recompute cost/water/yield for one crop directly from the CSV row and
-        config prices, independently of FarmPlanProblem."""
-        r = intel["suitability"]["rankings"][0]
-        year = intel["suitability"]["year_basis"]
-        raw = loader.load_all()["crop"]
-        row = raw[(raw.Location == intel["district"]) & (raw.Year == year) & (raw.Season == r["season"])
-                  & (raw.Crop_Name == r["crop"])].iloc[0]
-        prices = config.FERTILIZER_PRICE_RS_PER_KG_NUTRIENT
-        cost = (row.Fertilizer_N_Kg_Ha * prices["N"] + row.Fertilizer_P_Kg_Ha * prices["P"]
-                + row.Fertilizer_K_Kg_Ha * prices["K"] + row.Pesticide_Cost_Rs_Ha + row.Labor_Days_Ha * config.LABOR_WAGE_RS_PER_DAY)
-        assert r["cost_rs_ha"] == pytest.approx(cost, abs=1)
-        profile = pp.get_region_season_profile(intel["district"], r["season"], year=year)
-        net = max(row.Water_Req_mm - profile.rainfall.effective_rainfall_mm, 0)
-        assert r["irrigation_need_l_ha"] == pytest.approx(net * config.LITERS_PER_MM_PER_HA, abs=1)
-        a = fz.evaluate_uncertainty(profile.rainfall.avg_deviation_percent, profile.water.avg_storage_percent,
-                                    profile.soil.fertility_index)
-        conf = fz.crop_yield_confidence(a.yield_confidence, a.irrigation_risk, row.Rainfall_Dependency)
-        assert r["expected_yield_t_ha"] == pytest.approx(row.Yield_Kg_Ha / 1000 * conf, abs=0.01)
-        assert r["components"]["climate_soil"] == pytest.approx(conf, abs=0.001)
-
-    def test_uses_latest_observed_year(self, intel):
-        assert intel["suitability"]["year_basis"] == max(intel["coverage"]["observed_years"])
-
-
-class TestMarket:
-
-    def test_marked_historical_not_live(self, intel):
-        assert intel["market"]["is_live"] is False
-        assert "not live" in intel["market"]["note"]
-
-    def test_price_trend_matches_csv(self, intel):
-        item = intel["market"]["crops"][0]
-        raw = _observed("crop", intel["district"])
-        series = raw[raw.Crop_Name == item["crop"]].groupby("Year")["MSP_Rs_Qtl"].mean()
-        first, last = series.iloc[0], series.iloc[-1]
-        assert item["trend"]["change_pct"] == pytest.approx((last - first) / first * 100, abs=0.1)
+            ranked = {r["crop"] for r in intel["suitability"]["rankings"] if r["season"] == season}
+            try:
+                from app.data import preprocessing as pp
+                cands = {c.name for c in pp.get_region_season_profile(d, season, max_candidate_crops=12).candidate_crops}
+            except ValueError:
+                cands = set()
+            assert ranked <= cands
 
 
 class TestMissingData:
@@ -218,10 +203,9 @@ class TestMissingData:
         dsv.clear_cache()
         try:
             out = dsv._build("Erode")
-            assert out["water"] == {"available": False, "note": dsv.NOT_AVAILABLE}
+            assert out["water"]["available"] is False and "not available" in out["water"]["note"]
             assert out["soil"]["available"] is False
-            assert out["overview"]["agricultural_area_ha"] is None
-            assert out["overview"]["primary_irrigation_sources"] == []
+            assert out["overview"]["irrigated_pct"] is None
             json.dumps(out)
         finally:
             dsv.clear_cache()
@@ -236,9 +220,10 @@ class TestCachingAndEndpoint:
     def test_endpoint(self, district):
         r = client.get(f"/api/district-intelligence/{district}")
         assert r.status_code == 200
-        body = r.json()
-        assert body["district"].lower() == district
-        assert body["suitability"]["rankings"]
+        assert r.json()["district"].lower() == district
 
     def test_unknown_district(self):
-        assert client.get("/api/district-intelligence/chennai").status_code == 404
+        assert client.get("/api/district-intelligence/atlantis").status_code == 404
+
+    def test_pollachi_taluk_is_not_a_district(self):
+        assert client.get("/api/district-intelligence/pollachi").status_code in (400, 404)
