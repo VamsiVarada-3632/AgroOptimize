@@ -21,7 +21,11 @@ from app.services import results_store
 
 client = TestClient(app)
 
-DISTRICTS = [loc.lower() for loc in config.LOCATIONS]
+ALL_DISTRICTS = [loc.lower() for loc in config.LOCATIONS]
+# Districts whose official Season & Crop Report rows give fewer than two crops with every required field (yield, TNAU dose,
+# MSP, CACP cost): no plans/comparison can be built for them, and nothing is estimated in their place.
+NO_OFFICIAL_CROP_SET = {"chennai", "the nilgiris"}
+DISTRICTS = [d for d in ALL_DISTRICTS if d not in NO_OFFICIAL_CROP_SET]
 
 
 class TestResolveLocation:
@@ -30,104 +34,39 @@ class TestResolveLocation:
         ("coimbatore", "Coimbatore"),
         ("SALEM", "Salem"),
         (" Erode ", "Erode"),
-        ("Pollachi", "Pollachi"),
+        ("CHENNAI", "Chennai"),
     ])
     def test_case_and_whitespace_insensitive(self, raw, expected):
         assert ds.resolve_location(raw) == expected
 
     def test_unknown_district_raises(self):
         with pytest.raises(ValueError):
-            ds.resolve_location("chennai")
+            ds.resolve_location("atlantis")
+
+    def test_pollachi_is_a_taluk_not_a_district(self):
+        with pytest.raises(ValueError, match="taluk"):
+            ds.resolve_location("Pollachi")
 
 
 class TestWeatherEndpoint:
+    """The live-weather widget is DISABLED: IMD observed temperature/humidity/forecast is not among the official datasets
+    obtained. The endpoint says so (HTTP 501) and names the missing dataset; it never falls back to a third-party API or
+    synthetic values."""
 
-    @pytest.mark.parametrize("district", DISTRICTS)
-    def test_returns_200_with_expected_shape(self, district):
+    @pytest.mark.parametrize("district", ALL_DISTRICTS)
+    def test_is_disabled_with_the_missing_dataset_named(self, district):
         r = client.get(f"/api/weather/{district}")
-        assert r.status_code == 200
+        assert r.status_code == 501
         body = r.json()
-        for key in ("location", "temp", "condition", "conditionText", "rainfall_mm", "humidity", "source", "forecast"):
-            assert key in body
-        # Covers both the live Open-Meteo path (richer WMO-code-derived
-        # conditions) and the CSV-derived fallback (rainy/partly_cloudy_day/
-        # sunny only) -- whichever one actually ran on this machine/network.
-        assert body["condition"] in {
-            "sunny", "partly_cloudy_day", "cloud", "foggy", "rainy", "thunderstorm", "ac_unit",
-        }
-        assert len(body["forecast"]) == 5
-        assert all(set(f.keys()) == {"day", "icon", "temp"} for f in body["forecast"])
-
-    def test_differs_between_districts(self):
-        coimbatore = client.get("/api/weather/coimbatore").json()
-        salem = client.get("/api/weather/salem").json()
-        assert coimbatore["location"] != salem["location"]
-        # not asserting the *values* differ (two districts could coincide by
-        # chance) -- but they must be independently derived, i.e. each
-        # response's location must match what was requested
-        assert coimbatore["location"] == "Coimbatore"
-        assert salem["location"] == "Salem"
+        assert body["available"] is False and "IMD" in body["missing_dataset"] and body["feature"]
 
     def test_unknown_district_is_404(self):
-        r = client.get("/api/weather/chennai")
-        assert r.status_code == 404
+        assert client.get("/api/weather/atlantis").status_code == 404
 
-
-class TestLiveWeatherParsing:
-    """Exercises ds._get_weather_live's parsing against a hand-built
-    response matching Open-Meteo's documented JSON shape (see
-    https://open-meteo.com/en/docs), via a mocked requests.get -- this
-    verifies the parsing logic itself works, independent of whether this
-    machine actually has outbound internet access to Open-Meteo."""
-
-    @staticmethod
-    def _fake_response(weather_code=0):
-        class _FakeResp:
-            def raise_for_status(self):
-                pass
-
-            def json(self):
-                return {
-                    "current": {"temperature_2m": 31.4, "relative_humidity_2m": 62, "weather_code": weather_code},
-                    "daily": {
-                        "time": ["2026-08-13", "2026-08-14", "2026-08-15", "2026-08-16", "2026-08-17", "2026-08-18"],
-                        "weather_code": [weather_code, 1, 3, 61, 95, 0],
-                        "temperature_2m_max": [34.0, 33.5, 32.0, 30.1, 29.5, 33.0],
-                        "temperature_2m_min": [24.0, 23.5, 23.0, 22.5, 22.0, 24.0],
-                        "precipitation_sum": [0.0, 0.0, 1.2, 12.5, 30.0, 0.0],
-                    },
-                }
-        return _FakeResp()
-
-    def test_parses_current_and_forecast(self, monkeypatch):
-        import requests
-        from app.services import dashboard_service as ds
-
-        monkeypatch.setattr(requests, "get", lambda *a, **k: self._fake_response(weather_code=0))
-        result = ds._get_weather_live("Coimbatore")
-
-        assert result["location"] == "Coimbatore"
-        assert result["temp"] == 31
-        assert result["condition"] == "sunny"
-        assert result["source"] == "Live (Open-Meteo)"
-        assert len(result["forecast"]) == 5
-        # weather codes [1, 3, 61, 95, 0] for the 5 forecast days (index 1-5)
-        assert [f["icon"] for f in result["forecast"]] == [
-            "partly_cloudy_day", "cloud", "rainy", "thunderstorm", "sunny",
-        ]
-        assert result["forecast"][0]["temp"] == "34° / 24°"
-
-    def test_falls_back_to_csv_on_network_error(self, monkeypatch):
-        import requests
-        from app.services import dashboard_service as ds
-
-        def _raise(*a, **k):
-            raise requests.exceptions.ConnectionError("no network in this environment")
-
-        monkeypatch.setattr(requests, "get", _raise)
-        result = ds.get_weather("coimbatore")
-        assert result["source"] == "Historical CSV average (live weather unavailable)"
-        assert result["condition"] in {"rainy", "partly_cloudy_day", "sunny"}
+    def test_no_third_party_weather_code_remains(self):
+        import inspect
+        src = inspect.getsource(ds)
+        assert "open-meteo.com/v1" not in src and "requests.get" not in src
 
 
 class TestDashboardEndpoint:
@@ -154,7 +93,7 @@ class TestDashboardEndpoint:
         body = client.get("/api/dashboard/coimbatore").json()
         if body["crop_allocations"]:
             total_pct = sum(c["pct"] for c in body["crop_allocations"])
-            assert 0 < total_pct <= 100.01
+            assert 0 < total_pct <= 100.0 + 0.05 * len(body["crop_allocations"])   # each pct is rounded to 0.1
 
 
 class TestSoilProfileEndpoint:
@@ -169,6 +108,9 @@ class TestSoilProfileEndpoint:
             "K_status", "fertility_index", "irrigated_ha", "total_agricultural_ha",
         ):
             assert key in body
+        if not body["available"]:
+            assert body["fertility_index"] is None          # no Soil Health Card record: reported unavailable, not estimated
+            return
         assert 0.0 <= body["fertility_index"] <= 1.0
         assert body["N_status"] in {"Low", "Medium", "High"}
         assert body["irrigated_ha"] <= body["total_agricultural_ha"]
@@ -231,10 +173,10 @@ class TestHistoryClientScoping:
     @staticmethod
     def _fake_summary(client_id):
         return {
-            "run_id": "coimbatore_kharif_2023_fake",
+            "run_id": "coimbatore_kharif_2024_fake",
             "location": "Coimbatore",
             "season": "Kharif",
-            "year": 2023,
+            "year": 2024,
             "preference": "balanced",
             "saved_at": "2026-01-01T00:00:00+00:00",
             "n_plans": 3,
@@ -244,7 +186,7 @@ class TestHistoryClientScoping:
     @staticmethod
     def _fake_record():
         return {
-            "region_profile": {"location": "Coimbatore", "season": "Kharif", "year": 2023},
+            "region_profile": {"location": "Coimbatore", "season": "Kharif", "year": 2024},
             "plans": [{"area_ha": [2.0, 3.0], "yield_tonnes": 25.0, "cost_rs": 60000.0}],
             "fuzzy_assessment": {
                 "yield_confidence": 0.7,

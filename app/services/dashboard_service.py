@@ -2,7 +2,7 @@
 Support logic for the frontend-facing dashboard endpoints (weather, KPI
 summary, history, soil profile, Pareto plans, and A/B/C comparison).
 
-Every value returned here is derived from data/raw/*.csv and the same
+Every value returned here is derived from the official database and the same
 fuzzy/NSGA-II/TOPSIS pipeline the rest of the backend uses (see
 app/fuzzy/engine.py, app/optimization/, app/decision/ranking.py) -- nothing
 here is random or hardcoded. Where a metric has no single canonical
@@ -23,7 +23,7 @@ from typing import Optional
 from app import config
 from app.data import loader
 from app.data import preprocessing as pp
-from app.data.preprocessing import compute_soil_fertility_index
+from app.errors import FeatureUnavailable
 from app.decision import ranking
 from app.fuzzy import engine as fz
 from app.optimization.nsga2_runner import extract_convergence_history, extract_pareto_plans, run_nsga2
@@ -39,16 +39,10 @@ _MONTHS_IN_YEAR_ORDER = [
 
 
 def resolve_location(location: str) -> str:
-    """Case-insensitive district lookup (frontend sends lowercase path
-    segments, e.g. 'salem'). Raises ValueError -- mapped to a 404 in
-    main.py -- if it isn't one of the 4 districts in app.config.LOCATIONS."""
-    for loc in config.LOCATIONS:
-        if loc.lower() == location.strip().lower():
-            return loc
-    raise ValueError(
-        f"Unknown location '{location}'. Choose one of "
-        f"{[l.lower() for l in config.LOCATIONS]}."
-    )
+    """Case-insensitive district lookup (frontend sends lowercase path segments, e.g. 'salem').
+    Raises ValueError -- mapped to 404/400 in main.py -- for anything that is not one of the 38 official districts;
+    taluks such as Pollachi get an explicit "taluk data not available" message."""
+    return pp.resolve_location(location)
 
 
 def _current_season(today: Optional[_dt.date] = None) -> str:
@@ -83,138 +77,13 @@ _CONDITION_TEXT = {
     "ac_unit": "Snow",
 }
 
-# WMO weather-interpretation codes (used by Open-Meteo's weather_code
-# field) mapped onto the small set of condition keys the frontend renders
-# directly as Material Symbols icon names. See
-# https://open-meteo.com/en/docs for the authoritative code table.
-_WMO_CODE_TO_CONDITION = {
-    0: "sunny",
-    1: "partly_cloudy_day", 2: "partly_cloudy_day",
-    3: "cloud",
-    45: "foggy", 48: "foggy",
-    51: "rainy", 53: "rainy", 55: "rainy", 56: "rainy", 57: "rainy",
-    61: "rainy", 63: "rainy", 65: "rainy", 66: "rainy", 67: "rainy",
-    80: "rainy", 81: "rainy", 82: "rainy",
-    71: "ac_unit", 73: "ac_unit", 75: "ac_unit", 77: "ac_unit", 85: "ac_unit", 86: "ac_unit",
-    95: "thunderstorm", 96: "thunderstorm", 99: "thunderstorm",
-}
-
-
-def _condition_for_rainfall(monthly_rainfall_mm: float) -> str:
-    """Thresholds used only by the CSV-derived fallback path (no live
-    internet access): 'condition' is a proxy read off historical monthly
-    rainfall rather than a real weather code."""
-    if monthly_rainfall_mm > 100:
-        return "rainy"
-    if monthly_rainfall_mm > 50:
-        return "partly_cloudy_day"
-    return "sunny"
-
-
-def _get_weather_live(location: str) -> dict:
-    """Real current + 5-day weather from Open-Meteo (free, no API key
-    required for non-commercial use -- see https://open-meteo.com/en/docs).
-    Raises on any network/parsing problem so the caller can fall back to
-    the CSV-derived estimate rather than ever inventing numbers."""
-    import requests
-
-    lat, lon = config.DISTRICT_COORDINATES[location]
-    resp = requests.get(
-        "https://api.open-meteo.com/v1/forecast",
-        params={
-            "latitude": lat,
-            "longitude": lon,
-            "current": "temperature_2m,relative_humidity_2m,weather_code",
-            "daily": "weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum",
-            "timezone": "Asia/Kolkata",
-            "forecast_days": 6,
-        },
-        timeout=5,
-    )
-    resp.raise_for_status()
-    data = resp.json()
-
-    current = data["current"]
-    daily = data["daily"]
-    condition = _WMO_CODE_TO_CONDITION.get(int(current["weather_code"]), "partly_cloudy_day")
-
-    forecast = []
-    # index 0 of `daily` is today -- the "forecast" is the next 5 days.
-    for i in range(1, min(6, len(daily["time"]))):
-        date = _dt.datetime.strptime(daily["time"][i], "%Y-%m-%d")
-        day_condition = _WMO_CODE_TO_CONDITION.get(int(daily["weather_code"][i]), "partly_cloudy_day")
-        forecast.append({
-            "day": date.strftime("%a"),
-            "icon": day_condition,
-            "temp": f"{round(daily['temperature_2m_max'][i])}° / {round(daily['temperature_2m_min'][i])}°",
-        })
-
-    return {
-        "location": location,
-        "temp": round(current["temperature_2m"]),
-        "condition": condition,
-        "conditionText": _CONDITION_TEXT.get(condition, condition.title()),
-        "rainfall_mm": round(float(daily["precipitation_sum"][0]), 1),
-        "humidity": round(current["relative_humidity_2m"]),
-        "source": "Live (Open-Meteo)",
-        "forecast": forecast,
-    }
-
-
-def _get_weather_from_csv(location: str) -> dict:
-    """Fallback used only when the live call above fails (no internet,
-    Open-Meteo unreachable, etc.) -- derived from this project's own
-    historical rainfall.csv, clearly labelled as such via `source` so it's
-    never mistaken for a live reading."""
-    rainfall = loader.load_all()["rainfall"]
-    rows = rainfall[rainfall["Location"] == location]
-    today = _dt.date.today()
-
-    def month_avg(month_name: str) -> dict:
-        month_rows = rows[rows["Month"] == month_name]
-        if month_rows.empty:
-            month_rows = rows  # degrade to the location's overall average rather than crash
-        return {
-            "rainfall_mm": round(float(month_rows["Monthly_Rainfall_mm"].mean()), 1),
-            "max_temp_c": round(float(month_rows["Max_Temp_C"].mean()), 1),
-            "min_temp_c": round(float(month_rows["Min_Temp_C"].mean()), 1),
-            "humidity_pct": round(float(month_rows["Humidity_Percent"].mean()), 1),
-        }
-
-    current_month = _MONTHS_IN_YEAR_ORDER[today.month - 1]
-    current = month_avg(current_month)
-    condition = _condition_for_rainfall(current["rainfall_mm"])
-    temp = round((current["max_temp_c"] + current["min_temp_c"]) / 2)
-
-    forecast = []
-    for i, day in enumerate(["Mon", "Tue", "Wed", "Thu", "Fri"], start=1):
-        month_name = _MONTHS_IN_YEAR_ORDER[(today.month - 1 + i) % 12]
-        stats = month_avg(month_name)
-        forecast.append({
-            "day": day,
-            "icon": _condition_for_rainfall(stats["rainfall_mm"]),
-            "temp": f"{round(stats['max_temp_c'])}° / {round(stats['min_temp_c'])}°",
-        })
-
-    return {
-        "location": location,
-        "temp": temp,
-        "condition": condition,
-        "conditionText": _CONDITION_TEXT[condition],
-        "rainfall_mm": current["rainfall_mm"],
-        "humidity": round(current["humidity_pct"]),
-        "source": "Historical CSV average (live weather unavailable)",
-        "forecast": forecast,
-    }
-
-
 def get_weather(location: str) -> dict:
-    location = resolve_location(location)
-    try:
-        return _get_weather_live(location)
-    except Exception as live_exc:  # noqa: BLE001 -- deliberate: fall back to real historical data, never fabricate a reading
-        logger.warning("live Open-Meteo call failed for %s: %r -- using CSV fallback", location, live_exc)
-        return _get_weather_from_csv(location)
+    """DISABLED: the live-weather widget used a third-party API (Open-Meteo) and, offline, the synthetic rainfall/temperature
+    CSVs. Neither is an official source. It is re-enabled once an IMD weather feed (district forecast / observed
+    temperature, humidity) is integrated - TODO listed in docs/data_architecture/MIGRATION_REPORT.md."""
+    resolve_location(location)
+    raise FeatureUnavailable("Live weather widget", "IMD district weather (temperature, humidity, forecast) - not yet scraped",
+                             "Official monthly rainfall is shown elsewhere.")
 
 
 # ---------------------------------------------------------------------------
@@ -238,7 +107,7 @@ def _soil_status_label(fertility_index_0_100: float) -> str:
 
 
 def _current_land_row(land_df, location: str, year: int):
-    """The land.csv row for (location, year, current-season) -- falls
+    """The official land/soil row for (location, year, current-season) -- falls
     back to the last row for that year if the current season is somehow
     missing, so this never raises for a location that's in the dataset."""
     year_rows = land_df[(land_df["Location"] == location) & (land_df["Year"] == year)]
@@ -262,90 +131,72 @@ class PlanGenerationError(RuntimeError):
     failed optimisation is never silently presented as a real plan.
     """
 
+def ov_sources() -> list:
+    return [{"dataset": r["name"], "file": r["filename"], "report_year": r["report_year"]} for r in svc_provenance()]
+
+
+def svc_provenance():
+    from app.datasets import service as svc
+    return svc.provenance()
+
+
 def get_dashboard(location: str, client_id: str | None = None) -> dict:
-    """`client_id` (optional) is the requesting browser's persistent id --
-    see FarmPlanRequest.client_id. There are no real user accounts in this
-    project, so `active_plans` only counts *this* visitor's own saved runs
-    for the district -- the same rule get_history() already uses. No
-    client_id, or a mismatch (including older/demo/seed runs saved before
-    client_id existed, which have none), means it's excluded -- a
-    brand-new browser must never see someone else's, or seed/demo, saved
-    runs counted as its own active plans."""
+    """`client_id` (optional) is the requesting browser's persistent id -- see FarmPlanRequest.client_id.
+    `active_plans` only counts this visitor's own saved runs for the district (same rule as get_history).
+    Every KPI is derived from the official 2024-25 datasets; a KPI the data cannot support is None."""
     location = resolve_location(location)
     data = loader.load_all()
     crop_df, land_df, water_df = data["crop"], data["land"], data["water"]
+    season = _current_season()
 
-    loc_crop = crop_df[crop_df["Location"] == location]
-    latest_year = _latest_year_for(loc_crop, location)
+    # --- estimated_yield: area-weighted district yield of the season's crops (t/ha, mass-unit crops only) ---
+    rows = crop_df[(crop_df["Location"] == location) & (crop_df["Season"] == season) & crop_df["Yield_Kg_Ha"].notna() & (crop_df["Area_Ha"] > 0)]
+    estimated_yield = (round(float((rows["Yield_Kg_Ha"] * rows["Area_Ha"]).sum() / rows["Area_Ha"].sum()) / 1000.0, 1)
+                       if not rows.empty else None)
+    # Only one official report year per district is loaded, so there is no district year-over-year trend.
+    yield_trend = None
 
-    # --- estimated_yield & yield_trend: mean Yield_Kg_Ha, latest year vs. previous ---
-    this_year_yield = float(loc_crop.loc[loc_crop["Year"] == latest_year, "Yield_Kg_Ha"].mean())
-    earlier_years = loc_crop.loc[loc_crop["Year"] < latest_year, "Year"]
-    if not earlier_years.empty:
-        prev_year = int(earlier_years.max())
-        prev_year_yield = float(loc_crop.loc[loc_crop["Year"] == prev_year, "Yield_Kg_Ha"].mean())
-        pct_change = (this_year_yield - prev_year_yield) / prev_year_yield * 100 if prev_year_yield else 0.0
-    else:
-        pct_change = 0.0
-    estimated_yield = round(this_year_yield / 1000.0, 1)  # kg/ha -> t/ha
-    yield_trend = f"{'+' if pct_change >= 0 else ''}{round(pct_change, 1)}%"
-
-    # --- active_plans: this browser's own saved optimisation runs on disk
-    # for this district (matched by client_id -- same rule as get_history) ---
     active_plans = sum(
         1 for r in results_store.list_saved_runs()
         if r["location"] == location and client_id and r.get("client_id") == client_id
     )
 
-    # --- soil (current season's land.csv row) ---
-    land_row = _current_land_row(land_df, location, latest_year)
-    fertility_index = compute_soil_fertility_index(
-        avg_ph=float(land_row["Avg_Soil_pH"]),
-        organic_carbon_percent=float(land_row["Organic_Carbon_Percent"]),
-        n_status=land_row["N_Status"], p_status=land_row["P_Status"], k_status=land_row["K_Status"],
-    )
+    # --- soil: Soil Health Card fertility index (None if the portal has no row for the district) ---
+    land_row = land_df[(land_df["Location"] == location) & (land_df["Season"] == season)].iloc[0]
+    fertility_index = None if land_row["Soil_Fertility_Index"] != land_row["Soil_Fertility_Index"] else float(land_row["Soil_Fertility_Index"])
 
-    # --- water_utilization_pct: irrigation's share of total seasonal water
-    # demand (distinct from "storage percent", which is reservoir fullness
-    # and is already used elsewhere as the fuzzy engine's water input) ---
-    water_rows = water_df[(water_df["Location"] == location) & (water_df["Year"] == latest_year)]
-    total_demand = float(water_rows["Total_Demand_MCM"].sum()) if not water_rows.empty else 0.0
-    if total_demand > 0:
-        water_utilization_pct = round(float(water_rows["Irrigation_Water_MCM"].sum()) / total_demand * 100, 1)
-    else:
-        water_utilization_pct = 0.0
-    avg_storage_pct = float(water_rows["Storage_Percent"].mean()) if not water_rows.empty else 100.0
+    # --- water_utilization_pct: irrigated share of the district's cropped area (official area statistics) ---
+    irr = land_row["Irrigation_Percent"]
+    water_utilization_pct = None if irr != irr else round(float(irr), 1)
+    water_rows = water_df[(water_df["Location"] == location) & water_df["Storage_Percent"].notna()]
+    avg_storage_pct = float(water_rows["Storage_Percent"].mean()) if not water_rows.empty else None
 
-    # --- recommended_actions: rule-based off N/P/K status + water storage ---
+    # --- recommended_actions: rule-based off Soil Health Card N/P/K class + reservoir storage ---
     actions = []
     for key, status_col in (("nitrogen", "N_Status"), ("phosphorus", "P_Status"), ("potassium", "K_Status")):
         if str(land_row[status_col]) == "Low":
             title, desc, prio, window = _ACTION_LIBRARY[key]
             actions.append({"id": key, "title": title, "description": desc, "priority": prio, "window": window})
-    if avg_storage_pct < 40:
+    if avg_storage_pct is not None and avg_storage_pct < 40:
         title, desc, prio, window = _ACTION_LIBRARY["irrigation"]
         actions.append({"id": "irrigation", "title": title, "description": desc, "priority": prio, "window": window})
     if not actions:
+        known = fertility_index is not None
         actions.append({
-            "id": "monitor", "title": "No urgent action needed",
-            "description": "Soil N/P/K status and water storage are all within normal range.",
+            "id": "monitor", "title": "No urgent action needed" if known else "Soil data not available",
+            "description": ("Dominant Soil Health Card N/P/K classes and reservoir storage are not Low." if known
+                            else "The Soil Health Card portal has no data for this district."),
             "priority": "low", "window": "Routine monitoring",
         })
 
-    # --- crop_allocations: top 3 candidate crops by historical revenue,
-    # for the current season -- reuses the same ranking preprocessing.py
-    # already does for the optimiser's candidate-crop shortlist. NOTE: this
-    # is each crop's share of district *revenue*, not an optimised plan. ---
+    # --- crop_allocations: top 3 candidate crops by revenue at MSP (NOT an optimised plan) ---
     try:
-        profile = pp.get_region_season_profile(location, _current_season(), year=latest_year, max_candidate_crops=3)
+        profile = pp.get_region_season_profile(location, season, max_candidate_crops=3)
         top3 = profile.candidate_crops
         total_revenue = sum(c.revenue_rs_lakh_hist for c in top3) or 1.0
         crop_allocations = [
-            {
-                "crop": c.name,
-                "pct": round(c.revenue_rs_lakh_hist / total_revenue * 100, 1),
-                "ha": round(c.revenue_rs_lakh_hist / total_revenue * _REFERENCE_FARM_HA, 1),
-            }
+            {"crop": c.name, "pct": round(c.revenue_rs_lakh_hist / total_revenue * 100, 1),
+             "ha": round(c.revenue_rs_lakh_hist / total_revenue * _REFERENCE_FARM_HA, 1)}
             for c in top3
         ]
     except ValueError:
@@ -353,20 +204,17 @@ def get_dashboard(location: str, client_id: str | None = None) -> dict:
 
     return {
         "location": location,
-        # Provenance: which dataset year these KPIs describe, and whether
-        # that year's rows are estimates (2023 carried forward/scaled) --
-        # in which case yield_trend reflects the estimation factor, not an
-        # observed change.
-        "data_year": latest_year,
-        "data_year_estimated": pp.is_estimated_year(location, latest_year),
+        "data_year": int(crop_df["Year"].max()),
+        "data_year_estimated": False,
         "estimated_yield": estimated_yield,
         "yield_trend": yield_trend,
         "active_plans": active_plans,
-        "soil_health_pct": round(fertility_index),
+        "soil_health_pct": None if fertility_index is None else round(fertility_index),
         "water_utilization_pct": water_utilization_pct,
-        "soil_status": _soil_status_label(fertility_index),
+        "soil_status": None if fertility_index is None else _soil_status_label(fertility_index),
         "recommended_actions": actions,
         "crop_allocations": crop_allocations,
+        "data_sources": ov_sources(),
     }
 
 
@@ -376,26 +224,28 @@ def get_dashboard(location: str, client_id: str | None = None) -> dict:
 
 def get_soil_profile(location: str) -> dict:
     location = resolve_location(location)
-    land_df = loader.load_all()["land"]
-    latest_year = _latest_year_for(land_df, location)
-    row = _current_land_row(land_df, location, latest_year)
-
-    fertility_index = compute_soil_fertility_index(
-        avg_ph=float(row["Avg_Soil_pH"]),
-        organic_carbon_percent=float(row["Organic_Carbon_Percent"]),
-        n_status=row["N_Status"], p_status=row["P_Status"], k_status=row["K_Status"],
-    )
-
+    from app.data import official_view as ov
+    from app.datasets import service as svc
+    ss = ov.soil_summary(location)
+    lu = svc.land_use(location)
+    crop_df = loader.load_all()["crop"]
+    loc = crop_df[(crop_df["Location"] == location)]
+    per_crop = loc.drop_duplicates("Crop_Name")
+    irrigated_ha = float(per_crop["Irrigated_Area_Ha"].sum())
+    cropped_ha = float(per_crop["Area_Ha"].sum())      # same crops, same report: a consistent denominator for the irrigated area
     return {
         "location": location,
-        "soil_pH": float(row["Avg_Soil_pH"]),
-        "organic_carbon_pct": float(row["Organic_Carbon_Percent"]),
-        "N_status": str(row["N_Status"]),
-        "P_status": str(row["P_Status"]),
-        "K_status": str(row["K_Status"]),
-        "fertility_index": round(fertility_index / 100.0, 3),
-        "irrigated_ha": float(row["Irrigated_Land_Ha"]),
-        "total_agricultural_ha": float(row["Agricultural_Land_Ha"]),
+        "soil_pH": None, "organic_carbon_pct": None,        # the portal publishes classes, not mean values
+        "N_status": ss and ss["n_status"], "P_status": ss and ss["p_status"], "K_status": ss and ss["k_status"],
+        "fertility_index": None if ss is None else round(ss["fertility_index"] / 100.0, 3),
+        "irrigated_ha": irrigated_ha,
+        "total_agricultural_ha": cropped_ha,
+        "net_area_sown_ha": lu.get("Net area sown"),
+        "area_basis": "Irrigated and total area are both summed over the district's crops in the Season & Crop Report (gross cropped area).",
+        "class_shares": None if ss is None else {k: ss[k] for k in ("n_shares", "p_shares", "k_shares", "oc_shares", "ph_shares")},
+        "samples_tested": None if ss is None else ss["samples_tested"],
+        "source": "Soil Health Card portal (soilhealth.dac.gov.in); TN Season & Crop Report 2024-25 (land use, irrigation)",
+        "available": ss is not None,
     }
 
 
@@ -503,11 +353,7 @@ def _cached_pareto_front(location, season, year, total_land_ha, budget_rs, track
     request would recompute a bit-identical front. Only plain data is
     cached (not the pymoo result object), keeping each entry small."""
     profile = pp.get_region_season_profile(location, season, year=year)
-    assessment = fz.evaluate_uncertainty(
-        profile.rainfall.avg_deviation_percent,
-        profile.water.avg_storage_percent,
-        profile.soil.fertility_index,
-    )
+    assessment = fz.assess_profile(profile)
     problem = FarmPlanProblem(profile, assessment, total_land_ha=total_land_ha, budget_rs=budget_rs)
     result = run_nsga2(problem, pop_size=_DEMO_POP_SIZE, track_history=track_history)
     raw_plans = tuple(p for p in extract_pareto_plans(result, problem) if p.feasible)
@@ -534,14 +380,14 @@ def _summarize_pareto_front(raw_plans, total_land_ha: float) -> dict:
             "n_plans": 0,
             "best_yield_tonnes_per_ha": None,
             "min_cost_rs_per_ha": None,
-            "min_water_liters_per_ha": None,
+            "min_irrigated_ha_per_ha": None,
             "min_env_impact_per_ha": None,
         }
     per_ha = [
         {
             "yield_tonnes_per_ha": p.yield_tonnes / (sum(p.area_ha) or total_land_ha),
             "cost_rs_per_ha": p.cost_rs / (sum(p.area_ha) or total_land_ha),
-            "water_liters_per_ha": p.water_liters / (sum(p.area_ha) or total_land_ha),
+            "irrigated_ha_per_ha": p.irrigated_ha / (sum(p.area_ha) or total_land_ha),
             "env_impact_per_ha": p.env_impact_score / (sum(p.area_ha) or total_land_ha),
         }
         for p in raw_plans
@@ -550,7 +396,7 @@ def _summarize_pareto_front(raw_plans, total_land_ha: float) -> dict:
         "n_plans": len(raw_plans),
         "best_yield_tonnes_per_ha": round(max(x["yield_tonnes_per_ha"] for x in per_ha), 3),
         "min_cost_rs_per_ha": round(min(x["cost_rs_per_ha"] for x in per_ha), 2),
-        "min_water_liters_per_ha": round(min(x["water_liters_per_ha"] for x in per_ha), 1),
+        "min_irrigated_ha_per_ha": round(min(x["irrigated_ha_per_ha"] for x in per_ha), 1),
         "min_env_impact_per_ha": round(min(x["env_impact_per_ha"] for x in per_ha), 3),
     }
 
@@ -577,11 +423,7 @@ def get_fuzzy_comparison(
     season = pp.canonical_choice(season, config.AG_SEASONS, "season") if season else _current_season()
 
     profile = pp.get_region_season_profile(location, season, year=year)
-    assessment = fz.evaluate_uncertainty(
-        profile.rainfall.avg_deviation_percent,
-        profile.water.avg_storage_percent,
-        profile.soil.fertility_index,
-    )
+    assessment = fz.assess_profile(profile)
 
     results = {}
     for use_fuzzy in (True, False):
@@ -603,7 +445,7 @@ def get_fuzzy_comparison(
         "season": season,
         "year": profile.year,
         "total_land_ha": total_land_ha,
-        "fuzzy_assessment": vars(assessment),
+        "fuzzy_assessment": fz.assessment_payload(assessment, profile),
         "fuzzy": results["fuzzy"],
         "non_fuzzy": results["non_fuzzy"],
     }
@@ -633,7 +475,7 @@ def get_plans(location: str, total_land_ha: float = 5.0, budget_rs: Optional[flo
                 for name, pct in zip(rp.crop_names, rp.allocation_percent)
                 if pct > 0.5
             }
-            # rp.cost_rs / yield_tonnes / water_liters / env_impact_score are
+            # rp.cost_rs / yield_tonnes / irrigated_ha / env_impact_score are
             # plan TOTALS over total_land_ha -- normalise to per-hectare so
             # plans (and, later, districts run at a different land size)
             # are comparable on a like-for-like basis.
@@ -642,7 +484,8 @@ def get_plans(location: str, total_land_ha: float = 5.0, budget_rs: Optional[flo
                 "id": rp.rank - 1,
                 "cost": round(rp.cost_rs / area),
                 "yield_val": round(rp.yield_tonnes / area, 2),
-                "water_val": round(rp.water_liters / area / 1_000_000, 2),  # million litres / ha
+                "water_val": round(rp.irrigated_ha / area, 3),  # kept key (UI compatibility); now irrigated ha per ha of farm
+                "irrigated_ha_per_ha": round(rp.irrigated_ha / area, 3),
                 "env_impact": round(rp.env_impact_score / area, 2),
                 "is_recommended": rp.rank == 1,
                 "crops": crops,
@@ -654,8 +497,9 @@ def get_plans(location: str, total_land_ha: float = 5.0, budget_rs: Optional[flo
             "total_land_ha": total_land_ha,
             "num_plans": len(plans_out),
             "fuzzy_weights": {
-                "yield_confidence": assessment.yield_confidence,
-                "irrigation_risk": assessment.irrigation_risk,
+                "yield_confidence": fz.assessment_payload(assessment, profile)["yield_confidence"],
+                "irrigation_risk": fz.assessment_payload(assessment, profile)["irrigation_risk"],
+                "applied": assessment is not None,
             },
             "plans": plans_out,
             "best_plan": {"id": best["id"], "cost": best["cost"], "yield_val": best["yield_val"]} if best else None,
@@ -692,7 +536,7 @@ def _radar_scores(rp, trio, irrigation_risk: float, dep_by_crop: dict) -> dict:
     of weather swings."""
     yields = [p.yield_tonnes for p in trio]
     costs = [p.cost_rs for p in trio]
-    waters = [p.water_liters for p in trio]
+    waters = [p.irrigated_ha for p in trio]
     envs = [p.env_impact_score for p in trio]
 
     def norm(v, values, higher_better):
@@ -703,18 +547,18 @@ def _radar_scores(rp, trio, irrigation_risk: float, dep_by_crop: dict) -> dict:
         return (n if higher_better else 1 - n) * 100
 
     deps = [
-        dep_by_crop.get(name, "Medium")
+        dep_by_crop.get(name, 0.5)
         for name, pct in zip(rp.crop_names, rp.allocation_percent)
         if pct > 1.0
     ]
     avg_dep_factor = (
-        sum(config.RAINFALL_DEPENDENCY_FACTOR.get(d, 0.5) for d in deps) / len(deps) if deps else 0.5
+        sum(deps) / len(deps) if deps else 0.5
     )
 
     return {
         "yield": round(norm(rp.yield_tonnes, yields, True)),
         "cost_eff": round(norm(rp.cost_rs, costs, False)),
-        "water": round(norm(rp.water_liters, waters, False)),
+        "water": round(norm(rp.irrigated_ha, waters, False)),
         "land": round(norm(rp.env_impact_score, envs, False)),
         "risk": round((1 - irrigation_risk) * 100),
         "market": round((1 - avg_dep_factor) * 100),
@@ -736,7 +580,7 @@ def get_comparison(location: str, total_land_ha: float = 5.0, budget_rs: Optiona
     if not raw_plans:
         raise ValueError(f"No feasible plans found for {location} to build a comparison from.")
 
-    dep_by_crop = {c.name: c.rainfall_dependency for c in profile.candidate_crops}
+    dep_by_crop = {c.name: c.rainfed_share for c in profile.candidate_crops}
 
     # Plan A = most balanced (TOPSIS 'balanced' rank 1, i.e. closest to the
     # ideal point across all 4 objectives at once); Plan B = highest yield
@@ -753,7 +597,7 @@ def get_comparison(location: str, total_land_ha: float = 5.0, budget_rs: Optiona
         "B": (max_yield, "Plan B -- Max Yield", False),
         "C": (min_cost, "Plan C -- Lowest Cost", False),
     }
-    water_values = [p.water_liters for p in trio]
+    water_values = [p.irrigated_ha for p in trio]
 
     plans_out = {}
     for key, (rp, label, recommended) in chosen.items():
@@ -771,9 +615,9 @@ def get_comparison(location: str, total_land_ha: float = 5.0, budget_rs: Optiona
             }
             for i, (name, frac) in enumerate(crop_items)
         ]
-        if rp.water_liters == min(water_values):
+        if rp.irrigated_ha == min(water_values):
             water_label = "Efficient"
-        elif rp.water_liters == max(water_values):
+        elif rp.irrigated_ha == max(water_values):
             water_label = "High usage"
         else:
             water_label = "Moderate"
@@ -792,7 +636,7 @@ def get_comparison(location: str, total_land_ha: float = 5.0, budget_rs: Optiona
             "water": water_label,
             "recommended": recommended,
             "allocations": allocations,
-            "radar_scores": _radar_scores(rp, trio, assessment.irrigation_risk, dep_by_crop),
+            "radar_scores": _radar_scores(rp, trio, fz.assessment_payload(assessment, profile)["irrigation_risk"], dep_by_crop),
         }
 
     return {"location": location, "total_land_ha": total_land_ha, "plans": plans_out}
