@@ -82,3 +82,17 @@ def test_yield_cut_flagged_as_caution():
     d = {"book_yield_t_ha": 6.0, "expected_yield_t_ha": 3.0, "crop_confidence": 0.5}
     assert ce._yield(rp, {}, d, None, {"applied": True})["status"] == "caution"
     assert ce._yield(rp, {}, {**d, "expected_yield_t_ha": 5.9}, None, {"applied": True})["status"] == "supported"
+
+
+def test_explanation_endpoint_returns_crop_evidence():
+    """The API response model must keep crop_evidence, not only the service."""
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    r = TestClient(app).get("/api/comparison/Salem/explanation", params={"plan": "A"})
+    assert r.status_code == 200
+    body = r.json()
+    shown = {c["crop"] for c in body["summary"]["crop_mix"]}
+    assert {e["crop"] for e in body["crop_evidence"]} == shown
+    assert all([c["id"] for c in e["criteria"]] == IDS for e in body["crop_evidence"])
