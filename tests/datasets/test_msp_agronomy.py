@@ -29,7 +29,7 @@ def test_agronomy_values_and_nulls():
     r = AgronomyTnau().load(); f = r.frame
     m = f[(f.crop == "maize") & (f.condition == "hybrids")].iloc[0]
     assert (m.n_kg_ha, m.p_kg_ha, m.k_kg_ha) == (250, 75, 75)
-    bg = f[(f.crop == "bengalgram") & (f.condition == "irrigated")].iloc[0]
+    bg = f[(f.crop == "bengal gram") & (f.condition == "irrigated")].iloc[0]
     assert pd.isna(bg.p_kg_ha)                      # printed typo is not "fixed"
     assert f.water_req_mm.isna().all() and f.duration_days.isna().all()
     assert any(i.code == "source_anomaly" for i in r.issues)

@@ -135,7 +135,7 @@
       {
         "level": "warning",
         "code": "source_anomaly",
-        "message": "bengalgram/irrigated: P2O5 printed as '5' (apparent typo vs 25 for the other pulses); stored NULL, not corrected",
+        "message": "bengal gram/irrigated: P2O5 printed as '5' (apparent typo vs 25 for the other pulses); stored NULL, not corrected",
         "rows": 1
       },
       {
@@ -160,7 +160,7 @@
       {
         "level": "info",
         "code": "coverage",
-        "message": "37 districts; districts absent from the portal for this cycle (e.g. Chennai, no agricultural land) have no soil data",
+        "message": "37 districts; districts absent from the portal feed for this cycle have no soil data (not estimated)",
         "rows": 37
       }
     ]

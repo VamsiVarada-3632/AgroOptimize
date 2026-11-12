@@ -37,3 +37,12 @@ def _std_name(measure, unit):
 
 MCFT_TO_MCM = 0.0283168466     # 1 million cubic feet in million cubic metres
 CUSEC_TO_M3S = 0.0283168466
+
+
+# Crops whose official yield is NOT on the same basis as the official MSP / CACP cost (both per quintal of the
+# harvested produce). No official conversion factor (ginning outturn, milling outturn) is loaded, so these crops are
+# excluded from optimisation rather than converted with an assumed factor. Re-enable by loading the official factor.
+UNIT_BASIS_MISMATCH = {
+    "cotton": "official yield is kg of lint/ha; MSP and CACP cost are per quintal of kapas (seed cotton)",
+    "rice": "official production/yield is in terms of rice; MSP and CACP cost are per quintal of paddy",
+}
