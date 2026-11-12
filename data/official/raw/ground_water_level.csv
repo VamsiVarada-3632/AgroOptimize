@@ -1,0 +1,508 @@
+report_year,district_code,district,period,level_m,printed_page
+2024-25,2,Chennai,Jul-24,,102
+2024-25,2,Chennai,Aug-24,,102
+2024-25,2,Chennai,Sep-24,,102
+2024-25,2,Chennai,Oct-24,4.02,102
+2024-25,2,Chennai,Nov-24,,102
+2024-25,2,Chennai,Dec-24,,102
+2024-25,2,Chennai,Jan-25,,103
+2024-25,2,Chennai,Feb-25,,103
+2024-25,2,Chennai,Mar-25,,103
+2024-25,2,Chennai,Apr-25,,103
+2024-25,2,Chennai,May-25,,103
+2024-25,2,Chennai,Jun-25,,103
+2024-25,2,Chennai,Yearly average,,103
+2024-25,8,Kancheepuram,Jul-24,3.17,102
+2024-25,8,Kancheepuram,Aug-24,3.1,102
+2024-25,8,Kancheepuram,Sep-24,2.75,102
+2024-25,8,Kancheepuram,Oct-24,3.22,102
+2024-25,8,Kancheepuram,Nov-24,2.62,102
+2024-25,8,Kancheepuram,Dec-24,1.59,102
+2024-25,8,Kancheepuram,Jan-25,1.93,103
+2024-25,8,Kancheepuram,Feb-25,2.34,103
+2024-25,8,Kancheepuram,Mar-25,2.77,103
+2024-25,8,Kancheepuram,Apr-25,3.1,103
+2024-25,8,Kancheepuram,May-25,3.6,103
+2024-25,8,Kancheepuram,Jun-25,3.9,103
+2024-25,8,Kancheepuram,Yearly average,2.8,103
+2024-25,35,Chengalpattu,Jul-24,3.29,102
+2024-25,35,Chengalpattu,Aug-24,3.22,102
+2024-25,35,Chengalpattu,Sep-24,2.94,102
+2024-25,35,Chengalpattu,Oct-24,3.26,102
+2024-25,35,Chengalpattu,Nov-24,2.74,102
+2024-25,35,Chengalpattu,Dec-24,1.54,102
+2024-25,35,Chengalpattu,Jan-25,1.8,103
+2024-25,35,Chengalpattu,Feb-25,2.31,103
+2024-25,35,Chengalpattu,Mar-25,2.94,103
+2024-25,35,Chengalpattu,Apr-25,3.3,103
+2024-25,35,Chengalpattu,May-25,3.7,103
+2024-25,35,Chengalpattu,Jun-25,4.1,103
+2024-25,35,Chengalpattu,Yearly average,2.9,103
+2024-25,23,Tiruvallur,Jul-24,4.24,102
+2024-25,23,Tiruvallur,Aug-24,3.67,102
+2024-25,23,Tiruvallur,Sep-24,3.76,102
+2024-25,23,Tiruvallur,Oct-24,3.78,102
+2024-25,23,Tiruvallur,Nov-24,2.98,102
+2024-25,23,Tiruvallur,Dec-24,1.31,102
+2024-25,23,Tiruvallur,Jan-25,1.15,103
+2024-25,23,Tiruvallur,Feb-25,1.72,103
+2024-25,23,Tiruvallur,Mar-25,2.28,103
+2024-25,23,Tiruvallur,Apr-25,3.1,103
+2024-25,23,Tiruvallur,May-25,3.6,103
+2024-25,23,Tiruvallur,Jun-25,3.7,103
+2024-25,23,Tiruvallur,Yearly average,2.9,103
+2024-25,4,Cuddalore,Jul-24,4.34,102
+2024-25,4,Cuddalore,Aug-24,5.23,102
+2024-25,4,Cuddalore,Sep-24,3.7,102
+2024-25,4,Cuddalore,Oct-24,4.89,102
+2024-25,4,Cuddalore,Nov-24,4.21,102
+2024-25,4,Cuddalore,Dec-24,2.75,102
+2024-25,4,Cuddalore,Jan-25,2.74,103
+2024-25,4,Cuddalore,Feb-25,3.67,103
+2024-25,4,Cuddalore,Mar-25,4.35,103
+2024-25,4,Cuddalore,Apr-25,4.5,103
+2024-25,4,Cuddalore,May-25,5.0,103
+2024-25,4,Cuddalore,Jun-25,4.7,103
+2024-25,4,Cuddalore,Yearly average,4.2,103
+2024-25,31,Viluppuram,Jul-24,4.62,102
+2024-25,31,Viluppuram,Aug-24,4.59,102
+2024-25,31,Viluppuram,Sep-24,2.79,102
+2024-25,31,Viluppuram,Oct-24,3.32,102
+2024-25,31,Viluppuram,Nov-24,3.07,102
+2024-25,31,Viluppuram,Dec-24,0.87,102
+2024-25,31,Viluppuram,Jan-25,1.21,103
+2024-25,31,Viluppuram,Feb-25,1.82,103
+2024-25,31,Viluppuram,Mar-25,2.74,103
+2024-25,31,Viluppuram,Apr-25,2.9,103
+2024-25,31,Viluppuram,May-25,3.7,103
+2024-25,31,Viluppuram,Jun-25,3.3,103
+2024-25,31,Viluppuram,Yearly average,2.9,103
+2024-25,34,Kallakurichi,Jul-24,6.29,102
+2024-25,34,Kallakurichi,Aug-24,8.67,102
+2024-25,34,Kallakurichi,Sep-24,7.05,102
+2024-25,34,Kallakurichi,Oct-24,7.35,102
+2024-25,34,Kallakurichi,Nov-24,6.15,102
+2024-25,34,Kallakurichi,Dec-24,3.01,102
+2024-25,34,Kallakurichi,Jan-25,2.84,103
+2024-25,34,Kallakurichi,Feb-25,4,103
+2024-25,34,Kallakurichi,Mar-25,4.85,103
+2024-25,34,Kallakurichi,Apr-25,4.7,103
+2024-25,34,Kallakurichi,May-25,5.6,103
+2024-25,34,Kallakurichi,Jun-25,5.1,103
+2024-25,34,Kallakurichi,Yearly average,5.5,103
+2024-25,30,Vellore,Jul-24,6.62,102
+2024-25,30,Vellore,Aug-24,6.55,102
+2024-25,30,Vellore,Sep-24,6.03,102
+2024-25,30,Vellore,Oct-24,6.32,102
+2024-25,30,Vellore,Nov-24,5.43,102
+2024-25,30,Vellore,Dec-24,4.8,102
+2024-25,30,Vellore,Jan-25,4.39,103
+2024-25,30,Vellore,Feb-25,4.95,103
+2024-25,30,Vellore,Mar-25,5.51,103
+2024-25,30,Vellore,Apr-25,6.3,103
+2024-25,30,Vellore,May-25,6.3,103
+2024-25,30,Vellore,Jun-25,6.0,103
+2024-25,30,Vellore,Yearly average,5.8,103
+2024-25,37,Ranipet,Jul-24,4.81,102
+2024-25,37,Ranipet,Aug-24,4.39,102
+2024-25,37,Ranipet,Sep-24,4.09,102
+2024-25,37,Ranipet,Oct-24,4.3,102
+2024-25,37,Ranipet,Nov-24,3.16,102
+2024-25,37,Ranipet,Dec-24,2.15,102
+2024-25,37,Ranipet,Jan-25,2.16,103
+2024-25,37,Ranipet,Feb-25,2.74,103
+2024-25,37,Ranipet,Mar-25,3.38,103
+2024-25,37,Ranipet,Apr-25,4.0,103
+2024-25,37,Ranipet,May-25,4.7,103
+2024-25,37,Ranipet,Jun-25,4.7,103
+2024-25,37,Ranipet,Yearly average,3.7,103
+2024-25,36,Tirupathur,Jul-24,6.19,102
+2024-25,36,Tirupathur,Aug-24,6.62,102
+2024-25,36,Tirupathur,Sep-24,5.59,102
+2024-25,36,Tirupathur,Oct-24,3.72,102
+2024-25,36,Tirupathur,Nov-24,4.75,102
+2024-25,36,Tirupathur,Dec-24,3.24,102
+2024-25,36,Tirupathur,Jan-25,3.51,103
+2024-25,36,Tirupathur,Feb-25,4.17,103
+2024-25,36,Tirupathur,Mar-25,5.03,103
+2024-25,36,Tirupathur,Apr-25,5.8,103
+2024-25,36,Tirupathur,May-25,5.7,103
+2024-25,36,Tirupathur,Jun-25,5.5,103
+2024-25,36,Tirupathur,Yearly average,5.0,103
+2024-25,24,Tiruvannamalai,Jul-24,6.23,102
+2024-25,24,Tiruvannamalai,Aug-24,6.3,102
+2024-25,24,Tiruvannamalai,Sep-24,4.04,102
+2024-25,24,Tiruvannamalai,Oct-24,4.26,102
+2024-25,24,Tiruvannamalai,Nov-24,3.11,102
+2024-25,24,Tiruvannamalai,Dec-24,1.29,102
+2024-25,24,Tiruvannamalai,Jan-25,1.67,103
+2024-25,24,Tiruvannamalai,Feb-25,2.45,103
+2024-25,24,Tiruvannamalai,Mar-25,3,103
+2024-25,24,Tiruvannamalai,Apr-25,3.7,103
+2024-25,24,Tiruvannamalai,May-25,4.3,103
+2024-25,24,Tiruvannamalai,Jun-25,3.8,103
+2024-25,24,Tiruvannamalai,Yearly average,3.7,103
+2024-25,18,Salem,Jul-24,7.05,102
+2024-25,18,Salem,Aug-24,7.71,102
+2024-25,18,Salem,Sep-24,5.71,102
+2024-25,18,Salem,Oct-24,5.79,102
+2024-25,18,Salem,Nov-24,4.6,102
+2024-25,18,Salem,Dec-24,3.42,102
+2024-25,18,Salem,Jan-25,3.69,103
+2024-25,18,Salem,Feb-25,4.21,103
+2024-25,18,Salem,Mar-25,5.27,103
+2024-25,18,Salem,Apr-25,5.7,103
+2024-25,18,Salem,May-25,6.4,103
+2024-25,18,Salem,Jun-25,5.2,103
+2024-25,18,Salem,Yearly average,5.4,103
+2024-25,14,Namakkal,Jul-24,7.94,102
+2024-25,14,Namakkal,Aug-24,8.9,102
+2024-25,14,Namakkal,Sep-24,7.01,102
+2024-25,14,Namakkal,Oct-24,7.18,102
+2024-25,14,Namakkal,Nov-24,5.87,102
+2024-25,14,Namakkal,Dec-24,5.41,102
+2024-25,14,Namakkal,Jan-25,5.12,103
+2024-25,14,Namakkal,Feb-25,5.81,103
+2024-25,14,Namakkal,Mar-25,6.52,103
+2024-25,14,Namakkal,Apr-25,7.1,103
+2024-25,14,Namakkal,May-25,7.4,103
+2024-25,14,Namakkal,Jun-25,6.7,103
+2024-25,14,Namakkal,Yearly average,6.7,103
+2024-25,5,Dharmapuri,Jul-24,8.32,102
+2024-25,5,Dharmapuri,Aug-24,9.59,102
+2024-25,5,Dharmapuri,Sep-24,8.44,102
+2024-25,5,Dharmapuri,Oct-24,9.79,102
+2024-25,5,Dharmapuri,Nov-24,7.91,102
+2024-25,5,Dharmapuri,Dec-24,3.86,102
+2024-25,5,Dharmapuri,Jan-25,3.39,103
+2024-25,5,Dharmapuri,Feb-25,4.34,103
+2024-25,5,Dharmapuri,Mar-25,5.22,103
+2024-25,5,Dharmapuri,Apr-25,6.1,103
+2024-25,5,Dharmapuri,May-25,6.9,103
+2024-25,5,Dharmapuri,Jun-25,6.4,103
+2024-25,5,Dharmapuri,Yearly average,6.7,103
+2024-25,11,Krishnagiri,Jul-24,3.45,102
+2024-25,11,Krishnagiri,Aug-24,4.58,102
+2024-25,11,Krishnagiri,Sep-24,4.27,102
+2024-25,11,Krishnagiri,Oct-24,3.64,102
+2024-25,11,Krishnagiri,Nov-24,2.56,102
+2024-25,11,Krishnagiri,Dec-24,1.69,102
+2024-25,11,Krishnagiri,Jan-25,2.04,103
+2024-25,11,Krishnagiri,Feb-25,3.1,103
+2024-25,11,Krishnagiri,Mar-25,3.82,103
+2024-25,11,Krishnagiri,Apr-25,4.9,103
+2024-25,11,Krishnagiri,May-25,5.4,103
+2024-25,11,Krishnagiri,Jun-25,5.0,103
+2024-25,11,Krishnagiri,Yearly average,3.7,103
+2024-25,3,Coimbatore,Jul-24,11.07,102
+2024-25,3,Coimbatore,Aug-24,10.85,102
+2024-25,3,Coimbatore,Sep-24,9.53,102
+2024-25,3,Coimbatore,Oct-24,10.47,102
+2024-25,3,Coimbatore,Nov-24,10.88,102
+2024-25,3,Coimbatore,Dec-24,7.93,102
+2024-25,3,Coimbatore,Jan-25,8.29,103
+2024-25,3,Coimbatore,Feb-25,8.76,103
+2024-25,3,Coimbatore,Mar-25,10.48,103
+2024-25,3,Coimbatore,Apr-25,11.2,103
+2024-25,3,Coimbatore,May-25,11.1,103
+2024-25,3,Coimbatore,Jun-25,10.1,103
+2024-25,3,Coimbatore,Yearly average,10.1,103
+2024-25,28,Tiruppur,Jul-24,7.49,102
+2024-25,28,Tiruppur,Aug-24,9.97,102
+2024-25,28,Tiruppur,Sep-24,7.58,102
+2024-25,28,Tiruppur,Oct-24,8.12,102
+2024-25,28,Tiruppur,Nov-24,7.49,102
+2024-25,28,Tiruppur,Dec-24,5.87,102
+2024-25,28,Tiruppur,Jan-25,5.66,103
+2024-25,28,Tiruppur,Feb-25,6.28,103
+2024-25,28,Tiruppur,Mar-25,7.79,103
+2024-25,28,Tiruppur,Apr-25,8.2,103
+2024-25,28,Tiruppur,May-25,8.3,103
+2024-25,28,Tiruppur,Jun-25,8.4,103
+2024-25,28,Tiruppur,Yearly average,7.6,103
+2024-25,7,Erode,Jul-24,5.78,102
+2024-25,7,Erode,Aug-24,7.58,102
+2024-25,7,Erode,Sep-24,6.35,102
+2024-25,7,Erode,Oct-24,6.57,102
+2024-25,7,Erode,Nov-24,4.83,102
+2024-25,7,Erode,Dec-24,4.37,102
+2024-25,7,Erode,Jan-25,5.46,103
+2024-25,7,Erode,Feb-25,5.97,103
+2024-25,7,Erode,Mar-25,7.06,103
+2024-25,7,Erode,Apr-25,7.2,103
+2024-25,7,Erode,May-25,7.2,103
+2024-25,7,Erode,Jun-25,7.1,103
+2024-25,7,Erode,Yearly average,6.3,103
+2024-25,27,Tiruchirappalli,Jul-24,6.75,102
+2024-25,27,Tiruchirappalli,Aug-24,7.3,102
+2024-25,27,Tiruchirappalli,Sep-24,6.75,102
+2024-25,27,Tiruchirappalli,Oct-24,6.6,102
+2024-25,27,Tiruchirappalli,Nov-24,5.45,102
+2024-25,27,Tiruchirappalli,Dec-24,4.6,102
+2024-25,27,Tiruchirappalli,Jan-25,3.99,103
+2024-25,27,Tiruchirappalli,Feb-25,4.33,103
+2024-25,27,Tiruchirappalli,Mar-25,4.71,103
+2024-25,27,Tiruchirappalli,Apr-25,5.1,103
+2024-25,27,Tiruchirappalli,May-25,5.4,103
+2024-25,27,Tiruchirappalli,Jun-25,5.5,103
+2024-25,27,Tiruchirappalli,Yearly average,5.5,103
+2024-25,10,Karur,Jul-24,4.34,102
+2024-25,10,Karur,Aug-24,5.02,102
+2024-25,10,Karur,Sep-24,4.35,102
+2024-25,10,Karur,Oct-24,5.48,102
+2024-25,10,Karur,Nov-24,3.98,102
+2024-25,10,Karur,Dec-24,3.76,102
+2024-25,10,Karur,Jan-25,3.43,103
+2024-25,10,Karur,Feb-25,3.62,103
+2024-25,10,Karur,Mar-25,4.11,103
+2024-25,10,Karur,Apr-25,4.4,103
+2024-25,10,Karur,May-25,4.6,103
+2024-25,10,Karur,Jun-25,4.8,103
+2024-25,10,Karur,Yearly average,4.3,103
+2024-25,15,Perambalur,Jul-24,9.2,102
+2024-25,15,Perambalur,Aug-24,9.81,102
+2024-25,15,Perambalur,Sep-24,8.1,102
+2024-25,15,Perambalur,Oct-24,8.81,102
+2024-25,15,Perambalur,Nov-24,6.11,102
+2024-25,15,Perambalur,Dec-24,5.1,102
+2024-25,15,Perambalur,Jan-25,2.73,103
+2024-25,15,Perambalur,Feb-25,3.63,103
+2024-25,15,Perambalur,Mar-25,4.5,103
+2024-25,15,Perambalur,Apr-25,5.2,103
+2024-25,15,Perambalur,May-25,5.8,103
+2024-25,15,Perambalur,Jun-25,5.7,103
+2024-25,15,Perambalur,Yearly average,6.2,103
+2024-25,1,Ariyalur,Jul-24,5.29,102
+2024-25,1,Ariyalur,Aug-24,5.27,102
+2024-25,1,Ariyalur,Sep-24,4.52,102
+2024-25,1,Ariyalur,Oct-24,4.93,102
+2024-25,1,Ariyalur,Nov-24,4.73,102
+2024-25,1,Ariyalur,Dec-24,3.55,102
+2024-25,1,Ariyalur,Jan-25,2.41,103
+2024-25,1,Ariyalur,Feb-25,2.98,103
+2024-25,1,Ariyalur,Mar-25,3.7,103
+2024-25,1,Ariyalur,Apr-25,3.7,103
+2024-25,1,Ariyalur,May-25,4.1,103
+2024-25,1,Ariyalur,Jun-25,3.9,103
+2024-25,1,Ariyalur,Yearly average,4.1,103
+2024-25,16,Pudukkottai,Jul-24,5.51,102
+2024-25,16,Pudukkottai,Aug-24,6.66,102
+2024-25,16,Pudukkottai,Sep-24,5.53,102
+2024-25,16,Pudukkottai,Oct-24,6.24,102
+2024-25,16,Pudukkottai,Nov-24,4.86,102
+2024-25,16,Pudukkottai,Dec-24,4.55,102
+2024-25,16,Pudukkottai,Jan-25,4.04,103
+2024-25,16,Pudukkottai,Feb-25,4.42,103
+2024-25,16,Pudukkottai,Mar-25,5.91,103
+2024-25,16,Pudukkottai,Apr-25,6.4,103
+2024-25,16,Pudukkottai,May-25,6.9,103
+2024-25,16,Pudukkottai,Jun-25,7.1,103
+2024-25,16,Pudukkottai,Yearly average,5.7,103
+2024-25,20,Thanjavur,Jul-24,2.13,102
+2024-25,20,Thanjavur,Aug-24,2.93,102
+2024-25,20,Thanjavur,Sep-24,2.61,102
+2024-25,20,Thanjavur,Oct-24,2.86,102
+2024-25,20,Thanjavur,Nov-24,2.06,102
+2024-25,20,Thanjavur,Dec-24,1.4,102
+2024-25,20,Thanjavur,Jan-25,1.77,103
+2024-25,20,Thanjavur,Feb-25,1.84,103
+2024-25,20,Thanjavur,Mar-25,3.26,103
+2024-25,20,Thanjavur,Apr-25,3.9,103
+2024-25,20,Thanjavur,May-25,4.4,103
+2024-25,20,Thanjavur,Jun-25,4.4,103
+2024-25,20,Thanjavur,Yearly average,2.8,103
+2024-25,25,Tiruvarur,Jul-24,2.9,102
+2024-25,25,Tiruvarur,Aug-24,4.19,102
+2024-25,25,Tiruvarur,Sep-24,2.79,102
+2024-25,25,Tiruvarur,Oct-24,3.23,102
+2024-25,25,Tiruvarur,Nov-24,2.71,102
+2024-25,25,Tiruvarur,Dec-24,1.87,102
+2024-25,25,Tiruvarur,Jan-25,1.87,103
+2024-25,25,Tiruvarur,Feb-25,2.22,103
+2024-25,25,Tiruvarur,Mar-25,2.74,103
+2024-25,25,Tiruvarur,Apr-25,3.1,103
+2024-25,25,Tiruvarur,May-25,3.3,103
+2024-25,25,Tiruvarur,Jun-25,3.3,103
+2024-25,25,Tiruvarur,Yearly average,2.9,103
+2024-25,13,Nagapattinam,Jul-24,2.98,102
+2024-25,13,Nagapattinam,Aug-24,2.95,102
+2024-25,13,Nagapattinam,Sep-24,3.01,102
+2024-25,13,Nagapattinam,Oct-24,3.14,102
+2024-25,13,Nagapattinam,Nov-24,2.5,102
+2024-25,13,Nagapattinam,Dec-24,1.48,102
+2024-25,13,Nagapattinam,Jan-25,1.4,103
+2024-25,13,Nagapattinam,Feb-25,1.76,103
+2024-25,13,Nagapattinam,Mar-25,2.01,103
+2024-25,13,Nagapattinam,Apr-25,2.2,103
+2024-25,13,Nagapattinam,May-25,2.6,103
+2024-25,13,Nagapattinam,Jun-25,2.7,103
+2024-25,13,Nagapattinam,Yearly average,2.4,103
+2024-25,38,Mayiladuthurai,Jul-24,2.58,102
+2024-25,38,Mayiladuthurai,Aug-24,2.99,102
+2024-25,38,Mayiladuthurai,Sep-24,2.57,102
+2024-25,38,Mayiladuthurai,Oct-24,3.05,102
+2024-25,38,Mayiladuthurai,Nov-24,2.42,102
+2024-25,38,Mayiladuthurai,Dec-24,1.62,102
+2024-25,38,Mayiladuthurai,Jan-25,1.83,103
+2024-25,38,Mayiladuthurai,Feb-25,1.98,103
+2024-25,38,Mayiladuthurai,Mar-25,2.57,103
+2024-25,38,Mayiladuthurai,Apr-25,2.8,103
+2024-25,38,Mayiladuthurai,May-25,3.3,103
+2024-25,38,Mayiladuthurai,Jun-25,3.5,103
+2024-25,38,Mayiladuthurai,Yearly average,2.6,103
+2024-25,12,Madurai,Jul-24,4.54,102
+2024-25,12,Madurai,Aug-24,5,102
+2024-25,12,Madurai,Sep-24,4.6,102
+2024-25,12,Madurai,Oct-24,4.83,102
+2024-25,12,Madurai,Nov-24,3.43,102
+2024-25,12,Madurai,Dec-24,3.57,102
+2024-25,12,Madurai,Jan-25,3.36,103
+2024-25,12,Madurai,Feb-25,3.5,103
+2024-25,12,Madurai,Mar-25,4.03,103
+2024-25,12,Madurai,Apr-25,4.2,103
+2024-25,12,Madurai,May-25,4.6,103
+2024-25,12,Madurai,Jun-25,4.9,103
+2024-25,12,Madurai,Yearly average,4.2,103
+2024-25,22,Theni,Jul-24,6.13,102
+2024-25,22,Theni,Aug-24,6.42,102
+2024-25,22,Theni,Sep-24,6.51,102
+2024-25,22,Theni,Oct-24,8.15,102
+2024-25,22,Theni,Nov-24,4.91,102
+2024-25,22,Theni,Dec-24,4.44,102
+2024-25,22,Theni,Jan-25,4.68,103
+2024-25,22,Theni,Feb-25,4.9,103
+2024-25,22,Theni,Mar-25,5.79,103
+2024-25,22,Theni,Apr-25,6.0,103
+2024-25,22,Theni,May-25,5.7,103
+2024-25,22,Theni,Jun-25,5.5,103
+2024-25,22,Theni,Yearly average,5.8,103
+2024-25,6,Dindigul,Jul-24,6.34,102
+2024-25,6,Dindigul,Aug-24,7.07,102
+2024-25,6,Dindigul,Sep-24,6.49,102
+2024-25,6,Dindigul,Oct-24,5.36,102
+2024-25,6,Dindigul,Nov-24,5.45,102
+2024-25,6,Dindigul,Dec-24,5.23,102
+2024-25,6,Dindigul,Jan-25,4.65,103
+2024-25,6,Dindigul,Feb-25,4.86,103
+2024-25,6,Dindigul,Mar-25,5.69,103
+2024-25,6,Dindigul,Apr-25,6.0,103
+2024-25,6,Dindigul,May-25,6.7,103
+2024-25,6,Dindigul,Jun-25,6.8,103
+2024-25,6,Dindigul,Yearly average,5.9,103
+2024-25,17,Ramanathapuram,Jul-24,3.3,102
+2024-25,17,Ramanathapuram,Aug-24,4.29,102
+2024-25,17,Ramanathapuram,Sep-24,3.75,102
+2024-25,17,Ramanathapuram,Oct-24,4.14,102
+2024-25,17,Ramanathapuram,Nov-24,3.71,102
+2024-25,17,Ramanathapuram,Dec-24,2.72,102
+2024-25,17,Ramanathapuram,Jan-25,2.16,103
+2024-25,17,Ramanathapuram,Feb-25,2.31,103
+2024-25,17,Ramanathapuram,Mar-25,2.48,103
+2024-25,17,Ramanathapuram,Apr-25,2.6,103
+2024-25,17,Ramanathapuram,May-25,2.8,103
+2024-25,17,Ramanathapuram,Jun-25,3.0,103
+2024-25,17,Ramanathapuram,Yearly average,3.1,103
+2024-25,32,Virudhunagar,Jul-24,4.31,102
+2024-25,32,Virudhunagar,Aug-24,4.88,102
+2024-25,32,Virudhunagar,Sep-24,4.74,102
+2024-25,32,Virudhunagar,Oct-24,5.21,102
+2024-25,32,Virudhunagar,Nov-24,4.39,102
+2024-25,32,Virudhunagar,Dec-24,4.52,102
+2024-25,32,Virudhunagar,Jan-25,3.43,103
+2024-25,32,Virudhunagar,Feb-25,3.46,103
+2024-25,32,Virudhunagar,Mar-25,4.04,103
+2024-25,32,Virudhunagar,Apr-25,4.3,103
+2024-25,32,Virudhunagar,May-25,4.5,103
+2024-25,32,Virudhunagar,Jun-25,4.9,103
+2024-25,32,Virudhunagar,Yearly average,4.4,103
+2024-25,19,Sivaganga,Jul-24,5.25,102
+2024-25,19,Sivaganga,Aug-24,4.66,102
+2024-25,19,Sivaganga,Sep-24,4.65,102
+2024-25,19,Sivaganga,Oct-24,4.6,102
+2024-25,19,Sivaganga,Nov-24,4.39,102
+2024-25,19,Sivaganga,Dec-24,2.36,102
+2024-25,19,Sivaganga,Jan-25,1.96,103
+2024-25,19,Sivaganga,Feb-25,2.52,103
+2024-25,19,Sivaganga,Mar-25,3.15,103
+2024-25,19,Sivaganga,Apr-25,3.6,103
+2024-25,19,Sivaganga,May-25,3.9,103
+2024-25,19,Sivaganga,Jun-25,4.0,103
+2024-25,19,Sivaganga,Yearly average,3.8,103
+2024-25,26,Tirunelveli,Jul-24,4.85,102
+2024-25,26,Tirunelveli,Aug-24,5.21,102
+2024-25,26,Tirunelveli,Sep-24,5.73,102
+2024-25,26,Tirunelveli,Oct-24,5.72,102
+2024-25,26,Tirunelveli,Nov-24,5.54,102
+2024-25,26,Tirunelveli,Dec-24,5,102
+2024-25,26,Tirunelveli,Jan-25,4.25,103
+2024-25,26,Tirunelveli,Feb-25,4.74,103
+2024-25,26,Tirunelveli,Mar-25,5.02,103
+2024-25,26,Tirunelveli,Apr-25,5.1,103
+2024-25,26,Tirunelveli,May-25,5.5,103
+2024-25,26,Tirunelveli,Jun-25,5.8,103
+2024-25,26,Tirunelveli,Yearly average,5.2,103
+2024-25,33,Tenkasi,Jul-24,5.69,102
+2024-25,33,Tenkasi,Aug-24,5.47,102
+2024-25,33,Tenkasi,Sep-24,6.2,102
+2024-25,33,Tenkasi,Oct-24,6.48,102
+2024-25,33,Tenkasi,Nov-24,5.76,102
+2024-25,33,Tenkasi,Dec-24,5.46,102
+2024-25,33,Tenkasi,Jan-25,3.65,103
+2024-25,33,Tenkasi,Feb-25,3.9,103
+2024-25,33,Tenkasi,Mar-25,4.21,103
+2024-25,33,Tenkasi,Apr-25,4.5,103
+2024-25,33,Tenkasi,May-25,4.8,103
+2024-25,33,Tenkasi,Jun-25,5.2,103
+2024-25,33,Tenkasi,Yearly average,5.1,103
+2024-25,29,Thoothukudi,Jul-24,5.69,102
+2024-25,29,Thoothukudi,Aug-24,5.05,102
+2024-25,29,Thoothukudi,Sep-24,4.85,102
+2024-25,29,Thoothukudi,Oct-24,5.85,102
+2024-25,29,Thoothukudi,Nov-24,4.83,102
+2024-25,29,Thoothukudi,Dec-24,4.3,102
+2024-25,29,Thoothukudi,Jan-25,3.05,103
+2024-25,29,Thoothukudi,Feb-25,3.28,103
+2024-25,29,Thoothukudi,Mar-25,3.53,103
+2024-25,29,Thoothukudi,Apr-25,3.6,103
+2024-25,29,Thoothukudi,May-25,3.8,103
+2024-25,29,Thoothukudi,Jun-25,4.3,103
+2024-25,29,Thoothukudi,Yearly average,4.4,103
+2024-25,21,The Nilgiris,Jul-24,2.76,102
+2024-25,21,The Nilgiris,Aug-24,1.54,102
+2024-25,21,The Nilgiris,Sep-24,1.64,102
+2024-25,21,The Nilgiris,Oct-24,1.36,102
+2024-25,21,The Nilgiris,Nov-24,1.58,102
+2024-25,21,The Nilgiris,Dec-24,1.43,102
+2024-25,21,The Nilgiris,Jan-25,1.49,103
+2024-25,21,The Nilgiris,Feb-25,1.71,103
+2024-25,21,The Nilgiris,Mar-25,2.02,103
+2024-25,21,The Nilgiris,Apr-25,2.0,103
+2024-25,21,The Nilgiris,May-25,1.9,103
+2024-25,21,The Nilgiris,Jun-25,1.6,103
+2024-25,21,The Nilgiris,Yearly average,1.8,103
+2024-25,9,Kanniyakumari,Jul-24,7.14,102
+2024-25,9,Kanniyakumari,Aug-24,5.08,102
+2024-25,9,Kanniyakumari,Sep-24,4.33,102
+2024-25,9,Kanniyakumari,Oct-24,4.48,102
+2024-25,9,Kanniyakumari,Nov-24,2.73,102
+2024-25,9,Kanniyakumari,Dec-24,3.76,102
+2024-25,9,Kanniyakumari,Jan-25,4.34,103
+2024-25,9,Kanniyakumari,Feb-25,5.06,103
+2024-25,9,Kanniyakumari,Mar-25,5.07,103
+2024-25,9,Kanniyakumari,Apr-25,5.4,103
+2024-25,9,Kanniyakumari,May-25,5.3,103
+2024-25,9,Kanniyakumari,Jun-25,4.5,103
+2024-25,9,Kanniyakumari,Yearly average,4.8,103
+2024-25,,Tamil Nadu (State),Jul-24,5.4,102
+2024-25,,Tamil Nadu (State),Aug-24,5.8,102
+2024-25,,Tamil Nadu (State),Sep-24,5.0,102
+2024-25,,Tamil Nadu (State),Oct-24,5.3,102
+2024-25,,Tamil Nadu (State),Nov-24,4.4,102
+2024-25,,Tamil Nadu (State),Dec-24,3.4,102
+2024-25,,Tamil Nadu (State),Jan-25,3.2,103
+2024-25,,Tamil Nadu (State),Feb-25,3.7,103
+2024-25,,Tamil Nadu (State),Mar-25,4.4,103
+2024-25,,Tamil Nadu (State),Apr-25,4.7,103
+2024-25,,Tamil Nadu (State),May-25,5.1,103
+2024-25,,Tamil Nadu (State),Jun-25,5.0,103
+2024-25,,Tamil Nadu (State),Yearly average,4.6,103
