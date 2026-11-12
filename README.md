@@ -19,6 +19,9 @@ UI is finalised; this API is designed to be consumed by it (or by Swagger UI
 cd agrooptimize-backend
 pip install -r requirements-dev.txt  # runtime + test tools; add --break-system-packages on some Linux setups
 
+# Build the official-data database (data/official/official_v1.db) from data/official/raw/
+python3 scripts/preprocess_all.py
+
 # Option A: CLI demo, no server needed -- also saves results/ files
 python3 run_demo.py --location Coimbatore --season Kharif --land 5 --budget 200000
 
@@ -52,9 +55,10 @@ agrooptimize-backend/
 │   └── services/
 │       ├── plan_service.py      # orchestrates every stage end to end
 │       └── results_store.py     # Stage 5: persists each run to results/
-├── data/raw/                    # the 16 dataset CSVs (4 regions x 4 kinds)
+├── data/official/raw/           # official government datasets (the database is rebuilt from these)
+├── legacy/                      # archived synthetic v1 data and loader (tag published-v1)
 ├── results/                     # every run's saved output (JSON/CSV/PNG) -- created on first run
-├── tests/test_pipeline.py       # 34 tests covering every module + the API + persistence
+├── tests/                       # pytest suite (pipeline, API, datasets, fuzzy, NSGA-II, TOPSIS, ...)
 ├── notes/
 │   ├── methodology_notes.md     # full write-up: what each stage does & why
 │   └── viva_prep.md             # Q&A style reference for reviews / viva
@@ -63,10 +67,12 @@ agrooptimize-backend/
 
 ## Pipeline (matches the paper's Section III, plus persistence)
 
-1. **Data collection & preprocessing** (`app/data/`) -- loads soil, rainfall,
-   crop-history and water-availability CSVs for Coimbatore, Erode, Salem and
-   Pollachi (2020-2023); aggregates them into a `RegionSeasonProfile` for a
-   given location/year/season.
+1. **Data collection & preprocessing** (`app/data/`) -- reads the official
+   datasets (TN Season & Crop Report 2024-25, IMD rainfall, WRD reservoir
+   levels, groundwater, Soil Health Card, CACP MSP/cost, TNAU doses) for the
+   38 Tamil Nadu districts and aggregates them into a `RegionSeasonProfile`
+   for a given district and season (Kharif/Rabi). See
+   `docs/handbook/DATASETS.md`.
 2. **Fuzzy uncertainty modelling** (`app/fuzzy/`) -- triangular membership
    functions + a Mamdani rule base turn rainfall deviation, water storage
    and soil fertility into two scenario weights: `yield_confidence` and
