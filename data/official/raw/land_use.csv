@@ -1,0 +1,1834 @@
+report_year,district_code,district,category,measure,unit,value,printed_page
+2024-25,2,Chennai,Total geographical area,area_ha,ha,44111,104
+2024-25,2,Chennai,Total geographical area,pct_of_state_area,%,0.3,104
+2024-25,2,Chennai,Forest,area_ha,ha,300,104
+2024-25,2,Chennai,Forest,pct_of_district_area,%,0.7,104
+2024-25,2,Chennai,Forest,pct_of_state_area,%,0.0,104
+2024-25,2,Chennai,Barren and unculturable area,area_ha,ha,7,104
+2024-25,2,Chennai,Barren and unculturable area,pct_of_district_area,%,0.0,104
+2024-25,2,Chennai,Barren and unculturable area,pct_of_state_area,%,0.0,104
+2024-25,2,Chennai,Land put to non-agricultural uses: water logged land,area_ha,ha,426,105
+2024-25,2,Chennai,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,1.0,105
+2024-25,2,Chennai,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.7,105
+2024-25,2,Chennai,Land put to non-agricultural uses: social forestry,area_ha,ha,0,105
+2024-25,2,Chennai,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.0,105
+2024-25,2,Chennai,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,0.0,105
+2024-25,2,Chennai,Land put to non-agricultural uses: land under still water,area_ha,ha,3673,105
+2024-25,2,Chennai,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,8.3,105
+2024-25,2,Chennai,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,0.4,105
+2024-25,2,Chennai,Land put to non-agricultural uses: others,area_ha,ha,2894,106
+2024-25,2,Chennai,Land put to non-agricultural uses: others,pct_of_district_area,%,6.6,106
+2024-25,2,Chennai,Land put to non-agricultural uses: others,pct_of_state_area,%,0.7,106
+2024-25,2,Chennai,Land put to non-agricultural uses: total,area_ha,ha,35955,106
+2024-25,2,Chennai,Land put to non-agricultural uses: total,pct_of_district_area,%,81.5,106
+2024-25,2,Chennai,Land put to non-agricultural uses: total,pct_of_state_area,%,1.6,106
+2024-25,2,Chennai,Cultivable waste,area_ha,ha,1194,106
+2024-25,2,Chennai,Cultivable waste,pct_of_district_area,%,2.7,106
+2024-25,2,Chennai,Cultivable waste,pct_of_state_area,%,0.3,106
+2024-25,2,Chennai,Permanent pastures and other grazing lands,area_ha,ha,554,107
+2024-25,2,Chennai,Permanent pastures and other grazing lands,pct_of_district_area,%,1.3,107
+2024-25,2,Chennai,Permanent pastures and other grazing lands,pct_of_state_area,%,0.5,107
+2024-25,2,Chennai,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,212,107
+2024-25,2,Chennai,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,0.5,107
+2024-25,2,Chennai,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,0.1,107
+2024-25,2,Chennai,Current fallow,area_ha,ha,766,108
+2024-25,2,Chennai,Current fallow,pct_of_district_area,%,1.7,108
+2024-25,2,Chennai,Current fallow,pct_of_state_area,%,0.1,108
+2024-25,2,Chennai,Other fallow,area_ha,ha,4779,108
+2024-25,2,Chennai,Other fallow,pct_of_district_area,%,10.8,108
+2024-25,2,Chennai,Other fallow,pct_of_state_area,%,0,108
+2024-25,2,Chennai,Net area sown,area_ha,ha,349,109
+2024-25,2,Chennai,Net area sown,pct_of_district_area,%,0.8,109
+2024-25,2,Chennai,Net area sown,pct_of_state_area,%,0.0,109
+2024-25,2,Chennai,Area sown more than once,area_ha,ha,50,109
+2024-25,2,Chennai,Area sown more than once,pct_of_district_area,%,0.1,109
+2024-25,2,Chennai,Area sown more than once,pct_of_state_area,%,0.0,109
+2024-25,2,Chennai,Gross area sown,area_ha,ha,399,109
+2024-25,2,Chennai,Gross area sown,pct_of_district_area,%,0.9,109
+2024-25,2,Chennai,Gross area sown,pct_of_state_area,%,0.0,109
+2024-25,8,Kancheepuram,Total geographical area,area_ha,ha,170479,104
+2024-25,8,Kancheepuram,Total geographical area,pct_of_state_area,%,1.3,104
+2024-25,8,Kancheepuram,Forest,area_ha,ha,3685,104
+2024-25,8,Kancheepuram,Forest,pct_of_district_area,%,2.2,104
+2024-25,8,Kancheepuram,Forest,pct_of_state_area,%,0.2,104
+2024-25,8,Kancheepuram,Barren and unculturable area,area_ha,ha,2115,104
+2024-25,8,Kancheepuram,Barren and unculturable area,pct_of_district_area,%,1.2,104
+2024-25,8,Kancheepuram,Barren and unculturable area,pct_of_state_area,%,0.5,104
+2024-25,8,Kancheepuram,Land put to non-agricultural uses: water logged land,area_ha,ha,11,105
+2024-25,8,Kancheepuram,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.0,105
+2024-25,8,Kancheepuram,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.0,105
+2024-25,8,Kancheepuram,Land put to non-agricultural uses: social forestry,area_ha,ha,584,105
+2024-25,8,Kancheepuram,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.3,105
+2024-25,8,Kancheepuram,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,1.1,105
+2024-25,8,Kancheepuram,Land put to non-agricultural uses: land under still water,area_ha,ha,32789,105
+2024-25,8,Kancheepuram,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,19.2,105
+2024-25,8,Kancheepuram,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,3.3,105
+2024-25,8,Kancheepuram,Land put to non-agricultural uses: others,area_ha,ha,21408,106
+2024-25,8,Kancheepuram,Land put to non-agricultural uses: others,pct_of_district_area,%,12.6,106
+2024-25,8,Kancheepuram,Land put to non-agricultural uses: others,pct_of_state_area,%,5.1,106
+2024-25,8,Kancheepuram,Land put to non-agricultural uses: total,area_ha,ha,65584,106
+2024-25,8,Kancheepuram,Land put to non-agricultural uses: total,pct_of_district_area,%,38.5,106
+2024-25,8,Kancheepuram,Land put to non-agricultural uses: total,pct_of_state_area,%,3.0,106
+2024-25,8,Kancheepuram,Cultivable waste,area_ha,ha,5481,106
+2024-25,8,Kancheepuram,Cultivable waste,pct_of_district_area,%,3.2,106
+2024-25,8,Kancheepuram,Cultivable waste,pct_of_state_area,%,1.5,106
+2024-25,8,Kancheepuram,Permanent pastures and other grazing lands,area_ha,ha,4700,107
+2024-25,8,Kancheepuram,Permanent pastures and other grazing lands,pct_of_district_area,%,2.8,107
+2024-25,8,Kancheepuram,Permanent pastures and other grazing lands,pct_of_state_area,%,4.4,107
+2024-25,8,Kancheepuram,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,2857,107
+2024-25,8,Kancheepuram,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,1.7,107
+2024-25,8,Kancheepuram,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,1.7,107
+2024-25,8,Kancheepuram,Current fallow,area_ha,ha,20745,108
+2024-25,8,Kancheepuram,Current fallow,pct_of_district_area,%,12.2,108
+2024-25,8,Kancheepuram,Current fallow,pct_of_state_area,%,2.4,108
+2024-25,8,Kancheepuram,Other fallow,area_ha,ha,24029,108
+2024-25,8,Kancheepuram,Other fallow,pct_of_district_area,%,14.1,108
+2024-25,8,Kancheepuram,Other fallow,pct_of_state_area,%,1,108
+2024-25,8,Kancheepuram,Net area sown,area_ha,ha,41283,109
+2024-25,8,Kancheepuram,Net area sown,pct_of_district_area,%,24.2,109
+2024-25,8,Kancheepuram,Net area sown,pct_of_state_area,%,0.9,109
+2024-25,8,Kancheepuram,Area sown more than once,area_ha,ha,19813,109
+2024-25,8,Kancheepuram,Area sown more than once,pct_of_district_area,%,11.6,109
+2024-25,8,Kancheepuram,Area sown more than once,pct_of_state_area,%,1.4,109
+2024-25,8,Kancheepuram,Gross area sown,area_ha,ha,61096,109
+2024-25,8,Kancheepuram,Gross area sown,pct_of_district_area,%,35.8,109
+2024-25,8,Kancheepuram,Gross area sown,pct_of_state_area,%,1.0,109
+2024-25,35,Chengalpattu,Total geographical area,area_ha,ha,263892,104
+2024-25,35,Chengalpattu,Total geographical area,pct_of_state_area,%,2.0,104
+2024-25,35,Chengalpattu,Forest,area_ha,ha,20175,104
+2024-25,35,Chengalpattu,Forest,pct_of_district_area,%,7.6,104
+2024-25,35,Chengalpattu,Forest,pct_of_state_area,%,0.9,104
+2024-25,35,Chengalpattu,Barren and unculturable area,area_ha,ha,8826,104
+2024-25,35,Chengalpattu,Barren and unculturable area,pct_of_district_area,%,3.3,104
+2024-25,35,Chengalpattu,Barren and unculturable area,pct_of_state_area,%,1.9,104
+2024-25,35,Chengalpattu,Land put to non-agricultural uses: water logged land,area_ha,ha,2501,105
+2024-25,35,Chengalpattu,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.9,105
+2024-25,35,Chengalpattu,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,4.3,105
+2024-25,35,Chengalpattu,Land put to non-agricultural uses: social forestry,area_ha,ha,8089,105
+2024-25,35,Chengalpattu,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,3.1,105
+2024-25,35,Chengalpattu,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,15.3,105
+2024-25,35,Chengalpattu,Land put to non-agricultural uses: land under still water,area_ha,ha,40165,105
+2024-25,35,Chengalpattu,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,15.2,105
+2024-25,35,Chengalpattu,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,4.1,105
+2024-25,35,Chengalpattu,Land put to non-agricultural uses: others,area_ha,ha,11649,106
+2024-25,35,Chengalpattu,Land put to non-agricultural uses: others,pct_of_district_area,%,4.4,106
+2024-25,35,Chengalpattu,Land put to non-agricultural uses: others,pct_of_state_area,%,2.8,106
+2024-25,35,Chengalpattu,Land put to non-agricultural uses: total,area_ha,ha,80226,106
+2024-25,35,Chengalpattu,Land put to non-agricultural uses: total,pct_of_district_area,%,30.4,106
+2024-25,35,Chengalpattu,Land put to non-agricultural uses: total,pct_of_state_area,%,3.6,106
+2024-25,35,Chengalpattu,Cultivable waste,area_ha,ha,5313,106
+2024-25,35,Chengalpattu,Cultivable waste,pct_of_district_area,%,2.0,106
+2024-25,35,Chengalpattu,Cultivable waste,pct_of_state_area,%,1.5,106
+2024-25,35,Chengalpattu,Permanent pastures and other grazing lands,area_ha,ha,13393,107
+2024-25,35,Chengalpattu,Permanent pastures and other grazing lands,pct_of_district_area,%,5.1,107
+2024-25,35,Chengalpattu,Permanent pastures and other grazing lands,pct_of_state_area,%,12.5,107
+2024-25,35,Chengalpattu,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,8773,107
+2024-25,35,Chengalpattu,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,3.3,107
+2024-25,35,Chengalpattu,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,5.3,107
+2024-25,35,Chengalpattu,Current fallow,area_ha,ha,25415,108
+2024-25,35,Chengalpattu,Current fallow,pct_of_district_area,%,9.6,108
+2024-25,35,Chengalpattu,Current fallow,pct_of_state_area,%,3.0,108
+2024-25,35,Chengalpattu,Other fallow,area_ha,ha,35682,108
+2024-25,35,Chengalpattu,Other fallow,pct_of_district_area,%,13.5,108
+2024-25,35,Chengalpattu,Other fallow,pct_of_state_area,%,2,108
+2024-25,35,Chengalpattu,Net area sown,area_ha,ha,66090,109
+2024-25,35,Chengalpattu,Net area sown,pct_of_district_area,%,25.0,109
+2024-25,35,Chengalpattu,Net area sown,pct_of_state_area,%,1.4,109
+2024-25,35,Chengalpattu,Area sown more than once,area_ha,ha,18469,109
+2024-25,35,Chengalpattu,Area sown more than once,pct_of_district_area,%,7.0,109
+2024-25,35,Chengalpattu,Area sown more than once,pct_of_state_area,%,1.3,109
+2024-25,35,Chengalpattu,Gross area sown,area_ha,ha,84559,109
+2024-25,35,Chengalpattu,Gross area sown,pct_of_district_area,%,32.0,109
+2024-25,35,Chengalpattu,Gross area sown,pct_of_state_area,%,1.4,109
+2024-25,23,Tiruvallur,Total geographical area,area_ha,ha,324069,104
+2024-25,23,Tiruvallur,Total geographical area,pct_of_state_area,%,2.5,104
+2024-25,23,Tiruvallur,Forest,area_ha,ha,19736,104
+2024-25,23,Tiruvallur,Forest,pct_of_district_area,%,6.1,104
+2024-25,23,Tiruvallur,Forest,pct_of_state_area,%,0.9,104
+2024-25,23,Tiruvallur,Barren and unculturable area,area_ha,ha,13569,104
+2024-25,23,Tiruvallur,Barren and unculturable area,pct_of_district_area,%,4.2,104
+2024-25,23,Tiruvallur,Barren and unculturable area,pct_of_state_area,%,3.0,104
+2024-25,23,Tiruvallur,Land put to non-agricultural uses: water logged land,area_ha,ha,635,105
+2024-25,23,Tiruvallur,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.2,105
+2024-25,23,Tiruvallur,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,1.1,105
+2024-25,23,Tiruvallur,Land put to non-agricultural uses: social forestry,area_ha,ha,2011,105
+2024-25,23,Tiruvallur,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.6,105
+2024-25,23,Tiruvallur,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,3.8,105
+2024-25,23,Tiruvallur,Land put to non-agricultural uses: land under still water,area_ha,ha,42426,105
+2024-25,23,Tiruvallur,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,13.1,105
+2024-25,23,Tiruvallur,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,4.3,105
+2024-25,23,Tiruvallur,Land put to non-agricultural uses: others,area_ha,ha,30306,106
+2024-25,23,Tiruvallur,Land put to non-agricultural uses: others,pct_of_district_area,%,9.4,106
+2024-25,23,Tiruvallur,Land put to non-agricultural uses: others,pct_of_state_area,%,7.2,106
+2024-25,23,Tiruvallur,Land put to non-agricultural uses: total,area_ha,ha,96940,106
+2024-25,23,Tiruvallur,Land put to non-agricultural uses: total,pct_of_district_area,%,29.9,106
+2024-25,23,Tiruvallur,Land put to non-agricultural uses: total,pct_of_state_area,%,4.4,106
+2024-25,23,Tiruvallur,Cultivable waste,area_ha,ha,6274,106
+2024-25,23,Tiruvallur,Cultivable waste,pct_of_district_area,%,1.9,106
+2024-25,23,Tiruvallur,Cultivable waste,pct_of_state_area,%,1.8,106
+2024-25,23,Tiruvallur,Permanent pastures and other grazing lands,area_ha,ha,7741,107
+2024-25,23,Tiruvallur,Permanent pastures and other grazing lands,pct_of_district_area,%,2.4,107
+2024-25,23,Tiruvallur,Permanent pastures and other grazing lands,pct_of_state_area,%,7.2,107
+2024-25,23,Tiruvallur,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,6062,107
+2024-25,23,Tiruvallur,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,1.9,107
+2024-25,23,Tiruvallur,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,3.6,107
+2024-25,23,Tiruvallur,Current fallow,area_ha,ha,34558,108
+2024-25,23,Tiruvallur,Current fallow,pct_of_district_area,%,10.7,108
+2024-25,23,Tiruvallur,Current fallow,pct_of_state_area,%,4.0,108
+2024-25,23,Tiruvallur,Other fallow,area_ha,ha,49760,108
+2024-25,23,Tiruvallur,Other fallow,pct_of_district_area,%,15.4,108
+2024-25,23,Tiruvallur,Other fallow,pct_of_state_area,%,3,108
+2024-25,23,Tiruvallur,Net area sown,area_ha,ha,89430,109
+2024-25,23,Tiruvallur,Net area sown,pct_of_district_area,%,27.6,109
+2024-25,23,Tiruvallur,Net area sown,pct_of_state_area,%,1.9,109
+2024-25,23,Tiruvallur,Area sown more than once,area_ha,ha,62130,109
+2024-25,23,Tiruvallur,Area sown more than once,pct_of_district_area,%,19.2,109
+2024-25,23,Tiruvallur,Area sown more than once,pct_of_state_area,%,4.4,109
+2024-25,23,Tiruvallur,Gross area sown,area_ha,ha,151560,109
+2024-25,23,Tiruvallur,Gross area sown,pct_of_district_area,%,46.8,109
+2024-25,23,Tiruvallur,Gross area sown,pct_of_state_area,%,2.4,109
+2024-25,4,Cuddalore,Total geographical area,area_ha,ha,367781,104
+2024-25,4,Cuddalore,Total geographical area,pct_of_state_area,%,2.8,104
+2024-25,4,Cuddalore,Forest,area_ha,ha,1415,104
+2024-25,4,Cuddalore,Forest,pct_of_district_area,%,0.4,104
+2024-25,4,Cuddalore,Forest,pct_of_state_area,%,0.1,104
+2024-25,4,Cuddalore,Barren and unculturable area,area_ha,ha,14623,104
+2024-25,4,Cuddalore,Barren and unculturable area,pct_of_district_area,%,4.0,104
+2024-25,4,Cuddalore,Barren and unculturable area,pct_of_state_area,%,3.2,104
+2024-25,4,Cuddalore,Land put to non-agricultural uses: water logged land,area_ha,ha,3,105
+2024-25,4,Cuddalore,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.0,105
+2024-25,4,Cuddalore,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.0,105
+2024-25,4,Cuddalore,Land put to non-agricultural uses: social forestry,area_ha,ha,272,105
+2024-25,4,Cuddalore,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.1,105
+2024-25,4,Cuddalore,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,0.5,105
+2024-25,4,Cuddalore,Land put to non-agricultural uses: land under still water,area_ha,ha,24745,105
+2024-25,4,Cuddalore,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,6.7,105
+2024-25,4,Cuddalore,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,2.5,105
+2024-25,4,Cuddalore,Land put to non-agricultural uses: others,area_ha,ha,12108,106
+2024-25,4,Cuddalore,Land put to non-agricultural uses: others,pct_of_district_area,%,3.3,106
+2024-25,4,Cuddalore,Land put to non-agricultural uses: others,pct_of_state_area,%,2.9,106
+2024-25,4,Cuddalore,Land put to non-agricultural uses: total,area_ha,ha,58982,106
+2024-25,4,Cuddalore,Land put to non-agricultural uses: total,pct_of_district_area,%,16.0,106
+2024-25,4,Cuddalore,Land put to non-agricultural uses: total,pct_of_state_area,%,2.7,106
+2024-25,4,Cuddalore,Cultivable waste,area_ha,ha,6027,106
+2024-25,4,Cuddalore,Cultivable waste,pct_of_district_area,%,1.6,106
+2024-25,4,Cuddalore,Cultivable waste,pct_of_state_area,%,1.7,106
+2024-25,4,Cuddalore,Permanent pastures and other grazing lands,area_ha,ha,604,107
+2024-25,4,Cuddalore,Permanent pastures and other grazing lands,pct_of_district_area,%,0.2,107
+2024-25,4,Cuddalore,Permanent pastures and other grazing lands,pct_of_state_area,%,0.6,107
+2024-25,4,Cuddalore,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,12807,107
+2024-25,4,Cuddalore,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,3.5,107
+2024-25,4,Cuddalore,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,7.7,107
+2024-25,4,Cuddalore,Current fallow,area_ha,ha,23862,108
+2024-25,4,Cuddalore,Current fallow,pct_of_district_area,%,6.5,108
+2024-25,4,Cuddalore,Current fallow,pct_of_state_area,%,2.8,108
+2024-25,4,Cuddalore,Other fallow,area_ha,ha,37760,108
+2024-25,4,Cuddalore,Other fallow,pct_of_district_area,%,10.3,108
+2024-25,4,Cuddalore,Other fallow,pct_of_state_area,%,2,108
+2024-25,4,Cuddalore,Net area sown,area_ha,ha,211703,109
+2024-25,4,Cuddalore,Net area sown,pct_of_district_area,%,57.6,109
+2024-25,4,Cuddalore,Net area sown,pct_of_state_area,%,4.4,109
+2024-25,4,Cuddalore,Area sown more than once,area_ha,ha,105189,109
+2024-25,4,Cuddalore,Area sown more than once,pct_of_district_area,%,28.6,109
+2024-25,4,Cuddalore,Area sown more than once,pct_of_state_area,%,7.5,109
+2024-25,4,Cuddalore,Gross area sown,area_ha,ha,316892,109
+2024-25,4,Cuddalore,Gross area sown,pct_of_district_area,%,86.2,109
+2024-25,4,Cuddalore,Gross area sown,pct_of_state_area,%,5.1,109
+2024-25,31,Viluppuram,Total geographical area,area_ha,ha,391468,104
+2024-25,31,Viluppuram,Total geographical area,pct_of_state_area,%,3.0,104
+2024-25,31,Viluppuram,Forest,area_ha,ha,14846,104
+2024-25,31,Viluppuram,Forest,pct_of_district_area,%,3.8,104
+2024-25,31,Viluppuram,Forest,pct_of_state_area,%,0.7,104
+2024-25,31,Viluppuram,Barren and unculturable area,area_ha,ha,20604,104
+2024-25,31,Viluppuram,Barren and unculturable area,pct_of_district_area,%,5.3,104
+2024-25,31,Viluppuram,Barren and unculturable area,pct_of_state_area,%,4.5,104
+2024-25,31,Viluppuram,Land put to non-agricultural uses: water logged land,area_ha,ha,400,105
+2024-25,31,Viluppuram,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.1,105
+2024-25,31,Viluppuram,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.7,105
+2024-25,31,Viluppuram,Land put to non-agricultural uses: social forestry,area_ha,ha,175,105
+2024-25,31,Viluppuram,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.0,105
+2024-25,31,Viluppuram,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,0.3,105
+2024-25,31,Viluppuram,Land put to non-agricultural uses: land under still water,area_ha,ha,45154,105
+2024-25,31,Viluppuram,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,11.5,105
+2024-25,31,Viluppuram,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,4.6,105
+2024-25,31,Viluppuram,Land put to non-agricultural uses: others,area_ha,ha,12825,106
+2024-25,31,Viluppuram,Land put to non-agricultural uses: others,pct_of_district_area,%,3.3,106
+2024-25,31,Viluppuram,Land put to non-agricultural uses: others,pct_of_state_area,%,3.0,106
+2024-25,31,Viluppuram,Land put to non-agricultural uses: total,area_ha,ha,86872,106
+2024-25,31,Viluppuram,Land put to non-agricultural uses: total,pct_of_district_area,%,22.2,106
+2024-25,31,Viluppuram,Land put to non-agricultural uses: total,pct_of_state_area,%,3.9,106
+2024-25,31,Viluppuram,Cultivable waste,area_ha,ha,4883,106
+2024-25,31,Viluppuram,Cultivable waste,pct_of_district_area,%,1.2,106
+2024-25,31,Viluppuram,Cultivable waste,pct_of_state_area,%,1.4,106
+2024-25,31,Viluppuram,Permanent pastures and other grazing lands,area_ha,ha,1846,107
+2024-25,31,Viluppuram,Permanent pastures and other grazing lands,pct_of_district_area,%,0.5,107
+2024-25,31,Viluppuram,Permanent pastures and other grazing lands,pct_of_state_area,%,1.7,107
+2024-25,31,Viluppuram,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,5122,107
+2024-25,31,Viluppuram,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,1.3,107
+2024-25,31,Viluppuram,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,3.1,107
+2024-25,31,Viluppuram,Current fallow,area_ha,ha,66863,108
+2024-25,31,Viluppuram,Current fallow,pct_of_district_area,%,17.1,108
+2024-25,31,Viluppuram,Current fallow,pct_of_state_area,%,7.8,108
+2024-25,31,Viluppuram,Other fallow,area_ha,ha,4895,108
+2024-25,31,Viluppuram,Other fallow,pct_of_district_area,%,1.3,108
+2024-25,31,Viluppuram,Other fallow,pct_of_state_area,%,0,108
+2024-25,31,Viluppuram,Net area sown,area_ha,ha,185537,109
+2024-25,31,Viluppuram,Net area sown,pct_of_district_area,%,47.4,109
+2024-25,31,Viluppuram,Net area sown,pct_of_state_area,%,3.8,109
+2024-25,31,Viluppuram,Area sown more than once,area_ha,ha,52187,109
+2024-25,31,Viluppuram,Area sown more than once,pct_of_district_area,%,13.3,109
+2024-25,31,Viluppuram,Area sown more than once,pct_of_state_area,%,3.7,109
+2024-25,31,Viluppuram,Gross area sown,area_ha,ha,237724,109
+2024-25,31,Viluppuram,Gross area sown,pct_of_district_area,%,60.7,109
+2024-25,31,Viluppuram,Gross area sown,pct_of_state_area,%,3.8,109
+2024-25,34,Kallakurichi,Total geographical area,area_ha,ha,330735,104
+2024-25,34,Kallakurichi,Total geographical area,pct_of_state_area,%,2.5,104
+2024-25,34,Kallakurichi,Forest,area_ha,ha,56851,104
+2024-25,34,Kallakurichi,Forest,pct_of_district_area,%,17.2,104
+2024-25,34,Kallakurichi,Forest,pct_of_state_area,%,2.6,104
+2024-25,34,Kallakurichi,Barren and unculturable area,area_ha,ha,36047,104
+2024-25,34,Kallakurichi,Barren and unculturable area,pct_of_district_area,%,10.9,104
+2024-25,34,Kallakurichi,Barren and unculturable area,pct_of_state_area,%,7.9,104
+2024-25,34,Kallakurichi,Land put to non-agricultural uses: water logged land,area_ha,ha,549,105
+2024-25,34,Kallakurichi,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.2,105
+2024-25,34,Kallakurichi,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.9,105
+2024-25,34,Kallakurichi,Land put to non-agricultural uses: social forestry,area_ha,ha,946,105
+2024-25,34,Kallakurichi,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.3,105
+2024-25,34,Kallakurichi,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,1.8,105
+2024-25,34,Kallakurichi,Land put to non-agricultural uses: land under still water,area_ha,ha,30071,105
+2024-25,34,Kallakurichi,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,9.1,105
+2024-25,34,Kallakurichi,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,3.0,105
+2024-25,34,Kallakurichi,Land put to non-agricultural uses: others,area_ha,ha,6429,106
+2024-25,34,Kallakurichi,Land put to non-agricultural uses: others,pct_of_district_area,%,1.9,106
+2024-25,34,Kallakurichi,Land put to non-agricultural uses: others,pct_of_state_area,%,1.5,106
+2024-25,34,Kallakurichi,Land put to non-agricultural uses: total,area_ha,ha,49242,106
+2024-25,34,Kallakurichi,Land put to non-agricultural uses: total,pct_of_district_area,%,14.9,106
+2024-25,34,Kallakurichi,Land put to non-agricultural uses: total,pct_of_state_area,%,2.2,106
+2024-25,34,Kallakurichi,Cultivable waste,area_ha,ha,4655,106
+2024-25,34,Kallakurichi,Cultivable waste,pct_of_district_area,%,1.4,106
+2024-25,34,Kallakurichi,Cultivable waste,pct_of_state_area,%,1.3,106
+2024-25,34,Kallakurichi,Permanent pastures and other grazing lands,area_ha,ha,2324,107
+2024-25,34,Kallakurichi,Permanent pastures and other grazing lands,pct_of_district_area,%,0.7,107
+2024-25,34,Kallakurichi,Permanent pastures and other grazing lands,pct_of_state_area,%,2.2,107
+2024-25,34,Kallakurichi,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,1224,107
+2024-25,34,Kallakurichi,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,0.4,107
+2024-25,34,Kallakurichi,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,0.7,107
+2024-25,34,Kallakurichi,Current fallow,area_ha,ha,18652,108
+2024-25,34,Kallakurichi,Current fallow,pct_of_district_area,%,5.6,108
+2024-25,34,Kallakurichi,Current fallow,pct_of_state_area,%,2.2,108
+2024-25,34,Kallakurichi,Other fallow,area_ha,ha,8293,108
+2024-25,34,Kallakurichi,Other fallow,pct_of_district_area,%,2.5,108
+2024-25,34,Kallakurichi,Other fallow,pct_of_state_area,%,0,108
+2024-25,34,Kallakurichi,Net area sown,area_ha,ha,153447,109
+2024-25,34,Kallakurichi,Net area sown,pct_of_district_area,%,46.4,109
+2024-25,34,Kallakurichi,Net area sown,pct_of_state_area,%,3.2,109
+2024-25,34,Kallakurichi,Area sown more than once,area_ha,ha,72125,109
+2024-25,34,Kallakurichi,Area sown more than once,pct_of_district_area,%,21.8,109
+2024-25,34,Kallakurichi,Area sown more than once,pct_of_state_area,%,5.2,109
+2024-25,34,Kallakurichi,Gross area sown,area_ha,ha,225571,109
+2024-25,34,Kallakurichi,Gross area sown,pct_of_district_area,%,68.2,109
+2024-25,34,Kallakurichi,Gross area sown,pct_of_state_area,%,3.6,109
+2024-25,30,Vellore,Total geographical area,area_ha,ha,223264,104
+2024-25,30,Vellore,Total geographical area,pct_of_state_area,%,1.7,104
+2024-25,30,Vellore,Forest,area_ha,ha,89953,104
+2024-25,30,Vellore,Forest,pct_of_district_area,%,40.3,104
+2024-25,30,Vellore,Forest,pct_of_state_area,%,4.2,104
+2024-25,30,Vellore,Barren and unculturable area,area_ha,ha,10190,104
+2024-25,30,Vellore,Barren and unculturable area,pct_of_district_area,%,4.6,104
+2024-25,30,Vellore,Barren and unculturable area,pct_of_state_area,%,2.2,104
+2024-25,30,Vellore,Land put to non-agricultural uses: water logged land,area_ha,ha,349,105
+2024-25,30,Vellore,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.2,105
+2024-25,30,Vellore,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.6,105
+2024-25,30,Vellore,Land put to non-agricultural uses: social forestry,area_ha,ha,1322,105
+2024-25,30,Vellore,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.6,105
+2024-25,30,Vellore,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,2.5,105
+2024-25,30,Vellore,Land put to non-agricultural uses: land under still water,area_ha,ha,11967,105
+2024-25,30,Vellore,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,5.4,105
+2024-25,30,Vellore,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,1.2,105
+2024-25,30,Vellore,Land put to non-agricultural uses: others,area_ha,ha,2277,106
+2024-25,30,Vellore,Land put to non-agricultural uses: others,pct_of_district_area,%,1.0,106
+2024-25,30,Vellore,Land put to non-agricultural uses: others,pct_of_state_area,%,0.5,106
+2024-25,30,Vellore,Land put to non-agricultural uses: total,area_ha,ha,25453,106
+2024-25,30,Vellore,Land put to non-agricultural uses: total,pct_of_district_area,%,11.4,106
+2024-25,30,Vellore,Land put to non-agricultural uses: total,pct_of_state_area,%,1.2,106
+2024-25,30,Vellore,Cultivable waste,area_ha,ha,1313,106
+2024-25,30,Vellore,Cultivable waste,pct_of_district_area,%,0.6,106
+2024-25,30,Vellore,Cultivable waste,pct_of_state_area,%,0.4,106
+2024-25,30,Vellore,Permanent pastures and other grazing lands,area_ha,ha,644,107
+2024-25,30,Vellore,Permanent pastures and other grazing lands,pct_of_district_area,%,0.3,107
+2024-25,30,Vellore,Permanent pastures and other grazing lands,pct_of_state_area,%,0.6,107
+2024-25,30,Vellore,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,668,107
+2024-25,30,Vellore,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,0.3,107
+2024-25,30,Vellore,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,0.4,107
+2024-25,30,Vellore,Current fallow,area_ha,ha,28066,108
+2024-25,30,Vellore,Current fallow,pct_of_district_area,%,12.6,108
+2024-25,30,Vellore,Current fallow,pct_of_state_area,%,3.3,108
+2024-25,30,Vellore,Other fallow,area_ha,ha,13438,108
+2024-25,30,Vellore,Other fallow,pct_of_district_area,%,6.0,108
+2024-25,30,Vellore,Other fallow,pct_of_state_area,%,1,108
+2024-25,30,Vellore,Net area sown,area_ha,ha,53539,109
+2024-25,30,Vellore,Net area sown,pct_of_district_area,%,24.0,109
+2024-25,30,Vellore,Net area sown,pct_of_state_area,%,1.1,109
+2024-25,30,Vellore,Area sown more than once,area_ha,ha,13883,109
+2024-25,30,Vellore,Area sown more than once,pct_of_district_area,%,6.2,109
+2024-25,30,Vellore,Area sown more than once,pct_of_state_area,%,1.0,109
+2024-25,30,Vellore,Gross area sown,area_ha,ha,67422,109
+2024-25,30,Vellore,Gross area sown,pct_of_district_area,%,30.2,109
+2024-25,30,Vellore,Gross area sown,pct_of_state_area,%,1.1,109
+2024-25,37,Ranipet,Total geographical area,area_ha,ha,185553,104
+2024-25,37,Ranipet,Total geographical area,pct_of_state_area,%,1.4,104
+2024-25,37,Ranipet,Forest,area_ha,ha,9970,104
+2024-25,37,Ranipet,Forest,pct_of_district_area,%,5.4,104
+2024-25,37,Ranipet,Forest,pct_of_state_area,%,0.5,104
+2024-25,37,Ranipet,Barren and unculturable area,area_ha,ha,4729,104
+2024-25,37,Ranipet,Barren and unculturable area,pct_of_district_area,%,2.5,104
+2024-25,37,Ranipet,Barren and unculturable area,pct_of_state_area,%,1.0,104
+2024-25,37,Ranipet,Land put to non-agricultural uses: water logged land,area_ha,ha,3701,105
+2024-25,37,Ranipet,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,2.0,105
+2024-25,37,Ranipet,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,6.3,105
+2024-25,37,Ranipet,Land put to non-agricultural uses: social forestry,area_ha,ha,253,105
+2024-25,37,Ranipet,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.1,105
+2024-25,37,Ranipet,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,0.5,105
+2024-25,37,Ranipet,Land put to non-agricultural uses: land under still water,area_ha,ha,23659,105
+2024-25,37,Ranipet,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,12.8,105
+2024-25,37,Ranipet,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,2.4,105
+2024-25,37,Ranipet,Land put to non-agricultural uses: others,area_ha,ha,1988,106
+2024-25,37,Ranipet,Land put to non-agricultural uses: others,pct_of_district_area,%,1.1,106
+2024-25,37,Ranipet,Land put to non-agricultural uses: others,pct_of_state_area,%,0.5,106
+2024-25,37,Ranipet,Land put to non-agricultural uses: total,area_ha,ha,39285,106
+2024-25,37,Ranipet,Land put to non-agricultural uses: total,pct_of_district_area,%,21.2,106
+2024-25,37,Ranipet,Land put to non-agricultural uses: total,pct_of_state_area,%,1.8,106
+2024-25,37,Ranipet,Cultivable waste,area_ha,ha,2955,106
+2024-25,37,Ranipet,Cultivable waste,pct_of_district_area,%,1.6,106
+2024-25,37,Ranipet,Cultivable waste,pct_of_state_area,%,0.8,106
+2024-25,37,Ranipet,Permanent pastures and other grazing lands,area_ha,ha,1715,107
+2024-25,37,Ranipet,Permanent pastures and other grazing lands,pct_of_district_area,%,0.9,107
+2024-25,37,Ranipet,Permanent pastures and other grazing lands,pct_of_state_area,%,1.6,107
+2024-25,37,Ranipet,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,1855,107
+2024-25,37,Ranipet,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,1.0,107
+2024-25,37,Ranipet,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,1.1,107
+2024-25,37,Ranipet,Current fallow,area_ha,ha,13474,108
+2024-25,37,Ranipet,Current fallow,pct_of_district_area,%,7.3,108
+2024-25,37,Ranipet,Current fallow,pct_of_state_area,%,1.6,108
+2024-25,37,Ranipet,Other fallow,area_ha,ha,57232,108
+2024-25,37,Ranipet,Other fallow,pct_of_district_area,%,30.8,108
+2024-25,37,Ranipet,Other fallow,pct_of_state_area,%,3,108
+2024-25,37,Ranipet,Net area sown,area_ha,ha,54339,109
+2024-25,37,Ranipet,Net area sown,pct_of_district_area,%,29.3,109
+2024-25,37,Ranipet,Net area sown,pct_of_state_area,%,1.1,109
+2024-25,37,Ranipet,Area sown more than once,area_ha,ha,24742,109
+2024-25,37,Ranipet,Area sown more than once,pct_of_district_area,%,13.3,109
+2024-25,37,Ranipet,Area sown more than once,pct_of_state_area,%,1.8,109
+2024-25,37,Ranipet,Gross area sown,area_ha,ha,79082,109
+2024-25,37,Ranipet,Gross area sown,pct_of_district_area,%,42.6,109
+2024-25,37,Ranipet,Gross area sown,pct_of_state_area,%,1.3,109
+2024-25,36,Tirupathur,Total geographical area,area_ha,ha,183201,104
+2024-25,36,Tirupathur,Total geographical area,pct_of_state_area,%,1.4,104
+2024-25,36,Tirupathur,Forest,area_ha,ha,62363,104
+2024-25,36,Tirupathur,Forest,pct_of_district_area,%,34.0,104
+2024-25,36,Tirupathur,Forest,pct_of_state_area,%,2.9,104
+2024-25,36,Tirupathur,Barren and unculturable area,area_ha,ha,5525,104
+2024-25,36,Tirupathur,Barren and unculturable area,pct_of_district_area,%,3.0,104
+2024-25,36,Tirupathur,Barren and unculturable area,pct_of_state_area,%,1.2,104
+2024-25,36,Tirupathur,Land put to non-agricultural uses: water logged land,area_ha,ha,790,105
+2024-25,36,Tirupathur,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.4,105
+2024-25,36,Tirupathur,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,1.3,105
+2024-25,36,Tirupathur,Land put to non-agricultural uses: social forestry,area_ha,ha,524,105
+2024-25,36,Tirupathur,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.3,105
+2024-25,36,Tirupathur,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,1.0,105
+2024-25,36,Tirupathur,Land put to non-agricultural uses: land under still water,area_ha,ha,5648,105
+2024-25,36,Tirupathur,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,3.1,105
+2024-25,36,Tirupathur,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,0.6,105
+2024-25,36,Tirupathur,Land put to non-agricultural uses: others,area_ha,ha,1458,106
+2024-25,36,Tirupathur,Land put to non-agricultural uses: others,pct_of_district_area,%,0.8,106
+2024-25,36,Tirupathur,Land put to non-agricultural uses: others,pct_of_state_area,%,0.3,106
+2024-25,36,Tirupathur,Land put to non-agricultural uses: total,area_ha,ha,16012,106
+2024-25,36,Tirupathur,Land put to non-agricultural uses: total,pct_of_district_area,%,8.7,106
+2024-25,36,Tirupathur,Land put to non-agricultural uses: total,pct_of_state_area,%,0.7,106
+2024-25,36,Tirupathur,Cultivable waste,area_ha,ha,1379,106
+2024-25,36,Tirupathur,Cultivable waste,pct_of_district_area,%,0.8,106
+2024-25,36,Tirupathur,Cultivable waste,pct_of_state_area,%,0.4,106
+2024-25,36,Tirupathur,Permanent pastures and other grazing lands,area_ha,ha,1563,107
+2024-25,36,Tirupathur,Permanent pastures and other grazing lands,pct_of_district_area,%,0.9,107
+2024-25,36,Tirupathur,Permanent pastures and other grazing lands,pct_of_state_area,%,1.5,107
+2024-25,36,Tirupathur,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,433,107
+2024-25,36,Tirupathur,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,0.2,107
+2024-25,36,Tirupathur,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,0.3,107
+2024-25,36,Tirupathur,Current fallow,area_ha,ha,25505,108
+2024-25,36,Tirupathur,Current fallow,pct_of_district_area,%,13.9,108
+2024-25,36,Tirupathur,Current fallow,pct_of_state_area,%,3.0,108
+2024-25,36,Tirupathur,Other fallow,area_ha,ha,4235,108
+2024-25,36,Tirupathur,Other fallow,pct_of_district_area,%,2.3,108
+2024-25,36,Tirupathur,Other fallow,pct_of_state_area,%,0,108
+2024-25,36,Tirupathur,Net area sown,area_ha,ha,66184,109
+2024-25,36,Tirupathur,Net area sown,pct_of_district_area,%,36.1,109
+2024-25,36,Tirupathur,Net area sown,pct_of_state_area,%,1.4,109
+2024-25,36,Tirupathur,Area sown more than once,area_ha,ha,17298,109
+2024-25,36,Tirupathur,Area sown more than once,pct_of_district_area,%,9.4,109
+2024-25,36,Tirupathur,Area sown more than once,pct_of_state_area,%,1.2,109
+2024-25,36,Tirupathur,Gross area sown,area_ha,ha,83482,109
+2024-25,36,Tirupathur,Gross area sown,pct_of_district_area,%,45.6,109
+2024-25,36,Tirupathur,Gross area sown,pct_of_state_area,%,1.3,109
+2024-25,24,Tiruvannamalai,Total geographical area,area_ha,ha,631205,104
+2024-25,24,Tiruvannamalai,Total geographical area,pct_of_state_area,%,4.8,104
+2024-25,24,Tiruvannamalai,Forest,area_ha,ha,152810,104
+2024-25,24,Tiruvannamalai,Forest,pct_of_district_area,%,24.2,104
+2024-25,24,Tiruvannamalai,Forest,pct_of_state_area,%,7.1,104
+2024-25,24,Tiruvannamalai,Barren and unculturable area,area_ha,ha,20585,104
+2024-25,24,Tiruvannamalai,Barren and unculturable area,pct_of_district_area,%,3.3,104
+2024-25,24,Tiruvannamalai,Barren and unculturable area,pct_of_state_area,%,4.5,104
+2024-25,24,Tiruvannamalai,Land put to non-agricultural uses: water logged land,area_ha,ha,1153,105
+2024-25,24,Tiruvannamalai,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.2,105
+2024-25,24,Tiruvannamalai,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,2.0,105
+2024-25,24,Tiruvannamalai,Land put to non-agricultural uses: social forestry,area_ha,ha,1418,105
+2024-25,24,Tiruvannamalai,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.2,105
+2024-25,24,Tiruvannamalai,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,2.7,105
+2024-25,24,Tiruvannamalai,Land put to non-agricultural uses: land under still water,area_ha,ha,62573,105
+2024-25,24,Tiruvannamalai,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,9.9,105
+2024-25,24,Tiruvannamalai,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,6.3,105
+2024-25,24,Tiruvannamalai,Land put to non-agricultural uses: others,area_ha,ha,13684,106
+2024-25,24,Tiruvannamalai,Land put to non-agricultural uses: others,pct_of_district_area,%,2.2,106
+2024-25,24,Tiruvannamalai,Land put to non-agricultural uses: others,pct_of_state_area,%,3.2,106
+2024-25,24,Tiruvannamalai,Land put to non-agricultural uses: total,area_ha,ha,96501,106
+2024-25,24,Tiruvannamalai,Land put to non-agricultural uses: total,pct_of_district_area,%,15.3,106
+2024-25,24,Tiruvannamalai,Land put to non-agricultural uses: total,pct_of_state_area,%,4.4,106
+2024-25,24,Tiruvannamalai,Cultivable waste,area_ha,ha,8368,106
+2024-25,24,Tiruvannamalai,Cultivable waste,pct_of_district_area,%,1.3,106
+2024-25,24,Tiruvannamalai,Cultivable waste,pct_of_state_area,%,2.4,106
+2024-25,24,Tiruvannamalai,Permanent pastures and other grazing lands,area_ha,ha,2931,107
+2024-25,24,Tiruvannamalai,Permanent pastures and other grazing lands,pct_of_district_area,%,0.5,107
+2024-25,24,Tiruvannamalai,Permanent pastures and other grazing lands,pct_of_state_area,%,2.7,107
+2024-25,24,Tiruvannamalai,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,2128,107
+2024-25,24,Tiruvannamalai,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,0.3,107
+2024-25,24,Tiruvannamalai,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,1.3,107
+2024-25,24,Tiruvannamalai,Current fallow,area_ha,ha,96037,108
+2024-25,24,Tiruvannamalai,Current fallow,pct_of_district_area,%,15.2,108
+2024-25,24,Tiruvannamalai,Current fallow,pct_of_state_area,%,11.2,108
+2024-25,24,Tiruvannamalai,Other fallow,area_ha,ha,23883,108
+2024-25,24,Tiruvannamalai,Other fallow,pct_of_district_area,%,3.8,108
+2024-25,24,Tiruvannamalai,Other fallow,pct_of_state_area,%,1,108
+2024-25,24,Tiruvannamalai,Net area sown,area_ha,ha,227961,109
+2024-25,24,Tiruvannamalai,Net area sown,pct_of_district_area,%,36.1,109
+2024-25,24,Tiruvannamalai,Net area sown,pct_of_state_area,%,4.7,109
+2024-25,24,Tiruvannamalai,Area sown more than once,area_ha,ha,107413,109
+2024-25,24,Tiruvannamalai,Area sown more than once,pct_of_district_area,%,17.0,109
+2024-25,24,Tiruvannamalai,Area sown more than once,pct_of_state_area,%,7.7,109
+2024-25,24,Tiruvannamalai,Gross area sown,area_ha,ha,335374,109
+2024-25,24,Tiruvannamalai,Gross area sown,pct_of_district_area,%,53.1,109
+2024-25,24,Tiruvannamalai,Gross area sown,pct_of_state_area,%,5.4,109
+2024-25,18,Salem,Total geographical area,area_ha,ha,520530,104
+2024-25,18,Salem,Total geographical area,pct_of_state_area,%,4.0,104
+2024-25,18,Salem,Forest,area_ha,ha,125682,104
+2024-25,18,Salem,Forest,pct_of_district_area,%,24.1,104
+2024-25,18,Salem,Forest,pct_of_state_area,%,5.8,104
+2024-25,18,Salem,Barren and unculturable area,area_ha,ha,38198,104
+2024-25,18,Salem,Barren and unculturable area,pct_of_district_area,%,7.3,104
+2024-25,18,Salem,Barren and unculturable area,pct_of_state_area,%,8.4,104
+2024-25,18,Salem,Land put to non-agricultural uses: water logged land,area_ha,ha,0,105
+2024-25,18,Salem,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.0,105
+2024-25,18,Salem,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.0,105
+2024-25,18,Salem,Land put to non-agricultural uses: social forestry,area_ha,ha,858,105
+2024-25,18,Salem,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.2,105
+2024-25,18,Salem,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,1.6,105
+2024-25,18,Salem,Land put to non-agricultural uses: land under still water,area_ha,ha,24252,105
+2024-25,18,Salem,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,4.7,105
+2024-25,18,Salem,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,2.4,105
+2024-25,18,Salem,Land put to non-agricultural uses: others,area_ha,ha,17493,106
+2024-25,18,Salem,Land put to non-agricultural uses: others,pct_of_district_area,%,3.4,106
+2024-25,18,Salem,Land put to non-agricultural uses: others,pct_of_state_area,%,4.1,106
+2024-25,18,Salem,Land put to non-agricultural uses: total,area_ha,ha,67904,106
+2024-25,18,Salem,Land put to non-agricultural uses: total,pct_of_district_area,%,13.0,106
+2024-25,18,Salem,Land put to non-agricultural uses: total,pct_of_state_area,%,3.1,106
+2024-25,18,Salem,Cultivable waste,area_ha,ha,5617,106
+2024-25,18,Salem,Cultivable waste,pct_of_district_area,%,1.1,106
+2024-25,18,Salem,Cultivable waste,pct_of_state_area,%,1.6,106
+2024-25,18,Salem,Permanent pastures and other grazing lands,area_ha,ha,4200,107
+2024-25,18,Salem,Permanent pastures and other grazing lands,pct_of_district_area,%,0.8,107
+2024-25,18,Salem,Permanent pastures and other grazing lands,pct_of_state_area,%,3.9,107
+2024-25,18,Salem,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,2696,107
+2024-25,18,Salem,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,0.5,107
+2024-25,18,Salem,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,1.6,107
+2024-25,18,Salem,Current fallow,area_ha,ha,41570,108
+2024-25,18,Salem,Current fallow,pct_of_district_area,%,8.0,108
+2024-25,18,Salem,Current fallow,pct_of_state_area,%,4.9,108
+2024-25,18,Salem,Other fallow,area_ha,ha,26171,108
+2024-25,18,Salem,Other fallow,pct_of_district_area,%,5.0,108
+2024-25,18,Salem,Other fallow,pct_of_state_area,%,1,108
+2024-25,18,Salem,Net area sown,area_ha,ha,208492,109
+2024-25,18,Salem,Net area sown,pct_of_district_area,%,40.1,109
+2024-25,18,Salem,Net area sown,pct_of_state_area,%,4.3,109
+2024-25,18,Salem,Area sown more than once,area_ha,ha,103806,109
+2024-25,18,Salem,Area sown more than once,pct_of_district_area,%,19.9,109
+2024-25,18,Salem,Area sown more than once,pct_of_state_area,%,7.4,109
+2024-25,18,Salem,Gross area sown,area_ha,ha,312297,109
+2024-25,18,Salem,Gross area sown,pct_of_district_area,%,60.0,109
+2024-25,18,Salem,Gross area sown,pct_of_state_area,%,5.0,109
+2024-25,14,Namakkal,Total geographical area,area_ha,ha,336719,104
+2024-25,14,Namakkal,Total geographical area,pct_of_state_area,%,2.6,104
+2024-25,14,Namakkal,Forest,area_ha,ha,43909,104
+2024-25,14,Namakkal,Forest,pct_of_district_area,%,13.0,104
+2024-25,14,Namakkal,Forest,pct_of_state_area,%,2.0,104
+2024-25,14,Namakkal,Barren and unculturable area,area_ha,ha,24539,104
+2024-25,14,Namakkal,Barren and unculturable area,pct_of_district_area,%,7.3,104
+2024-25,14,Namakkal,Barren and unculturable area,pct_of_state_area,%,5.4,104
+2024-25,14,Namakkal,Land put to non-agricultural uses: water logged land,area_ha,ha,121,105
+2024-25,14,Namakkal,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.0,105
+2024-25,14,Namakkal,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.2,105
+2024-25,14,Namakkal,Land put to non-agricultural uses: social forestry,area_ha,ha,811,105
+2024-25,14,Namakkal,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.2,105
+2024-25,14,Namakkal,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,1.5,105
+2024-25,14,Namakkal,Land put to non-agricultural uses: land under still water,area_ha,ha,8127,105
+2024-25,14,Namakkal,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,2.4,105
+2024-25,14,Namakkal,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,0.8,105
+2024-25,14,Namakkal,Land put to non-agricultural uses: others,area_ha,ha,16176,106
+2024-25,14,Namakkal,Land put to non-agricultural uses: others,pct_of_district_area,%,4.8,106
+2024-25,14,Namakkal,Land put to non-agricultural uses: others,pct_of_state_area,%,3.8,106
+2024-25,14,Namakkal,Land put to non-agricultural uses: total,area_ha,ha,39108,106
+2024-25,14,Namakkal,Land put to non-agricultural uses: total,pct_of_district_area,%,11.6,106
+2024-25,14,Namakkal,Land put to non-agricultural uses: total,pct_of_state_area,%,1.8,106
+2024-25,14,Namakkal,Cultivable waste,area_ha,ha,4777,106
+2024-25,14,Namakkal,Cultivable waste,pct_of_district_area,%,1.4,106
+2024-25,14,Namakkal,Cultivable waste,pct_of_state_area,%,1.3,106
+2024-25,14,Namakkal,Permanent pastures and other grazing lands,area_ha,ha,6664,107
+2024-25,14,Namakkal,Permanent pastures and other grazing lands,pct_of_district_area,%,2.0,107
+2024-25,14,Namakkal,Permanent pastures and other grazing lands,pct_of_state_area,%,6.2,107
+2024-25,14,Namakkal,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,3364,107
+2024-25,14,Namakkal,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,1.0,107
+2024-25,14,Namakkal,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,2.0,107
+2024-25,14,Namakkal,Current fallow,area_ha,ha,36659,108
+2024-25,14,Namakkal,Current fallow,pct_of_district_area,%,10.9,108
+2024-25,14,Namakkal,Current fallow,pct_of_state_area,%,4.3,108
+2024-25,14,Namakkal,Other fallow,area_ha,ha,23461,108
+2024-25,14,Namakkal,Other fallow,pct_of_district_area,%,7.0,108
+2024-25,14,Namakkal,Other fallow,pct_of_state_area,%,1.2,108
+2024-25,14,Namakkal,Net area sown,area_ha,ha,154239,109
+2024-25,14,Namakkal,Net area sown,pct_of_district_area,%,45.8,109
+2024-25,14,Namakkal,Net area sown,pct_of_state_area,%,3.2,109
+2024-25,14,Namakkal,Area sown more than once,area_ha,ha,66728,109
+2024-25,14,Namakkal,Area sown more than once,pct_of_district_area,%,19.8,109
+2024-25,14,Namakkal,Area sown more than once,pct_of_state_area,%,4.8,109
+2024-25,14,Namakkal,Gross area sown,area_ha,ha,220967,109
+2024-25,14,Namakkal,Gross area sown,pct_of_district_area,%,65.6,109
+2024-25,14,Namakkal,Gross area sown,pct_of_state_area,%,3.5,109
+2024-25,5,Dharmapuri,Total geographical area,area_ha,ha,449777,104
+2024-25,5,Dharmapuri,Total geographical area,pct_of_state_area,%,3.5,104
+2024-25,5,Dharmapuri,Forest,area_ha,ha,164177,104
+2024-25,5,Dharmapuri,Forest,pct_of_district_area,%,36.5,104
+2024-25,5,Dharmapuri,Forest,pct_of_state_area,%,7.6,104
+2024-25,5,Dharmapuri,Barren and unculturable area,area_ha,ha,15803,104
+2024-25,5,Dharmapuri,Barren and unculturable area,pct_of_district_area,%,3.5,104
+2024-25,5,Dharmapuri,Barren and unculturable area,pct_of_state_area,%,3.5,104
+2024-25,5,Dharmapuri,Land put to non-agricultural uses: water logged land,area_ha,ha,2296,105
+2024-25,5,Dharmapuri,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.5,105
+2024-25,5,Dharmapuri,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,3.9,105
+2024-25,5,Dharmapuri,Land put to non-agricultural uses: social forestry,area_ha,ha,12523,105
+2024-25,5,Dharmapuri,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,2.8,105
+2024-25,5,Dharmapuri,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,23.6,105
+2024-25,5,Dharmapuri,Land put to non-agricultural uses: land under still water,area_ha,ha,14233,105
+2024-25,5,Dharmapuri,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,3.2,105
+2024-25,5,Dharmapuri,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,1.4,105
+2024-25,5,Dharmapuri,Land put to non-agricultural uses: others,area_ha,ha,7849,106
+2024-25,5,Dharmapuri,Land put to non-agricultural uses: others,pct_of_district_area,%,1.7,106
+2024-25,5,Dharmapuri,Land put to non-agricultural uses: others,pct_of_state_area,%,1.9,106
+2024-25,5,Dharmapuri,Land put to non-agricultural uses: total,area_ha,ha,51890,106
+2024-25,5,Dharmapuri,Land put to non-agricultural uses: total,pct_of_district_area,%,11.5,106
+2024-25,5,Dharmapuri,Land put to non-agricultural uses: total,pct_of_state_area,%,2.4,106
+2024-25,5,Dharmapuri,Cultivable waste,area_ha,ha,2687,106
+2024-25,5,Dharmapuri,Cultivable waste,pct_of_district_area,%,0.6,106
+2024-25,5,Dharmapuri,Cultivable waste,pct_of_state_area,%,0.8,106
+2024-25,5,Dharmapuri,Permanent pastures and other grazing lands,area_ha,ha,6210,107
+2024-25,5,Dharmapuri,Permanent pastures and other grazing lands,pct_of_district_area,%,1.4,107
+2024-25,5,Dharmapuri,Permanent pastures and other grazing lands,pct_of_state_area,%,5.8,107
+2024-25,5,Dharmapuri,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,2826,107
+2024-25,5,Dharmapuri,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,0.6,107
+2024-25,5,Dharmapuri,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,1.7,107
+2024-25,5,Dharmapuri,Current fallow,area_ha,ha,26180,108
+2024-25,5,Dharmapuri,Current fallow,pct_of_district_area,%,5.8,108
+2024-25,5,Dharmapuri,Current fallow,pct_of_state_area,%,3.1,108
+2024-25,5,Dharmapuri,Other fallow,area_ha,ha,11163,108
+2024-25,5,Dharmapuri,Other fallow,pct_of_district_area,%,2.5,108
+2024-25,5,Dharmapuri,Other fallow,pct_of_state_area,%,0.6,108
+2024-25,5,Dharmapuri,Net area sown,area_ha,ha,168841,109
+2024-25,5,Dharmapuri,Net area sown,pct_of_district_area,%,37.5,109
+2024-25,5,Dharmapuri,Net area sown,pct_of_state_area,%,3.5,109
+2024-25,5,Dharmapuri,Area sown more than once,area_ha,ha,93710,109
+2024-25,5,Dharmapuri,Area sown more than once,pct_of_district_area,%,20.8,109
+2024-25,5,Dharmapuri,Area sown more than once,pct_of_state_area,%,6.7,109
+2024-25,5,Dharmapuri,Gross area sown,area_ha,ha,262551,109
+2024-25,5,Dharmapuri,Gross area sown,pct_of_district_area,%,58.4,109
+2024-25,5,Dharmapuri,Gross area sown,pct_of_state_area,%,4.2,109
+2024-25,11,Krishnagiri,Total geographical area,area_ha,ha,514326,104
+2024-25,11,Krishnagiri,Total geographical area,pct_of_state_area,%,3.9,104
+2024-25,11,Krishnagiri,Forest,area_ha,ha,203964,104
+2024-25,11,Krishnagiri,Forest,pct_of_district_area,%,39.7,104
+2024-25,11,Krishnagiri,Forest,pct_of_state_area,%,9.5,104
+2024-25,11,Krishnagiri,Barren and unculturable area,area_ha,ha,23938,104
+2024-25,11,Krishnagiri,Barren and unculturable area,pct_of_district_area,%,4.7,104
+2024-25,11,Krishnagiri,Barren and unculturable area,pct_of_state_area,%,5.2,104
+2024-25,11,Krishnagiri,Land put to non-agricultural uses: water logged land,area_ha,ha,3026,105
+2024-25,11,Krishnagiri,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.6,105
+2024-25,11,Krishnagiri,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,5.1,105
+2024-25,11,Krishnagiri,Land put to non-agricultural uses: social forestry,area_ha,ha,2300,105
+2024-25,11,Krishnagiri,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.4,105
+2024-25,11,Krishnagiri,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,4.3,105
+2024-25,11,Krishnagiri,Land put to non-agricultural uses: land under still water,area_ha,ha,13821,105
+2024-25,11,Krishnagiri,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,2.7,105
+2024-25,11,Krishnagiri,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,1.4,105
+2024-25,11,Krishnagiri,Land put to non-agricultural uses: others,area_ha,ha,10911,106
+2024-25,11,Krishnagiri,Land put to non-agricultural uses: others,pct_of_district_area,%,2.1,106
+2024-25,11,Krishnagiri,Land put to non-agricultural uses: others,pct_of_state_area,%,2.6,106
+2024-25,11,Krishnagiri,Land put to non-agricultural uses: total,area_ha,ha,42295,106
+2024-25,11,Krishnagiri,Land put to non-agricultural uses: total,pct_of_district_area,%,8.2,106
+2024-25,11,Krishnagiri,Land put to non-agricultural uses: total,pct_of_state_area,%,1.9,106
+2024-25,11,Krishnagiri,Cultivable waste,area_ha,ha,4329,106
+2024-25,11,Krishnagiri,Cultivable waste,pct_of_district_area,%,0.8,106
+2024-25,11,Krishnagiri,Cultivable waste,pct_of_state_area,%,1.2,106
+2024-25,11,Krishnagiri,Permanent pastures and other grazing lands,area_ha,ha,7855,107
+2024-25,11,Krishnagiri,Permanent pastures and other grazing lands,pct_of_district_area,%,1.5,107
+2024-25,11,Krishnagiri,Permanent pastures and other grazing lands,pct_of_state_area,%,7.3,107
+2024-25,11,Krishnagiri,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,8341,107
+2024-25,11,Krishnagiri,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,1.6,107
+2024-25,11,Krishnagiri,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,5.0,107
+2024-25,11,Krishnagiri,Current fallow,area_ha,ha,36875,108
+2024-25,11,Krishnagiri,Current fallow,pct_of_district_area,%,7.2,108
+2024-25,11,Krishnagiri,Current fallow,pct_of_state_area,%,4.3,108
+2024-25,11,Krishnagiri,Other fallow,area_ha,ha,18024,108
+2024-25,11,Krishnagiri,Other fallow,pct_of_district_area,%,3.5,108
+2024-25,11,Krishnagiri,Other fallow,pct_of_state_area,%,0.9,108
+2024-25,11,Krishnagiri,Net area sown,area_ha,ha,168705,109
+2024-25,11,Krishnagiri,Net area sown,pct_of_district_area,%,32.8,109
+2024-25,11,Krishnagiri,Net area sown,pct_of_state_area,%,3.5,109
+2024-25,11,Krishnagiri,Area sown more than once,area_ha,ha,80547,109
+2024-25,11,Krishnagiri,Area sown more than once,pct_of_district_area,%,15.7,109
+2024-25,11,Krishnagiri,Area sown more than once,pct_of_state_area,%,5.8,109
+2024-25,11,Krishnagiri,Gross area sown,area_ha,ha,249251,109
+2024-25,11,Krishnagiri,Gross area sown,pct_of_district_area,%,48.5,109
+2024-25,11,Krishnagiri,Gross area sown,pct_of_state_area,%,4.0,109
+2024-25,3,Coimbatore,Total geographical area,area_ha,ha,472322,104
+2024-25,3,Coimbatore,Total geographical area,pct_of_state_area,%,3.6,104
+2024-25,3,Coimbatore,Forest,area_ha,ha,111871,104
+2024-25,3,Coimbatore,Forest,pct_of_district_area,%,23.7,104
+2024-25,3,Coimbatore,Forest,pct_of_state_area,%,5.2,104
+2024-25,3,Coimbatore,Barren and unculturable area,area_ha,ha,4797,104
+2024-25,3,Coimbatore,Barren and unculturable area,pct_of_district_area,%,1.0,104
+2024-25,3,Coimbatore,Barren and unculturable area,pct_of_state_area,%,1.0,104
+2024-25,3,Coimbatore,Land put to non-agricultural uses: water logged land,area_ha,ha,129,105
+2024-25,3,Coimbatore,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.0,105
+2024-25,3,Coimbatore,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.2,105
+2024-25,3,Coimbatore,Land put to non-agricultural uses: social forestry,area_ha,ha,16,105
+2024-25,3,Coimbatore,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.0,105
+2024-25,3,Coimbatore,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,0.0,105
+2024-25,3,Coimbatore,Land put to non-agricultural uses: land under still water,area_ha,ha,14916,105
+2024-25,3,Coimbatore,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,3.2,105
+2024-25,3,Coimbatore,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,1.5,105
+2024-25,3,Coimbatore,Land put to non-agricultural uses: others,area_ha,ha,21090,106
+2024-25,3,Coimbatore,Land put to non-agricultural uses: others,pct_of_district_area,%,4.5,106
+2024-25,3,Coimbatore,Land put to non-agricultural uses: others,pct_of_state_area,%,5.0,106
+2024-25,3,Coimbatore,Land put to non-agricultural uses: total,area_ha,ha,77347,106
+2024-25,3,Coimbatore,Land put to non-agricultural uses: total,pct_of_district_area,%,16.4,106
+2024-25,3,Coimbatore,Land put to non-agricultural uses: total,pct_of_state_area,%,3.5,106
+2024-25,3,Coimbatore,Cultivable waste,area_ha,ha,8422,106
+2024-25,3,Coimbatore,Cultivable waste,pct_of_district_area,%,1.8,106
+2024-25,3,Coimbatore,Cultivable waste,pct_of_state_area,%,2.4,106
+2024-25,3,Coimbatore,Permanent pastures and other grazing lands,area_ha,ha,77,107
+2024-25,3,Coimbatore,Permanent pastures and other grazing lands,pct_of_district_area,%,0.0,107
+2024-25,3,Coimbatore,Permanent pastures and other grazing lands,pct_of_state_area,%,0.1,107
+2024-25,3,Coimbatore,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,3592,107
+2024-25,3,Coimbatore,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,0.8,107
+2024-25,3,Coimbatore,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,2.2,107
+2024-25,3,Coimbatore,Current fallow,area_ha,ha,47394,108
+2024-25,3,Coimbatore,Current fallow,pct_of_district_area,%,10.0,108
+2024-25,3,Coimbatore,Current fallow,pct_of_state_area,%,5.5,108
+2024-25,3,Coimbatore,Other fallow,area_ha,ha,59778,108
+2024-25,3,Coimbatore,Other fallow,pct_of_district_area,%,12.7,108
+2024-25,3,Coimbatore,Other fallow,pct_of_state_area,%,3.1,108
+2024-25,3,Coimbatore,Net area sown,area_ha,ha,159043,109
+2024-25,3,Coimbatore,Net area sown,pct_of_district_area,%,33.7,109
+2024-25,3,Coimbatore,Net area sown,pct_of_state_area,%,3.3,109
+2024-25,3,Coimbatore,Area sown more than once,area_ha,ha,8822,109
+2024-25,3,Coimbatore,Area sown more than once,pct_of_district_area,%,1.9,109
+2024-25,3,Coimbatore,Area sown more than once,pct_of_state_area,%,0.6,109
+2024-25,3,Coimbatore,Gross area sown,area_ha,ha,167866,109
+2024-25,3,Coimbatore,Gross area sown,pct_of_district_area,%,35.5,109
+2024-25,3,Coimbatore,Gross area sown,pct_of_state_area,%,2.7,109
+2024-25,28,Tiruppur,Total geographical area,area_ha,ha,519559,104
+2024-25,28,Tiruppur,Total geographical area,pct_of_state_area,%,4.0,104
+2024-25,28,Tiruppur,Forest,area_ha,ha,48168,104
+2024-25,28,Tiruppur,Forest,pct_of_district_area,%,9.3,104
+2024-25,28,Tiruppur,Forest,pct_of_state_area,%,2.2,104
+2024-25,28,Tiruppur,Barren and unculturable area,area_ha,ha,2548,104
+2024-25,28,Tiruppur,Barren and unculturable area,pct_of_district_area,%,0.5,104
+2024-25,28,Tiruppur,Barren and unculturable area,pct_of_state_area,%,0.6,104
+2024-25,28,Tiruppur,Land put to non-agricultural uses: water logged land,area_ha,ha,33,105
+2024-25,28,Tiruppur,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.0,105
+2024-25,28,Tiruppur,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.1,105
+2024-25,28,Tiruppur,Land put to non-agricultural uses: social forestry,area_ha,ha,6,105
+2024-25,28,Tiruppur,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.0,105
+2024-25,28,Tiruppur,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,0.0,105
+2024-25,28,Tiruppur,Land put to non-agricultural uses: land under still water,area_ha,ha,16455,105
+2024-25,28,Tiruppur,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,3.2,105
+2024-25,28,Tiruppur,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,1.7,105
+2024-25,28,Tiruppur,Land put to non-agricultural uses: others,area_ha,ha,15504,106
+2024-25,28,Tiruppur,Land put to non-agricultural uses: others,pct_of_district_area,%,3.0,106
+2024-25,28,Tiruppur,Land put to non-agricultural uses: others,pct_of_state_area,%,3.7,106
+2024-25,28,Tiruppur,Land put to non-agricultural uses: total,area_ha,ha,69547,106
+2024-25,28,Tiruppur,Land put to non-agricultural uses: total,pct_of_district_area,%,13.4,106
+2024-25,28,Tiruppur,Land put to non-agricultural uses: total,pct_of_state_area,%,3.2,106
+2024-25,28,Tiruppur,Cultivable waste,area_ha,ha,3881,106
+2024-25,28,Tiruppur,Cultivable waste,pct_of_district_area,%,0.7,106
+2024-25,28,Tiruppur,Cultivable waste,pct_of_state_area,%,1.1,106
+2024-25,28,Tiruppur,Permanent pastures and other grazing lands,area_ha,ha,120,107
+2024-25,28,Tiruppur,Permanent pastures and other grazing lands,pct_of_district_area,%,0.0,107
+2024-25,28,Tiruppur,Permanent pastures and other grazing lands,pct_of_state_area,%,0.1,107
+2024-25,28,Tiruppur,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,1821,107
+2024-25,28,Tiruppur,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,0.4,107
+2024-25,28,Tiruppur,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,1.1,107
+2024-25,28,Tiruppur,Current fallow,area_ha,ha,70878,108
+2024-25,28,Tiruppur,Current fallow,pct_of_district_area,%,13.6,108
+2024-25,28,Tiruppur,Current fallow,pct_of_state_area,%,8.3,108
+2024-25,28,Tiruppur,Other fallow,area_ha,ha,132236,108
+2024-25,28,Tiruppur,Other fallow,pct_of_district_area,%,25.5,108
+2024-25,28,Tiruppur,Other fallow,pct_of_state_area,%,7.0,108
+2024-25,28,Tiruppur,Net area sown,area_ha,ha,190360,109
+2024-25,28,Tiruppur,Net area sown,pct_of_district_area,%,36.6,109
+2024-25,28,Tiruppur,Net area sown,pct_of_state_area,%,3.9,109
+2024-25,28,Tiruppur,Area sown more than once,area_ha,ha,4612,109
+2024-25,28,Tiruppur,Area sown more than once,pct_of_district_area,%,0.9,109
+2024-25,28,Tiruppur,Area sown more than once,pct_of_state_area,%,0.3,109
+2024-25,28,Tiruppur,Gross area sown,area_ha,ha,194972,109
+2024-25,28,Tiruppur,Gross area sown,pct_of_district_area,%,37.5,109
+2024-25,28,Tiruppur,Gross area sown,pct_of_state_area,%,3.1,109
+2024-25,7,Erode,Total geographical area,area_ha,ha,572264,104
+2024-25,7,Erode,Total geographical area,pct_of_state_area,%,4.4,104
+2024-25,7,Erode,Forest,area_ha,ha,227511,104
+2024-25,7,Erode,Forest,pct_of_district_area,%,39.8,104
+2024-25,7,Erode,Forest,pct_of_state_area,%,10.5,104
+2024-25,7,Erode,Barren and unculturable area,area_ha,ha,6270,104
+2024-25,7,Erode,Barren and unculturable area,pct_of_district_area,%,1.1,104
+2024-25,7,Erode,Barren and unculturable area,pct_of_state_area,%,1.4,104
+2024-25,7,Erode,Land put to non-agricultural uses: water logged land,area_ha,ha,0,105
+2024-25,7,Erode,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.0,105
+2024-25,7,Erode,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.0,105
+2024-25,7,Erode,Land put to non-agricultural uses: social forestry,area_ha,ha,135,105
+2024-25,7,Erode,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.0,105
+2024-25,7,Erode,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,0.3,105
+2024-25,7,Erode,Land put to non-agricultural uses: land under still water,area_ha,ha,13934,105
+2024-25,7,Erode,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,2.4,105
+2024-25,7,Erode,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,1.4,105
+2024-25,7,Erode,Land put to non-agricultural uses: others,area_ha,ha,14893,106
+2024-25,7,Erode,Land put to non-agricultural uses: others,pct_of_district_area,%,2.6,106
+2024-25,7,Erode,Land put to non-agricultural uses: others,pct_of_state_area,%,3.5,106
+2024-25,7,Erode,Land put to non-agricultural uses: total,area_ha,ha,53607,106
+2024-25,7,Erode,Land put to non-agricultural uses: total,pct_of_district_area,%,9.4,106
+2024-25,7,Erode,Land put to non-agricultural uses: total,pct_of_state_area,%,2.4,106
+2024-25,7,Erode,Cultivable waste,area_ha,ha,3072,106
+2024-25,7,Erode,Cultivable waste,pct_of_district_area,%,0.5,106
+2024-25,7,Erode,Cultivable waste,pct_of_state_area,%,0.9,106
+2024-25,7,Erode,Permanent pastures and other grazing lands,area_ha,ha,105,107
+2024-25,7,Erode,Permanent pastures and other grazing lands,pct_of_district_area,%,0.0,107
+2024-25,7,Erode,Permanent pastures and other grazing lands,pct_of_state_area,%,0.1,107
+2024-25,7,Erode,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,1022,107
+2024-25,7,Erode,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,0.2,107
+2024-25,7,Erode,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,0.6,107
+2024-25,7,Erode,Current fallow,area_ha,ha,22784,108
+2024-25,7,Erode,Current fallow,pct_of_district_area,%,4.0,108
+2024-25,7,Erode,Current fallow,pct_of_state_area,%,2.7,108
+2024-25,7,Erode,Other fallow,area_ha,ha,101252,108
+2024-25,7,Erode,Other fallow,pct_of_district_area,%,17.7,108
+2024-25,7,Erode,Other fallow,pct_of_state_area,%,5.3,108
+2024-25,7,Erode,Net area sown,area_ha,ha,156642,109
+2024-25,7,Erode,Net area sown,pct_of_district_area,%,27.4,109
+2024-25,7,Erode,Net area sown,pct_of_state_area,%,3.2,109
+2024-25,7,Erode,Area sown more than once,area_ha,ha,19838,109
+2024-25,7,Erode,Area sown more than once,pct_of_district_area,%,3.5,109
+2024-25,7,Erode,Area sown more than once,pct_of_state_area,%,1.4,109
+2024-25,7,Erode,Gross area sown,area_ha,ha,176480,109
+2024-25,7,Erode,Gross area sown,pct_of_district_area,%,30.8,109
+2024-25,7,Erode,Gross area sown,pct_of_state_area,%,2.8,109
+2024-25,27,Tiruchirappalli,Total geographical area,area_ha,ha,440383,104
+2024-25,27,Tiruchirappalli,Total geographical area,pct_of_state_area,%,3.4,104
+2024-25,27,Tiruchirappalli,Forest,area_ha,ha,36773,104
+2024-25,27,Tiruchirappalli,Forest,pct_of_district_area,%,8.4,104
+2024-25,27,Tiruchirappalli,Forest,pct_of_state_area,%,1.7,104
+2024-25,27,Tiruchirappalli,Barren and unculturable area,area_ha,ha,12534,104
+2024-25,27,Tiruchirappalli,Barren and unculturable area,pct_of_district_area,%,2.8,104
+2024-25,27,Tiruchirappalli,Barren and unculturable area,pct_of_state_area,%,2.7,104
+2024-25,27,Tiruchirappalli,Land put to non-agricultural uses: water logged land,area_ha,ha,3,105
+2024-25,27,Tiruchirappalli,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.0,105
+2024-25,27,Tiruchirappalli,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.0,105
+2024-25,27,Tiruchirappalli,Land put to non-agricultural uses: social forestry,area_ha,ha,1333,105
+2024-25,27,Tiruchirappalli,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.3,105
+2024-25,27,Tiruchirappalli,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,2.5,105
+2024-25,27,Tiruchirappalli,Land put to non-agricultural uses: land under still water,area_ha,ha,39688,105
+2024-25,27,Tiruchirappalli,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,9.0,105
+2024-25,27,Tiruchirappalli,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,4.0,105
+2024-25,27,Tiruchirappalli,Land put to non-agricultural uses: others,area_ha,ha,13734,106
+2024-25,27,Tiruchirappalli,Land put to non-agricultural uses: others,pct_of_district_area,%,3.1,106
+2024-25,27,Tiruchirappalli,Land put to non-agricultural uses: others,pct_of_state_area,%,3.2,106
+2024-25,27,Tiruchirappalli,Land put to non-agricultural uses: total,area_ha,ha,85415,106
+2024-25,27,Tiruchirappalli,Land put to non-agricultural uses: total,pct_of_district_area,%,19.4,106
+2024-25,27,Tiruchirappalli,Land put to non-agricultural uses: total,pct_of_state_area,%,3.9,106
+2024-25,27,Tiruchirappalli,Cultivable waste,area_ha,ha,10192,106
+2024-25,27,Tiruchirappalli,Cultivable waste,pct_of_district_area,%,2.3,106
+2024-25,27,Tiruchirappalli,Cultivable waste,pct_of_state_area,%,2.9,106
+2024-25,27,Tiruchirappalli,Permanent pastures and other grazing lands,area_ha,ha,667,107
+2024-25,27,Tiruchirappalli,Permanent pastures and other grazing lands,pct_of_district_area,%,0.2,107
+2024-25,27,Tiruchirappalli,Permanent pastures and other grazing lands,pct_of_state_area,%,0.6,107
+2024-25,27,Tiruchirappalli,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,2107,107
+2024-25,27,Tiruchirappalli,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,0.5,107
+2024-25,27,Tiruchirappalli,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,1.3,107
+2024-25,27,Tiruchirappalli,Current fallow,area_ha,ha,22356,108
+2024-25,27,Tiruchirappalli,Current fallow,pct_of_district_area,%,5.1,108
+2024-25,27,Tiruchirappalli,Current fallow,pct_of_state_area,%,2.6,108
+2024-25,27,Tiruchirappalli,Other fallow,area_ha,ha,119380,108
+2024-25,27,Tiruchirappalli,Other fallow,pct_of_district_area,%,27.1,108
+2024-25,27,Tiruchirappalli,Other fallow,pct_of_state_area,%,6.3,108
+2024-25,27,Tiruchirappalli,Net area sown,area_ha,ha,150958,109
+2024-25,27,Tiruchirappalli,Net area sown,pct_of_district_area,%,34.3,109
+2024-25,27,Tiruchirappalli,Net area sown,pct_of_state_area,%,3.1,109
+2024-25,27,Tiruchirappalli,Area sown more than once,area_ha,ha,23127,109
+2024-25,27,Tiruchirappalli,Area sown more than once,pct_of_district_area,%,5.3,109
+2024-25,27,Tiruchirappalli,Area sown more than once,pct_of_state_area,%,1.7,109
+2024-25,27,Tiruchirappalli,Gross area sown,area_ha,ha,174085,109
+2024-25,27,Tiruchirappalli,Gross area sown,pct_of_district_area,%,39.5,109
+2024-25,27,Tiruchirappalli,Gross area sown,pct_of_state_area,%,2.8,109
+2024-25,10,Karur,Total geographical area,area_ha,ha,289557,104
+2024-25,10,Karur,Total geographical area,pct_of_state_area,%,2.2,104
+2024-25,10,Karur,Forest,area_ha,ha,6187,104
+2024-25,10,Karur,Forest,pct_of_district_area,%,2.1,104
+2024-25,10,Karur,Forest,pct_of_state_area,%,0.3,104
+2024-25,10,Karur,Barren and unculturable area,area_ha,ha,2786,104
+2024-25,10,Karur,Barren and unculturable area,pct_of_district_area,%,1.0,104
+2024-25,10,Karur,Barren and unculturable area,pct_of_state_area,%,0.6,104
+2024-25,10,Karur,Land put to non-agricultural uses: water logged land,area_ha,ha,0,105
+2024-25,10,Karur,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.0,105
+2024-25,10,Karur,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.0,105
+2024-25,10,Karur,Land put to non-agricultural uses: social forestry,area_ha,ha,330,105
+2024-25,10,Karur,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.1,105
+2024-25,10,Karur,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,0.6,105
+2024-25,10,Karur,Land put to non-agricultural uses: land under still water,area_ha,ha,16627,105
+2024-25,10,Karur,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,5.7,105
+2024-25,10,Karur,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,1.7,105
+2024-25,10,Karur,Land put to non-agricultural uses: others,area_ha,ha,6459,106
+2024-25,10,Karur,Land put to non-agricultural uses: others,pct_of_district_area,%,2.2,106
+2024-25,10,Karur,Land put to non-agricultural uses: others,pct_of_state_area,%,1.5,106
+2024-25,10,Karur,Land put to non-agricultural uses: total,area_ha,ha,37851,106
+2024-25,10,Karur,Land put to non-agricultural uses: total,pct_of_district_area,%,13.1,106
+2024-25,10,Karur,Land put to non-agricultural uses: total,pct_of_state_area,%,1.7,106
+2024-25,10,Karur,Cultivable waste,area_ha,ha,64997,106
+2024-25,10,Karur,Cultivable waste,pct_of_district_area,%,22.4,106
+2024-25,10,Karur,Cultivable waste,pct_of_state_area,%,18.3,106
+2024-25,10,Karur,Permanent pastures and other grazing lands,area_ha,ha,10801,107
+2024-25,10,Karur,Permanent pastures and other grazing lands,pct_of_district_area,%,3.7,107
+2024-25,10,Karur,Permanent pastures and other grazing lands,pct_of_state_area,%,10.0,107
+2024-25,10,Karur,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,1463,107
+2024-25,10,Karur,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,0.5,107
+2024-25,10,Karur,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,0.9,107
+2024-25,10,Karur,Current fallow,area_ha,ha,25093,108
+2024-25,10,Karur,Current fallow,pct_of_district_area,%,8.7,108
+2024-25,10,Karur,Current fallow,pct_of_state_area,%,2.9,108
+2024-25,10,Karur,Other fallow,area_ha,ha,59397,108
+2024-25,10,Karur,Other fallow,pct_of_district_area,%,20.5,108
+2024-25,10,Karur,Other fallow,pct_of_state_area,%,3.1,108
+2024-25,10,Karur,Net area sown,area_ha,ha,80982,109
+2024-25,10,Karur,Net area sown,pct_of_district_area,%,28.0,109
+2024-25,10,Karur,Net area sown,pct_of_state_area,%,1.7,109
+2024-25,10,Karur,Area sown more than once,area_ha,ha,6037,109
+2024-25,10,Karur,Area sown more than once,pct_of_district_area,%,2.1,109
+2024-25,10,Karur,Area sown more than once,pct_of_state_area,%,0.4,109
+2024-25,10,Karur,Gross area sown,area_ha,ha,87020,109
+2024-25,10,Karur,Gross area sown,pct_of_district_area,%,30.1,109
+2024-25,10,Karur,Gross area sown,pct_of_state_area,%,1.4,109
+2024-25,15,Perambalur,Total geographical area,area_ha,ha,175739,104
+2024-25,15,Perambalur,Total geographical area,pct_of_state_area,%,1.3,104
+2024-25,15,Perambalur,Forest,area_ha,ha,16281,104
+2024-25,15,Perambalur,Forest,pct_of_district_area,%,9.3,104
+2024-25,15,Perambalur,Forest,pct_of_state_area,%,0.8,104
+2024-25,15,Perambalur,Barren and unculturable area,area_ha,ha,2786,104
+2024-25,15,Perambalur,Barren and unculturable area,pct_of_district_area,%,1.6,104
+2024-25,15,Perambalur,Barren and unculturable area,pct_of_state_area,%,0.6,104
+2024-25,15,Perambalur,Land put to non-agricultural uses: water logged land,area_ha,ha,0,105
+2024-25,15,Perambalur,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.0,105
+2024-25,15,Perambalur,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.0,105
+2024-25,15,Perambalur,Land put to non-agricultural uses: social forestry,area_ha,ha,463,105
+2024-25,15,Perambalur,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.3,105
+2024-25,15,Perambalur,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,0.9,105
+2024-25,15,Perambalur,Land put to non-agricultural uses: land under still water,area_ha,ha,15037,105
+2024-25,15,Perambalur,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,8.6,105
+2024-25,15,Perambalur,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,1.5,105
+2024-25,15,Perambalur,Land put to non-agricultural uses: others,area_ha,ha,6002,106
+2024-25,15,Perambalur,Land put to non-agricultural uses: others,pct_of_district_area,%,3.4,106
+2024-25,15,Perambalur,Land put to non-agricultural uses: others,pct_of_state_area,%,1.4,106
+2024-25,15,Perambalur,Land put to non-agricultural uses: total,area_ha,ha,28570,106
+2024-25,15,Perambalur,Land put to non-agricultural uses: total,pct_of_district_area,%,16.3,106
+2024-25,15,Perambalur,Land put to non-agricultural uses: total,pct_of_state_area,%,1.3,106
+2024-25,15,Perambalur,Cultivable waste,area_ha,ha,3706,106
+2024-25,15,Perambalur,Cultivable waste,pct_of_district_area,%,2.1,106
+2024-25,15,Perambalur,Cultivable waste,pct_of_state_area,%,1.0,106
+2024-25,15,Perambalur,Permanent pastures and other grazing lands,area_ha,ha,152,107
+2024-25,15,Perambalur,Permanent pastures and other grazing lands,pct_of_district_area,%,0.1,107
+2024-25,15,Perambalur,Permanent pastures and other grazing lands,pct_of_state_area,%,0.1,107
+2024-25,15,Perambalur,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,1644,107
+2024-25,15,Perambalur,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,0.9,107
+2024-25,15,Perambalur,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,1.0,107
+2024-25,15,Perambalur,Current fallow,area_ha,ha,13695,108
+2024-25,15,Perambalur,Current fallow,pct_of_district_area,%,7.8,108
+2024-25,15,Perambalur,Current fallow,pct_of_state_area,%,1.6,108
+2024-25,15,Perambalur,Other fallow,area_ha,ha,8840,108
+2024-25,15,Perambalur,Other fallow,pct_of_district_area,%,5.0,108
+2024-25,15,Perambalur,Other fallow,pct_of_state_area,%,0.5,108
+2024-25,15,Perambalur,Net area sown,area_ha,ha,100062,109
+2024-25,15,Perambalur,Net area sown,pct_of_district_area,%,56.9,109
+2024-25,15,Perambalur,Net area sown,pct_of_state_area,%,2.1,109
+2024-25,15,Perambalur,Area sown more than once,area_ha,ha,10468,109
+2024-25,15,Perambalur,Area sown more than once,pct_of_district_area,%,6.0,109
+2024-25,15,Perambalur,Area sown more than once,pct_of_state_area,%,0.7,109
+2024-25,15,Perambalur,Gross area sown,area_ha,ha,110530,109
+2024-25,15,Perambalur,Gross area sown,pct_of_district_area,%,62.9,109
+2024-25,15,Perambalur,Gross area sown,pct_of_state_area,%,1.8,109
+2024-25,1,Ariyalur,Total geographical area,area_ha,ha,193398,104
+2024-25,1,Ariyalur,Total geographical area,pct_of_state_area,%,1.5,104
+2024-25,1,Ariyalur,Forest,area_ha,ha,739,104
+2024-25,1,Ariyalur,Forest,pct_of_district_area,%,0.4,104
+2024-25,1,Ariyalur,Forest,pct_of_state_area,%,0.0,104
+2024-25,1,Ariyalur,Barren and unculturable area,area_ha,ha,8523,104
+2024-25,1,Ariyalur,Barren and unculturable area,pct_of_district_area,%,4.4,104
+2024-25,1,Ariyalur,Barren and unculturable area,pct_of_state_area,%,1.9,104
+2024-25,1,Ariyalur,Land put to non-agricultural uses: water logged land,area_ha,ha,0,105
+2024-25,1,Ariyalur,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.0,105
+2024-25,1,Ariyalur,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.0,105
+2024-25,1,Ariyalur,Land put to non-agricultural uses: social forestry,area_ha,ha,13,105
+2024-25,1,Ariyalur,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.0,105
+2024-25,1,Ariyalur,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,0.0,105
+2024-25,1,Ariyalur,Land put to non-agricultural uses: land under still water,area_ha,ha,19452,105
+2024-25,1,Ariyalur,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,10.1,105
+2024-25,1,Ariyalur,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,2.0,105
+2024-25,1,Ariyalur,Land put to non-agricultural uses: others,area_ha,ha,2902,106
+2024-25,1,Ariyalur,Land put to non-agricultural uses: others,pct_of_district_area,%,1.5,106
+2024-25,1,Ariyalur,Land put to non-agricultural uses: others,pct_of_state_area,%,0.7,106
+2024-25,1,Ariyalur,Land put to non-agricultural uses: total,area_ha,ha,32444,106
+2024-25,1,Ariyalur,Land put to non-agricultural uses: total,pct_of_district_area,%,16.8,106
+2024-25,1,Ariyalur,Land put to non-agricultural uses: total,pct_of_state_area,%,1.5,106
+2024-25,1,Ariyalur,Cultivable waste,area_ha,ha,4161,106
+2024-25,1,Ariyalur,Cultivable waste,pct_of_district_area,%,2.2,106
+2024-25,1,Ariyalur,Cultivable waste,pct_of_state_area,%,1.2,106
+2024-25,1,Ariyalur,Permanent pastures and other grazing lands,area_ha,ha,1263,107
+2024-25,1,Ariyalur,Permanent pastures and other grazing lands,pct_of_district_area,%,0.7,107
+2024-25,1,Ariyalur,Permanent pastures and other grazing lands,pct_of_state_area,%,1.2,107
+2024-25,1,Ariyalur,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,12617,107
+2024-25,1,Ariyalur,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,6.5,107
+2024-25,1,Ariyalur,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,7.6,107
+2024-25,1,Ariyalur,Current fallow,area_ha,ha,9566,108
+2024-25,1,Ariyalur,Current fallow,pct_of_district_area,%,4.9,108
+2024-25,1,Ariyalur,Current fallow,pct_of_state_area,%,1.1,108
+2024-25,1,Ariyalur,Other fallow,area_ha,ha,26909,108
+2024-25,1,Ariyalur,Other fallow,pct_of_district_area,%,13.9,108
+2024-25,1,Ariyalur,Other fallow,pct_of_state_area,%,1.4,108
+2024-25,1,Ariyalur,Net area sown,area_ha,ha,97176,109
+2024-25,1,Ariyalur,Net area sown,pct_of_district_area,%,50.2,109
+2024-25,1,Ariyalur,Net area sown,pct_of_state_area,%,2.0,109
+2024-25,1,Ariyalur,Area sown more than once,area_ha,ha,23365,109
+2024-25,1,Ariyalur,Area sown more than once,pct_of_district_area,%,12.1,109
+2024-25,1,Ariyalur,Area sown more than once,pct_of_state_area,%,1.7,109
+2024-25,1,Ariyalur,Gross area sown,area_ha,ha,120541,109
+2024-25,1,Ariyalur,Gross area sown,pct_of_district_area,%,62.3,109
+2024-25,1,Ariyalur,Gross area sown,pct_of_state_area,%,1.9,109
+2024-25,16,Pudukkottai,Total geographical area,area_ha,ha,466329,104
+2024-25,16,Pudukkottai,Total geographical area,pct_of_state_area,%,3.6,104
+2024-25,16,Pudukkottai,Forest,area_ha,ha,23535,104
+2024-25,16,Pudukkottai,Forest,pct_of_district_area,%,5.0,104
+2024-25,16,Pudukkottai,Forest,pct_of_state_area,%,1.1,104
+2024-25,16,Pudukkottai,Barren and unculturable area,area_ha,ha,9863,104
+2024-25,16,Pudukkottai,Barren and unculturable area,pct_of_district_area,%,2.1,104
+2024-25,16,Pudukkottai,Barren and unculturable area,pct_of_state_area,%,2.2,104
+2024-25,16,Pudukkottai,Land put to non-agricultural uses: water logged land,area_ha,ha,616,105
+2024-25,16,Pudukkottai,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.1,105
+2024-25,16,Pudukkottai,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,1.0,105
+2024-25,16,Pudukkottai,Land put to non-agricultural uses: social forestry,area_ha,ha,3121,105
+2024-25,16,Pudukkottai,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.7,105
+2024-25,16,Pudukkottai,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,5.9,105
+2024-25,16,Pudukkottai,Land put to non-agricultural uses: land under still water,area_ha,ha,82781,105
+2024-25,16,Pudukkottai,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,17.8,105
+2024-25,16,Pudukkottai,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,8.4,105
+2024-25,16,Pudukkottai,Land put to non-agricultural uses: others,area_ha,ha,25936,106
+2024-25,16,Pudukkottai,Land put to non-agricultural uses: others,pct_of_district_area,%,5.6,106
+2024-25,16,Pudukkottai,Land put to non-agricultural uses: others,pct_of_state_area,%,6.1,106
+2024-25,16,Pudukkottai,Land put to non-agricultural uses: total,area_ha,ha,136699,106
+2024-25,16,Pudukkottai,Land put to non-agricultural uses: total,pct_of_district_area,%,29.3,106
+2024-25,16,Pudukkottai,Land put to non-agricultural uses: total,pct_of_state_area,%,6.2,106
+2024-25,16,Pudukkottai,Cultivable waste,area_ha,ha,9280,106
+2024-25,16,Pudukkottai,Cultivable waste,pct_of_district_area,%,2.0,106
+2024-25,16,Pudukkottai,Cultivable waste,pct_of_state_area,%,2.6,106
+2024-25,16,Pudukkottai,Permanent pastures and other grazing lands,area_ha,ha,3471,107
+2024-25,16,Pudukkottai,Permanent pastures and other grazing lands,pct_of_district_area,%,0.7,107
+2024-25,16,Pudukkottai,Permanent pastures and other grazing lands,pct_of_state_area,%,3.2,107
+2024-25,16,Pudukkottai,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,14847,107
+2024-25,16,Pudukkottai,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,3.2,107
+2024-25,16,Pudukkottai,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,8.9,107
+2024-25,16,Pudukkottai,Current fallow,area_ha,ha,14349,108
+2024-25,16,Pudukkottai,Current fallow,pct_of_district_area,%,3.1,108
+2024-25,16,Pudukkottai,Current fallow,pct_of_state_area,%,1.7,108
+2024-25,16,Pudukkottai,Other fallow,area_ha,ha,118137,108
+2024-25,16,Pudukkottai,Other fallow,pct_of_district_area,%,25.3,108
+2024-25,16,Pudukkottai,Other fallow,pct_of_state_area,%,6.2,108
+2024-25,16,Pudukkottai,Net area sown,area_ha,ha,136148,109
+2024-25,16,Pudukkottai,Net area sown,pct_of_district_area,%,29.2,109
+2024-25,16,Pudukkottai,Net area sown,pct_of_state_area,%,2.8,109
+2024-25,16,Pudukkottai,Area sown more than once,area_ha,ha,10292,109
+2024-25,16,Pudukkottai,Area sown more than once,pct_of_district_area,%,2.2,109
+2024-25,16,Pudukkottai,Area sown more than once,pct_of_state_area,%,0.7,109
+2024-25,16,Pudukkottai,Gross area sown,area_ha,ha,146440,109
+2024-25,16,Pudukkottai,Gross area sown,pct_of_district_area,%,31.4,109
+2024-25,16,Pudukkottai,Gross area sown,pct_of_state_area,%,2.4,109
+2024-25,20,Thanjavur,Total geographical area,area_ha,ha,339657,104
+2024-25,20,Thanjavur,Total geographical area,pct_of_state_area,%,2.6,104
+2024-25,20,Thanjavur,Forest,area_ha,ha,3390,104
+2024-25,20,Thanjavur,Forest,pct_of_district_area,%,1.0,104
+2024-25,20,Thanjavur,Forest,pct_of_state_area,%,0.2,104
+2024-25,20,Thanjavur,Barren and unculturable area,area_ha,ha,2148,104
+2024-25,20,Thanjavur,Barren and unculturable area,pct_of_district_area,%,0.6,104
+2024-25,20,Thanjavur,Barren and unculturable area,pct_of_state_area,%,0.5,104
+2024-25,20,Thanjavur,Land put to non-agricultural uses: water logged land,area_ha,ha,32,105
+2024-25,20,Thanjavur,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.0,105
+2024-25,20,Thanjavur,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.1,105
+2024-25,20,Thanjavur,Land put to non-agricultural uses: social forestry,area_ha,ha,5,105
+2024-25,20,Thanjavur,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.0,105
+2024-25,20,Thanjavur,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,0.0,105
+2024-25,20,Thanjavur,Land put to non-agricultural uses: land under still water,area_ha,ha,30366,105
+2024-25,20,Thanjavur,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,8.9,105
+2024-25,20,Thanjavur,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,3.1,105
+2024-25,20,Thanjavur,Land put to non-agricultural uses: others,area_ha,ha,4467,106
+2024-25,20,Thanjavur,Land put to non-agricultural uses: others,pct_of_district_area,%,1.3,106
+2024-25,20,Thanjavur,Land put to non-agricultural uses: others,pct_of_state_area,%,1.1,106
+2024-25,20,Thanjavur,Land put to non-agricultural uses: total,area_ha,ha,81752,106
+2024-25,20,Thanjavur,Land put to non-agricultural uses: total,pct_of_district_area,%,24.1,106
+2024-25,20,Thanjavur,Land put to non-agricultural uses: total,pct_of_state_area,%,3.7,106
+2024-25,20,Thanjavur,Cultivable waste,area_ha,ha,12026,106
+2024-25,20,Thanjavur,Cultivable waste,pct_of_district_area,%,3.5,106
+2024-25,20,Thanjavur,Cultivable waste,pct_of_state_area,%,3.4,106
+2024-25,20,Thanjavur,Permanent pastures and other grazing lands,area_ha,ha,1192,107
+2024-25,20,Thanjavur,Permanent pastures and other grazing lands,pct_of_district_area,%,0.4,107
+2024-25,20,Thanjavur,Permanent pastures and other grazing lands,pct_of_state_area,%,1.1,107
+2024-25,20,Thanjavur,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,5707,107
+2024-25,20,Thanjavur,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,1.7,107
+2024-25,20,Thanjavur,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,3.4,107
+2024-25,20,Thanjavur,Current fallow,area_ha,ha,10369,108
+2024-25,20,Thanjavur,Current fallow,pct_of_district_area,%,3.1,108
+2024-25,20,Thanjavur,Current fallow,pct_of_state_area,%,1.2,108
+2024-25,20,Thanjavur,Other fallow,area_ha,ha,28338,108
+2024-25,20,Thanjavur,Other fallow,pct_of_district_area,%,8.3,108
+2024-25,20,Thanjavur,Other fallow,pct_of_state_area,%,1.5,108
+2024-25,20,Thanjavur,Net area sown,area_ha,ha,194736,109
+2024-25,20,Thanjavur,Net area sown,pct_of_district_area,%,57.3,109
+2024-25,20,Thanjavur,Net area sown,pct_of_state_area,%,4.0,109
+2024-25,20,Thanjavur,Area sown more than once,area_ha,ha,103767,109
+2024-25,20,Thanjavur,Area sown more than once,pct_of_district_area,%,30.6,109
+2024-25,20,Thanjavur,Area sown more than once,pct_of_state_area,%,7.4,109
+2024-25,20,Thanjavur,Gross area sown,area_ha,ha,298503,109
+2024-25,20,Thanjavur,Gross area sown,pct_of_district_area,%,87.9,109
+2024-25,20,Thanjavur,Gross area sown,pct_of_state_area,%,4.8,109
+2024-25,25,Tiruvarur,Total geographical area,area_ha,ha,209709,104
+2024-25,25,Tiruvarur,Total geographical area,pct_of_state_area,%,1.6,104
+2024-25,25,Tiruvarur,Forest,area_ha,ha,2452,104
+2024-25,25,Tiruvarur,Forest,pct_of_district_area,%,1.2,104
+2024-25,25,Tiruvarur,Forest,pct_of_state_area,%,0.1,104
+2024-25,25,Tiruvarur,Barren and unculturable area,area_ha,ha,113,104
+2024-25,25,Tiruvarur,Barren and unculturable area,pct_of_district_area,%,0.1,104
+2024-25,25,Tiruvarur,Barren and unculturable area,pct_of_state_area,%,0.0,104
+2024-25,25,Tiruvarur,Land put to non-agricultural uses: water logged land,area_ha,ha,71,105
+2024-25,25,Tiruvarur,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.0,105
+2024-25,25,Tiruvarur,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.1,105
+2024-25,25,Tiruvarur,Land put to non-agricultural uses: social forestry,area_ha,ha,115,105
+2024-25,25,Tiruvarur,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.1,105
+2024-25,25,Tiruvarur,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,0.2,105
+2024-25,25,Tiruvarur,Land put to non-agricultural uses: land under still water,area_ha,ha,23730,105
+2024-25,25,Tiruvarur,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,11.3,105
+2024-25,25,Tiruvarur,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,2.4,105
+2024-25,25,Tiruvarur,Land put to non-agricultural uses: others,area_ha,ha,3107,106
+2024-25,25,Tiruvarur,Land put to non-agricultural uses: others,pct_of_district_area,%,1.5,106
+2024-25,25,Tiruvarur,Land put to non-agricultural uses: others,pct_of_state_area,%,0.7,106
+2024-25,25,Tiruvarur,Land put to non-agricultural uses: total,area_ha,ha,37321,106
+2024-25,25,Tiruvarur,Land put to non-agricultural uses: total,pct_of_district_area,%,17.8,106
+2024-25,25,Tiruvarur,Land put to non-agricultural uses: total,pct_of_state_area,%,1.7,106
+2024-25,25,Tiruvarur,Cultivable waste,area_ha,ha,1179,106
+2024-25,25,Tiruvarur,Cultivable waste,pct_of_district_area,%,0.6,106
+2024-25,25,Tiruvarur,Cultivable waste,pct_of_state_area,%,0.3,106
+2024-25,25,Tiruvarur,Permanent pastures and other grazing lands,area_ha,ha,786,107
+2024-25,25,Tiruvarur,Permanent pastures and other grazing lands,pct_of_district_area,%,0.4,107
+2024-25,25,Tiruvarur,Permanent pastures and other grazing lands,pct_of_state_area,%,0.7,107
+2024-25,25,Tiruvarur,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,2096,107
+2024-25,25,Tiruvarur,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,1.0,107
+2024-25,25,Tiruvarur,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,1.3,107
+2024-25,25,Tiruvarur,Current fallow,area_ha,ha,4542,108
+2024-25,25,Tiruvarur,Current fallow,pct_of_district_area,%,2.2,108
+2024-25,25,Tiruvarur,Current fallow,pct_of_state_area,%,0.5,108
+2024-25,25,Tiruvarur,Other fallow,area_ha,ha,5384,108
+2024-25,25,Tiruvarur,Other fallow,pct_of_district_area,%,2.6,108
+2024-25,25,Tiruvarur,Other fallow,pct_of_state_area,%,0.3,108
+2024-25,25,Tiruvarur,Net area sown,area_ha,ha,155836,109
+2024-25,25,Tiruvarur,Net area sown,pct_of_district_area,%,74.3,109
+2024-25,25,Tiruvarur,Net area sown,pct_of_state_area,%,3.2,109
+2024-25,25,Tiruvarur,Area sown more than once,area_ha,ha,121573,109
+2024-25,25,Tiruvarur,Area sown more than once,pct_of_district_area,%,58.0,109
+2024-25,25,Tiruvarur,Area sown more than once,pct_of_state_area,%,8.7,109
+2024-25,25,Tiruvarur,Gross area sown,area_ha,ha,277409,109
+2024-25,25,Tiruvarur,Gross area sown,pct_of_district_area,%,132.3,109
+2024-25,25,Tiruvarur,Gross area sown,pct_of_state_area,%,4.5,109
+2024-25,13,Nagapattinam,Total geographical area,area_ha,ha,154225,104
+2024-25,13,Nagapattinam,Total geographical area,pct_of_state_area,%,1.2,104
+2024-25,13,Nagapattinam,Forest,area_ha,ha,3531,104
+2024-25,13,Nagapattinam,Forest,pct_of_district_area,%,2.3,104
+2024-25,13,Nagapattinam,Forest,pct_of_state_area,%,0.2,104
+2024-25,13,Nagapattinam,Barren and unculturable area,area_ha,ha,32669,104
+2024-25,13,Nagapattinam,Barren and unculturable area,pct_of_district_area,%,21.2,104
+2024-25,13,Nagapattinam,Barren and unculturable area,pct_of_state_area,%,7.1,104
+2024-25,13,Nagapattinam,Land put to non-agricultural uses: water logged land,area_ha,ha,361,105
+2024-25,13,Nagapattinam,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.2,105
+2024-25,13,Nagapattinam,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.6,105
+2024-25,13,Nagapattinam,Land put to non-agricultural uses: social forestry,area_ha,ha,135,105
+2024-25,13,Nagapattinam,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.1,105
+2024-25,13,Nagapattinam,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,0.3,105
+2024-25,13,Nagapattinam,Land put to non-agricultural uses: land under still water,area_ha,ha,12618,105
+2024-25,13,Nagapattinam,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,8.2,105
+2024-25,13,Nagapattinam,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,1.3,105
+2024-25,13,Nagapattinam,Land put to non-agricultural uses: others,area_ha,ha,3732,106
+2024-25,13,Nagapattinam,Land put to non-agricultural uses: others,pct_of_district_area,%,2.4,106
+2024-25,13,Nagapattinam,Land put to non-agricultural uses: others,pct_of_state_area,%,0.9,106
+2024-25,13,Nagapattinam,Land put to non-agricultural uses: total,area_ha,ha,24096,106
+2024-25,13,Nagapattinam,Land put to non-agricultural uses: total,pct_of_district_area,%,15.6,106
+2024-25,13,Nagapattinam,Land put to non-agricultural uses: total,pct_of_state_area,%,1.1,106
+2024-25,13,Nagapattinam,Cultivable waste,area_ha,ha,1446,106
+2024-25,13,Nagapattinam,Cultivable waste,pct_of_district_area,%,0.9,106
+2024-25,13,Nagapattinam,Cultivable waste,pct_of_state_area,%,0.4,106
+2024-25,13,Nagapattinam,Permanent pastures and other grazing lands,area_ha,ha,413,107
+2024-25,13,Nagapattinam,Permanent pastures and other grazing lands,pct_of_district_area,%,0.3,107
+2024-25,13,Nagapattinam,Permanent pastures and other grazing lands,pct_of_state_area,%,0.4,107
+2024-25,13,Nagapattinam,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,3432,107
+2024-25,13,Nagapattinam,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,2.2,107
+2024-25,13,Nagapattinam,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,2.1,107
+2024-25,13,Nagapattinam,Current fallow,area_ha,ha,7306,108
+2024-25,13,Nagapattinam,Current fallow,pct_of_district_area,%,4.7,108
+2024-25,13,Nagapattinam,Current fallow,pct_of_state_area,%,0.9,108
+2024-25,13,Nagapattinam,Other fallow,area_ha,ha,9330,108
+2024-25,13,Nagapattinam,Other fallow,pct_of_district_area,%,6.0,108
+2024-25,13,Nagapattinam,Other fallow,pct_of_state_area,%,0.5,108
+2024-25,13,Nagapattinam,Net area sown,area_ha,ha,72001,109
+2024-25,13,Nagapattinam,Net area sown,pct_of_district_area,%,46.7,109
+2024-25,13,Nagapattinam,Net area sown,pct_of_state_area,%,1.5,109
+2024-25,13,Nagapattinam,Area sown more than once,area_ha,ha,43608,109
+2024-25,13,Nagapattinam,Area sown more than once,pct_of_district_area,%,28.3,109
+2024-25,13,Nagapattinam,Area sown more than once,pct_of_state_area,%,3.1,109
+2024-25,13,Nagapattinam,Gross area sown,area_ha,ha,115608,109
+2024-25,13,Nagapattinam,Gross area sown,pct_of_district_area,%,75.0,109
+2024-25,13,Nagapattinam,Gross area sown,pct_of_state_area,%,1.9,109
+2024-25,38,Mayiladuthurai,Total geographical area,area_ha,ha,117358,104
+2024-25,38,Mayiladuthurai,Total geographical area,pct_of_state_area,%,0.9,104
+2024-25,38,Mayiladuthurai,Forest,area_ha,ha,1102,104
+2024-25,38,Mayiladuthurai,Forest,pct_of_district_area,%,0.9,104
+2024-25,38,Mayiladuthurai,Forest,pct_of_state_area,%,0.1,104
+2024-25,38,Mayiladuthurai,Barren and unculturable area,area_ha,ha,751,104
+2024-25,38,Mayiladuthurai,Barren and unculturable area,pct_of_district_area,%,0.6,104
+2024-25,38,Mayiladuthurai,Barren and unculturable area,pct_of_state_area,%,0.2,104
+2024-25,38,Mayiladuthurai,Land put to non-agricultural uses: water logged land,area_ha,ha,140,105
+2024-25,38,Mayiladuthurai,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.1,105
+2024-25,38,Mayiladuthurai,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.2,105
+2024-25,38,Mayiladuthurai,Land put to non-agricultural uses: social forestry,area_ha,ha,939,105
+2024-25,38,Mayiladuthurai,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.8,105
+2024-25,38,Mayiladuthurai,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,1.8,105
+2024-25,38,Mayiladuthurai,Land put to non-agricultural uses: land under still water,area_ha,ha,10460,105
+2024-25,38,Mayiladuthurai,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,8.9,105
+2024-25,38,Mayiladuthurai,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,1.1,105
+2024-25,38,Mayiladuthurai,Land put to non-agricultural uses: others,area_ha,ha,4156,106
+2024-25,38,Mayiladuthurai,Land put to non-agricultural uses: others,pct_of_district_area,%,3.5,106
+2024-25,38,Mayiladuthurai,Land put to non-agricultural uses: others,pct_of_state_area,%,1.0,106
+2024-25,38,Mayiladuthurai,Land put to non-agricultural uses: total,area_ha,ha,23661,106
+2024-25,38,Mayiladuthurai,Land put to non-agricultural uses: total,pct_of_district_area,%,20.2,106
+2024-25,38,Mayiladuthurai,Land put to non-agricultural uses: total,pct_of_state_area,%,1.1,106
+2024-25,38,Mayiladuthurai,Cultivable waste,area_ha,ha,553,106
+2024-25,38,Mayiladuthurai,Cultivable waste,pct_of_district_area,%,0.5,106
+2024-25,38,Mayiladuthurai,Cultivable waste,pct_of_state_area,%,0.2,106
+2024-25,38,Mayiladuthurai,Permanent pastures and other grazing lands,area_ha,ha,418,107
+2024-25,38,Mayiladuthurai,Permanent pastures and other grazing lands,pct_of_district_area,%,0.4,107
+2024-25,38,Mayiladuthurai,Permanent pastures and other grazing lands,pct_of_state_area,%,0.4,107
+2024-25,38,Mayiladuthurai,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,2775,107
+2024-25,38,Mayiladuthurai,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,2.4,107
+2024-25,38,Mayiladuthurai,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,1.7,107
+2024-25,38,Mayiladuthurai,Current fallow,area_ha,ha,1590,108
+2024-25,38,Mayiladuthurai,Current fallow,pct_of_district_area,%,1.4,108
+2024-25,38,Mayiladuthurai,Current fallow,pct_of_state_area,%,0.2,108
+2024-25,38,Mayiladuthurai,Other fallow,area_ha,ha,13323,108
+2024-25,38,Mayiladuthurai,Other fallow,pct_of_district_area,%,11.4,108
+2024-25,38,Mayiladuthurai,Other fallow,pct_of_state_area,%,0.7,108
+2024-25,38,Mayiladuthurai,Net area sown,area_ha,ha,73184,109
+2024-25,38,Mayiladuthurai,Net area sown,pct_of_district_area,%,62.4,109
+2024-25,38,Mayiladuthurai,Net area sown,pct_of_state_area,%,1.5,109
+2024-25,38,Mayiladuthurai,Area sown more than once,area_ha,ha,95834,109
+2024-25,38,Mayiladuthurai,Area sown more than once,pct_of_district_area,%,81.7,109
+2024-25,38,Mayiladuthurai,Area sown more than once,pct_of_state_area,%,6.9,109
+2024-25,38,Mayiladuthurai,Gross area sown,area_ha,ha,169018,109
+2024-25,38,Mayiladuthurai,Gross area sown,pct_of_district_area,%,144.0,109
+2024-25,38,Mayiladuthurai,Gross area sown,pct_of_state_area,%,2.7,109
+2024-25,12,Madurai,Total geographical area,area_ha,ha,374173,104
+2024-25,12,Madurai,Total geographical area,pct_of_state_area,%,2.9,104
+2024-25,12,Madurai,Forest,area_ha,ha,48473,104
+2024-25,12,Madurai,Forest,pct_of_district_area,%,13.0,104
+2024-25,12,Madurai,Forest,pct_of_state_area,%,2.2,104
+2024-25,12,Madurai,Barren and unculturable area,area_ha,ha,13031,104
+2024-25,12,Madurai,Barren and unculturable area,pct_of_district_area,%,3.5,104
+2024-25,12,Madurai,Barren and unculturable area,pct_of_state_area,%,2.9,104
+2024-25,12,Madurai,Land put to non-agricultural uses: water logged land,area_ha,ha,195,105
+2024-25,12,Madurai,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.1,105
+2024-25,12,Madurai,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.3,105
+2024-25,12,Madurai,Land put to non-agricultural uses: social forestry,area_ha,ha,282,105
+2024-25,12,Madurai,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.1,105
+2024-25,12,Madurai,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,0.5,105
+2024-25,12,Madurai,Land put to non-agricultural uses: land under still water,area_ha,ha,39402,105
+2024-25,12,Madurai,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,10.5,105
+2024-25,12,Madurai,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,4.0,105
+2024-25,12,Madurai,Land put to non-agricultural uses: others,area_ha,ha,14276,106
+2024-25,12,Madurai,Land put to non-agricultural uses: others,pct_of_district_area,%,3.8,106
+2024-25,12,Madurai,Land put to non-agricultural uses: others,pct_of_state_area,%,3.4,106
+2024-25,12,Madurai,Land put to non-agricultural uses: total,area_ha,ha,75605,106
+2024-25,12,Madurai,Land put to non-agricultural uses: total,pct_of_district_area,%,20.2,106
+2024-25,12,Madurai,Land put to non-agricultural uses: total,pct_of_state_area,%,3.4,106
+2024-25,12,Madurai,Cultivable waste,area_ha,ha,14086,106
+2024-25,12,Madurai,Cultivable waste,pct_of_district_area,%,3.8,106
+2024-25,12,Madurai,Cultivable waste,pct_of_state_area,%,4.0,106
+2024-25,12,Madurai,Permanent pastures and other grazing lands,area_ha,ha,233,107
+2024-25,12,Madurai,Permanent pastures and other grazing lands,pct_of_district_area,%,0.1,107
+2024-25,12,Madurai,Permanent pastures and other grazing lands,pct_of_state_area,%,0.2,107
+2024-25,12,Madurai,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,2326,107
+2024-25,12,Madurai,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,0.6,107
+2024-25,12,Madurai,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,1.4,107
+2024-25,12,Madurai,Current fallow,area_ha,ha,15005,108
+2024-25,12,Madurai,Current fallow,pct_of_district_area,%,4.0,108
+2024-25,12,Madurai,Current fallow,pct_of_state_area,%,1.8,108
+2024-25,12,Madurai,Other fallow,area_ha,ha,83700,108
+2024-25,12,Madurai,Other fallow,pct_of_district_area,%,22.4,108
+2024-25,12,Madurai,Other fallow,pct_of_state_area,%,4.4,108
+2024-25,12,Madurai,Net area sown,area_ha,ha,121714,109
+2024-25,12,Madurai,Net area sown,pct_of_district_area,%,32.5,109
+2024-25,12,Madurai,Net area sown,pct_of_state_area,%,2.5,109
+2024-25,12,Madurai,Area sown more than once,area_ha,ha,14664,109
+2024-25,12,Madurai,Area sown more than once,pct_of_district_area,%,3.9,109
+2024-25,12,Madurai,Area sown more than once,pct_of_state_area,%,1.0,109
+2024-25,12,Madurai,Gross area sown,area_ha,ha,136378,109
+2024-25,12,Madurai,Gross area sown,pct_of_district_area,%,36.4,109
+2024-25,12,Madurai,Gross area sown,pct_of_state_area,%,2.2,109
+2024-25,22,Theni,Total geographical area,area_ha,ha,324230,104
+2024-25,22,Theni,Total geographical area,pct_of_state_area,%,2.5,104
+2024-25,22,Theni,Forest,area_ha,ha,134813,104
+2024-25,22,Theni,Forest,pct_of_district_area,%,41.6,104
+2024-25,22,Theni,Forest,pct_of_state_area,%,6.3,104
+2024-25,22,Theni,Barren and unculturable area,area_ha,ha,12225,104
+2024-25,22,Theni,Barren and unculturable area,pct_of_district_area,%,3.8,104
+2024-25,22,Theni,Barren and unculturable area,pct_of_state_area,%,2.7,104
+2024-25,22,Theni,Land put to non-agricultural uses: water logged land,area_ha,ha,1163,105
+2024-25,22,Theni,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.4,105
+2024-25,22,Theni,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,2.0,105
+2024-25,22,Theni,Land put to non-agricultural uses: social forestry,area_ha,ha,380,105
+2024-25,22,Theni,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.1,105
+2024-25,22,Theni,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,0.7,105
+2024-25,22,Theni,Land put to non-agricultural uses: land under still water,area_ha,ha,8556,105
+2024-25,22,Theni,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,2.6,105
+2024-25,22,Theni,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,0.9,105
+2024-25,22,Theni,Land put to non-agricultural uses: others,area_ha,ha,5806,106
+2024-25,22,Theni,Land put to non-agricultural uses: others,pct_of_district_area,%,1.8,106
+2024-25,22,Theni,Land put to non-agricultural uses: others,pct_of_state_area,%,1.4,106
+2024-25,22,Theni,Land put to non-agricultural uses: total,area_ha,ha,24623,106
+2024-25,22,Theni,Land put to non-agricultural uses: total,pct_of_district_area,%,7.6,106
+2024-25,22,Theni,Land put to non-agricultural uses: total,pct_of_state_area,%,1.1,106
+2024-25,22,Theni,Cultivable waste,area_ha,ha,2616,106
+2024-25,22,Theni,Cultivable waste,pct_of_district_area,%,0.8,106
+2024-25,22,Theni,Cultivable waste,pct_of_state_area,%,0.7,106
+2024-25,22,Theni,Permanent pastures and other grazing lands,area_ha,ha,315,107
+2024-25,22,Theni,Permanent pastures and other grazing lands,pct_of_district_area,%,0.1,107
+2024-25,22,Theni,Permanent pastures and other grazing lands,pct_of_state_area,%,0.3,107
+2024-25,22,Theni,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,793,107
+2024-25,22,Theni,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,0.2,107
+2024-25,22,Theni,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,0.5,107
+2024-25,22,Theni,Current fallow,area_ha,ha,14865,108
+2024-25,22,Theni,Current fallow,pct_of_district_area,%,4.6,108
+2024-25,22,Theni,Current fallow,pct_of_state_area,%,1.7,108
+2024-25,22,Theni,Other fallow,area_ha,ha,30828,108
+2024-25,22,Theni,Other fallow,pct_of_district_area,%,9.5,108
+2024-25,22,Theni,Other fallow,pct_of_state_area,%,1.6,108
+2024-25,22,Theni,Net area sown,area_ha,ha,103152,109
+2024-25,22,Theni,Net area sown,pct_of_district_area,%,31.8,109
+2024-25,22,Theni,Net area sown,pct_of_state_area,%,2.1,109
+2024-25,22,Theni,Area sown more than once,area_ha,ha,10188,109
+2024-25,22,Theni,Area sown more than once,pct_of_district_area,%,3.1,109
+2024-25,22,Theni,Area sown more than once,pct_of_state_area,%,0.7,109
+2024-25,22,Theni,Gross area sown,area_ha,ha,113340,109
+2024-25,22,Theni,Gross area sown,pct_of_district_area,%,35.0,109
+2024-25,22,Theni,Gross area sown,pct_of_state_area,%,1.8,109
+2024-25,6,Dindigul,Total geographical area,area_ha,ha,626664,104
+2024-25,6,Dindigul,Total geographical area,pct_of_state_area,%,4.8,104
+2024-25,6,Dindigul,Forest,area_ha,ha,138923,104
+2024-25,6,Dindigul,Forest,pct_of_district_area,%,22.2,104
+2024-25,6,Dindigul,Forest,pct_of_state_area,%,6.4,104
+2024-25,6,Dindigul,Barren and unculturable area,area_ha,ha,36210,104
+2024-25,6,Dindigul,Barren and unculturable area,pct_of_district_area,%,5.8,104
+2024-25,6,Dindigul,Barren and unculturable area,pct_of_state_area,%,7.9,104
+2024-25,6,Dindigul,Land put to non-agricultural uses: water logged land,area_ha,ha,125,105
+2024-25,6,Dindigul,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.0,105
+2024-25,6,Dindigul,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.2,105
+2024-25,6,Dindigul,Land put to non-agricultural uses: social forestry,area_ha,ha,3572,105
+2024-25,6,Dindigul,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.6,105
+2024-25,6,Dindigul,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,6.7,105
+2024-25,6,Dindigul,Land put to non-agricultural uses: land under still water,area_ha,ha,17005,105
+2024-25,6,Dindigul,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,2.7,105
+2024-25,6,Dindigul,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,1.7,105
+2024-25,6,Dindigul,Land put to non-agricultural uses: others,area_ha,ha,12188,106
+2024-25,6,Dindigul,Land put to non-agricultural uses: others,pct_of_district_area,%,1.9,106
+2024-25,6,Dindigul,Land put to non-agricultural uses: others,pct_of_state_area,%,2.9,106
+2024-25,6,Dindigul,Land put to non-agricultural uses: total,area_ha,ha,67381,106
+2024-25,6,Dindigul,Land put to non-agricultural uses: total,pct_of_district_area,%,10.8,106
+2024-25,6,Dindigul,Land put to non-agricultural uses: total,pct_of_state_area,%,3.1,106
+2024-25,6,Dindigul,Cultivable waste,area_ha,ha,8216,106
+2024-25,6,Dindigul,Cultivable waste,pct_of_district_area,%,1.3,106
+2024-25,6,Dindigul,Cultivable waste,pct_of_state_area,%,2.3,106
+2024-25,6,Dindigul,Permanent pastures and other grazing lands,area_ha,ha,6946,107
+2024-25,6,Dindigul,Permanent pastures and other grazing lands,pct_of_district_area,%,1.1,107
+2024-25,6,Dindigul,Permanent pastures and other grazing lands,pct_of_state_area,%,6.5,107
+2024-25,6,Dindigul,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,6914,107
+2024-25,6,Dindigul,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,1.1,107
+2024-25,6,Dindigul,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,4.2,107
+2024-25,6,Dindigul,Current fallow,area_ha,ha,15271,108
+2024-25,6,Dindigul,Current fallow,pct_of_district_area,%,2.4,108
+2024-25,6,Dindigul,Current fallow,pct_of_state_area,%,1.8,108
+2024-25,6,Dindigul,Other fallow,area_ha,ha,130496,108
+2024-25,6,Dindigul,Other fallow,pct_of_district_area,%,20.8,108
+2024-25,6,Dindigul,Other fallow,pct_of_state_area,%,6.9,108
+2024-25,6,Dindigul,Net area sown,area_ha,ha,216306,109
+2024-25,6,Dindigul,Net area sown,pct_of_district_area,%,34.5,109
+2024-25,6,Dindigul,Net area sown,pct_of_state_area,%,4.5,109
+2024-25,6,Dindigul,Area sown more than once,area_ha,ha,6246,109
+2024-25,6,Dindigul,Area sown more than once,pct_of_district_area,%,1.0,109
+2024-25,6,Dindigul,Area sown more than once,pct_of_state_area,%,0.4,109
+2024-25,6,Dindigul,Gross area sown,area_ha,ha,222552,109
+2024-25,6,Dindigul,Gross area sown,pct_of_district_area,%,35.5,109
+2024-25,6,Dindigul,Gross area sown,pct_of_state_area,%,3.6,109
+2024-25,17,Ramanathapuram,Total geographical area,area_ha,ha,408957,104
+2024-25,17,Ramanathapuram,Total geographical area,pct_of_state_area,%,3.1,104
+2024-25,17,Ramanathapuram,Forest,area_ha,ha,4488,104
+2024-25,17,Ramanathapuram,Forest,pct_of_district_area,%,1.1,104
+2024-25,17,Ramanathapuram,Forest,pct_of_state_area,%,0.2,104
+2024-25,17,Ramanathapuram,Barren and unculturable area,area_ha,ha,4342,104
+2024-25,17,Ramanathapuram,Barren and unculturable area,pct_of_district_area,%,1.1,104
+2024-25,17,Ramanathapuram,Barren and unculturable area,pct_of_state_area,%,1.0,104
+2024-25,17,Ramanathapuram,Land put to non-agricultural uses: water logged land,area_ha,ha,2341,105
+2024-25,17,Ramanathapuram,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.6,105
+2024-25,17,Ramanathapuram,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,4.0,105
+2024-25,17,Ramanathapuram,Land put to non-agricultural uses: social forestry,area_ha,ha,4556,105
+2024-25,17,Ramanathapuram,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,1.1,105
+2024-25,17,Ramanathapuram,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,8.6,105
+2024-25,17,Ramanathapuram,Land put to non-agricultural uses: land under still water,area_ha,ha,52269,105
+2024-25,17,Ramanathapuram,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,12.8,105
+2024-25,17,Ramanathapuram,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,5.3,105
+2024-25,17,Ramanathapuram,Land put to non-agricultural uses: others,area_ha,ha,16105,106
+2024-25,17,Ramanathapuram,Land put to non-agricultural uses: others,pct_of_district_area,%,3.9,106
+2024-25,17,Ramanathapuram,Land put to non-agricultural uses: others,pct_of_state_area,%,3.8,106
+2024-25,17,Ramanathapuram,Land put to non-agricultural uses: total,area_ha,ha,86649,106
+2024-25,17,Ramanathapuram,Land put to non-agricultural uses: total,pct_of_district_area,%,21.2,106
+2024-25,17,Ramanathapuram,Land put to non-agricultural uses: total,pct_of_state_area,%,3.9,106
+2024-25,17,Ramanathapuram,Cultivable waste,area_ha,ha,29388,106
+2024-25,17,Ramanathapuram,Cultivable waste,pct_of_district_area,%,7.2,106
+2024-25,17,Ramanathapuram,Cultivable waste,pct_of_state_area,%,8.3,106
+2024-25,17,Ramanathapuram,Permanent pastures and other grazing lands,area_ha,ha,186,107
+2024-25,17,Ramanathapuram,Permanent pastures and other grazing lands,pct_of_district_area,%,0.0,107
+2024-25,17,Ramanathapuram,Permanent pastures and other grazing lands,pct_of_state_area,%,0.2,107
+2024-25,17,Ramanathapuram,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,2520,107
+2024-25,17,Ramanathapuram,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,0.6,107
+2024-25,17,Ramanathapuram,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,1.5,107
+2024-25,17,Ramanathapuram,Current fallow,area_ha,ha,7390,108
+2024-25,17,Ramanathapuram,Current fallow,pct_of_district_area,%,1.8,108
+2024-25,17,Ramanathapuram,Current fallow,pct_of_state_area,%,0.9,108
+2024-25,17,Ramanathapuram,Other fallow,area_ha,ha,87410,108
+2024-25,17,Ramanathapuram,Other fallow,pct_of_district_area,%,21.4,108
+2024-25,17,Ramanathapuram,Other fallow,pct_of_state_area,%,4.6,108
+2024-25,17,Ramanathapuram,Net area sown,area_ha,ha,186584,109
+2024-25,17,Ramanathapuram,Net area sown,pct_of_district_area,%,45.6,109
+2024-25,17,Ramanathapuram,Net area sown,pct_of_state_area,%,3.9,109
+2024-25,17,Ramanathapuram,Area sown more than once,area_ha,ha,5667,109
+2024-25,17,Ramanathapuram,Area sown more than once,pct_of_district_area,%,1.4,109
+2024-25,17,Ramanathapuram,Area sown more than once,pct_of_state_area,%,0.4,109
+2024-25,17,Ramanathapuram,Gross area sown,area_ha,ha,192251,109
+2024-25,17,Ramanathapuram,Gross area sown,pct_of_district_area,%,47.0,109
+2024-25,17,Ramanathapuram,Gross area sown,pct_of_state_area,%,3.1,109
+2024-25,32,Virudhunagar,Total geographical area,area_ha,ha,424323,104
+2024-25,32,Virudhunagar,Total geographical area,pct_of_state_area,%,3.3,104
+2024-25,32,Virudhunagar,Forest,area_ha,ha,26466,104
+2024-25,32,Virudhunagar,Forest,pct_of_district_area,%,6.2,104
+2024-25,32,Virudhunagar,Forest,pct_of_state_area,%,1.2,104
+2024-25,32,Virudhunagar,Barren and unculturable area,area_ha,ha,4525,104
+2024-25,32,Virudhunagar,Barren and unculturable area,pct_of_district_area,%,1.1,104
+2024-25,32,Virudhunagar,Barren and unculturable area,pct_of_state_area,%,1.0,104
+2024-25,32,Virudhunagar,Land put to non-agricultural uses: water logged land,area_ha,ha,202,105
+2024-25,32,Virudhunagar,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.0,105
+2024-25,32,Virudhunagar,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.3,105
+2024-25,32,Virudhunagar,Land put to non-agricultural uses: social forestry,area_ha,ha,235,105
+2024-25,32,Virudhunagar,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.1,105
+2024-25,32,Virudhunagar,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,0.4,105
+2024-25,32,Virudhunagar,Land put to non-agricultural uses: land under still water,area_ha,ha,33295,105
+2024-25,32,Virudhunagar,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,7.8,105
+2024-25,32,Virudhunagar,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,3.4,105
+2024-25,32,Virudhunagar,Land put to non-agricultural uses: others,area_ha,ha,21166,106
+2024-25,32,Virudhunagar,Land put to non-agricultural uses: others,pct_of_district_area,%,5.0,106
+2024-25,32,Virudhunagar,Land put to non-agricultural uses: others,pct_of_state_area,%,5.0,106
+2024-25,32,Virudhunagar,Land put to non-agricultural uses: total,area_ha,ha,70539,106
+2024-25,32,Virudhunagar,Land put to non-agricultural uses: total,pct_of_district_area,%,16.6,106
+2024-25,32,Virudhunagar,Land put to non-agricultural uses: total,pct_of_state_area,%,3.2,106
+2024-25,32,Virudhunagar,Cultivable waste,area_ha,ha,9227,106
+2024-25,32,Virudhunagar,Cultivable waste,pct_of_district_area,%,2.2,106
+2024-25,32,Virudhunagar,Cultivable waste,pct_of_state_area,%,2.6,106
+2024-25,32,Virudhunagar,Permanent pastures and other grazing lands,area_ha,ha,804,107
+2024-25,32,Virudhunagar,Permanent pastures and other grazing lands,pct_of_district_area,%,0.2,107
+2024-25,32,Virudhunagar,Permanent pastures and other grazing lands,pct_of_state_area,%,0.7,107
+2024-25,32,Virudhunagar,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,1847,107
+2024-25,32,Virudhunagar,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,0.4,107
+2024-25,32,Virudhunagar,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,1.1,107
+2024-25,32,Virudhunagar,Current fallow,area_ha,ha,7709,108
+2024-25,32,Virudhunagar,Current fallow,pct_of_district_area,%,1.8,108
+2024-25,32,Virudhunagar,Current fallow,pct_of_state_area,%,0.9,108
+2024-25,32,Virudhunagar,Other fallow,area_ha,ha,169943,108
+2024-25,32,Virudhunagar,Other fallow,pct_of_district_area,%,40.1,108
+2024-25,32,Virudhunagar,Other fallow,pct_of_state_area,%,8.9,108
+2024-25,32,Virudhunagar,Net area sown,area_ha,ha,133263,109
+2024-25,32,Virudhunagar,Net area sown,pct_of_district_area,%,31.4,109
+2024-25,32,Virudhunagar,Net area sown,pct_of_state_area,%,2.8,109
+2024-25,32,Virudhunagar,Area sown more than once,area_ha,ha,8387,109
+2024-25,32,Virudhunagar,Area sown more than once,pct_of_district_area,%,2.0,109
+2024-25,32,Virudhunagar,Area sown more than once,pct_of_state_area,%,0.6,109
+2024-25,32,Virudhunagar,Gross area sown,area_ha,ha,141650,109
+2024-25,32,Virudhunagar,Gross area sown,pct_of_district_area,%,33.4,109
+2024-25,32,Virudhunagar,Gross area sown,pct_of_state_area,%,2.3,109
+2024-25,19,Sivaganga,Total geographical area,area_ha,ha,418900,104
+2024-25,19,Sivaganga,Total geographical area,pct_of_state_area,%,3.2,104
+2024-25,19,Sivaganga,Forest,area_ha,ha,16533,104
+2024-25,19,Sivaganga,Forest,pct_of_district_area,%,3.9,104
+2024-25,19,Sivaganga,Forest,pct_of_state_area,%,0.8,104
+2024-25,19,Sivaganga,Barren and unculturable area,area_ha,ha,4700,104
+2024-25,19,Sivaganga,Barren and unculturable area,pct_of_district_area,%,1.1,104
+2024-25,19,Sivaganga,Barren and unculturable area,pct_of_state_area,%,1.0,104
+2024-25,19,Sivaganga,Land put to non-agricultural uses: water logged land,area_ha,ha,0,105
+2024-25,19,Sivaganga,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.0,105
+2024-25,19,Sivaganga,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.0,105
+2024-25,19,Sivaganga,Land put to non-agricultural uses: social forestry,area_ha,ha,2924,105
+2024-25,19,Sivaganga,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.7,105
+2024-25,19,Sivaganga,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,5.5,105
+2024-25,19,Sivaganga,Land put to non-agricultural uses: land under still water,area_ha,ha,91152,105
+2024-25,19,Sivaganga,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,21.8,105
+2024-25,19,Sivaganga,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,9.2,105
+2024-25,19,Sivaganga,Land put to non-agricultural uses: others,area_ha,ha,7852,106
+2024-25,19,Sivaganga,Land put to non-agricultural uses: others,pct_of_district_area,%,1.9,106
+2024-25,19,Sivaganga,Land put to non-agricultural uses: others,pct_of_state_area,%,1.9,106
+2024-25,19,Sivaganga,Land put to non-agricultural uses: total,area_ha,ha,122731,106
+2024-25,19,Sivaganga,Land put to non-agricultural uses: total,pct_of_district_area,%,29.3,106
+2024-25,19,Sivaganga,Land put to non-agricultural uses: total,pct_of_state_area,%,5.6,106
+2024-25,19,Sivaganga,Cultivable waste,area_ha,ha,17668,106
+2024-25,19,Sivaganga,Cultivable waste,pct_of_district_area,%,4.2,106
+2024-25,19,Sivaganga,Cultivable waste,pct_of_state_area,%,5.0,106
+2024-25,19,Sivaganga,Permanent pastures and other grazing lands,area_ha,ha,1368,107
+2024-25,19,Sivaganga,Permanent pastures and other grazing lands,pct_of_district_area,%,0.3,107
+2024-25,19,Sivaganga,Permanent pastures and other grazing lands,pct_of_state_area,%,1.3,107
+2024-25,19,Sivaganga,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,6952,107
+2024-25,19,Sivaganga,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,1.7,107
+2024-25,19,Sivaganga,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,4.2,107
+2024-25,19,Sivaganga,Current fallow,area_ha,ha,9303,108
+2024-25,19,Sivaganga,Current fallow,pct_of_district_area,%,2.2,108
+2024-25,19,Sivaganga,Current fallow,pct_of_state_area,%,1.1,108
+2024-25,19,Sivaganga,Other fallow,area_ha,ha,130834,108
+2024-25,19,Sivaganga,Other fallow,pct_of_district_area,%,31.2,108
+2024-25,19,Sivaganga,Other fallow,pct_of_state_area,%,6.9,108
+2024-25,19,Sivaganga,Net area sown,area_ha,ha,108812,109
+2024-25,19,Sivaganga,Net area sown,pct_of_district_area,%,26.0,109
+2024-25,19,Sivaganga,Net area sown,pct_of_state_area,%,2.3,109
+2024-25,19,Sivaganga,Area sown more than once,area_ha,ha,1367,109
+2024-25,19,Sivaganga,Area sown more than once,pct_of_district_area,%,0.3,109
+2024-25,19,Sivaganga,Area sown more than once,pct_of_state_area,%,0.1,109
+2024-25,19,Sivaganga,Gross area sown,area_ha,ha,110179,109
+2024-25,19,Sivaganga,Gross area sown,pct_of_district_area,%,26.3,109
+2024-25,19,Sivaganga,Gross area sown,pct_of_state_area,%,1.8,109
+2024-25,26,Tirunelveli,Total geographical area,area_ha,ha,387606,104
+2024-25,26,Tirunelveli,Total geographical area,pct_of_state_area,%,3.0,104
+2024-25,26,Tirunelveli,Forest,area_ha,ha,83758,104
+2024-25,26,Tirunelveli,Forest,pct_of_district_area,%,21.6,104
+2024-25,26,Tirunelveli,Forest,pct_of_state_area,%,3.9,104
+2024-25,26,Tirunelveli,Barren and unculturable area,area_ha,ha,23784,104
+2024-25,26,Tirunelveli,Barren and unculturable area,pct_of_district_area,%,6.1,104
+2024-25,26,Tirunelveli,Barren and unculturable area,pct_of_state_area,%,5.2,104
+2024-25,26,Tirunelveli,Land put to non-agricultural uses: water logged land,area_ha,ha,17741,105
+2024-25,26,Tirunelveli,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,4.6,105
+2024-25,26,Tirunelveli,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,30.2,105
+2024-25,26,Tirunelveli,Land put to non-agricultural uses: social forestry,area_ha,ha,726,105
+2024-25,26,Tirunelveli,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.2,105
+2024-25,26,Tirunelveli,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,1.4,105
+2024-25,26,Tirunelveli,Land put to non-agricultural uses: land under still water,area_ha,ha,14743,105
+2024-25,26,Tirunelveli,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,3.8,105
+2024-25,26,Tirunelveli,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,1.5,105
+2024-25,26,Tirunelveli,Land put to non-agricultural uses: others,area_ha,ha,18086,106
+2024-25,26,Tirunelveli,Land put to non-agricultural uses: others,pct_of_district_area,%,4.7,106
+2024-25,26,Tirunelveli,Land put to non-agricultural uses: others,pct_of_state_area,%,4.3,106
+2024-25,26,Tirunelveli,Land put to non-agricultural uses: total,area_ha,ha,62442,106
+2024-25,26,Tirunelveli,Land put to non-agricultural uses: total,pct_of_district_area,%,16.1,106
+2024-25,26,Tirunelveli,Land put to non-agricultural uses: total,pct_of_state_area,%,2.8,106
+2024-25,26,Tirunelveli,Cultivable waste,area_ha,ha,25148,106
+2024-25,26,Tirunelveli,Cultivable waste,pct_of_district_area,%,6.5,106
+2024-25,26,Tirunelveli,Cultivable waste,pct_of_state_area,%,7.1,106
+2024-25,26,Tirunelveli,Permanent pastures and other grazing lands,area_ha,ha,4112,107
+2024-25,26,Tirunelveli,Permanent pastures and other grazing lands,pct_of_district_area,%,1.1,107
+2024-25,26,Tirunelveli,Permanent pastures and other grazing lands,pct_of_state_area,%,3.8,107
+2024-25,26,Tirunelveli,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,6815,107
+2024-25,26,Tirunelveli,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,1.8,107
+2024-25,26,Tirunelveli,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,4.1,107
+2024-25,26,Tirunelveli,Current fallow,area_ha,ha,10619,108
+2024-25,26,Tirunelveli,Current fallow,pct_of_district_area,%,2.7,108
+2024-25,26,Tirunelveli,Current fallow,pct_of_state_area,%,1.2,108
+2024-25,26,Tirunelveli,Other fallow,area_ha,ha,105116,108
+2024-25,26,Tirunelveli,Other fallow,pct_of_district_area,%,27.1,108
+2024-25,26,Tirunelveli,Other fallow,pct_of_state_area,%,5.5,108
+2024-25,26,Tirunelveli,Net area sown,area_ha,ha,65813,109
+2024-25,26,Tirunelveli,Net area sown,pct_of_district_area,%,17.0,109
+2024-25,26,Tirunelveli,Net area sown,pct_of_state_area,%,1.4,109
+2024-25,26,Tirunelveli,Area sown more than once,area_ha,ha,13355,109
+2024-25,26,Tirunelveli,Area sown more than once,pct_of_district_area,%,3.4,109
+2024-25,26,Tirunelveli,Area sown more than once,pct_of_state_area,%,1.0,109
+2024-25,26,Tirunelveli,Gross area sown,area_ha,ha,79168,109
+2024-25,26,Tirunelveli,Gross area sown,pct_of_district_area,%,20.4,109
+2024-25,26,Tirunelveli,Gross area sown,pct_of_state_area,%,1.3,109
+2024-25,33,Tenkasi,Total geographical area,area_ha,ha,288244,104
+2024-25,33,Tenkasi,Total geographical area,pct_of_state_area,%,2.2,104
+2024-25,33,Tenkasi,Forest,area_ha,ha,44000,104
+2024-25,33,Tenkasi,Forest,pct_of_district_area,%,15.3,104
+2024-25,33,Tenkasi,Forest,pct_of_state_area,%,2.0,104
+2024-25,33,Tenkasi,Barren and unculturable area,area_ha,ha,6240,104
+2024-25,33,Tenkasi,Barren and unculturable area,pct_of_district_area,%,2.2,104
+2024-25,33,Tenkasi,Barren and unculturable area,pct_of_state_area,%,1.4,104
+2024-25,33,Tenkasi,Land put to non-agricultural uses: water logged land,area_ha,ha,18782,105
+2024-25,33,Tenkasi,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,6.5,105
+2024-25,33,Tenkasi,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,32.0,105
+2024-25,33,Tenkasi,Land put to non-agricultural uses: social forestry,area_ha,ha,362,105
+2024-25,33,Tenkasi,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.1,105
+2024-25,33,Tenkasi,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,0.7,105
+2024-25,33,Tenkasi,Land put to non-agricultural uses: land under still water,area_ha,ha,6464,105
+2024-25,33,Tenkasi,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,2.2,105
+2024-25,33,Tenkasi,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,0.7,105
+2024-25,33,Tenkasi,Land put to non-agricultural uses: others,area_ha,ha,6386,106
+2024-25,33,Tenkasi,Land put to non-agricultural uses: others,pct_of_district_area,%,2.2,106
+2024-25,33,Tenkasi,Land put to non-agricultural uses: others,pct_of_state_area,%,1.5,106
+2024-25,33,Tenkasi,Land put to non-agricultural uses: total,area_ha,ha,40742,106
+2024-25,33,Tenkasi,Land put to non-agricultural uses: total,pct_of_district_area,%,14.1,106
+2024-25,33,Tenkasi,Land put to non-agricultural uses: total,pct_of_state_area,%,1.8,106
+2024-25,33,Tenkasi,Cultivable waste,area_ha,ha,9097,106
+2024-25,33,Tenkasi,Cultivable waste,pct_of_district_area,%,3.2,106
+2024-25,33,Tenkasi,Cultivable waste,pct_of_state_area,%,2.6,106
+2024-25,33,Tenkasi,Permanent pastures and other grazing lands,area_ha,ha,1032,107
+2024-25,33,Tenkasi,Permanent pastures and other grazing lands,pct_of_district_area,%,0.4,107
+2024-25,33,Tenkasi,Permanent pastures and other grazing lands,pct_of_state_area,%,1.0,107
+2024-25,33,Tenkasi,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,1867,107
+2024-25,33,Tenkasi,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,0.6,107
+2024-25,33,Tenkasi,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,1.1,107
+2024-25,33,Tenkasi,Current fallow,area_ha,ha,14760,108
+2024-25,33,Tenkasi,Current fallow,pct_of_district_area,%,5.1,108
+2024-25,33,Tenkasi,Current fallow,pct_of_state_area,%,1.7,108
+2024-25,33,Tenkasi,Other fallow,area_ha,ha,52143,108
+2024-25,33,Tenkasi,Other fallow,pct_of_district_area,%,18.1,108
+2024-25,33,Tenkasi,Other fallow,pct_of_state_area,%,2.7,108
+2024-25,33,Tenkasi,Net area sown,area_ha,ha,118363,109
+2024-25,33,Tenkasi,Net area sown,pct_of_district_area,%,41.1,109
+2024-25,33,Tenkasi,Net area sown,pct_of_state_area,%,2.5,109
+2024-25,33,Tenkasi,Area sown more than once,area_ha,ha,17416,109
+2024-25,33,Tenkasi,Area sown more than once,pct_of_district_area,%,6.0,109
+2024-25,33,Tenkasi,Area sown more than once,pct_of_state_area,%,1.2,109
+2024-25,33,Tenkasi,Gross area sown,area_ha,ha,135779,109
+2024-25,33,Tenkasi,Gross area sown,pct_of_district_area,%,47.1,109
+2024-25,33,Tenkasi,Gross area sown,pct_of_state_area,%,2.2,109
+2024-25,29,Thoothukudi,Total geographical area,area_ha,ha,470724,104
+2024-25,29,Thoothukudi,Total geographical area,pct_of_state_area,%,3.6,104
+2024-25,29,Thoothukudi,Forest,area_ha,ha,11012,104
+2024-25,29,Thoothukudi,Forest,pct_of_district_area,%,2.3,104
+2024-25,29,Thoothukudi,Forest,pct_of_state_area,%,0.5,104
+2024-25,29,Thoothukudi,Barren and unculturable area,area_ha,ha,19642,104
+2024-25,29,Thoothukudi,Barren and unculturable area,pct_of_district_area,%,4.2,104
+2024-25,29,Thoothukudi,Barren and unculturable area,pct_of_state_area,%,4.3,104
+2024-25,29,Thoothukudi,Land put to non-agricultural uses: water logged land,area_ha,ha,718,105
+2024-25,29,Thoothukudi,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.2,105
+2024-25,29,Thoothukudi,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,1.2,105
+2024-25,29,Thoothukudi,Land put to non-agricultural uses: social forestry,area_ha,ha,91,105
+2024-25,29,Thoothukudi,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.0,105
+2024-25,29,Thoothukudi,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,0.2,105
+2024-25,29,Thoothukudi,Land put to non-agricultural uses: land under still water,area_ha,ha,36592,105
+2024-25,29,Thoothukudi,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,7.8,105
+2024-25,29,Thoothukudi,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,3.7,105
+2024-25,29,Thoothukudi,Land put to non-agricultural uses: others,area_ha,ha,21837,106
+2024-25,29,Thoothukudi,Land put to non-agricultural uses: others,pct_of_district_area,%,4.6,106
+2024-25,29,Thoothukudi,Land put to non-agricultural uses: others,pct_of_state_area,%,5.2,106
+2024-25,29,Thoothukudi,Land put to non-agricultural uses: total,area_ha,ha,76583,106
+2024-25,29,Thoothukudi,Land put to non-agricultural uses: total,pct_of_district_area,%,16.3,106
+2024-25,29,Thoothukudi,Land put to non-agricultural uses: total,pct_of_state_area,%,3.5,106
+2024-25,29,Thoothukudi,Cultivable waste,area_ha,ha,44957,106
+2024-25,29,Thoothukudi,Cultivable waste,pct_of_district_area,%,9.6,106
+2024-25,29,Thoothukudi,Cultivable waste,pct_of_state_area,%,12.6,106
+2024-25,29,Thoothukudi,Permanent pastures and other grazing lands,area_ha,ha,5061,107
+2024-25,29,Thoothukudi,Permanent pastures and other grazing lands,pct_of_district_area,%,1.1,107
+2024-25,29,Thoothukudi,Permanent pastures and other grazing lands,pct_of_state_area,%,4.7,107
+2024-25,29,Thoothukudi,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,18451,107
+2024-25,29,Thoothukudi,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,3.9,107
+2024-25,29,Thoothukudi,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,11.1,107
+2024-25,29,Thoothukudi,Current fallow,area_ha,ha,10282,108
+2024-25,29,Thoothukudi,Current fallow,pct_of_district_area,%,2.2,108
+2024-25,29,Thoothukudi,Current fallow,pct_of_state_area,%,1.2,108
+2024-25,29,Thoothukudi,Other fallow,area_ha,ha,74714,108
+2024-25,29,Thoothukudi,Other fallow,pct_of_district_area,%,15.9,108
+2024-25,29,Thoothukudi,Other fallow,pct_of_state_area,%,3.9,108
+2024-25,29,Thoothukudi,Net area sown,area_ha,ha,210023,109
+2024-25,29,Thoothukudi,Net area sown,pct_of_district_area,%,44.6,109
+2024-25,29,Thoothukudi,Net area sown,pct_of_state_area,%,4.4,109
+2024-25,29,Thoothukudi,Area sown more than once,area_ha,ha,2177,109
+2024-25,29,Thoothukudi,Area sown more than once,pct_of_district_area,%,0.5,109
+2024-25,29,Thoothukudi,Area sown more than once,pct_of_state_area,%,0.2,109
+2024-25,29,Thoothukudi,Gross area sown,area_ha,ha,212200,109
+2024-25,29,Thoothukudi,Gross area sown,pct_of_district_area,%,45.1,109
+2024-25,29,Thoothukudi,Gross area sown,pct_of_state_area,%,3.4,109
+2024-25,21,The Nilgiris,Total geographical area,area_ha,ha,254485,104
+2024-25,21,The Nilgiris,Total geographical area,pct_of_state_area,%,2.0,104
+2024-25,21,The Nilgiris,Forest,area_ha,ha,142512,104
+2024-25,21,The Nilgiris,Forest,pct_of_district_area,%,56.0,104
+2024-25,21,The Nilgiris,Forest,pct_of_state_area,%,6.6,104
+2024-25,21,The Nilgiris,Barren and unculturable area,area_ha,ha,3295,104
+2024-25,21,The Nilgiris,Barren and unculturable area,pct_of_district_area,%,1.3,104
+2024-25,21,The Nilgiris,Barren and unculturable area,pct_of_state_area,%,0.7,104
+2024-25,21,The Nilgiris,Land put to non-agricultural uses: water logged land,area_ha,ha,72,105
+2024-25,21,The Nilgiris,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.0,105
+2024-25,21,The Nilgiris,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.1,105
+2024-25,21,The Nilgiris,Land put to non-agricultural uses: social forestry,area_ha,ha,780,105
+2024-25,21,The Nilgiris,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.3,105
+2024-25,21,The Nilgiris,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,1.5,105
+2024-25,21,The Nilgiris,Land put to non-agricultural uses: land under still water,area_ha,ha,1311,105
+2024-25,21,The Nilgiris,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,0.5,105
+2024-25,21,The Nilgiris,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,0.1,105
+2024-25,21,The Nilgiris,Land put to non-agricultural uses: others,area_ha,ha,4048,106
+2024-25,21,The Nilgiris,Land put to non-agricultural uses: others,pct_of_district_area,%,1.6,106
+2024-25,21,The Nilgiris,Land put to non-agricultural uses: others,pct_of_state_area,%,1.0,106
+2024-25,21,The Nilgiris,Land put to non-agricultural uses: total,area_ha,ha,9998,106
+2024-25,21,The Nilgiris,Land put to non-agricultural uses: total,pct_of_district_area,%,3.9,106
+2024-25,21,The Nilgiris,Land put to non-agricultural uses: total,pct_of_state_area,%,0.5,106
+2024-25,21,The Nilgiris,Cultivable waste,area_ha,ha,5638,106
+2024-25,21,The Nilgiris,Cultivable waste,pct_of_district_area,%,2.2,106
+2024-25,21,The Nilgiris,Cultivable waste,pct_of_state_area,%,1.6,106
+2024-25,21,The Nilgiris,Permanent pastures and other grazing lands,area_ha,ha,4931,107
+2024-25,21,The Nilgiris,Permanent pastures and other grazing lands,pct_of_district_area,%,1.9,107
+2024-25,21,The Nilgiris,Permanent pastures and other grazing lands,pct_of_state_area,%,4.6,107
+2024-25,21,The Nilgiris,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,4688,107
+2024-25,21,The Nilgiris,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,1.8,107
+2024-25,21,The Nilgiris,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,2.8,107
+2024-25,21,The Nilgiris,Current fallow,area_ha,ha,3963,108
+2024-25,21,The Nilgiris,Current fallow,pct_of_district_area,%,1.6,108
+2024-25,21,The Nilgiris,Current fallow,pct_of_state_area,%,0.5,108
+2024-25,21,The Nilgiris,Other fallow,area_ha,ha,7139,108
+2024-25,21,The Nilgiris,Other fallow,pct_of_district_area,%,2.8,108
+2024-25,21,The Nilgiris,Other fallow,pct_of_state_area,%,0.4,108
+2024-25,21,The Nilgiris,Net area sown,area_ha,ha,72321,109
+2024-25,21,The Nilgiris,Net area sown,pct_of_district_area,%,28.4,109
+2024-25,21,The Nilgiris,Net area sown,pct_of_state_area,%,1.5,109
+2024-25,21,The Nilgiris,Area sown more than once,area_ha,ha,3399,109
+2024-25,21,The Nilgiris,Area sown more than once,pct_of_district_area,%,1.3,109
+2024-25,21,The Nilgiris,Area sown more than once,pct_of_state_area,%,0.2,109
+2024-25,21,The Nilgiris,Gross area sown,area_ha,ha,75720,109
+2024-25,21,The Nilgiris,Gross area sown,pct_of_district_area,%,29.8,109
+2024-25,21,The Nilgiris,Gross area sown,pct_of_state_area,%,1.2,109
+2024-25,9,Kanniyakumari,Total geographical area,area_ha,ha,167200,104
+2024-25,9,Kanniyakumari,Total geographical area,pct_of_state_area,%,1.3,104
+2024-25,9,Kanniyakumari,Forest,area_ha,ha,54155,104
+2024-25,9,Kanniyakumari,Forest,pct_of_district_area,%,32.4,104
+2024-25,9,Kanniyakumari,Forest,pct_of_state_area,%,2.5,104
+2024-25,9,Kanniyakumari,Barren and unculturable area,area_ha,ha,4001,104
+2024-25,9,Kanniyakumari,Barren and unculturable area,pct_of_district_area,%,2.4,104
+2024-25,9,Kanniyakumari,Barren and unculturable area,pct_of_state_area,%,0.9,104
+2024-25,9,Kanniyakumari,Land put to non-agricultural uses: water logged land,area_ha,ha,84,105
+2024-25,9,Kanniyakumari,Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.1,105
+2024-25,9,Kanniyakumari,Land put to non-agricultural uses: water logged land,pct_of_state_area,%,0.1,105
+2024-25,9,Kanniyakumari,Land put to non-agricultural uses: social forestry,area_ha,ha,429,105
+2024-25,9,Kanniyakumari,Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.3,105
+2024-25,9,Kanniyakumari,Land put to non-agricultural uses: social forestry,pct_of_state_area,%,0.8,105
+2024-25,9,Kanniyakumari,Land put to non-agricultural uses: land under still water,area_ha,ha,9862,105
+2024-25,9,Kanniyakumari,Land put to non-agricultural uses: land under still water,pct_of_district_area,%,5.9,105
+2024-25,9,Kanniyakumari,Land put to non-agricultural uses: land under still water,pct_of_state_area,%,1.0,105
+2024-25,9,Kanniyakumari,Land put to non-agricultural uses: others,area_ha,ha,4301,106
+2024-25,9,Kanniyakumari,Land put to non-agricultural uses: others,pct_of_district_area,%,2.6,106
+2024-25,9,Kanniyakumari,Land put to non-agricultural uses: others,pct_of_state_area,%,1.0,106
+2024-25,9,Kanniyakumari,Land put to non-agricultural uses: total,area_ha,ha,29742,106
+2024-25,9,Kanniyakumari,Land put to non-agricultural uses: total,pct_of_district_area,%,17.8,106
+2024-25,9,Kanniyakumari,Land put to non-agricultural uses: total,pct_of_state_area,%,1.3,106
+2024-25,9,Kanniyakumari,Cultivable waste,area_ha,ha,1859,106
+2024-25,9,Kanniyakumari,Cultivable waste,pct_of_district_area,%,1.1,106
+2024-25,9,Kanniyakumari,Cultivable waste,pct_of_state_area,%,0.5,106
+2024-25,9,Kanniyakumari,Permanent pastures and other grazing lands,area_ha,ha,104,107
+2024-25,9,Kanniyakumari,Permanent pastures and other grazing lands,pct_of_district_area,%,0.1,107
+2024-25,9,Kanniyakumari,Permanent pastures and other grazing lands,pct_of_state_area,%,0.1,107
+2024-25,9,Kanniyakumari,Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,701,107
+2024-25,9,Kanniyakumari,Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,0.4,107
+2024-25,9,Kanniyakumari,Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,0.4,107
+2024-25,9,Kanniyakumari,Current fallow,area_ha,ha,1760,108
+2024-25,9,Kanniyakumari,Current fallow,pct_of_district_area,%,1.1,108
+2024-25,9,Kanniyakumari,Current fallow,pct_of_state_area,%,0.2,108
+2024-25,9,Kanniyakumari,Other fallow,area_ha,ha,1967,108
+2024-25,9,Kanniyakumari,Other fallow,pct_of_district_area,%,1.2,108
+2024-25,9,Kanniyakumari,Other fallow,pct_of_state_area,%,0.1,108
+2024-25,9,Kanniyakumari,Net area sown,area_ha,ha,72910,109
+2024-25,9,Kanniyakumari,Net area sown,pct_of_district_area,%,43.6,109
+2024-25,9,Kanniyakumari,Net area sown,pct_of_state_area,%,1.5,109
+2024-25,9,Kanniyakumari,Area sown more than once,area_ha,ha,6209,109
+2024-25,9,Kanniyakumari,Area sown more than once,pct_of_district_area,%,3.7,109
+2024-25,9,Kanniyakumari,Area sown more than once,pct_of_state_area,%,0.4,109
+2024-25,9,Kanniyakumari,Gross area sown,area_ha,ha,79120,109
+2024-25,9,Kanniyakumari,Gross area sown,pct_of_district_area,%,47.3,109
+2024-25,9,Kanniyakumari,Gross area sown,pct_of_state_area,%,1.3,109
+2024-25,,Tamil Nadu (State),Total geographical area,area_ha,ha,13033116,104
+2024-25,,Tamil Nadu (State),Total geographical area,pct_of_state_area,%,100,104
+2024-25,,Tamil Nadu (State),Forest,area_ha,ha,2156509,104
+2024-25,,Tamil Nadu (State),Forest,pct_of_district_area,%,16.5,104
+2024-25,,Tamil Nadu (State),Forest,pct_of_state_area,%,100,104
+2024-25,,Tamil Nadu (State),Barren and unculturable area,area_ha,ha,457082,104
+2024-25,,Tamil Nadu (State),Barren and unculturable area,pct_of_district_area,%,3.5,104
+2024-25,,Tamil Nadu (State),Barren and unculturable area,pct_of_state_area,%,100,104
+2024-25,,Tamil Nadu (State),Land put to non-agricultural uses: water logged land,area_ha,ha,58769,105
+2024-25,,Tamil Nadu (State),Land put to non-agricultural uses: water logged land,pct_of_district_area,%,0.5,105
+2024-25,,Tamil Nadu (State),Land put to non-agricultural uses: water logged land,pct_of_state_area,%,100,105
+2024-25,,Tamil Nadu (State),Land put to non-agricultural uses: social forestry,area_ha,ha,53035,105
+2024-25,,Tamil Nadu (State),Land put to non-agricultural uses: social forestry,pct_of_district_area,%,0.4,105
+2024-25,,Tamil Nadu (State),Land put to non-agricultural uses: social forestry,pct_of_state_area,%,100,105
+2024-25,,Tamil Nadu (State),Land put to non-agricultural uses: land under still water,area_ha,ha,990018,105
+2024-25,,Tamil Nadu (State),Land put to non-agricultural uses: land under still water,pct_of_district_area,%,7.6,105
+2024-25,,Tamil Nadu (State),Land put to non-agricultural uses: land under still water,pct_of_state_area,%,100,105
+2024-25,,Tamil Nadu (State),Land put to non-agricultural uses: others,area_ha,ha,423487,106
+2024-25,,Tamil Nadu (State),Land put to non-agricultural uses: others,pct_of_district_area,%,3.2,106
+2024-25,,Tamil Nadu (State),Land put to non-agricultural uses: others,pct_of_state_area,%,100,106
+2024-25,,Tamil Nadu (State),Land put to non-agricultural uses: total,area_ha,ha,2207592,106
+2024-25,,Tamil Nadu (State),Land put to non-agricultural uses: total,pct_of_district_area,%,16.9,106
+2024-25,,Tamil Nadu (State),Land put to non-agricultural uses: total,pct_of_state_area,%,100,106
+2024-25,,Tamil Nadu (State),Cultivable waste,area_ha,ha,356068,106
+2024-25,,Tamil Nadu (State),Cultivable waste,pct_of_district_area,%,2.7,106
+2024-25,,Tamil Nadu (State),Cultivable waste,pct_of_state_area,%,100,106
+2024-25,,Tamil Nadu (State),Permanent pastures and other grazing lands,area_ha,ha,107499,107
+2024-25,,Tamil Nadu (State),Permanent pastures and other grazing lands,pct_of_district_area,%,0.8,107
+2024-25,,Tamil Nadu (State),Permanent pastures and other grazing lands,pct_of_state_area,%,100,107
+2024-25,,Tamil Nadu (State),Miscellaneous tree crops and groves not included in net area sown,area_ha,ha,166366,107
+2024-25,,Tamil Nadu (State),Miscellaneous tree crops and groves not included in net area sown,pct_of_district_area,%,1.3,107
+2024-25,,Tamil Nadu (State),Miscellaneous tree crops and groves not included in net area sown,pct_of_state_area,%,100,107
+2024-25,,Tamil Nadu (State),Current fallow,area_ha,ha,856073,108
+2024-25,,Tamil Nadu (State),Current fallow,pct_of_district_area,%,6.6,108
+2024-25,,Tamil Nadu (State),Current fallow,pct_of_state_area,%,100,108
+2024-25,,Tamil Nadu (State),Other fallow,area_ha,ha,1899398,108
+2024-25,,Tamil Nadu (State),Other fallow,pct_of_district_area,%,14.6,108
+2024-25,,Tamil Nadu (State),Other fallow,pct_of_state_area,%,100,108
+2024-25,,Tamil Nadu (State),Net area sown,area_ha,ha,4826529,109
+2024-25,,Tamil Nadu (State),Net area sown,pct_of_district_area,%,37.0,109
+2024-25,,Tamil Nadu (State),Net area sown,pct_of_state_area,%,100,109
+2024-25,,Tamil Nadu (State),Area sown more than once,area_ha,ha,1398508,109
+2024-25,,Tamil Nadu (State),Area sown more than once,pct_of_district_area,%,10.7,109
+2024-25,,Tamil Nadu (State),Area sown more than once,pct_of_state_area,%,100,109
+2024-25,,Tamil Nadu (State),Gross area sown,area_ha,ha,6225037,109
+2024-25,,Tamil Nadu (State),Gross area sown,pct_of_district_area,%,47.8,109
+2024-25,,Tamil Nadu (State),Gross area sown,pct_of_state_area,%,100,109
