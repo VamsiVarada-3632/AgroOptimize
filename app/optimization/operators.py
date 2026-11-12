@@ -377,7 +377,7 @@ def seed_chromosomes(problem) -> np.ndarray:
     yield_t_ha = cv.yield_kg_ha / 1000.0 * cv.crop_yield_confidence
     metrics = problem.single_crop_metrics()  # per-hectare objectives at baseline inputs
     cost = np.array([m["cost_rs_ha"] for m in metrics])
-    water = np.array([m["water_l_ha"] for m in metrics])
+    water = np.array([m["irrigated_ha_per_ha"] for m in metrics])
 
     def share(weights):
         weights = np.clip(np.nan_to_num(weights, nan=0.0, posinf=0.0), 0.0, None)

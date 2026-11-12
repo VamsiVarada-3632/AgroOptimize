@@ -40,7 +40,7 @@ from pymoo.indicators.igd_plus import IGDPlus
 from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
 
 HV_REFERENCE = 1.1
-OBJECTIVE_NAMES = ("yield_tonnes", "cost_rs", "water_liters", "env_impact_score")
+OBJECTIVE_NAMES = ("yield_tonnes", "cost_rs", "irrigated_ha", "env_impact_score")
 
 
 # ---------------------------------------------------------------------------

@@ -81,7 +81,7 @@ def _plan_label(plan) -> dict:
     mix = sorted(zip(get("crop_names"), pcts), key=lambda x: -x[1])
     return {"crop_mix": [{"crop": n, "share_pct": s} for n, s in mix if s >= 1.0][:4],
             "yield_tonnes": get("yield_tonnes"), "cost_rs": get("cost_rs"),
-            "water_liters": get("water_liters"), "env_impact_score": get("env_impact_score")}
+            "irrigated_ha": get("irrigated_ha"), "env_impact_score": get("env_impact_score")}
 
 
 def profile_comparison(plans: Sequence, attrs: Optional[CropAttributes], budget_rs: Optional[float],

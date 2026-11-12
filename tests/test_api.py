@@ -23,6 +23,9 @@ from app.main import app
 
 client = TestClient(app)
 
+# Districts whose official Season & Crop Report rows give fewer than two crops with every required field.
+NO_OFFICIAL_CROP_SET = {"Chennai", "The Nilgiris"}
+
 
 # ---------------------------------------------------------------------------
 # GET /health
@@ -73,7 +76,7 @@ class TestRegionProfileEndpoint:
     def test_region_profile_includes_fuzzy_assessment(self):
         r = client.get(
             "/api/region-profile",
-            params={"location": "Salem", "season": "Kharif", "year": 2023},
+            params={"location": "Salem", "season": "Kharif", "year": 2024},
         )
         data = r.json()
         assert "fuzzy_assessment" in data
@@ -95,9 +98,9 @@ class TestFarmPlansEndpoint:
         payload = {
             "location": location,
             "season": "Kharif",
-            "year": 2023,
+            "year": 2024,
             "total_land_ha": 5,
-            "budget_rs": 200000,
+            "budget_rs": 500000,
             "preference": "balanced",
             # fast settings so the suite stays quick, same knobs test_pipeline.py uses
             "pop_size": config.NSGA2_FAST_POP_SIZE,
@@ -119,7 +122,11 @@ class TestFarmPlansEndpoint:
 
     @pytest.mark.parametrize("location", config.LOCATIONS)
     def test_farm_plans_works_for_every_location(self, location):
-        r = client.post("/api/farm-plans", json=self._payload(location=location))
+        r = client.post("/api/farm-plans", json=self._payload(location=location, budget_rs=None))
+        if location in NO_OFFICIAL_CROP_SET:
+            # Fewer than two crops have complete official data (yield + TNAU dose + MSP/CACP cost): refused, never estimated.
+            assert r.status_code == 400 and "complete official data" in r.json()["detail"], r.text
+            return
         assert r.status_code == 200, f"Failed for {location}: {r.text}"
         assert len(r.json()["plans"]) > 0
 
@@ -136,15 +143,13 @@ class TestFarmPlansEndpoint:
         assert r.status_code == 400
 
     def test_farm_plans_respects_budget_constraint(self):
-        # 180k is tight-but-feasible for Coimbatore/5ha at the fast pop/gen
-        # settings used here (checked empirically -- 150k returns zero
-        # feasible plans at these settings and would make this test
-        # vacuously true).
-        r = client.post("/api/farm-plans", json=self._payload(budget_rs=180_000))
+        # Tight but feasible for Coimbatore/Kharif/5ha at the fast pop/gen settings (official CACP costs; 200k gives zero feasible plans);
+        # the assertion below is non-vacuous because len(plans) > 0 is checked first.
+        r = client.post("/api/farm-plans", json=self._payload(budget_rs=230_000))
         body = r.json()
         assert len(body["plans"]) > 0
         for plan in body["plans"]:
-            assert plan["cost_rs"] <= 180_000 + 1e-6
+            assert plan["cost_rs"] <= 230_000 + 1e-6
 
     def test_farm_plans_max_yield_preference_beats_min_cost_on_yield(self):
         max_yield = client.post(

@@ -40,17 +40,24 @@ def test_catalog_has_all_locations():
 @pytest.mark.parametrize("location", config.LOCATIONS)
 @pytest.mark.parametrize("season", config.AG_SEASONS)
 def test_region_profile_builds_for_every_location_and_season(location, season):
-    profile = pp.get_region_season_profile(location, season)
-    assert profile.location == location
-    assert profile.season == season
+    """Every district/season either builds a complete official profile or is refused with the reason (never estimated)."""
+    try:
+        profile = pp.get_region_season_profile(location, season)
+    except ValueError as exc:
+        assert "complete official data" in str(exc), exc          # fewer than 2 crops with yield + TNAU dose + MSP + CACP cost
+        return
+    assert profile.location == location and profile.season == season
     assert len(profile.candidate_crops) >= config.MIN_CANDIDATE_CROPS
-    assert 0 <= profile.soil.fertility_index <= 100
-    assert profile.rainfall.effective_rainfall_mm >= 0
+    assert profile.soil.fertility_index is None or 0 <= profile.soil.fertility_index <= 100
+    assert profile.rainfall.season_actual_mm is None or profile.rainfall.season_actual_mm >= 0
+    for c in profile.candidate_crops:
+        assert c.yield_kg_ha > 0 and c.msp_rs_qtl > 0 and c.cost_rs_qtl > 0 and 0 <= c.rainfed_share <= 1
+        assert c.sources, "every candidate crop must cite its official sources"
 
 
 def test_region_profile_rejects_unknown_location():
     with pytest.raises(ValueError):
-        pp.get_region_season_profile("Chennai", "Kharif")
+        pp.get_region_season_profile("Atlantis", "Kharif")
 
 
 def test_region_profile_rejects_unknown_season():
@@ -81,8 +88,8 @@ def test_severe_drought_yields_lower_confidence_than_favourable_conditions():
 
 def test_high_rainfall_dependency_crop_penalised_more_than_low_dependency():
     base_conf, irr_risk = 0.8, 0.8
-    high_dep = fz.crop_yield_confidence(base_conf, irr_risk, "High")
-    low_dep = fz.crop_yield_confidence(base_conf, irr_risk, "Very Low")
+    high_dep = fz.crop_yield_confidence(base_conf, irr_risk, 0.95)    # 95% of the crop's area rainfed
+    low_dep = fz.crop_yield_confidence(base_conf, irr_risk, 0.05)
     assert high_dep < low_dep
 
 
@@ -92,13 +99,10 @@ def test_high_rainfall_dependency_crop_penalised_more_than_low_dependency():
 
 @pytest.fixture
 def small_problem():
-    profile = pp.get_region_season_profile("Coimbatore", "Kharif", year=2023)
-    assessment = fz.evaluate_uncertainty(
-        profile.rainfall.avg_deviation_percent,
-        profile.water.avg_storage_percent,
-        profile.soil.fertility_index,
-    )
-    return FarmPlanProblem(profile, assessment, total_land_ha=5.0, budget_rs=200_000)
+    profile = pp.get_region_season_profile("Coimbatore", "Rabi", year=2024)
+    assessment = fz.assess_profile(profile)
+    assert assessment is not None          # Coimbatore has a mapped reservoir in the Rabi window
+    return FarmPlanProblem(profile, assessment, total_land_ha=5.0, budget_rs=500_000)
 
 
 def test_nsga2_produces_a_valid_pareto_front(small_problem):
@@ -109,7 +113,7 @@ def test_nsga2_produces_a_valid_pareto_front(small_problem):
         assert plan.feasible  # budget constraint respected
         assert plan.yield_tonnes >= 0
         assert plan.cost_rs >= 0
-        assert plan.water_liters >= 0
+        assert plan.irrigated_ha >= 0
         assert plan.env_impact_score >= 0
         # allocation fractions must sum to ~1 (land can't exceed 100%)
         assert abs(sum(plan.allocation_fraction) - 1.0) < 1e-6
@@ -129,12 +133,8 @@ def test_nsga2_is_reasonably_fast_at_full_paper_settings(small_problem):
 
 
 def test_unconstrained_problem_has_no_budget_and_still_solves():
-    profile = pp.get_region_season_profile("Salem", "Summer")
-    assessment = fz.evaluate_uncertainty(
-        profile.rainfall.avg_deviation_percent,
-        profile.water.avg_storage_percent,
-        profile.soil.fertility_index,
-    )
+    profile = pp.get_region_season_profile("Salem", "Rabi")
+    assessment = fz.assess_profile(profile)
     problem = FarmPlanProblem(profile, assessment, total_land_ha=2.0, budget_rs=None)
     assert problem.n_ieq_constr == 0
     result = run_nsga2(problem, pop_size=config.NSGA2_FAST_POP_SIZE, n_gen=config.NSGA2_FAST_N_GEN, seed=3)
@@ -187,10 +187,10 @@ def test_generate_farm_plans_end_to_end():
     # save_results=False here: this test is about pipeline correctness, not
     # persistence (that gets its own tests below, writing to a tmp dir).
     request = FarmPlanRequest(
-        location="Pollachi",
+        location="Coimbatore",
         season="Kharif",
         total_land_ha=4.0,
-        budget_rs=180_000,
+        budget_rs=500_000,
         preference="balanced",
         pop_size=config.NSGA2_FAST_POP_SIZE,
         n_gen=config.NSGA2_FAST_N_GEN,
@@ -199,7 +199,8 @@ def test_generate_farm_plans_end_to_end():
     response = generate_farm_plans(request)
     assert response["meta"]["n_plans_returned"] > 0
     assert response["fuzzy_assessment"]["yield_confidence"] is not None
-    assert response["region_profile"]["location"] == "Pollachi"
+    assert response["fuzzy_assessment"]["applied"] is False       # Coimbatore Kharif: no official reservoir record -> flagged, not estimated
+    assert response["region_profile"]["location"] == "Coimbatore"
     assert response["run_id"] is None
     assert response["saved_files"] is None
     assert response["convergence_history"] == []
@@ -226,7 +227,7 @@ def test_api_endpoints_via_testclient():
             "location": "Coimbatore",
             "season": "Kharif",
             "total_land_ha": 5,
-            "budget_rs": 200000,
+            "budget_rs": 500000,
             "pop_size": config.NSGA2_FAST_POP_SIZE,
             "n_gen": config.NSGA2_FAST_N_GEN,
             "save_results": False,

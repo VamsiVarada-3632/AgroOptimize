@@ -1,17 +1,19 @@
 """
-Multi-Objective Genetic Optimization engine (reference paper, Section III-D).
+Multi-Objective Genetic Optimization engine (reference paper, Section III-D) - OFFICIAL-DATA objectives.
 
-Defines FarmPlanProblem, a pymoo Problem whose decision variables are a
-per-crop land allocation plus irrigation/fertilizer intensity multipliers,
-and whose four objectives are:
+FarmPlanProblem is a pymoo Problem whose decision variables are a per-crop land allocation plus
+irrigation/fertilizer intensity multipliers. All four objectives are computed from official values only
+(no estimated constants):
 
-    f1 = -expected yield (t)            [maximise yield  -> minimise -yield]
-    f2 =  total production cost (Rs)    [minimise]
-    f3 =  total irrigation water (L)    [minimise]
-    f4 =  environmental impact score    [minimise]
+    f1 = -expected yield (t)           yield (TN Season & Crop Report, district) x fuzzy confidence    [maximise]
+    f2 =  cultivation cost (Rs)        yield (q/ha) x CACP projected cost of cultivation A2+FL (Rs/q)   [minimise]
+    f3 =  irrigation demand (ha)       area x irrigation multiplier x the crop's irrigated area share   [minimise]
+    f4 =  nutrient load (kg NPK)       area x fertiliser multiplier x TNAU blanket N+P2O5+K2O dose       [minimise]
 
-An optional inequality constraint keeps total cost under the farmer's
-budget, if one was supplied.
+f3 is irrigated hectare-equivalents rather than litres, and f4 is kilograms of nutrient rather than an
+emission score, because the official data publishes neither a crop water requirement (mm) nor emission
+factors; those would have to be estimated. An optional inequality constraint keeps total cost under the
+farmer's budget.
 """
 
 from __future__ import annotations
@@ -29,48 +31,38 @@ from app.fuzzy.engine import UncertaintyAssessment, crop_yield_confidence
 
 @dataclass
 class CropVector:
-    """Per-crop scalar arrays, precomputed once so `_evaluate` is fully
-    vectorised across the population (no Python-level loops per individual).
-    """
+    """Per-crop scalar arrays, precomputed once so `_evaluate` is fully vectorised."""
 
     names: List[str]
     yield_kg_ha: np.ndarray
-    water_req_mm: np.ndarray
     fert_n_kg_ha: np.ndarray
     fert_p_kg_ha: np.ndarray
     fert_k_kg_ha: np.ndarray
-    pesticide_cost_rs_ha: np.ndarray
-    labor_days_ha: np.ndarray
+    cost_rs_ha: np.ndarray            # yield (q/ha) x CACP cost (Rs/q)
+    irrigated_share: np.ndarray       # official irrigated area / total area of the crop in the district
+    rainfed_share: np.ndarray
     crop_yield_confidence: np.ndarray  # fuzzy-adjusted, per crop
 
     @classmethod
     def from_candidates(
-        cls, crops: List[CropCandidate], assessment: UncertaintyAssessment, use_fuzzy: bool = True
+        cls, crops: List[CropCandidate], assessment: Optional[UncertaintyAssessment], use_fuzzy: bool = True
     ) -> "CropVector":
-        """`use_fuzzy=False` bypasses the Mamdani fuzzy uncertainty
-        adjustment entirely (every crop gets confidence=1.0, i.e. the
-        dataset's "book" yield is trusted as-is) -- this is the non-fuzzy
-        baseline for the Task 4 fuzzy-vs-non-fuzzy comparison study, not a
-        change to the default (fuzzy-on) pipeline every other caller uses.
-        """
-        if use_fuzzy:
-            conf = np.array(
-                [
-                    crop_yield_confidence(assessment.yield_confidence, assessment.irrigation_risk, c.rainfall_dependency)
-                    for c in crops
-                ]
-            )
+        """`use_fuzzy=False` (or no assessment, when an official fuzzy input is unavailable for the district)
+        leaves the official yield unadjusted (confidence = 1.0)."""
+        if use_fuzzy and assessment is not None:
+            conf = np.array([crop_yield_confidence(assessment.yield_confidence, assessment.irrigation_risk, c.rainfed_share)
+                             for c in crops])
         else:
             conf = np.ones(len(crops))
         return cls(
             names=[c.name for c in crops],
             yield_kg_ha=np.array([c.yield_kg_ha for c in crops]),
-            water_req_mm=np.array([c.water_req_mm for c in crops]),
             fert_n_kg_ha=np.array([c.fert_n_kg_ha for c in crops]),
             fert_p_kg_ha=np.array([c.fert_p_kg_ha for c in crops]),
             fert_k_kg_ha=np.array([c.fert_k_kg_ha for c in crops]),
-            pesticide_cost_rs_ha=np.array([c.pesticide_cost_rs_ha for c in crops]),
-            labor_days_ha=np.array([c.labor_days_ha for c in crops]),
+            cost_rs_ha=np.array([c.cost_rs_ha for c in crops]),
+            irrigated_share=np.array([c.irrigated_share for c in crops]),
+            rainfed_share=np.array([c.rainfed_share for c in crops]),
             crop_yield_confidence=conf,
         )
 
@@ -79,58 +71,36 @@ class FarmPlanProblem(Problem):
     def __init__(
         self,
         profile: RegionSeasonProfile,
-        assessment: UncertaintyAssessment,
+        assessment: Optional[UncertaintyAssessment],
         total_land_ha: float,
         budget_rs: Optional[float] = None,
         use_fuzzy: bool = True,
         fertilizer_price_factor: float = 1.0,
     ):
+        if fertilizer_price_factor != 1.0:
+            raise ValueError("Fertiliser-price scenarios are disabled: no official fertiliser price dataset is loaded "
+                             "(the cost objective uses the CACP cost of cultivation).")
         self.profile = profile
         self.assessment = assessment
         self.total_land_ha = float(total_land_ha)
         self.budget_rs = budget_rs
         self.use_fuzzy = use_fuzzy
-        # Scenario hook: scales the fertiliser prices in the cost objective (1.0 = config prices).
-        self.fertilizer_price_factor = float(fertilizer_price_factor)
+        self.fertilizer_price_factor = 1.0
 
         self.crop_vec = CropVector.from_candidates(profile.candidate_crops, assessment, use_fuzzy=use_fuzzy)
         self.n_crops = len(profile.candidate_crops)
         n = self.n_crops
 
-        # Effective rainfall offsets part of the crop's water requirement.
-        self.effective_rainfall_mm = profile.rainfall.effective_rainfall_mm
-
-        xl = np.concatenate(
-            [
-                np.full(n, config.ALLOC_MIN),
-                np.full(n, config.IRRIGATION_MULT_MIN),
-                np.full(n, config.FERTILIZER_MULT_MIN),
-            ]
-        )
-        xu = np.concatenate(
-            [
-                np.full(n, config.ALLOC_MAX if config.ALLOC_MAX > 0 else 1.0),
-                np.full(n, config.IRRIGATION_MULT_MAX),
-                np.full(n, config.FERTILIZER_MULT_MAX),
-            ]
-        )
-        # avoid degenerate zero-width allocation bound
-        xl[0:n] = 1e-4
-
+        xl = np.concatenate([np.full(n, config.ALLOC_MIN), np.full(n, config.IRRIGATION_MULT_MIN), np.full(n, config.FERTILIZER_MULT_MIN)])
+        xu = np.concatenate([np.full(n, config.ALLOC_MAX if config.ALLOC_MAX > 0 else 1.0),
+                             np.full(n, config.IRRIGATION_MULT_MAX), np.full(n, config.FERTILIZER_MULT_MAX)])
+        xl[0:n] = 1e-4   # avoid a degenerate zero-width allocation bound
         n_ieq_constr = 1 if budget_rs else 0
 
-        # Per-crop quantities that do not depend on the chromosome, computed
-        # once here instead of on every evaluation (same expressions, so the
-        # objective values are bit-identical).
         cv = self.crop_vec
-        prices = {k: v * self.fertilizer_price_factor for k, v in config.FERTILIZER_PRICE_RS_PER_KG_NUTRIENT.items()}
-        self._fert_cost_per_ha = (
-            cv.fert_n_kg_ha * prices["N"] + cv.fert_p_kg_ha * prices["P"] + cv.fert_k_kg_ha * prices["K"]
-        )
-        self._yield_t_per_ha = cv.yield_kg_ha / 1000.0  # multiplied by confidence after area, as before
-        self._net_irrigation_mm = np.clip(cv.water_req_mm - self.effective_rainfall_mm, 0.0, None)
-        self._fert_npk_kg_ha = cv.fert_n_kg_ha + cv.fert_p_kg_ha + cv.fert_k_kg_ha
-
+        self._yield_t_per_ha = cv.yield_kg_ha / 1000.0          # multiplied by confidence after area
+        self._cost_rs_per_ha = cv.cost_rs_ha
+        self._npk_kg_ha = cv.fert_n_kg_ha + cv.fert_p_kg_ha + cv.fert_k_kg_ha
         super().__init__(n_var=3 * n, n_obj=4, n_ieq_constr=n_ieq_constr, xl=xl, xu=xu)
 
     def _evaluate(self, X, out, *args, **kwargs):
@@ -141,41 +111,15 @@ class FarmPlanProblem(Problem):
         alloc = alloc / np.clip(alloc.sum(axis=1, keepdims=True), 1e-9, None)
         irr_mult = X[:, n : 2 * n]
         fert_mult = X[:, 2 * n : 3 * n]
-
         area_ha = alloc * self.total_land_ha  # (pop, n_crops)
 
-        # --- f1: expected yield (tonnes), maximised -> stored as negative ---
-        yield_tonnes = area_ha * self._yield_t_per_ha * cv.crop_yield_confidence
-        total_yield = yield_tonnes.sum(axis=1)
-        f1 = -total_yield
-
-        # --- f2: total production cost (Rs) ---
-        cost_per_ha = (
-            fert_mult * self._fert_cost_per_ha
-            + cv.pesticide_cost_rs_ha
-            + cv.labor_days_ha * config.LABOR_WAGE_RS_PER_DAY
-        )
-        total_cost = (area_ha * cost_per_ha).sum(axis=1)
+        f1 = -(area_ha * self._yield_t_per_ha * cv.crop_yield_confidence).sum(axis=1)       # tonnes
+        total_cost = (area_ha * self._cost_rs_per_ha).sum(axis=1)                            # Rs
         f2 = total_cost
-
-        # --- f3: total irrigation water (litres) ---
-        water_liters = area_ha * irr_mult * self._net_irrigation_mm * config.LITERS_PER_MM_PER_HA
-        total_water = water_liters.sum(axis=1)
-        f3 = total_water
-
-        # --- f4: environmental impact = sqrt(leaching_risk * carbon_proxy) ---
-        # (geometric mean keeps the composite in the same order of magnitude
-        # as its two components, while preserving the paper's "product of
-        # leaching risk and carbon proxy" definition).
-        leaching = (area_ha * fert_mult * cv.fert_n_kg_ha).sum(axis=1)
-        carbon = (
-            area_ha * fert_mult * self._fert_npk_kg_ha * config.CARBON_FERTILIZER_FACTOR
-            + area_ha * irr_mult * cv.water_req_mm * config.CARBON_PUMPING_FACTOR
-        ).sum(axis=1)
-        f4 = np.sqrt(np.clip(leaching, 0, None) * np.clip(carbon, 0, None))
+        f3 = (area_ha * irr_mult * cv.irrigated_share).sum(axis=1)                           # irrigated ha-equivalents
+        f4 = (area_ha * fert_mult * self._npk_kg_ha).sum(axis=1)                             # kg N+P2O5+K2O
 
         out["F"] = np.column_stack([f1, f2, f3, f4])
-
         if self.budget_rs:
             out["G"] = (total_cost - self.budget_rs).reshape(-1, 1)
 
@@ -194,7 +138,7 @@ class FarmPlanProblem(Problem):
                 "crop_confidence": float(self.crop_vec.crop_yield_confidence[i]),
                 "yield_t_ha": float(-F[i, 0] / land),
                 "cost_rs_ha": float(F[i, 1] / land),
-                "water_l_ha": float(F[i, 2] / land),
+                "irrigated_ha_per_ha": float(F[i, 2] / land),
                 "env_per_ha": float(F[i, 3] / land),
             }
             for i, name in enumerate(self.crop_vec.names)
