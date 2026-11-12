@@ -31,7 +31,6 @@ from typing import Dict, List, Optional, Sequence
 import numpy as np
 
 from app import config
-from app.data.loader import load_all
 from app.fuzzy import engine as fz
 
 CRITERIA = ("yield", "cost", "water", "env", "market_price", "income", "budget", "soil", "land", "rainfall")
@@ -40,12 +39,12 @@ OPTIMISER_CRITERIA = ("yield", "cost", "water", "env")
 CRITERIA_META: Dict[str, dict] = {
     "yield": {"label": "Yield", "direction": "benefit", "unit": "t", "source": "NSGA-II objective f1"},
     "cost": {"label": "Production cost", "direction": "cost", "unit": "₹", "source": "NSGA-II objective f2"},
-    "water": {"label": "Water", "direction": "cost", "unit": "L", "source": "NSGA-II objective f3"},
+    "water": {"label": "Irrigated area", "direction": "cost", "unit": "ha", "source": "NSGA-II objective f3 (irrigated share of crop area, official)"},
     "env": {"label": "Environmental impact", "direction": "cost", "unit": "index", "source": "NSGA-II objective f4"},
     "market_price": {"label": "Market price", "direction": "benefit", "unit": "₹/quintal",
-                     "source": "dataset MSP_Rs_Qtl, weighted by each crop's expected tonnes"},
+                     "source": "official CACP/MSP KMS 2024-25, weighted by each crop's expected tonnes"},
     "income": {"label": "Income", "direction": "benefit", "unit": "₹",
-               "source": "expected tonnes × MSP_Rs_Qtl − production cost (indicative)"},
+               "source": "expected tonnes × MSP − production cost (indicative)"},
     "budget": {"label": "Budget", "direction": "benefit", "unit": "₹",
                "source": "budget − production cost; neutral when no budget is set"},
     "soil": {"label": "Soil suitability", "direction": "benefit", "unit": "0–1",
@@ -53,11 +52,11 @@ CRITERIA_META: Dict[str, dict] = {
     "land": {"label": "Land use", "direction": "benefit", "unit": "0–1",
              "source": "Shannon evenness of the land allocation (crop diversification)"},
     "rainfall": {"label": "Rainfall exposure", "direction": "cost", "unit": "0.1–1",
-                 "source": "area-weighted RAINFALL_DEPENDENCY_FACTOR of the crops"},
+                 "source": "area-weighted rainfed (unirrigated) area share of the crops, official"},
 }
 
 # Share of a nutrient the crop has to get from fertiliser rather than the
-# soil, by the soil's status of that nutrient (land.csv N/P/K_Status).
+# soil, by the soil's status of that nutrient (Soil Health Card N/P/K class).
 SOIL_DEFICIT = {"Low": 1.0, "Medium": 0.5, "High": 0.0}
 
 
@@ -70,7 +69,7 @@ class CropAttributes:
     confidence: np.ndarray       # fuzzy-adjusted crop yield confidence (as in FarmPlanProblem)
     price_rs_qtl: np.ndarray     # MSP_Rs_Qtl
     soil_fit: np.ndarray         # 0-1, see soil_fit()
-    rainfall_factor: np.ndarray  # RAINFALL_DEPENDENCY_FACTOR of Rainfall_Dependency
+    rainfall_factor: np.ndarray  # rainfed (unirrigated) area share of the crop, official
 
 
 def soil_fit(npk_kg_ha: np.ndarray, statuses: Sequence[str]) -> np.ndarray:
@@ -93,27 +92,20 @@ def soil_fit(npk_kg_ha: np.ndarray, statuses: Sequence[str]) -> np.ndarray:
 def crop_attributes(region_profile: dict, fuzzy: dict) -> CropAttributes:
     """Build CropAttributes from a run's region_profile block and fuzzy
     assessment (the FarmPlanResponse fields, live or saved). Prices and
-    fertiliser doses come from the same crop.csv rows the run used."""
+    fertiliser doses come from the same official candidate-crop records the run used."""
     rp = region_profile
     crops = rp["candidate_crops"]
-    crop_df = load_all()["crop"]
-    rows = crop_df[(crop_df["Location"] == rp["location"]) & (crop_df["Year"] == rp["year"])
-                   & (crop_df["Season"] == rp["season"])].drop_duplicates("Crop_Name").set_index("Crop_Name")
     names = [c["name"] for c in crops]
-    missing = [n for n in names if n not in rows.index]
-    if missing:
-        raise ValueError(f"No crop.csv row for {', '.join(missing)} in {rp['location']} {rp['season']} {rp['year']}.")
-    r = rows.loc[names]
     soil = rp["soil"]
     return CropAttributes(
         names=names,
         yield_t_ha=np.array([c["yield_kg_ha"] for c in crops], dtype=float) / 1000.0,
         confidence=np.array([fz.crop_yield_confidence(fuzzy["yield_confidence"], fuzzy["irrigation_risk"],
-                                                      c["rainfall_dependency"]) for c in crops]),
-        price_rs_qtl=r["MSP_Rs_Qtl"].to_numpy(dtype=float),
-        soil_fit=soil_fit(r[["Fertilizer_N_Kg_Ha", "Fertilizer_P_Kg_Ha", "Fertilizer_K_Kg_Ha"]].to_numpy(dtype=float),
+                                                      c["rainfed_share"]) for c in crops]),
+        price_rs_qtl=np.array([c["msp_rs_qtl"] for c in crops], dtype=float),
+        soil_fit=soil_fit(np.array([[c["fert_n_kg_ha"], c["fert_p_kg_ha"], c["fert_k_kg_ha"]] for c in crops], dtype=float),
                           [soil["n_status"], soil["p_status"], soil["k_status"]]),
-        rainfall_factor=np.array([config.RAINFALL_DEPENDENCY_FACTOR.get(c["rainfall_dependency"], 0.6) for c in crops]),
+        rainfall_factor=np.array([float(c["rainfed_share"]) for c in crops]),
     )
 
 
@@ -128,7 +120,7 @@ def plan_criteria(plans: Sequence, attrs: Optional[CropAttributes], budget_rs: O
     plans are FarmPlan objects or RankedPlanOut-shaped dicts. attrs may be
     None when only the four optimiser criteria are requested."""
     out: Dict[str, List[float]] = {}
-    for k, field in (("yield", "yield_tonnes"), ("cost", "cost_rs"), ("water", "water_liters"), ("env", "env_impact_score")):
+    for k, field in (("yield", "yield_tonnes"), ("cost", "cost_rs"), ("water", "irrigated_ha"), ("env", "env_impact_score")):
         if k in keys:
             out[k] = [float(_field(p, field)) for p in plans]
     extra = [k for k in keys if k not in OPTIMISER_CRITERIA]

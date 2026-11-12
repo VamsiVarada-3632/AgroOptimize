@@ -43,7 +43,7 @@ FAST = {"pop_size": config.NSGA2_FAST_POP_SIZE, "n_gen": config.NSGA2_FAST_N_GEN
 class TestRunIdValidation:
 
     @pytest.mark.parametrize("run_id", [
-        "coimbatore_kharif_2023_20260808T113724Z",
+        "coimbatore_kharif_2024_20260808T113724Z",
         "salem_summer_2024_20260101T000000Z",
     ])
     def test_real_run_ids_are_valid(self, run_id):
@@ -70,8 +70,8 @@ class TestSavedRunListing:
     @staticmethod
     def _record(location="Erode", saved_at="2026-01-01T00:00:00+00:00", n_plans=2):
         return {
-            "run_id": f"{location.lower()}_kharif_2023_x",
-            "region_profile": {"location": location, "season": "Kharif", "year": 2023},
+            "run_id": f"{location.lower()}_kharif_2024_x",
+            "region_profile": {"location": location, "season": "Kharif", "year": 2024},
             "meta": {"preference": "balanced"},
             "saved_at": saved_at,
             "plans": [{}] * n_plans,
@@ -123,20 +123,24 @@ class TestSavedRunListing:
 class TestInputHandling:
 
     def test_location_and_season_are_case_insensitive(self):
-        profile = pp.get_region_season_profile(" coimbatore ", "KHARIF", year=2023)
+        profile = pp.get_region_season_profile(" coimbatore ", "KHARIF", year=2024)
         assert profile.location == "Coimbatore"
         assert profile.season == "Kharif"
 
     def test_farm_plans_accepts_lowercase_location(self):
         r = client.post("/api/farm-plans", json={
-            "location": "pollachi", "season": "rabi", "total_land_ha": 3, "save_results": False, **FAST,
+            "location": "coimbatore", "season": "rabi", "total_land_ha": 3, "save_results": False, **FAST,
         })
         assert r.status_code == 200
-        assert r.json()["region_profile"]["location"] == "Pollachi"
+        assert r.json()["region_profile"]["location"] == "Coimbatore"
+
+    def test_pollachi_is_rejected_as_a_taluk_with_a_clear_message(self):
+        r = client.post("/api/farm-plans", json={"location": "pollachi", "season": "rabi", "total_land_ha": 3, "save_results": False, **FAST})
+        assert r.status_code == 400 and "taluk" in r.json()["detail"].lower() and "Coimbatore" in r.json()["detail"]
 
     def test_unknown_location_is_still_rejected(self):
         with pytest.raises(ValueError):
-            pp.get_region_season_profile("Chennai", "Kharif")
+            pp.get_region_season_profile("Atlantis", "Kharif")
 
     @pytest.mark.parametrize("path", ["/api/plans/salem", "/api/comparison/salem", "/api/compare-fuzzy/salem"])
     @pytest.mark.parametrize("params", [{"total_land_ha": 0}, {"total_land_ha": -5}, {"budget_rs": -1}])
@@ -160,9 +164,9 @@ class TestInputHandling:
 
 def test_history_is_newest_saved_run_first(monkeypatch):
     summaries = [
-        {"run_id": "old", "location": "Salem", "season": "Summer", "year": 2023,
+        {"run_id": "old", "location": "Salem", "season": "Summer", "year": 2024,
          "preference": "balanced", "saved_at": "2026-01-01T00:00:00+00:00", "n_plans": 1, "client_id": "me"},
-        {"run_id": "new", "location": "Salem", "season": "Kharif", "year": 2023,
+        {"run_id": "new", "location": "Salem", "season": "Kharif", "year": 2024,
          "preference": "balanced", "saved_at": "2026-06-01T00:00:00+00:00", "n_plans": 1, "client_id": "me"},
     ]
     record = {"plans": [{"area_ha": [1.0], "yield_tonnes": 2.0, "cost_rs": 100.0}],
@@ -180,37 +184,30 @@ def test_history_is_newest_saved_run_first(monkeypatch):
 # ---------------------------------------------------------------------------
 
 class TestEstimatedYearFlag:
+    """Official data is never estimated: no year, district or season is flagged as an estimate."""
 
-    def test_observed_year_is_not_flagged(self):
-        assert pp.is_estimated_year("Coimbatore", 2023) is False
-        assert pp.get_region_season_profile("Coimbatore", "Kharif", year=2023).data_year_estimated is False
-
-    def test_estimated_year_is_flagged(self):
-        assert pp.is_estimated_year("Coimbatore", 2024) is True
-        assert pp.get_region_season_profile("Coimbatore", "Kharif", year=2024).data_year_estimated is True
+    def test_official_year_is_not_flagged(self):
+        assert pp.is_estimated_year("Coimbatore", 2024) is False
+        assert pp.get_region_season_profile("Coimbatore", "Kharif", year=2024).data_year_estimated is False
 
     def test_flag_is_exposed_by_the_api(self):
-        body = client.get("/api/region-profile", params={"location": "Salem", "season": "Kharif", "year": 2023}).json()
+        body = client.get("/api/region-profile", params={"location": "Salem", "season": "Kharif", "year": 2024}).json()
         assert body["data_year_estimated"] is False
         dash = client.get("/api/dashboard/salem").json()
         assert isinstance(dash["data_year"], int)
-        assert isinstance(dash["data_year_estimated"], bool)
+        assert dash["data_year_estimated"] is False
 
 
 # ---------------------------------------------------------------------------
 # Determinism (serial and concurrent) and the dashboard cache
 # ---------------------------------------------------------------------------
 
-def _front_signature(location="Erode", season="Kharif", seed=42):
-    profile = pp.get_region_season_profile(location, season, year=2023)
-    assessment = fz.evaluate_uncertainty(
-        profile.rainfall.avg_deviation_percent,
-        profile.water.avg_storage_percent,
-        profile.soil.fertility_index,
-    )
+def _front_signature(location="Erode", season="Rabi", seed=42):
+    profile = pp.get_region_season_profile(location, season, year=2024)
+    assessment = fz.assess_profile(profile)
     problem = FarmPlanProblem(profile, assessment, total_land_ha=4.0)
     result = run_nsga2(problem, seed=seed, **FAST)
-    return sorted((p.yield_tonnes, p.cost_rs, p.water_liters, p.env_impact_score)
+    return sorted((p.yield_tonnes, p.cost_rs, p.irrigated_ha, p.env_impact_score)
                   for p in extract_pareto_plans(result, problem))
 
 
@@ -251,24 +248,24 @@ def test_dashboard_front_cache_returns_equal_independent_results():
 
 
 def test_results_listing_never_exposes_client_ids(monkeypatch):
-    summary = {"run_id": "salem_kharif_2023_x", "location": "Salem", "season": "Kharif", "year": 2023,
+    summary = {"run_id": "salem_kharif_2024_x", "location": "Salem", "season": "Kharif", "year": 2024,
                "preference": "balanced", "saved_at": None, "n_plans": 1, "client_id": "secret-browser-id"}
     monkeypatch.setattr(results_store, "list_saved_runs", lambda **k: [summary])
     body = client.get("/api/results").json()
-    assert body[0]["run_id"] == "salem_kharif_2023_x"
+    assert body[0]["run_id"] == "salem_kharif_2024_x"
     assert body[0]["client_id"] is None
     assert summary["client_id"] == "secret-browser-id"  # stored record untouched
 
 
 def test_same_second_saves_get_distinct_run_ids(tmp_path, monkeypatch):
-    monkeypatch.setattr(results_store, "make_run_id", lambda *a: "salem_kharif_2023_20260101T000000Z")
+    monkeypatch.setattr(results_store, "make_run_id", lambda *a: "salem_kharif_2024_20260101T000000Z")
     response = {
-        "region_profile": {"location": "Salem", "season": "Kharif", "year": 2023},
+        "region_profile": {"location": "Salem", "season": "Kharif", "year": 2024},
         "plans": [{"rank": 1}],
     }
     first = results_store.save_run_results(dict(response), [], out_dir=tmp_path)
     second = results_store.save_run_results(dict(response), [], out_dir=tmp_path)
-    assert first.run_id == "salem_kharif_2023_20260101T000000Z"
-    assert second.run_id == "salem_kharif_2023_20260101T000000Z-2"
+    assert first.run_id == "salem_kharif_2024_20260101T000000Z"
+    assert second.run_id == "salem_kharif_2024_20260101T000000Z-2"
     assert results_store.load_run(first.run_id, out_dir=tmp_path)["run_id"] == first.run_id
     assert results_store.load_run(second.run_id, out_dir=tmp_path)["run_id"] == second.run_id

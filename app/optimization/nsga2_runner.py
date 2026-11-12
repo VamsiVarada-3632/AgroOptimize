@@ -67,7 +67,7 @@ class FarmPlan:
     fertilizer_multiplier: List[float]
     yield_tonnes: float
     cost_rs: float
-    water_liters: float
+    irrigated_ha: float
     env_impact_score: float
     feasible: bool
 
@@ -299,8 +299,8 @@ def extract_convergence_history(result) -> List[dict]:
                 "mean_yield_tonnes": round(float(-F[:, 0].mean()), 3),
                 "best_cost_rs": round(float(F[:, 1].min()), 2),
                 "mean_cost_rs": round(float(F[:, 1].mean()), 2),
-                "best_water_liters": round(float(F[:, 2].min()), 1),
-                "mean_water_liters": round(float(F[:, 2].mean()), 1),
+                "best_irrigated_ha": round(float(F[:, 2].min()), 3),
+                "mean_irrigated_ha": round(float(F[:, 2].mean()), 3),
                 "best_env_impact": round(float(F[:, 3].min()), 3),
                 "mean_env_impact": round(float(F[:, 3].mean()), 3),
                 "hypervolume": round(float(hv_indicator(F_norm)), 4),
@@ -346,7 +346,7 @@ def extract_pareto_plans(result, problem: FarmPlanProblem) -> List[FarmPlan]:
                 fertilizer_multiplier=decoded["fertilizer_multiplier"],
                 yield_tonnes=round(float(-f1), 3),
                 cost_rs=round(float(f2), 2),
-                water_liters=round(float(f3), 1),
+                irrigated_ha=round(float(f3), 3),
                 env_impact_score=round(float(f4), 3),
                 feasible=feasible,
             )

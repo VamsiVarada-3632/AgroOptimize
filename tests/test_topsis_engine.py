@@ -34,7 +34,7 @@ from app.services.plan_service import generate_farm_plans, run_pipeline
 
 client = TestClient(app)
 FAST = {"pop_size": config.NSGA2_FAST_POP_SIZE, "n_gen": config.NSGA2_FAST_N_GEN}
-BASE = {"location": "Salem", "season": "Kharif", "total_land_ha": 5, "budget_rs": 400_000, "save_results": False, **FAST}
+BASE = {"location": "Salem", "season": "Rabi", "total_land_ha": 5, "budget_rs": 400_000, "save_results": False, **FAST}
 PROFILES = ("balanced", "profit", "water", "sustainability", "low_cost")
 
 
@@ -106,10 +106,10 @@ class TestOnlyRankingChanges:
 
     @pytest.mark.parametrize("profile", PROFILES[1:])
     def test_ranked_plans_come_from_the_same_front(self, runs, profile):
-        front = {(p["yield_tonnes"], p["cost_rs"], p["water_liters"], p["env_impact_score"])
+        front = {(p["yield_tonnes"], p["cost_rs"], p["irrigated_ha"], p["env_impact_score"])
                  for p in runs[None].response["ranked_front"]}
         for p in runs[profile].response["plans"]:
-            assert (p["yield_tonnes"], p["cost_rs"], p["water_liters"], p["env_impact_score"]) in front
+            assert (p["yield_tonnes"], p["cost_rs"], p["irrigated_ha"], p["env_impact_score"]) in front
 
     def test_profiles_change_the_ranking(self, runs):
         tops = {p: tuple(runs[p].response["plans"][0]["area_ha"]) for p in PROFILES}

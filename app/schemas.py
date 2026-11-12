@@ -75,7 +75,7 @@ class FarmPlanRequest(RankingProfileIn):
     # four quantities are non-negative by construction, so a negative
     # limit could only ever filter out every plan.
     max_cost_rs: Optional[float] = Field(None, ge=0)
-    max_water_liters: Optional[float] = Field(None, ge=0)
+    max_irrigated_ha: Optional[float] = Field(None, ge=0)
     min_yield_tonnes: Optional[float] = Field(None, ge=0)
     max_env_impact: Optional[float] = Field(None, ge=0)
 
@@ -101,7 +101,7 @@ class FarmPlanRequest(RankingProfileIn):
     compare_profiles: bool = False
 
     # Fuzzy model for this run (GET /api/fuzzy/models). None = the server's
-    # default (config.FUZZY_MODEL, "original" unless configured).
+    # default (config.FUZZY_MODEL, "official" unless configured).
     fuzzy_model: Optional[str] = Field(None, examples=["original"])
 
     @model_validator(mode="after")
@@ -117,42 +117,52 @@ class FarmPlanRequest(RankingProfileIn):
 
 
 class SoilOut(BaseModel):
-    soil_type: str
-    avg_ph: float
-    organic_carbon_percent: float
-    n_status: str
-    p_status: str
-    k_status: str
-    irrigation_percent: float
-    fertility_index: float
+    soil_type: Optional[str] = None
+    avg_ph: Optional[float] = None
+    organic_carbon_percent: Optional[float] = None
+    n_status: Optional[str] = None
+    p_status: Optional[str] = None
+    k_status: Optional[str] = None
+    irrigation_percent: Optional[float] = None
+    fertility_index: Optional[float] = None
 
 
 class RainfallOut(BaseModel):
     avg_monthly_rainfall_mm: float
     avg_deviation_percent: float
-    avg_humidity_percent: float
-    avg_max_temp_c: float
-    avg_min_temp_c: float
+    avg_humidity_percent: Optional[float] = None
+    avg_max_temp_c: Optional[float] = None
+    avg_min_temp_c: Optional[float] = None
     months_used: List[str]
-    effective_rainfall_mm: float
+    effective_rainfall_mm: Optional[float] = None
 
 
 class WaterOut(BaseModel):
-    avg_storage_percent: float
-    groundwater_status: str
-    avg_deficit_surplus_mcm: float
+    avg_storage_percent: Optional[float] = None
+    groundwater_status: Optional[str] = None
+    avg_deficit_surplus_mcm: Optional[float] = None
 
 
 class CropCandidateOut(BaseModel):
     name: str
-    crop_type: str
+    crop_type: Optional[str] = None
     yield_kg_ha: float
-    water_req_mm: float
+    water_req_mm: Optional[float] = None
     rainfall_dependency: str
     irrigation_type: str
-    sowing_month: str
-    harvest_month: str
-    crop_duration_days: int
+    sowing_month: Optional[str] = None
+    harvest_month: Optional[str] = None
+    crop_duration_days: Optional[int] = None
+    # official-data fields (all from the datasets cited in `sources`)
+    msp_rs_qtl: Optional[float] = None
+    cost_rs_qtl: Optional[float] = None
+    fert_n_kg_ha: Optional[float] = None
+    fert_p_kg_ha: Optional[float] = None
+    fert_k_kg_ha: Optional[float] = None
+    rainfed_share: Optional[float] = None
+    area_ha: Optional[float] = None
+    dose_rule: Optional[str] = None
+    sources: Dict[str, Any] = {}
 
 
 class RegionProfileOut(BaseModel):
@@ -163,7 +173,12 @@ class RegionProfileOut(BaseModel):
     rainfall: RainfallOut
     water: WaterOut
     candidate_crops: List[CropCandidateOut]
-    normalized_snapshot: Dict[str, float]
+    normalized_snapshot: Dict[str, Optional[float]]
+    # Official-data additions: why crops were excluded, whether the fuzzy stage could run, and notes.
+    excluded_crops: List[Dict[str, Any]] = []
+    fuzzy_available: bool = True
+    fuzzy_unavailable_reason: Optional[str] = None
+    notes: List[str] = []
     # True when this year's CSV rows are flagged "Estimated" (carried
     # forward / scaled from 2023) rather than observed. Defaults to False
     # so records saved before this field existed still validate.
@@ -176,6 +191,8 @@ class FuzzyAssessmentOut(BaseModel):
     rainfall_label: str
     water_label: str
     soil_label: str
+    applied: bool = True                 # False: an official fuzzy input was unavailable; yield left unadjusted
+    reason: Optional[str] = None
 
 
 class RankedPlanOut(BaseModel):
@@ -187,7 +204,7 @@ class RankedPlanOut(BaseModel):
     fertilizer_multiplier: List[float]
     yield_tonnes: float
     cost_rs: float
-    water_liters: float
+    irrigated_ha: float
     env_impact_score: float
     feasible: bool
     composite_score: float
@@ -217,6 +234,9 @@ class RunMeta(BaseModel):
     # Weights the ranking used (profile or preference), and the front ranked
     # under every standard profile when requested (app/services/topsis_service.py).
     topsis: Optional[Dict[str, Any]] = None
+    # Per-crop criteria (rainfall, soil, water, budget, fertiliser, market price, MSP, duration, yield, risks),
+    # each with statement + official-dataset sources; "Official data unavailable" where not published.
+    crop_evidence: List[Dict[str, Any]] = []
     profile_comparison: Optional[Dict[str, Any]] = None
     # Fuzzy model that produced the run; absent on runs saved before models existed (= "original").
     fuzzy_model: Optional[str] = None
@@ -225,7 +245,7 @@ class RunMeta(BaseModel):
 class MeanObjectivesOut(BaseModel):
     yield_tonnes: float
     cost_rs: float
-    water_liters: float
+    irrigated_ha: float
     env_impact_score: float
 
 
@@ -260,8 +280,8 @@ class ConvergencePointOut(BaseModel):
     mean_yield_tonnes: float
     best_cost_rs: float
     mean_cost_rs: float
-    best_water_liters: float
-    mean_water_liters: float
+    best_irrigated_ha: float
+    mean_irrigated_ha: float
     best_env_impact: float
     mean_env_impact: float
     hypervolume: float
@@ -277,7 +297,7 @@ class SavedFilesOut(BaseModel):
 
 class FarmPlanResponse(BaseModel):
     region_profile: RegionProfileOut
-    fuzzy_assessment: FuzzyAssessmentOut
+    fuzzy_assessment: FuzzyAssessmentOut   # None when an official fuzzy input is unavailable (see region_profile.fuzzy_unavailable_reason)
     plans: List[RankedPlanOut]
     convergence_history: List[ConvergencePointOut] = []
     meta: RunMeta
@@ -302,6 +322,8 @@ class CatalogOut(BaseModel):
     seasons: List[str]
     years: List[int]
     crops_by_season: Dict[str, List[str]]
+    taluk_notes: Dict[str, str] = {}
+    data_sources: List[Dict[str, Any]] = []
 
 
 # ---------------------------------------------------------------------------

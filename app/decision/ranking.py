@@ -85,7 +85,7 @@ class RankedPlan:
     fertilizer_multiplier: List[float]
     yield_tonnes: float
     cost_rs: float
-    water_liters: float
+    irrigated_ha: float
     env_impact_score: float
     feasible: bool
     composite_score: float
@@ -192,7 +192,7 @@ def criteria_closeness(values: Dict[str, List[float]], directions: Dict[str, str
 def filter_plans(
     plans: List[FarmPlan],
     max_cost: Optional[float] = None,
-    max_water_liters: Optional[float] = None,
+    max_irrigated_ha: Optional[float] = None,
     min_yield_tonnes: Optional[float] = None,
     max_env_impact: Optional[float] = None,
 ) -> List[FarmPlan]:
@@ -201,8 +201,8 @@ def filter_plans(
     out = plans
     if max_cost is not None:
         out = [p for p in out if p.cost_rs <= max_cost]
-    if max_water_liters is not None:
-        out = [p for p in out if p.water_liters <= max_water_liters]
+    if max_irrigated_ha is not None:
+        out = [p for p in out if p.irrigated_ha <= max_irrigated_ha]
     if min_yield_tonnes is not None:
         out = [p for p in out if p.yield_tonnes >= min_yield_tonnes]
     if max_env_impact is not None:
@@ -237,7 +237,7 @@ def rank_plans(
 
     yields = [p.yield_tonnes for p in plans]
     costs = [p.cost_rs for p in plans]
-    waters = [p.water_liters for p in plans]
+    waters = [p.irrigated_ha for p in plans]
     envs = [p.env_impact_score for p in plans]
 
     if criteria_weights is not None:
@@ -293,7 +293,7 @@ def rank_plans(
                 fertilizer_multiplier=[round(a, 3) for a in p.fertilizer_multiplier],
                 yield_tonnes=p.yield_tonnes,
                 cost_rs=p.cost_rs,
-                water_liters=p.water_liters,
+                irrigated_ha=p.irrigated_ha,
                 env_impact_score=p.env_impact_score,
                 feasible=p.feasible,
                 composite_score=round(composite, 4),
