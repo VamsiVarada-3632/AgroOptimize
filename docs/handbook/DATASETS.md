@@ -1,8 +1,35 @@
 # Datasets
 
-Authoritative copy: `agrooptimize-backend/data/raw/` (16 CSV files, 761 lines incl. headers). The top-level `final_year_project/datasets/` folder is an **older, unused** version (see §7).
+## Current runtime data: official datasets (since 2026-11)
 
-All facts below were measured from the files on 2026-09-29 with pandas (`app.data.loader.load_all()`); quality findings are summarised here and analysed in depth in [DATA_VALIDATION.md](DATA_VALIDATION.md).
+The pipeline reads **only** the official database `data/official/official_v1.db` (SQLAlchemy; override with `AGROOPTIMIZE_DB_URL`). It is a build artefact: `scripts/preprocess_all.py` (and the Docker build) rebuilds it from the tracked raw files in `data/official/raw/`, validating and cleaning each dataset (`data/official/validation_report.json`). There is no CSV fallback; a missing dataset raises `OfficialDataUnavailable`, and a feature whose dataset is missing returns HTTP 501 (`GET /api/datasets` lists them).
+
+| Dataset | Source | Raw file | Report year | Clean rows |
+|---|---|---|---|---|
+| crops_by_district | Dept. of Economics & Statistics, TN Season & Crop Report | crops_by_district.csv | 2024-25 | 12,558 |
+| crops_state_series | TN Season & Crop Report (state series) | crops_state_series.csv | 2024-25 | 3,420 |
+| land_use | TN Season & Crop Report | land_use.csv | 2024-25 | 1,833 |
+| irrigation | TN Season & Crop Report | irrigation.csv | 2024-25 | 8,775 |
+| rainfall_by_district | IMD district rainfall as published in the Season & Crop Report | rainfall_by_district.csv | 2024-25 | 663 |
+| ground_water_level | Tamil Nadu groundwater levels | ground_water_level.csv | 2024-25 | 507 |
+| reservoir_daily | TN Water Resources Department daily reservoir levels | reservoir_daily.csv | 2024-25 | 11,153 |
+| msp_extracted | CACP / MSP notifications (KMS/RMS 2022-23 to 2025-26) | msp_extracted.csv | 2024-25 | 88 |
+| agronomy_tnau | TNAU Crop Production Guide | agronomy_tnau.csv | 2024-25 | 31 |
+| soil_health_tn | Soil Health Card portal, 2024-25 cycle | soil_health_tn.csv | 2024-25 | 37 |
+
+Supporting masters in the same folder: `agronomy_master.csv` ([AGRONOMY_MASTER.md](../data_architecture/AGRONOMY_MASTER.md)), `soil_master.csv` ([SOIL_MASTER.md](../data_architecture/SOIL_MASTER.md)) and `conversion_table.csv` ([FINAL_CONVERSION_DECISION.md](../data_architecture/FINAL_CONVERSION_DECISION.md)).
+
+`app/data/official_view.py` turns these tables into the four frames the pipeline has always consumed (crop, land, rainfall, water: 985 / 76 / 456 / 456 rows). Coverage: 38 districts with crop statistics (36 produce plans; Chennai and The Nilgiris have fewer than 2 crops with complete official data), seasons Kharif and Rabi, report year 2024-25. Pollachi is a taluk and has no data of its own. The fuzzy stage runs only where an official reservoir reading exists for the district and season. Which source feeds which stage, the features still disabled and the TODOs: [MIGRATION_REPORT.md](../data_architecture/MIGRATION_REPORT.md); field mapping: [OFFICIAL_DATASET_MAPPING.md](../data_architecture/OFFICIAL_DATASET_MAPPING.md); runtime cost: [OFFICIAL_DATA_PERFORMANCE.md](OFFICIAL_DATA_PERFORMANCE.md).
+
+---
+
+## Archived v1 data (synthetic, `legacy/data/raw/`)
+
+Everything below describes the course-provided v1 CSVs that the published paper used. They moved from `data/raw/` to `legacy/data/raw/` and are no longer read at runtime (`tests/test_no_synthetic_runtime.py`); reproduce the paper with `git checkout published-v1`. Paths and API notes below are as they were for v1.
+
+Authoritative copy (v1): `legacy/data/raw/` (16 CSV files, 761 lines incl. headers; was `data/raw/`). The top-level `final_year_project/datasets/` folder is an **older, unused** version (see §7).
+
+All facts below were measured from the files on 2026-09-29 with pandas (the v1 `app.data.loader.load_all()`); quality findings are summarised here and analysed in depth in [DATA_VALIDATION.md](DATA_VALIDATION.md).
 
 ## 1. Overview
 
