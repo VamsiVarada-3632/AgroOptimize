@@ -113,5 +113,56 @@
         "rows": 0
       }
     ]
+  },
+  {
+    "dataset": "msp_extracted",
+    "rows_raw": 88,
+    "rows_clean": 88,
+    "issues": [
+      {
+        "level": "info",
+        "code": "margin_check",
+        "message": "20 rows: margin = MSP/cost-1 within 1 point",
+        "rows": 0
+      }
+    ]
+  },
+  {
+    "dataset": "agronomy_tnau",
+    "rows_raw": 31,
+    "rows_clean": 31,
+    "issues": [
+      {
+        "level": "warning",
+        "code": "source_anomaly",
+        "message": "bengalgram/irrigated: P2O5 printed as '5' (apparent typo vs 25 for the other pulses); stored NULL, not corrected",
+        "rows": 1
+      },
+      {
+        "level": "info",
+        "code": "agronomy_coverage",
+        "message": "15 crops, 31 condition rows; water requirement (mm) and duration NOT provided as numbers by the guide -> left NULL",
+        "rows": 31
+      }
+    ]
+  },
+  {
+    "dataset": "soil_health_tn",
+    "rows_raw": 37,
+    "rows_clean": 37,
+    "issues": [
+      {
+        "level": "info",
+        "code": "totals_consistent",
+        "message": "max spread of per-parameter totals 2.78%",
+        "rows": 37
+      },
+      {
+        "level": "info",
+        "code": "coverage",
+        "message": "37 districts; districts absent from the portal for this cycle (e.g. Chennai, no agricultural land) have no soil data",
+        "rows": 37
+      }
+    ]
   }
 ]

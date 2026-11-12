@@ -49,7 +49,7 @@ def test_cleaner_drops_exact_duplicates(ds):
 @pytest.mark.parametrize("ds", DATASETS, ids=IDS)
 def test_loader_reads_real_file_and_keeps_rows(ds):
     res = ds.load()
-    assert res.rows_raw > 100 and len(res.frame) > 0
+    assert res.rows_raw > 0 and len(res.frame) == res.rows_raw
     assert not any(i.level == "error" for i in res.issues), [i for i in res.issues if i.level == "error"]
 
 
