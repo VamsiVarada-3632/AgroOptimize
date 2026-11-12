@@ -84,6 +84,9 @@ class FuzzyModel:
     imd_rainfall: bool = False
     # Improvement 3: leave out the rules subsumed by a more general rule.
     prune_inert: bool = False
+    # Membership sets calibrated from the official data distributions (app/fuzzy/calibration.py):
+    # ((variable, ((label, params), ...)), ...). Applied last, so they override the sets above.
+    custom_sets: tuple = ()
 
 
 # Improvement 1. The original storage and fertility triangles keep their
@@ -163,6 +166,9 @@ def resolve_model(model=None) -> FuzzyModel:
     name = model or _ACTIVE_MODEL.get() or config.FUZZY_MODEL
     if isinstance(name, FuzzyModel):
         return name
+    if name == "official" and "official" not in MODELS:
+        from app.fuzzy.calibration import official_model   # built from the official database on first use
+        MODELS["official"] = official_model()
     try:
         return MODELS[name]
     except KeyError:
@@ -188,6 +194,8 @@ def membership_functions(model=None) -> dict:
         table.update({var: dict(sets) for var, sets in STRONG_PARTITION_SETS.items()})
     if model.imd_rainfall:
         table.update({var: dict(sets) for var, sets in IMD_RAINFALL_SETS.items()})
+    for var, sets in model.custom_sets:
+        table[var] = {label: tuple(params) for label, params in sets}
     return table
 
 
@@ -437,6 +445,29 @@ def _clipped_inputs(rainfall_deviation_percent, water_storage_percent, soil_fert
     }
 
 
+def assessment_payload(assessment, profile=None) -> dict:
+    """JSON block describing the fuzzy stage. When an official input was unavailable the stage is NOT applied:
+    confidence 1.0 / risk 0.0 leave the official yield unadjusted and `applied`/`reason` say so explicitly."""
+    if assessment is not None:
+        return {**vars(assessment), "applied": True, "reason": None}
+    reason = getattr(profile, "fuzzy_unavailable_reason", None) or "official fuzzy input unavailable"
+    return {"yield_confidence": 1.0, "irrigation_risk": 0.0, "rainfall_label": "n/a", "water_label": "n/a",
+            "soil_label": "n/a", "applied": False, "reason": reason}
+
+
+def assess_profile(profile, model=None):
+    """Fuzzy assessment of a RegionSeasonProfile, or None when an official input is unavailable for it
+    (profile.fuzzy_unavailable_reason says which) - the yield is then left unadjusted and the explanation says so."""
+    if not profile.fuzzy_available:
+        return None
+    return evaluate_uncertainty(
+        rainfall_deviation_percent=profile.rainfall.avg_deviation_percent,
+        water_storage_percent=profile.water.avg_storage_percent,
+        soil_fertility_index=profile.soil.fertility_index,
+        model=model,
+    )
+
+
 def evaluate_uncertainty(
     rainfall_deviation_percent: float,
     water_storage_percent: float,
@@ -568,14 +599,14 @@ def _clip01(x: float) -> float:
     return max(0.0, min(1.0, x))
 
 
-def crop_yield_confidence(base_yield_confidence: float, irrigation_risk: float, rainfall_dependency: str) -> float:
-    """Adjust the region-level yield confidence per crop, based on how
-    rain-dependent that specific crop is (dataset column
-    `Rainfall_Dependency`). A drip-irrigated, "Very Low" dependency crop
-    barely feels a rainfall deficit; a rainfed "High" dependency crop feels
+def crop_yield_confidence(base_yield_confidence: float, irrigation_risk: float, rainfed_share) -> float:
+    """Adjust the region-level yield confidence per crop, based on how rain-dependent that specific crop is:
+    its rainfed (unirrigated) share of the district's area under the crop, 0-1, from the official Season & Crop
+    Report. A fully irrigated crop (share 0) barely feels a rainfall deficit; a fully rainfed one (share 1) feels
     it fully.
     """
-    dep_factor = config.RAINFALL_DEPENDENCY_FACTOR.get(rainfall_dependency, 0.5)
+    # rainfed_share comes from the official area statistics - no hand-picked label factors.
+    dep_factor = _clip01(float(rainfed_share))
     penalty = irrigation_risk * dep_factor * 0.4  # cap the max penalty at 40%
     return round(_clip01(base_yield_confidence * (1.0 - penalty)), 3)
 
