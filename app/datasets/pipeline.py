@@ -16,6 +16,9 @@ from app.datasets.land_use import LandUse
 from app.datasets.rainfall import Rainfall
 from app.datasets.reference import DISTRICT_RESERVOIR_MAP
 from app.datasets.reservoir import ReservoirDaily
+from app.datasets.msp import MspExtracted
+from app.datasets.agronomy import AgronomyTnau
+from app.datasets.soil_health import SoilHealthTN
 from app.db import schema
 from app.db.session import get_engine
 
@@ -23,7 +26,7 @@ CLEAN_DIR = config.PROJECT_ROOT / "data" / "official" / "clean"
 
 
 def all_datasets():
-    return [CropsByDistrict(), CropsStateSeries(), LandUse(), Irrigation(), Rainfall(), Groundwater(), ReservoirDaily()]
+    return [CropsByDistrict(), CropsStateSeries(), LandUse(), Irrigation(), Rainfall(), Groundwater(), ReservoirDaily(), MspExtracted(), AgronomyTnau(), SoilHealthTN()]
 
 
 def _district_rows(frames: Dict[str, pd.DataFrame], raw_dir: Path) -> pd.DataFrame:
