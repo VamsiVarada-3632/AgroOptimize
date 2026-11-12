@@ -162,19 +162,20 @@ def leave_one_out(points: Optional[List[Tuple[float, float, float]]] = None, mod
 
 
 def dataset_points() -> List[dict]:
-    """Fuzzy inputs of every location/season/year region profile in the data."""
+    """Fuzzy inputs of every official district/season region profile for which all three fuzzy inputs exist
+    (rainfall IMD, reservoir storage, Soil Health Card fertility). Profiles with missing inputs are not audited."""
     from app.data import preprocessing as pp
-    years = sorted(int(y) for y in pp.load_all()["crop"]["Year"].unique())
     out = []
     for loc in config.LOCATIONS:
         for season in config.AG_SEASONS:
-            for year in years:
-                try:
-                    p = pp.get_region_season_profile(loc, season, year)
-                except ValueError:
-                    continue
-                out.append({"location": loc, "season": season, "year": year, "estimated": p.data_year_estimated,
-                            "inputs": (p.rainfall.avg_deviation_percent, p.water.avg_storage_percent, p.soil.fertility_index)})
+            try:
+                p = pp.get_region_season_profile(loc, season)
+            except ValueError:
+                continue
+            inputs = (p.rainfall.avg_deviation_percent, p.water.avg_storage_percent, p.soil.fertility_index)
+            if any(v is None for v in inputs):
+                continue
+            out.append({"location": loc, "season": season, "year": p.year, "estimated": False, "inputs": inputs})
     return out
 
 
