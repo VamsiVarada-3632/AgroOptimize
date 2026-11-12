@@ -100,7 +100,7 @@ def run(base_url: str) -> tuple[list, dict]:
             prints[name] = fingerprint(payload)
         return payload if ok else None
 
-    farm = {"location": "Salem", "season": "Kharif", "year": 2023, "total_land_ha": 5.0, "preference": "balanced"}
+    farm = {"location": "Salem", "season": "Rabi", "year": 2024, "total_land_ha": 5.0, "preference": "balanced"}
     is_html = lambda p, t: "text/html" in t and "<div id=\"root\">" in p  # noqa: E731
 
     # Platform and frontend
@@ -116,8 +116,10 @@ def run(base_url: str) -> tuple[list, dict]:
     check("api-unknown-404", "GET", "/api/does-not-exist", expect=404, test=lambda p, t: "json" in t)
 
     # Data and optimisation
-    check("catalog", "GET", "/api/catalog", record=True, test=lambda p, t: len(p["locations"]) == 4)
-    check("region-profile", "GET", "/api/region-profile", params={"location": "Salem", "season": "Kharif", "year": 2023},
+    check("catalog", "GET", "/api/catalog", record=True,
+          test=lambda p, t: len(p["locations"]) == 38 and p["seasons"] == ["Kharif", "Rabi"])
+    check("datasets", "GET", "/api/datasets", test=lambda p, t: len(p["datasets"]) == 10 and "disabled_features" in p)
+    check("region-profile", "GET", "/api/region-profile", params={"location": "Salem", "season": "Rabi", "year": 2024},
           record=True)
     check("farm-plans", "POST", "/api/farm-plans", body={**farm, "save_results": False}, record=True,
           test=lambda p, t: len(p["plans"]) > 0)
@@ -136,8 +138,11 @@ def run(base_url: str) -> tuple[list, dict]:
 
     # Dashboard pages
     check("dashboard", "GET", "/api/dashboard/coimbatore", params={"client_id": f"{client_id}-dash"}, record=True)
-    check("weather", "GET", "/api/weather/erode", test=lambda p, t: "temp" in p and "forecast" in p)
-    check("soil-profile", "GET", "/api/soil-profile/pollachi", record=True)
+    # Disabled until an official IMD weather feed is loaded: 501, never an estimate
+    check("weather-disabled", "GET", "/api/weather/erode", expect=501, test=lambda p, t: p.get("available") is False)
+    check("soil-profile", "GET", "/api/soil-profile/coimbatore", record=True)
+    check("soil-master", "GET", "/api/soil-master/salem", record=True, test=lambda p, t: p.get("available") is True)
+    check("taluk-pollachi-404", "GET", "/api/soil-profile/pollachi", expect=404)
     check("plans", "GET", "/api/plans/salem", params={"total_land_ha": 5}, record=True)
     check("comparison", "GET", "/api/comparison/erode", params={"total_land_ha": 5}, record=True)
     check("comparison-explanation", "GET", "/api/comparison/erode/explanation", params={"plan": "A", "total_land_ha": 5},
@@ -150,7 +155,7 @@ def run(base_url: str) -> tuple[list, dict]:
 
     # Scenario simulation: run, save, list, load, delete
     sim = check("simulation-run", "POST", "/api/simulations/run",
-                body={"base": {"location": "Salem", "season": "Kharif", "year": 2023, "total_land_ha": 5},
+                body={"base": {"location": "Salem", "season": "Rabi", "year": 2024, "total_land_ha": 5},
                       "scenario": {"rainfall_change_pct": -20, "water_availability": "low"}, "client_id": client_id},
                 record=True, test=lambda p, t: bool(p.get("token")))
     if sim:

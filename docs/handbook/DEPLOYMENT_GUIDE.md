@@ -8,7 +8,8 @@ AgroOptimize runs on [Render](https://render.com) as **one Docker web service** 
 GitHub repo ──push──► Render (Blueprint: render.yaml)
                          │ docker build (Dockerfile)
                          │   stage 1  node:22-slim      npm ci → vite build → frontend/dist
-                         │   stage 2  python:3.13-slim  pip install pinned wheels; copy app/, data/, dist/
+                         │   stage 2  python:3.13-slim  pip install pinned wheels; copy app/, data/, dist/;
+                         │                              build data/official/official_v1.db from data/official/raw
                          ▼
                   container: uvicorn app.main:app --port $PORT   (user "agro", 1 worker)
                          │
@@ -38,7 +39,7 @@ GitHub repo ──push──► Render (Blueprint: render.yaml)
 | `CORS_ALLOW_ORIGINS` | optional | comma-separated origins | Only for a frontend on another domain |
 | `VITE_API_BASE` | frontend build time, optional | URL | Only for a frontend on another domain |
 
-There are **no secrets**: the only external API (Open-Meteo weather) needs no key.
+There are **no secrets** and no external API calls: the live-weather endpoint is disabled (501) until an official IMD feed is loaded.
 
 ### Storage
 Saved runs (History, Reports, explanations of saved runs) and saved simulations are files in `/app/results`. On the **free plan the filesystem is temporary**: it is wiped when the service redeploys, restarts or wakes up after sleeping (free services sleep after about 15 minutes without traffic). Everything else is computed from the bundled dataset and needs no storage.
@@ -60,7 +61,7 @@ To keep saved runs, use a paid instance type with a persistent disk: in `render.
 | Redeploy without changes | Dashboard → service → **Manual Deploy → Deploy latest commit** |
 | Rebuild from scratch | **Manual Deploy → Clear build cache & deploy** (after dependency changes, or if a cached layer is suspect) |
 | Change an environment variable | Dashboard → **Environment**, edit, save (Render redeploys). Keep `render.yaml` in sync |
-| Change the dataset | Edit `data/raw/*.csv` and push. The data is loaded once per process, so the redeploy picks it up |
+| Change the dataset | Replace the file in `data/official/raw/` and push. The image build rebuilds the database; the data is loaded once per process |
 | Update dependencies | Change the pins in `requirements.txt` (and `package-lock.json` for the frontend), run the full test suites and the smoke-test comparison locally, then push. A new numpy/pymoo/scikit-fuzzy version can change optimisation results |
 
 Zero-downtime: Render keeps the previous version running until the new one passes `/health`.
@@ -83,7 +84,7 @@ python scripts/smoke_test_deployment.py --base-url http://localhost:8000 --recor
 python scripts/smoke_test_deployment.py --base-url https://<service>.onrender.com --compare ref.json
 ```
 
-The script calls 34 endpoints and pages: health, docs, the frontend and an asset, the SPA fallback, catalog, region profile, farm plans (saved and unsaved), saved result and its explanation, history, dashboard, weather, soil profile, plans, comparison and its explanation, fuzzy vs non-fuzzy, District Intelligence, fuzzy explain and audit, simulation run, save, list, load and delete, and three error cases. It compares 17 result fingerprints: optimisation, ranking, fuzzy and simulation outputs with timings and ids removed. It exits non-zero on any failure or difference.
+The script runs 37 checks: health, docs, the frontend and an asset, the SPA fallback, catalog, dataset provenance, region profile, farm plans (saved and unsaved), saved result and its explanation, history, dashboard, weather (expects the 501 'disabled' response), soil profile, Soil Health Card record, the Pollachi taluk 404, plans, comparison and its explanation, fuzzy vs non-fuzzy, District Intelligence, fuzzy explain and audit, simulation run, save, list, load and delete, and three error cases. It compares 18 result fingerprints: optimisation, ranking, fuzzy and simulation outputs with timings and ids removed. It exits non-zero on any failure or difference.
 
 The first request after the free service has slept takes ~30–60 s while the instance starts.
 
@@ -92,6 +93,7 @@ The first request after the free service has slept takes ~30–60 s while the in
 ```bash
 cd frontend && npm ci && npm run build && cd ..
 pip install -r requirements.txt
+python3 scripts/preprocess_all.py         # builds data/official/official_v1.db
 uvicorn app.main:app --port 8000          # http://localhost:8000 serves the app and the API
 ```
 
