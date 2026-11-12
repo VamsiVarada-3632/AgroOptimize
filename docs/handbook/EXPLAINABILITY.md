@@ -21,7 +21,7 @@ flowchart LR
     subgraph Inputs
         SR[(Saved run JSON<br/>results/run_id.json)]
         CF[Memoised comparison front<br/>dashboard_service]
-        CSV[(data/raw CSVs)]
+        CSV[(official database<br/>data/official)]
     end
     SR --> C1[context_from_saved_run]
     CF --> C2[context_from_comparison]
@@ -61,7 +61,7 @@ Each item is `{id, title, detail, source, evidence, status?, severity?}`. `detai
 | Constraints | land allocation, budget (if recorded), rainfall (fuzzy set + rainfall coverage), soil (fuzzy set), irrigation risk (fuzzy output set), optimiser feasibility |
 | Benefits | objectives better than the set median (percent difference) |
 | Risks | irrigation-risk output set, rainfall deficit, rainfall coverage < 50 %, rain-dependent crops, concentration (HHI), perennial crops, weak objectives (goodness < 0.30), estimated data year, year-to-year rainfall variability, inputs at the model minimum |
-| Historical context | observed (non-estimated) years in crop.csv and rainfall.csv for the district/season |
+| Historical context | the official state yield series (TN Season & Crop Report) for each crop and this year's district ranking |
 | Confidence | see §4 |
 | Insights | trade-off position, diversification, main yield driver, rainfall reliance, rank under each preference |
 | Alternatives | runner-up per-ha deltas and closeness |
