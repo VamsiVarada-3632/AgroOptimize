@@ -26,7 +26,7 @@ DIRECTIONS = {"yield": "benefit", "cost": "cost", "water": "cost", "env": "cost"
 
 @pytest.fixture(scope="module")
 def front():
-    prof = pp.get_region_season_profile("Salem", "Kharif")
+    prof = pp.get_region_season_profile("Salem", "Rabi")
     a = fz.evaluate_uncertainty(prof.rainfall.avg_deviation_percent, prof.water.avg_storage_percent, prof.soil.fertility_index)
     problem = FarmPlanProblem(prof, a, 5.0)
     plans = [p for p in extract_pareto_plans(run_nsga2(problem, pop_size=60, n_gen=40), problem) if p.feasible]
@@ -36,7 +36,7 @@ def front():
 
 def _columns(plans):
     return {"yield": [p.yield_tonnes for p in plans], "cost": [p.cost_rs for p in plans],
-            "water": [p.water_liters for p in plans], "env": [p.env_impact_score for p in plans]}
+            "water": [p.irrigated_ha for p in plans], "env": [p.env_impact_score for p in plans]}
 
 
 def _weights(pref):

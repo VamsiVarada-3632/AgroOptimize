@@ -1,3 +1,4 @@
+import { OFFICIAL_DATA_NA } from '../../services/officialData';
 import React, { useMemo } from 'react';
 import { CHART, niceTicks, formatNumber } from './chartTheme';
 
@@ -48,7 +49,7 @@ export default function DeltaBarChart({ items, ariaLabel }) {
                 </rect>
               )}
               <text x={pad.left + innerW + 8} y={y + 12} fontSize="10" fill={CHART.text}>
-                <tspan fontWeight="600">{has ? `${it.change > 0 ? '+' : ''}${formatNumber(it.change, 1)}%` : '—'}</tspan>
+                <tspan fontWeight="600">{has ? `${it.change > 0 ? '+' : ''}${formatNumber(it.change, 1)}%` : OFFICIAL_DATA_NA}</tspan>
                 <tspan dx="6">{it.verdictLabel}</tspan>
               </text>
             </g>

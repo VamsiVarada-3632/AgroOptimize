@@ -62,7 +62,7 @@ from app.services.plan_service import PipelineAdjustments, PipelineRun, run_pipe
 OBJECTIVES = ("yield", "cost", "water", "env")
 OBJECTIVE_LABEL = {"yield": "Expected yield", "cost": "Production cost", "water": "Irrigation water",
                    "env": "Environmental impact"}
-OBJECTIVE_KEY = {"yield": "yield_tonnes", "cost": "cost_rs", "water": "water_liters", "env": "env_impact_score"}
+OBJECTIVE_KEY = {"yield": "yield_tonnes", "cost": "cost_rs", "water": "irrigated_ha", "env": "env_impact_score"}
 HIGHER_IS_BETTER = {"yield": True, "cost": False, "water": False, "env": False, "profit": True, "confidence": True,
                     "yield_confidence": True, "irrigation_risk": False}
 
@@ -78,7 +78,22 @@ MARKET_OPTIONS = ("decrease", "stable", "increase")
 #   medium    50  peak of "medium"
 #   high      70  medium/high overlap, "high" dominant (0.25 vs 0.20)
 #   very_high 90  only "high" active (0.75)
-WATER_LEVEL_STORAGE_PCT = {"very_low": 10.0, "low": 25.0, "medium": 50.0, "high": 70.0, "very_high": 90.0}
+WATER_LEVEL_KEYS = ("very_low", "low", "medium", "high", "very_high")
+
+
+def water_level_storage_pct() -> Dict[str, float]:
+    """Reservoir-storage % of each water-availability scenario, taken from the OFFICIAL distribution of monthly reservoir
+    storage (fuzzy calibration): the observed minimum, 10th, 50th and 90th percentiles and the observed maximum."""
+    from app.fuzzy import calibration
+    w = calibration.report()["water_storage"]
+    vals = (w["min"], w["percentiles"][10], w["percentiles"][50], w["percentiles"][90], w["max"])
+    return dict(zip(WATER_LEVEL_KEYS, (float(v) for v in vals)))
+
+
+def __getattr__(name):                     # WATER_LEVEL_STORAGE_PCT stays importable; computed lazily from the official data
+    if name == "WATER_LEVEL_STORAGE_PCT":
+        return water_level_storage_pct()
+    raise AttributeError(name)
 WATER_LEVEL_LABEL = {"current": "Current (dataset)", "very_low": "Very low", "low": "Low", "medium": "Medium",
                      "high": "High", "very_high": "Very high"}
 
@@ -94,6 +109,11 @@ SIGNIFICANCE_P = 0.05        # paired t-test threshold for a reported change
 PENDING_LIMIT = 32           # unsaved results kept so "Save" does not re-run
 
 
+def _n(x, fmt: str) -> str:
+    """Format a possibly unavailable official value."""
+    return "n/a" if x is None else format(x, fmt)
+
+
 class SimulationError(ValueError):
     """Invalid simulation inputs (mapped to HTTP 422)."""
 
@@ -103,13 +123,17 @@ class SimulationError(ValueError):
 # ---------------------------------------------------------------------------
 
 def market_price_step_pct(location: str) -> float:
-    """Largest one-year change in the dataset's price column for this
-    district (observed years, any crop/season). "Increase"/"Decrease" move
-    every price by this much: a change the district has actually seen."""
-    crop = pp.observed_rows(load_all()["crop"])
-    rows = crop[crop["Location"] == location].sort_values("Year")
-    yoy = rows.groupby(["Season", "Crop_Name"])["MSP_Rs_Qtl"].pct_change().dropna().abs() * 100
-    return round(float(yoy.max()), 1) if len(yoy) else 0.0
+    """Largest year-on-year change in the official MSP series (CACP notifications KMS 2022-23 .. 2025-26) among
+    the crops grown in this district. "Increase"/"Decrease" move every price by this much: a change actually notified."""
+    from app.datasets import service as svc
+    grown = set(load_all()["crop"].query("Location == @location")["Crop_Name"])
+    msp = svc.msp_table()
+    msp = msp[msp.marketing_season.str.startswith("KMS") & msp.crop.isin(grown)].copy()
+    msp["yr"] = msp.marketing_season.str[4:8].astype(int)
+    steps = []
+    for _, g in msp.groupby(["crop", "variety"]):
+        steps += list(g.sort_values("yr")["msp_rs_qtl"].pct_change(fill_method=None).dropna().abs() * 100)
+    return round(float(max(steps)), 1) if steps else 0.0
 
 
 def _priority_weights(priorities: Optional[dict]) -> Optional[Tuple[float, float, float, float]]:
@@ -138,7 +162,11 @@ def resolve(request: dict) -> dict:
         raise SimulationError(f"rainfall_change_pct must be one of {RAINFALL_STEPS}.")
     if fert not in FERTILIZER_STEPS:
         raise SimulationError(f"fertilizer_cost_change_pct must be one of {FERTILIZER_STEPS}.")
-    if water != "current" and water not in WATER_LEVEL_STORAGE_PCT:
+    if fert != 0:
+        from app.errors import FeatureUnavailable
+        raise FeatureUnavailable("Fertiliser-price scenario", "official fertiliser retail prices (Dept of Fertilizers / TN Agriculture Dept)",
+                                 "Production cost uses the CACP cost of cultivation per quintal.")
+    if water != "current" and water not in WATER_LEVEL_KEYS:
         raise SimulationError("water_availability must be current, very_low, low, medium, high or very_high.")
     if market not in MARKET_OPTIONS:
         raise SimulationError("market_price must be decrease, stable or increase.")
@@ -156,7 +184,7 @@ def resolve(request: dict) -> dict:
                                preference=sc.get("preference") or base.get("preference", "balanced"))
     adjustments = PipelineAdjustments(
         rainfall_factor=1 + rain / 100,
-        storage_override_pct=WATER_LEVEL_STORAGE_PCT.get(water),
+        storage_override_pct=water_level_storage_pct().get(water),
         fertilizer_price_factor=1 + fert / 100,
         topsis_weights=_priority_weights(sc.get("priorities")),
     )
@@ -253,7 +281,7 @@ def _evaluate_plan(run: PipelineRun, plan: dict) -> dict:
     feasible = True
     if problem.budget_rs:
         feasible = bool(out["G"][0][0] <= 0)
-    return {"yield_tonnes": float(-F[0]), "cost_rs": float(F[1]), "water_liters": float(F[2]),
+    return {"yield_tonnes": float(-F[0]), "cost_rs": float(F[1]), "irrigated_ha": float(F[2]),
             "env_impact_score": float(F[3]), "feasible": feasible}
 
 
@@ -346,16 +374,16 @@ def _conditions(ctx: dict, base: dict, scen: dict) -> List[dict]:
         {"id": "rainfall", "label": "Rainfall", "baseline": "Dataset",
          "scenario": "Dataset" if c["rainfall_change_pct"] == 0 else f"{c['rainfall_change_pct']:+d}%",
          "detail": f"Season rainfall deviation {brp['rainfall']['avg_deviation_percent']:+.1f}% → "
-                   f"{srp['rainfall']['avg_deviation_percent']:+.1f}%; effective rainfall "
-                   f"{brp['rainfall']['effective_rainfall_mm']:.0f} → {srp['rainfall']['effective_rainfall_mm']:.0f} mm.",
-         "enters": "Preprocessing → fuzzy rainfall input and the effective rainfall in the water objective",
+                   f"{srp['rainfall']['avg_deviation_percent']:+.1f}%; season rainfall "
+                   f"{_n(brp['rainfall'].get('season_actual_mm'), '.0f')} → {_n(srp['rainfall'].get('season_actual_mm'), '.0f')} mm.",
+         "enters": "Preprocessing → fuzzy rainfall input",
          "changed": c["rainfall_change_pct"] != 0},
         {"id": "water", "label": "Water availability", "baseline": WATER_LEVEL_LABEL["current"],
          "scenario": WATER_LEVEL_LABEL[c["water_availability"]],
-         "detail": f"Seasonal reservoir storage {brp['water']['avg_storage_percent']:.1f}% → {srp['water']['avg_storage_percent']:.1f}%.",
+         "detail": f"Seasonal reservoir storage {_n(brp['water']['avg_storage_percent'], '.1f')}% → {_n(srp['water']['avg_storage_percent'], '.1f')}%.",
          "enters": "Fuzzy water-storage input", "changed": c["water_availability"] != "current"},
-        {"id": "fertilizer", "label": "Fertiliser cost", "baseline": "Config prices",
-         "scenario": "Config prices" if c["fertilizer_cost_change_pct"] == 0 else f"{c['fertilizer_cost_change_pct']:+d}%",
+        {"id": "fertilizer", "label": "Fertiliser cost", "baseline": "Disabled (no official price data)",
+         "scenario": "Disabled (no official price data)" if c["fertilizer_cost_change_pct"] == 0 else f"{c['fertilizer_cost_change_pct']:+d}%",
          "detail": "N, P and K prices per kg of nutrient scaled together.",
          "enters": "NSGA-II cost objective", "changed": c["fertilizer_cost_change_pct"] != 0},
         {"id": "market", "label": "Market price", "baseline": "Dataset prices",
@@ -473,7 +501,7 @@ def _crop_effects(base: dict, scen: dict, shares: Dict[str, dict]) -> List[dict]
                "share_change_pp": t.get("change_pp") or 0.0, "share_p_value": t.get("p_value"),
                "share_shift_reliable": bool(t.get("reliable"))}
         for key, label in (("crop_confidence", "confidence"), ("yield_t_ha", "yield"), ("cost_rs_ha", "cost"),
-                           ("water_l_ha", "water"), ("env_per_ha", "env")):
+                           ("irrigated_ha_per_ha", "water"), ("env_per_ha", "env")):
             row[label] = {"baseline": round(b[key], 4), "scenario": round(s[key], 4), "change_pct": _pct(b[key], s[key])}
         out.append(row)
     return sorted(out, key=lambda r: -max(r["baseline_share_pct"], r["scenario_share_pct"]))
@@ -484,6 +512,20 @@ def _fuzzy_changes(base: dict, scen: dict) -> dict:
         rp = side["region_profile"]
         return (rp["rainfall"]["avg_deviation_percent"], rp["water"]["avg_storage_percent"], rp["soil"]["fertility_index"])
     bi, si = inputs(base), inputs(scen)
+    if any(v is None for v in bi + si):
+        bf, sf = base["fuzzy_assessment"], scen["fuzzy_assessment"]
+        names = ("rainfall_dev", "water_storage", "soil_fert")
+        reason = bf.get("reason") or sf.get("reason") or "An official fuzzy input (rainfall, reservoir storage or soil fertility) is unavailable."
+        return {
+            "applied": False, "reason": reason,
+            "inputs": [{"id": n, "baseline": None if b is None else round(b, 2), "scenario": None if s_ is None else round(s_, 2),
+                        "baseline_set": bf[k], "scenario_set": sf[k]}
+                       for n, b, s_, k in zip(names, bi, si, ("rainfall_label", "water_label", "soil_label"))],
+            "memberships": {"baseline": None, "scenario": None},
+            "outputs": [_compare("yield_confidence", "Yield confidence", "0-1", bf["yield_confidence"], sf["yield_confidence"], 3),
+                        _compare("irrigation_risk", "Irrigation risk", "0-1", bf["irrigation_risk"], sf["irrigation_risk"], 3)],
+            "rules_changed": [], "rules_fired": {"baseline": 0, "scenario": 0},
+        }
     brules = {r["rule"]: r for r in fz.fired_rules(*bi)}
     srules = {r["rule"]: r for r in fz.fired_rules(*si)}
     changed = []
@@ -633,7 +675,7 @@ def _historical(location: str, season: str, base: dict, scen: dict) -> dict:
                          "historical_share_pct": round(hist_share.get(c["crop"], 0.0), 1),
                          "expected_yield_t_ha": d.get("expected_yield_t_ha"),
                          "historical_yield_t_ha": t["mean_yield_t_ha"] if t else None,
-                         "historical_yield_trend": t["yield"]["direction"] if t else None,
+                         "historical_yield_trend": (t["yield"] or {}).get("direction") if t else None,
                          "grown_historically": t is not None})
         shares = {c["crop"]: c["share_pct"] for c in side["crop_mix"]}
         overlap = sum(min(shares.get(c, 0.0), hist_share[c]) for c in candidates)
@@ -664,9 +706,9 @@ def _decision_impact(ctx: dict, conditions: List[dict], base: dict, scen: dict, 
     brp, srp = base["region_profile"], scen["region_profile"]
 
     if any(c["id"] == "rainfall" and c["changed"] for c in conditions):
-        er_b, er_s = brp["rainfall"]["effective_rainfall_mm"], srp["rainfall"]["effective_rainfall_mm"]
+        er_b, er_s = brp["rainfall"].get("season_actual_mm"), srp["rainfall"].get("season_actual_mm")
         moved = sorted((e for e in crop_effects if e["water"]["change_pct"]), key=lambda e: -abs(e["water"]["change_pct"]))
-        detail = (f"Rainfall {ctx['controls']['rainfall_change_pct']:+d}% moved effective rainfall from {er_b:.0f} to {er_s:.0f} mm "
+        detail = (f"Rainfall {ctx['controls']['rainfall_change_pct']:+d}% moved season rainfall from {_n(er_b, '.0f')} to {_n(er_s, '.0f')} mm "
                   f"and the seasonal deviation from {brp['rainfall']['avg_deviation_percent']:+.1f}% to "
                   f"{srp['rainfall']['avg_deviation_percent']:+.1f}% (fuzzy set {fuzzy['inputs'][0]['baseline_set']} → "
                   f"{fuzzy['inputs'][0]['scenario_set']}).")
@@ -675,11 +717,11 @@ def _decision_impact(ctx: dict, conditions: List[dict], base: dict, scen: dict, 
             detail += (f" {m['crop']}'s irrigation need per hectare changed {m['water']['change_pct']:+.1f}% "
                        f"({m['water']['baseline']:,.0f} → {m['water']['scenario']:,.0f} L/ha).")
         items.append(make_item("rainfall", "Rainfall changed crop water needs", detail, "preprocessing + fuzzy",
-                               {"effective_rainfall_mm": [er_b, er_s]}))
+                               {"season_rainfall_mm": [er_b, er_s]}))
     if any(c["id"] == "water" and c["changed"] for c in conditions):
         risk = fuzzy["outputs"][1]
         items.append(make_item("water", "Water availability changed the irrigation risk",
-                               f"Storage {brp['water']['avg_storage_percent']:.1f}% → {srp['water']['avg_storage_percent']:.1f}% "
+                               f"Storage {_n(brp['water']['avg_storage_percent'], '.1f')}% → {_n(srp['water']['avg_storage_percent'], '.1f')}% "
                                f"(fuzzy set {fuzzy['inputs'][1]['baseline_set']} → {fuzzy['inputs'][1]['scenario_set']}); "
                                f"irrigation risk {risk['baseline']} → {risk['scenario']}.", "fuzzy",
                                {"storage_pct": [brp['water']['avg_storage_percent'], srp['water']['avg_storage_percent']]}))

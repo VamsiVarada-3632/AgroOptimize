@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { api, DISTRICTS, SEASONS, PREFERENCES, FUZZY_MODELS, fuzzyModelLabel, ApiError, describeApiError } from '../services/api';
+import { api, PREFERENCES, ApiError, describeApiError } from '../services/api';
+import { fuzzyModelLabel, showValue, useCatalog, useFuzzyModels } from '../services/officialData';
 import { ExplanationModal } from '../components/ExplanationPanel';
 import ProfileSelector from '../components/topsis/ProfileSelector';
 import TopsisPanel from '../components/topsis/TopsisPanel';
@@ -22,18 +23,28 @@ const stages = [
  * creates a saved, personalized result should be obvious and deliberate,
  * not a side effect of clicking something else.
  */
-export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNavigate, initialDistrict: requestedDistrict }) {
-  const initialDistrict = DISTRICTS.includes(requestedDistrict) ? requestedDistrict
-    : userLocation && DISTRICTS.includes(userLocation) ? userLocation : DISTRICTS[0];
+export default function RunOptimizationView({ userLocation, userSeason, landSizeHa = 5, onNavigate, initialDistrict: requestedDistrict }) {
+  // Districts, seasons and years come from GET /api/catalog and the fuzzy
+  // models from GET /api/fuzzy/models; nothing is offered that the official
+  // datasets do not cover.
+  const { data: catalog, error: catalogError } = useCatalog();
+  const { data: fuzzyCatalog } = useFuzzyModels();
+  const districts = catalog?.locations ?? [];
+  const seasons = catalog?.seasons ?? [];
+  const availableYears = catalog?.years ?? [];
+  const fuzzyModels = fuzzyCatalog?.models ?? [];
 
-  const [district, setDistrict] = useState(initialDistrict);
-  const [season, setSeason] = useState('Kharif');
+  const [districtChoice, setDistrict] = useState(requestedDistrict || userLocation || '');
+  const [seasonChoice, setSeason] = useState(userSeason || '');
+  const district = districts.includes(districtChoice) ? districtChoice : (districts[0] ?? '');
+  const season = seasons.includes(seasonChoice) ? seasonChoice : (seasons[0] ?? '');
   const [year, setYear] = useState(''); // '' = let the backend use the latest year in the dataset
-  const [availableYears, setAvailableYears] = useState([]);
   const [landArea, setLandArea] = useState(landSizeHa);
   const [budget, setBudget] = useState('');
   const [preference, setPreference] = useState('balanced');
-  const [fuzzyModel, setFuzzyModel] = useState('original');
+  // '' = the server's default model (GET /api/fuzzy/models -> default)
+  const [fuzzyModelChoice, setFuzzyModel] = useState('');
+  const fuzzyModel = fuzzyModelChoice || fuzzyCatalog?.default || '';
   const [profile, setProfile] = useState('balanced');
   const [customPercent, setCustomPercent] = useState({ ...BALANCED_PERCENT });
   const [rankedWith, setRankedWith] = useState({ profile: 'balanced', customPercent: undefined });
@@ -51,16 +62,6 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
   useEffect(() => {
     setLandArea(landSizeHa);
   }, [landSizeHa]);
-
-  // Real years the dataset actually covers, for the Year dropdown -- not
-  // a guessed/hardcoded range.
-  useEffect(() => {
-    let cancelled = false;
-    api.getCatalog()
-      .then((c) => { if (!cancelled) setAvailableYears(c.years || []); })
-      .catch(() => { if (!cancelled) setAvailableYears([]); });
-    return () => { cancelled = true; };
-  }, []);
 
   useEffect(() => {
     let timer;
@@ -130,7 +131,7 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
       preference,
       profile: rankProfile,
       custom_weights: rankProfile === 'custom' ? toFractions(customPercent) : undefined,
-      fuzzy_model: fuzzyModel,
+      fuzzy_model: fuzzyModel || undefined,
     });
     setIsRunning(true);
     setStep(0);
@@ -181,7 +182,7 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
                   <p className="font-label-sm text-label-sm text-on-surface-variant">
                     {result.region_profile.location} · {result.region_profile.season} {result.region_profile.year}
                     {result.region_profile.data_year_estimated && ' (estimated-year inputs)'}
-                    {result.meta?.fuzzy_model && result.meta.fuzzy_model !== 'original' && ` · ${fuzzyModelLabel(result.meta.fuzzy_model)} fuzzy model`}
+                    {result.meta?.fuzzy_model && ` · ${fuzzyModelLabel(result.meta.fuzzy_model)} fuzzy model`}
                   </p>
                 </div>
               </div>
@@ -203,7 +204,7 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
                     </div>
                     <div>
                       <p className="font-label-sm text-label-sm text-on-surface-variant">Confidence</p>
-                      <p className="font-body-lg text-body-lg font-bold text-on-surface">{topPlan.confidence_label}</p>
+                      <p className="font-body-lg text-body-lg font-bold text-on-surface">{showValue(topPlan.confidence_label)}</p>
                     </div>
                   </div>
                 </div>
@@ -252,6 +253,11 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="bg-surface-container-lowest rounded-xl border border-outline-variant/20 shadow-soft p-6 space-y-5">
+              {catalogError && (
+                <p className="font-label-sm text-label-sm bg-error-container/40 text-on-error-container px-4 py-3 rounded-lg">
+                  The district list could not be loaded: {describeApiError(catalogError)}
+                </p>
+              )}
               <div>
                 <label className="block font-label-sm text-label-sm text-on-surface-variant mb-1 font-semibold">District</label>
                 <select
@@ -259,9 +265,9 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
                   onChange={(e) => setDistrict(e.target.value)}
                   className="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-bright text-on-surface font-body-md outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"
                 >
-                  {DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
+                  {districts.map((d) => <option key={d} value={d}>{d}</option>)}
                 </select>
-                {isOffProfileDistrict && (
+                {isOffProfileDistrict && userLocation && (
                   <p className="text-xs text-on-surface-variant mt-1.5">
                     Your profile district is {userLocation}. This run will be saved under {district} and will show up in {district}'s History, not your Home dashboard.
                   </p>
@@ -276,7 +282,7 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
                     onChange={(e) => setSeason(e.target.value)}
                     className="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-bright text-on-surface font-body-md outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"
                   >
-                    {SEASONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                    {seasons.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
                 <div>
@@ -343,14 +349,19 @@ export default function RunOptimizationView({ userLocation, landSizeHa = 5, onNa
                   onChange={(e) => setFuzzyModel(e.target.value)}
                   className="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-bright text-on-surface font-body-md outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"
                 >
-                  {FUZZY_MODELS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                  {fuzzyModels.map((m) => (
+                    <option key={m.name} value={m.name}>
+                      {fuzzyModelLabel(m.name)}{m.name === fuzzyCatalog?.default ? ' – default' : ''}
+                    </option>
+                  ))}
                 </select>
-                <p className="text-xs text-on-surface-variant mt-1.5">{FUZZY_MODELS.find((m) => m.value === fuzzyModel)?.hint}</p>
+                <p className="text-xs text-on-surface-variant mt-1.5">{fuzzyModels.find((m) => m.name === fuzzyModel)?.description}</p>
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-primary text-on-primary font-label-md text-label-md py-3 rounded-lg hover:opacity-90 transition-opacity shadow-sm cursor-pointer font-bold mt-2 flex items-center justify-center gap-2"
+                disabled={!district || !season}
+                className="w-full disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-on-primary font-label-md text-label-md py-3 rounded-lg hover:opacity-90 transition-opacity shadow-sm cursor-pointer font-bold mt-2 flex items-center justify-center gap-2"
               >
                 <span className="material-symbols-outlined">model_training</span>
                 Run Optimization

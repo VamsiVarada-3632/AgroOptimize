@@ -1,5 +1,6 @@
 import React, { useState, useEffect, Suspense } from 'react';
-import { api, DISTRICTS } from './services/api';
+import { api } from './services/api';
+import { isCatalogDistrict, useCatalog } from './services/officialData';
 import { lazyView } from './utils/lazyView';
 import ViewLoading from './components/ViewLoading';
 
@@ -16,13 +17,14 @@ const ReportsView = lazyView(() => import('./views/ReportsView'));
 const DistrictIntelligenceView = lazyView(() => import('./views/DistrictIntelligenceView'));
 const SimulationView = lazyView(() => import('./views/SimulationView'));
 const SettingsView = lazyView(() => import('./views/SettingsView'));
+const DatasetsView = lazyView(() => import('./views/DatasetsView'));
 
 const defaultAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23707a6f'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>";
 
 export default function App() {
   const [currentView, setCurrentView] = useState(() => {
     return localStorage.getItem('agro_currentView') || 'onboarding';
-  }); // onboarding, login, register, profile-setup, dashboard, analytics, comparison, run-optimization, history, reports, settings
+  }); // onboarding, login, register, profile-setup, dashboard, analytics, comparison, run-optimization, history, reports, datasets, settings
   const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [dashboardLayout, setDashboardLayout] = useState('sidebar'); // 'sidebar' | 'topbar'
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -54,12 +56,16 @@ export default function App() {
   // District Intelligence when jumping to Run Optimization).
   const [navParams, setNavParams] = useState({});
 
-  // A "complete" profile means we actually have a real district on file --
-  // every dashboard-shell view depends on this to call the backend. Full
-  // name is intentionally not required here: it's a cosmetic greeting
-  // field a user can skip during profile setup, and DashboardView already
-  // falls back gracefully when it's blank.
-  const hasCompleteProfile = Boolean(user?.location && DISTRICTS.includes(user.location));
+  // A "complete" profile means we actually have a district on file that the
+  // official datasets cover (GET /api/catalog) -- every dashboard-shell view
+  // depends on this to call the backend. A district saved by an older build
+  // that the catalog no longer lists (e.g. the taluk Pollachi) sends the user
+  // back to profile setup. Until the catalog has loaded (or if it cannot be
+  // loaded) the saved district is trusted and each view reports its own error.
+  // Full name is intentionally not required: it's a cosmetic greeting field.
+  const { data: catalog } = useCatalog();
+  const isKnownDistrict = (location) => Boolean(location) && (!catalog || isCatalogDistrict(catalog, location));
+  const hasCompleteProfile = isKnownDistrict(user?.location);
 
   // Startup health check -- confirms the FastAPI backend (localhost:8000)
   // is reachable so the shell can show a subtle "offline" indicator
@@ -80,7 +86,7 @@ export default function App() {
     // actually have a real district on file -- otherwise (e.g. a brand
     // new visitor who used the Login tab) they still have to complete a
     // real profile first, same as Register does.
-    const mergedHasProfile = Boolean(merged.location && DISTRICTS.includes(merged.location));
+    const mergedHasProfile = isKnownDistrict(merged.location);
     setCurrentView(goToDashboard && mergedHasProfile ? 'dashboard' : 'profile-setup');
   };
 
@@ -113,6 +119,7 @@ export default function App() {
     'scenario-simulation',
     'history',
     'reports',
+    'datasets',
     'settings'
   ].includes(currentView);
 
@@ -142,6 +149,7 @@ export default function App() {
     { id: 'scenario-simulation', label: 'Scenario Simulation', icon: 'science' },
     { id: 'history', label: 'History', icon: 'history' },
     { id: 'reports', label: 'Reports', icon: 'description' },
+    { id: 'datasets', label: 'Official Data', icon: 'database' },
     { id: 'settings', label: 'Settings', icon: 'settings' },
   ];
 
@@ -391,10 +399,10 @@ export default function App() {
           )}
 
           {/* E. MAIN PAGE CANVAS WRAPPER */}
-          <div className={`flex-grow flex flex-col min-h-screen ${dashboardLayout === 'sidebar' ? 'md:pl-64' : ''}`}>
+          <div className={`flex-grow flex flex-col min-h-screen min-w-0 ${dashboardLayout === 'sidebar' ? 'md:pl-64' : ''}`}>
             
             {/* View Canvas Content */}
-            <main className="flex-grow p-4 md:p-8 max-w-7xl mx-auto w-full">
+            <main className="flex-grow p-4 md:p-8 max-w-7xl mx-auto w-full min-w-0">
               <Suspense fallback={<ViewLoading />}>
                 {currentView === 'dashboard' && (
                   <DashboardView
@@ -425,6 +433,7 @@ export default function App() {
                   <RunOptimizationView
                     key={navParams.district || 'profile'}
                     userLocation={user.location}
+                    userSeason={user.season}
                     initialDistrict={navParams.district}
                     landSizeHa={Number(user.landSize) || 5}
                     onNavigate={navigateTo}
@@ -436,7 +445,7 @@ export default function App() {
                 )}
 
                 {currentView === 'scenario-simulation' && (
-                  <SimulationView userLocation={user.location} landSizeHa={Number(user.landSize) || 5} onNavigate={navigateTo} />
+                  <SimulationView userLocation={user.location} userSeason={user.season} landSizeHa={Number(user.landSize) || 5} onNavigate={navigateTo} />
                 )}
 
                 {currentView === 'history' && (
@@ -446,6 +455,8 @@ export default function App() {
                 {currentView === 'reports' && (
                   <ReportsView userLocation={user.location} onNavigate={navigateTo} />
                 )}
+
+                {currentView === 'datasets' && <DatasetsView userLocation={user.location} />}
 
                 {currentView === 'settings' && (
                   <SettingsView 

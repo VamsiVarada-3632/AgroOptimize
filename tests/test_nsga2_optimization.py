@@ -19,31 +19,30 @@ from app.optimization import metrics, monitoring, operators
 from app.optimization.nsga2_runner import extract_pareto_plans, run_nsga2
 from app.services import results_store
 
-from tests.test_nsga2_engine import _digest, _problem
+from tests.test_nsga2_engine import _binding_budget, _digest, _problem
 
-# Digests of the enhanced engine as merged in PR #12 (recorded on main):
-# any later speed-up must reproduce them exactly.
-ENHANCED_GOLDEN = [
-    (dict(location="Salem", season="Kharif"), "1e64a443331f689f"),
-    (dict(location="Erode", season="Rabi", budget=120000.0), "c5747c91779d74a5"),
-    (dict(location="Coimbatore", season="Summer"), "51ead5e790b5a25b"),
+# The golden digests of the paper (synthetic-data) enhanced engine are archived in legacy/ and reproduced from the
+# `published-v1` tag. On the official data each engine configuration must be exactly deterministic for a seed.
+CASES = [
+    dict(location="Salem", season="Rabi"),
+    dict(location="Erode", season="Rabi", budget=1_000.0),     # below every plan's cost: infeasible branch
+    dict(location="Coimbatore", season="Rabi"),
+    dict(location="Erode", season="Rabi", budget="binding"),
 ]
 
 
-# Digests of the current enhanced engine (PR #12 + constraint-aware
-# initialisation + duplicate avoidance), so later refactors keep it exact.
-ENHANCED_V2_GOLDEN = [
-    (dict(location="Salem", season="Kharif"), "262810d25bee0edc"),
-    (dict(location="Erode", season="Rabi", budget=120000.0), "9da0c2675df7573d"),
-    (dict(location="Coimbatore", season="Summer"), "97e00ad7994ac91f"),
-    (dict(location="Erode", season="Kharif", budget=230000.0), "8e9a80d61c07acf0"),
-]
+def _case(args):
+    from tests.test_nsga2_engine import _binding_budget
+    a = dict(args)
+    if a.get("budget") == "binding":
+        a["budget"] = _binding_budget(a["location"], a["season"])
+    return _problem(**a)
 
 
-@pytest.mark.parametrize("args,digest", ENHANCED_V2_GOLDEN)
-def test_current_enhanced_engine_reproduces_its_recorded_results(args, digest):
-    result = run_nsga2(_problem(**args), pop_size=40, n_gen=60, seed=3, mode="enhanced")
-    assert _digest(result) == digest
+@pytest.mark.parametrize("args", CASES)
+def test_current_enhanced_engine_is_deterministic_on_official_data(args):
+    kw = dict(pop_size=40, n_gen=60, seed=3, mode="enhanced")
+    assert _digest(run_nsga2(_case(args), **kw)) == _digest(run_nsga2(_case(args), **kw))
 
 
 def test_enhanced_mode_enables_the_accepted_switches_only():
@@ -59,10 +58,10 @@ def _pr12_enhanced():
     return dataclasses.replace(settings("enhanced"), duplicate_avoidance=False, constraint_aware_initialization=False)
 
 
-@pytest.mark.parametrize("args,digest", ENHANCED_GOLDEN)
-def test_enhanced_engine_reproduces_its_recorded_results(args, digest):
-    result = run_nsga2(_problem(**args), pop_size=40, n_gen=60, seed=3, engine=_pr12_enhanced())
-    assert _digest(result) == digest
+@pytest.mark.parametrize("args", CASES)
+def test_pr12_enhanced_engine_is_deterministic_on_official_data(args):
+    kw = dict(pop_size=40, n_gen=60, seed=3, engine=_pr12_enhanced())
+    assert _digest(run_nsga2(_case(args), **kw)) == _digest(run_nsga2(_case(args), **kw))
 
 
 # ---------------------------------------------------------------------------
@@ -81,7 +80,7 @@ def _hypervolume_from_getters(algorithm):
     return float(HV(ref_point=np.full(F.shape[1], 1.1))(F))
 
 
-@pytest.mark.parametrize("budget", [None, 150000.0, 20000.0])  # 20000: no feasible plan at all
+@pytest.mark.parametrize("budget", [None, 250_000.0, 1_000.0])  # 1000: no feasible plan at all
 def test_front_hypervolume_matches_the_getter_computation(budget):
     result = run_nsga2(_problem("Erode", "Kharif", budget=budget), pop_size=30, n_gen=12, seed=5, mode="enhanced")
     algorithm = result.algorithm
@@ -90,7 +89,7 @@ def test_front_hypervolume_matches_the_getter_computation(budget):
 
 
 def test_duplicate_eliminator_caches_population_reads():
-    result = run_nsga2(_problem("Coimbatore", "Summer"), pop_size=24, n_gen=6, seed=1)
+    result = run_nsga2(_problem("Coimbatore", "Rabi"), pop_size=24, n_gen=6, seed=1)
     pop = result.pop
     eliminator = operators.CountingDuplicateElimination()
     first = eliminator._decision_vectors(pop)
@@ -174,7 +173,7 @@ REQUIRED_KEYS = {"reference_front", "pareto_size", "feasible_pareto_size", "cons
 
 
 def test_run_quality_metrics_report():
-    problem = _problem("Erode", "Rabi", budget=200000.0)
+    problem = _problem("Erode", "Rabi", budget=_binding_budget("Erode", "Rabi"))
     result = run_nsga2(problem, pop_size=30, n_gen=15, seed=4)
     q = metrics.run_quality_metrics(result, problem)
     assert set(q) == REQUIRED_KEYS
@@ -186,7 +185,7 @@ def test_run_quality_metrics_report():
 
 
 def test_metrics_of_an_infeasible_run_are_null_not_nan():
-    problem = _problem("Erode", "Kharif", budget=20000.0)
+    problem = _problem("Erode", "Kharif", budget=1_000.0)
     result = run_nsga2(problem, pop_size=24, n_gen=8, seed=1)
     q = metrics.run_quality_metrics(result, problem)
     assert q["feasible_pareto_size"] == 0 and q["constraint_satisfaction_rate"] == 0.0
@@ -205,7 +204,7 @@ def test_api_returns_and_saves_quality_metrics(tmp_path, monkeypatch):
     from app import config
     monkeypatch.setattr(config, "RESULTS_DIR", tmp_path)
     client = TestClient(app)
-    body = {"location": "Salem", "season": "Kharif", "year": 2023, "total_land_ha": 5,
+    body = {"location": "Salem", "season": "Kharif", "year": 2024, "total_land_ha": 5,
             "pop_size": 24, "n_gen": 10, "save_results": False}
     res = client.post("/api/farm-plans", json=body)
     assert res.status_code == 200
@@ -261,7 +260,7 @@ def test_smart_sampling_with_lhs_keeps_seeds_and_stratifies_the_rest():
 
 @pytest.mark.parametrize("base", ["original", "enhanced"])
 def test_lhs_initialization_is_deterministic_and_in_bounds(base):
-    problem = _problem("Erode", "Kharif", budget=180000.0)
+    problem = _problem("Erode", "Kharif", budget=_split_budget("Erode", "Kharif"))
     engine = _with(base, lhs_initialization=True)
     a = run_nsga2(problem, pop_size=30, n_gen=10, seed=6, engine=engine)
     b = run_nsga2(problem, pop_size=30, n_gen=10, seed=6, engine=engine)
@@ -269,6 +268,12 @@ def test_lhs_initialization_is_deterministic_and_in_bounds(base):
     X = a.pop.get("X")
     assert np.all(X >= problem.xl - 1e-12) and np.all(X <= problem.xu + 1e-12)
     assert _digest(a) != _digest(run_nsga2(problem, pop_size=30, n_gen=10, seed=6, mode=base))
+
+
+def _split_budget(location, season, seed=0):
+    """A budget at the median cost of uniformly random plans: about half are over it, half within."""
+    base = _problem(location, season)
+    return float(np.median(_costs(base, _uniform(base, seed=seed))))
 
 
 def _costs(problem, X):
@@ -280,7 +285,7 @@ def _uniform(problem, n=60, seed=0):
 
 
 def test_budget_repair_makes_over_budget_plans_feasible_and_keeps_the_rest():
-    problem = _problem("Erode", "Kharif", budget=230000.0)
+    problem = _problem("Erode", "Kharif", budget=_split_budget("Erode", "Kharif"))
     X = _uniform(problem)
     before = _costs(problem, X)
     Y = operators.make_budget_feasible(problem, X)
@@ -293,7 +298,7 @@ def test_budget_repair_makes_over_budget_plans_feasible_and_keeps_the_rest():
 
 
 def test_budget_repair_moves_plans_only_as_far_as_needed():
-    problem = _problem("Erode", "Kharif", budget=230000.0)
+    problem = _problem("Erode", "Kharif", budget=_split_budget("Erode", "Kharif"))
     X = _uniform(problem, seed=3)
     fixed = operators.make_budget_feasible(problem, X)
     moved = _costs(problem, X) > problem.budget_rs
@@ -301,7 +306,7 @@ def test_budget_repair_moves_plans_only_as_far_as_needed():
     assert np.median(_costs(problem, fixed)[moved]) > 0.95 * problem.budget_rs
 
 
-@pytest.mark.parametrize("budget", [None, 20000.0])  # no budget / no feasible plan at all
+@pytest.mark.parametrize("budget", [None, 1_000.0])  # no budget / no feasible plan at all
 def test_budget_repair_changes_nothing_without_a_reachable_budget(budget):
     problem = _problem("Erode", "Kharif", budget=budget)
     X = _uniform(problem)
@@ -309,7 +314,7 @@ def test_budget_repair_changes_nothing_without_a_reachable_budget(budget):
 
 
 def test_constraint_aware_initialization_draws_no_extra_random_numbers():
-    problem = _problem("Erode", "Kharif", budget=230000.0)
+    problem = _problem("Erode", "Kharif", budget=_split_budget("Erode", "Kharif"))
     a = run_nsga2(problem, pop_size=30, n_gen=10, seed=2, engine=_with(constraint_aware_initialization=True))
     b = run_nsga2(problem, pop_size=30, n_gen=10, seed=2, engine=_with(constraint_aware_initialization=True))
     assert _digest(a) == _digest(b)
@@ -348,7 +353,7 @@ def test_unknown_crossover_schedule_is_rejected():
 
 
 def test_duplicate_avoidance_perturbs_copies_of_parents():
-    problem = _problem("Coimbatore", "Summer")
+    problem = _problem("Coimbatore", "Rabi")
     mutation = operators.GaussianMutation(prob=0.0, sigma=0.12, avoid_duplicates=True)
 
     class _Algo:  # the parts of the algorithm the mutation reads
@@ -365,7 +370,7 @@ def test_duplicate_avoidance_perturbs_copies_of_parents():
 
 
 def test_duplicate_avoidance_reduces_rejections_and_is_deterministic():
-    problem = _problem("Coimbatore", "Summer")
+    problem = _problem("Coimbatore", "Rabi")
     engine = _with("enhanced", duplicate_avoidance=True)
     a = run_nsga2(problem, seed=2, pop_size=40, n_gen=40, engine=engine)
     b = run_nsga2(problem, seed=2, pop_size=40, n_gen=40, engine=engine)

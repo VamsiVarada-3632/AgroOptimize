@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { describeApiError } from '../services/api';
+import { EVIDENCE_LABELS, FIELD_LABELS, OFFICIAL_DATA_NA, isMissing, showValue } from '../services/officialData';
 
 /**
  * Renders an explanation returned by the backend explanation service
@@ -134,8 +135,8 @@ function SummaryCard({ summary, confidence }) {
       <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 text-sm">
         <div><dt className="text-on-surface-variant text-xs">Yield</dt><dd className="font-bold">{summary.per_ha.yield.toFixed(2)} t/ha</dd></div>
         <div><dt className="text-on-surface-variant text-xs">Cost</dt><dd className="font-bold">₹{Math.round(summary.per_ha.cost).toLocaleString()}/ha</dd></div>
-        <div><dt className="text-on-surface-variant text-xs">Irrigation</dt><dd className="font-bold">{summary.per_ha.water.toFixed(2)} ML/ha</dd></div>
-        <div><dt className="text-on-surface-variant text-xs">Env. impact</dt><dd className="font-bold">{summary.per_ha.env.toFixed(2)}/ha</dd></div>
+        <div><dt className="text-on-surface-variant text-xs">{FIELD_LABELS.irrigated_ha}</dt><dd className="font-bold">{showValue(summary.per_ha.water, (v) => `${v.toFixed(2)} ha/ha`)}</dd></div>
+        <div><dt className="text-on-surface-variant text-xs">Nutrient load</dt><dd className="font-bold">{showValue(summary.per_ha.env, (v) => `${v.toFixed(2)} kg/ha`)}</dd></div>
       </dl>
     </section>
   );
@@ -174,9 +175,9 @@ function ConfidenceSection({ confidence }) {
           <div key={c.id} title={c.detail}>
             <div className="flex justify-between text-sm">
               <span className="font-semibold">{c.label}</span>
-              <span className="text-on-surface-variant">{c.score === null ? 'not available' : `${c.score}%`}</span>
+              <span className="text-on-surface-variant">{showValue(c.score, (v) => `${v}%`)}</span>
             </div>
-            {c.score !== null && <Bar value={c.score} max={100} tone={c.score >= 70 ? 'bg-primary' : c.score >= 40 ? 'bg-secondary' : 'bg-error'} />}
+            {!isMissing(c.score) && <Bar value={c.score} max={100} tone={c.score >= 70 ? 'bg-primary' : c.score >= 40 ? 'bg-secondary' : 'bg-error'} />}
             <p className="text-xs text-on-surface-variant mt-1">{c.detail}</p>
           </div>
         ))}
@@ -188,16 +189,16 @@ function ConfidenceSection({ confidence }) {
 function HistoricalSection({ history }) {
   const rain = history.rainfall;
   return (
-    <Section icon="history_edu" title="Historical context" subtitle={`Observed years: ${history.observed_years.join(', ') || 'none'}`}>
+    <Section icon="history_edu" title="Historical context" subtitle={`Observed years: ${history.observed_years.join(', ') || OFFICIAL_DATA_NA}`}>
       <ul className="space-y-2 text-sm">
         {history.crops.map((c) => (
           <li key={c.crop} className="p-3 rounded-lg bg-surface-container-low" title={JSON.stringify(c)}>{c.detail}</li>
         ))}
       </ul>
-      {rain.seasonal_total_mm_mean !== null && (
+      {!isMissing(rain.seasonal_total_mm_mean) && (
         <p className="text-xs text-on-surface-variant mt-3">
-          Season rainfall: {rain.this_year_total_mm} mm this year ({rain.this_year_deviation_pct}% vs normal) against an observed mean of{' '}
-          {rain.seasonal_total_mm_mean} mm (variation coefficient {rain.seasonal_total_mm_cv}).
+          Season rainfall: {showValue(rain.this_year_total_mm, (v) => `${v} mm`)} this year ({showValue(rain.this_year_deviation_pct, (v) => `${v}% vs normal`)}) against an observed mean of{' '}
+          {rain.seasonal_total_mm_mean} mm (year-to-year variation: {showValue(rain.seasonal_total_mm_cv)}).
         </p>
       )}
     </Section>
@@ -260,6 +261,114 @@ export function TopsisSection({ topsis }) {
   );
 }
 
+/** How each crop-evidence status is worded for a farmer (backend: app/services/crop_evidence.py). */
+const EVIDENCE_STATUS = {
+  supported: { label: 'Supports this crop', cls: 'bg-primary-fixed/40 text-on-primary-fixed', icon: 'check_circle',
+    meaning: 'The official records for your district agree with growing this crop on this point.' },
+  caution: { label: 'Worth checking', cls: 'bg-secondary-fixed/50 text-on-secondary-fixed', icon: 'error',
+    meaning: 'The official records show something to keep an eye on before you decide.' },
+  concern: { label: 'Concern', cls: 'bg-error-container text-on-error-container', icon: 'warning',
+    meaning: 'The official records point against this crop on this point.' },
+  info: { label: 'For your information', cls: 'bg-surface-container-high text-on-surface-variant', icon: 'info',
+    meaning: 'A fact from the official records that helps you plan; it does not count for or against the crop.' },
+  unavailable: { label: OFFICIAL_DATA_NA, cls: 'bg-surface-container-high text-on-surface-variant', icon: 'block',
+    meaning: 'No official dataset covers this yet, so it could not be checked.' },
+};
+
+function evidenceStatus(status) {
+  return EVIDENCE_STATUS[status] || EVIDENCE_STATUS.unavailable;
+}
+
+function EvidenceSources({ sources }) {
+  if (!sources?.length) return <p className="text-xs text-on-surface-variant">{OFFICIAL_DATA_NA}</p>;
+  return (
+    <ul className="text-xs text-on-surface-variant list-disc pl-5 space-y-0.5">
+      {sources.map((src, i) => (
+        <li key={`${src.dataset}-${i}`}>
+          {src.dataset}
+          {src.detail && <span> ({src.detail})</span>}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
+ * Per-crop evidence from the official datasets (explanation `crop_evidence`):
+ * one collapsible card per crop, and inside it one collapsible card per
+ * criterion with its status, the backend's statement and the sources it cites.
+ */
+export function CropEvidenceSection({ cropEvidence }) {
+  if (!cropEvidence?.length) {
+    return (
+      <Section icon="fact_check" title={FIELD_LABELS.crop_evidence}>
+        <p className="text-sm text-on-surface-variant">{OFFICIAL_DATA_NA}</p>
+      </Section>
+    );
+  }
+  return (
+    <Section icon="fact_check" title={FIELD_LABELS.crop_evidence}
+      subtitle="What the official government records say about each crop in this plan. Open a crop, then a topic, to see the evidence and where it comes from.">
+      <div className="space-y-3">
+        {cropEvidence.map((crop, index) => (
+          <details key={crop.crop} open={index === 0} className="rounded-lg border border-outline-variant/30 bg-surface-container-low">
+            <summary className="cursor-pointer px-3 py-2.5 flex flex-wrap items-center justify-between gap-2">
+              <span className="font-semibold text-sm text-on-surface capitalize">
+                {crop.crop}
+                {!isMissing(crop.share_pct) && <span className="font-normal text-on-surface-variant normal-case"> · {crop.share_pct.toFixed(1)}% of land</span>}
+              </span>
+              {crop.status_counts && (
+                <span className="flex flex-wrap gap-1.5 text-[11px]">
+                  {['supported', 'caution', 'concern', 'unavailable'].filter((k) => crop.status_counts[k] > 0).map((k) => (
+                    <span key={k} className={`px-2 py-0.5 rounded-full font-semibold ${evidenceStatus(k).cls}`}>
+                      {crop.status_counts[k]} {k === 'unavailable' ? evidenceStatus(k).label : evidenceStatus(k).label.toLowerCase()}
+                    </span>
+                  ))}
+                </span>
+              )}
+            </summary>
+            <ul className="px-3 pb-3 space-y-2">
+              {crop.criteria.map((c) => {
+                const st = evidenceStatus(c.status);
+                return (
+                  <li key={c.id}>
+                    <details className="rounded-lg bg-surface-container-lowest border border-outline-variant/20">
+                      <summary className="cursor-pointer px-3 py-2 flex items-center justify-between gap-2">
+                        <span className="font-semibold text-sm">{EVIDENCE_LABELS[c.id] || c.label}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-semibold flex items-center gap-1 ${st.cls}`}>
+                          <span className="material-symbols-outlined text-[14px]" aria-hidden="true">{st.icon}</span>{st.label}
+                        </span>
+                      </summary>
+                      <dl className="px-3 pb-3 space-y-2 text-sm">
+                        <div>
+                          <dt className="text-xs font-semibold text-on-surface-variant">Status</dt>
+                          <dd>{st.label}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs font-semibold text-on-surface-variant">Evidence</dt>
+                          <dd className="leading-relaxed">{showValue(c.statement)}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs font-semibold text-on-surface-variant">Official source</dt>
+                          <dd><EvidenceSources sources={c.sources} /></dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs font-semibold text-on-surface-variant">In simple words</dt>
+                          <dd className="text-on-surface-variant">{st.meaning}</dd>
+                        </div>
+                      </dl>
+                    </details>
+                  </li>
+                );
+              })}
+            </ul>
+          </details>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
 const PROFILE_LABELS = { balanced: 'Balanced', profit: 'Profit', water: 'Water saving', sustainability: 'Sustainability', low_cost: 'Low cost' };
 
 export function ExplanationPanel({ explanation }) {
@@ -274,6 +383,8 @@ export function ExplanationPanel({ explanation }) {
         </Section>
         <ObjectivesSection objectives={e.objectives} />
       </div>
+
+      <CropEvidenceSection cropEvidence={e.crop_evidence} />
 
       <Section icon="compare_arrows" title="Trade-offs accepted" subtitle="Each line compares this plan with the best plan in the set for one objective.">
         <ItemList items={e.trade_offs.items} empty="This plan is already the best in the set on every objective." />
@@ -354,7 +465,7 @@ export function ExplanationPanel({ explanation }) {
   );
 }
 
-const OBJECTIVE_LABELS = { yield: 'Yield', cost: 'Cost', water: 'Irrigation water', env: 'Environmental impact' };
+const OBJECTIVE_LABELS = { yield: 'Yield', cost: 'Cost', water: FIELD_LABELS.irrigated_ha, env: 'Environmental impact' };
 
 /**
  * Side-by-side view of several explanations (e.g. Plans A/B/C). Every cell
@@ -386,7 +497,7 @@ export function ExplanationComparison({ explanations }) {
           {row('Chosen by', (e) => `#${e.summary.rank} under “${e.summary.preference}” (closeness ${e.summary.closeness})`)}
           {row('Crop mix', (e) => e.summary.crop_mix.map((c) => `${c.crop} ${c.share_pct.toFixed(0)}%`).join(', '))}
           {row('Yield / cost', (e) => `${e.summary.per_ha.yield.toFixed(2)} t/ha · ₹${Math.round(e.summary.per_ha.cost).toLocaleString()}/ha`)}
-          {row('Water / impact', (e) => `${e.summary.per_ha.water.toFixed(2)} ML/ha · ${e.summary.per_ha.env.toFixed(2)}/ha`)}
+          {row('Irrigated area / nutrient load', (e) => `${showValue(e.summary.per_ha.water, (v) => `${v.toFixed(2)} ha/ha`)} · ${showValue(e.summary.per_ha.env, (v) => `${v.toFixed(2)} kg/ha`)}`)}
           {row('Strongest objective', (e) => OBJECTIVE_LABELS[e.objectives.strongest])}
           {row('Main compromise', (e) => OBJECTIVE_LABELS[e.objectives.compromise])}
           {row('Top reasons', (e) => <ul className="list-disc pl-4">{e.reasons.slice(0, 3).map((r) => <li key={r.id}>{r.title}</li>)}</ul>)}
@@ -394,7 +505,7 @@ export function ExplanationComparison({ explanations }) {
           {row('Top risk', (e) => e.risks[0]?.title || 'None detected')}
           {row('Weakest confidence factor', (e) => {
             const c = e.confidence.components.find((x) => x.id === e.confidence.weakest_component);
-            return c ? `${c.label} (${c.score}%)` : '--';
+            return c && !isMissing(c.score) ? `${c.label} (${c.score}%)` : OFFICIAL_DATA_NA;
           })}
           {row('Rank under each preference', (e) => {
             const ranks = e.insights.find((i) => i.id === 'preference-ranks')?.evidence.rank_by_preference || {};
@@ -474,7 +585,7 @@ export function FuzzyRulesSection({ reasoning }) {
   const fired = reasoning?.fired_rules || [];
   const byRule = inference ? Object.fromEntries(inference.rules.map((r) => [r.rule, r])) : {};
   const rows = inference ? inference.ranking.map((n) => byRule[n]) : fired;
-  const pct = (v) => (v === undefined ? '–' : `${v}%`);
+  const pct = (v) => (isMissing(v) ? 'none' : `${v}%`);
   return (
     <details className="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-4">
       <summary className="cursor-pointer font-semibold text-sm">
@@ -508,7 +619,7 @@ export function FuzzyRulesSection({ reasoning }) {
                       {r.tied_with.length > 0 && <span className="block text-on-surface-variant">tied with #{r.tied_with.join(', #')}</span>}
                     </td>
                     <td className="py-1 pr-2">{pct(r.contribution_pct.yield_conf)} / {pct(r.contribution_pct.irrigation_risk)}</td>
-                    <td className="py-1 pr-2">{r.limiting_condition ? `${r.limiting_condition.variable} is ${r.limiting_condition.term} (${r.limiting_condition.membership})` : '–'}</td>
+                    <td className="py-1 pr-2">{r.limiting_condition ? `${r.limiting_condition.variable} is ${r.limiting_condition.term} (${r.limiting_condition.membership})` : 'none'}</td>
                     <td className="py-1">{r.importance}</td>
                   </>
                 )}

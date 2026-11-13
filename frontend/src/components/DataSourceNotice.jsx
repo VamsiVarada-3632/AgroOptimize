@@ -6,13 +6,13 @@ import React from 'react';
  * not a personalized result saved to the user's own history. One shared
  * copy so every page explains the distinction the same way:
  *
- *   Historical District Data -- from historical datasets, used for
- *     analysis/trends/reference, not personalized.
+ *   Official District Data -- from the official government datasets, used
+ *     for analysis/reference, not personalized.
  *   Optimization Results -- generated live by NSGA-II, personalized to
  *     the inputs you choose, saved to your History, usable in Reports.
  *
- * variant="historical" -- Home's KPI cards: plain historical averages
- *   (yield/soil/water/crop-mix) straight from the district's records.
+ * variant="historical" -- Home's KPI cards: district figures (yield, soil,
+ *   irrigated area, crop mix) straight from the official records.
  * variant="live" -- Analytics/Comparison: a real NSGA-II run, computed
  *   fresh on this visit, but still generic to the district -- not saved,
  *   not scoped to the user's own inputs.
@@ -20,7 +20,7 @@ import React from 'react';
 export default function DataSourceNotice({ location, variant = 'historical', onRunOptimization }) {
   const copy = variant === 'live'
     ? `Live optimization for ${location} -- recalculated fresh each time you open this page. Not personalized to you and not saved to your history.`
-    : `Historical district data for ${location} -- reference figures from past seasons, not personalized to you.`;
+    : `Official district data for ${location} -- figures from the government datasets, not personalized to you.`;
 
   return (
     <div className="mb-6 font-label-sm text-label-sm bg-surface-container-high text-on-surface-variant px-4 py-3 rounded-lg flex flex-col sm:flex-row sm:items-center gap-3">

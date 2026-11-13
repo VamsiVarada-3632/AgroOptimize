@@ -21,7 +21,7 @@ flowchart LR
     subgraph Inputs
         SR[(Saved run JSON<br/>results/run_id.json)]
         CF[Memoised comparison front<br/>dashboard_service]
-        CSV[(data/raw CSVs)]
+        CSV[(official database<br/>data/official)]
     end
     SR --> C1[context_from_saved_run]
     CF --> C2[context_from_comparison]
@@ -61,7 +61,7 @@ Each item is `{id, title, detail, source, evidence, status?, severity?}`. `detai
 | Constraints | land allocation, budget (if recorded), rainfall (fuzzy set + rainfall coverage), soil (fuzzy set), irrigation risk (fuzzy output set), optimiser feasibility |
 | Benefits | objectives better than the set median (percent difference) |
 | Risks | irrigation-risk output set, rainfall deficit, rainfall coverage < 50 %, rain-dependent crops, concentration (HHI), perennial crops, weak objectives (goodness < 0.30), estimated data year, year-to-year rainfall variability, inputs at the model minimum |
-| Historical context | observed (non-estimated) years in crop.csv and rainfall.csv for the district/season |
+| Historical context | the official state yield series (TN Season & Crop Report) for each crop and this year's district ranking |
 | Confidence | see §4 |
 | Insights | trade-off position, diversification, main yield driver, rainfall reliance, rank under each preference |
 | Alternatives | runner-up per-ha deltas and closeness |
@@ -137,9 +137,9 @@ Response model: `ExplanationOut` (`app/schemas.py`); JSDoc `Explanation` typedef
 | Comparison | "Explain" on each plan row; "Why this plan?" on the plan detail card; "Compare explanations" (side-by-side A/B/C) |
 | Run Optimization | "Why this plan?" on the saved result |
 | History | "Explain top plan" in the run details dialog |
-| Reports | "Why?" on each report card; the downloaded report includes Recommendation → Reasons → Trade-offs → Benefits → Risks → Confidence breakdown |
+| Reports | "Why?" on each report card; the downloaded report includes Recommendation → Reasons → Trade-offs → Benefits → Risks → Confidence breakdown → Why each crop was selected (criteria with sources) |
 
-`ExplanationPanel` sections: summary (recommendation badge, confidence %, crop-mix bars, per-ha metrics), why recommended, objective balance (goodness bars, STRONGEST / MAIN COMPROMISE badges), trade-offs, constraint checks (status chips), benefits, risks (severity badges), confidence (component bars), historical context, insights, runner-up comparison, pipeline timeline, fired fuzzy rules (collapsible), indicative economics (collapsible, flagged), consistency note. `ExplanationModal` handles loading, errors and Escape-to-close; it is an ARIA dialog.
+`ExplanationPanel` sections: summary (recommendation badge, confidence %, crop-mix bars, per-ha metrics: yield, cost, irrigated area, nutrient load), why recommended, objective balance (goodness bars, STRONGEST / MAIN COMPROMISE badges), **Why this crop was selected** (`CropEvidenceSection`: one collapsible card per crop with its status counts, and inside it one collapsible card per criterion showing Status, Evidence (the backend `statement`), Official source (`sources[].dataset`) and the meaning of the status in plain words; an empty list shows "Official Data Not Available"), trade-offs, constraint checks (status chips), benefits, risks (severity badges), confidence (component bars), historical context, insights, runner-up comparison, pipeline timeline, fired fuzzy rules (collapsible), indicative economics (collapsible, flagged), consistency note. `ExplanationModal` handles loading, errors and Escape-to-close; it is an ARIA dialog.
 
 ## 8. Worked example — Salem, Rabi 2024 (estimated year), Plan A (balanced)
 Rank #1 of 100, closeness 0.6152, confidence 74.9 % → "Recommended". Sugarcane 53 % / Sunflower 47 %; 31.49 t/ha, ₹51,970/ha, 6.61 ML/ha, impact 68.49/ha. Strongest objective: environmental impact; main compromise: yield. Best-yield alternative: +26.69 t/ha but +41 % cost and +74 % water. Risks include rainfall −36.8 % (deficit), rainfall covering 18 % of crop water need, estimated input year, sugarcane as a 365-day crop in a one-season plan, and inputs at the model minimum. Confidence components: climate/soil 56.3, data quality 50 (estimated year), convergence 100, constraints 100, historical 100, weather 97.7, robustness 20. Recomputed yield and water match reported totals within 0.03 %.
@@ -154,3 +154,29 @@ Rank #1 of 100, closeness 0.6152, confidence 74.9 % → "Recommended". Sugarcane
 4. Validated price data → promote economics from reference to a first-class objective and explanation.
 5. Localised wording (English/Tamil) generated from the same evidence.
 6. Store the explanation snapshot in the saved run for audit, alongside a version number of the explainer.
+
+## Per-crop evidence (`crop_evidence`)
+
+`GET /api/results/{run_id}/explanation` and `GET /api/comparison/{location}/explanation` now also return
+`crop_evidence`: one entry per crop shown in the plan (land share >= 1 %), each with ten criteria. This field is
+additive; every existing key is unchanged. Code: `app/services/crop_evidence.py`.
+
+| Criterion | What is stated | Official dataset cited |
+|---|---|---|
+| Rainfall suitability | season rainfall vs IMD normal (mm, % deviation); the crop's rainfall requirement quoted from TNAU | `rainfall_by_district.csv`; TNAU Crop Production Guide |
+| Soil suitability | Soil Health Card class counts and fertility index; the crop's soil / pH text quoted from TNAU | `soil_health_tn.csv`, `soil_master.csv`; TNAU |
+| Water availability | share of the crop's area that is irrigated; reservoir storage (where published); TNAU water/irrigation text | `irrigation.csv`, `reservoir_daily.csv`; TNAU |
+| Budget suitability | CACP cost per quintal x expected quintals = crop cost, its share of the plan, plan vs user budget | MSP/CACP notification (`msp_extracted.csv`); crop statistics |
+| Fertiliser requirement | TNAU N-P2O5-K2O dose (with PDF page) and the plan's multiplier | TNAU (`agronomy_tnau.csv`) |
+| Market price | **always "Official data unavailable"** - no official mandi price dataset is loaded | Agmarknet (not loaded) |
+| MSP | notified MSP, CACP cost, margin computed from those two figures | PIB MSP release / `msp_extracted.csv` |
+| Cultivation duration | TNAU duration text, quoted as printed | `agronomy_master.csv` |
+| Expected yield | official district yield; plan yield after the fuzzy reliability check (or "not applied" with the reason); TNAU reference text | crop statistics; TNAU |
+| Risks | only risks that follow from the figures above (rainfall >= 20 % below normal, irrigation risk >= 0.5, MSP <= cost, fuzzy not applied) plus every criterion that was unavailable | as cited |
+
+Each criterion is `{id, label, status, statement, sources[], evidence{}}`.
+`status` is `supported | caution | concern | info | unavailable`. Anything the official data does not publish
+produces `status = "unavailable"` and a statement starting **"Official data unavailable"**; no value is estimated.
+TNAU text is quoted verbatim (cut at 260 characters with " ..."). Thresholds that set a status are named constants
+in `crop_evidence.py` (`YIELD_CUT_CAUTION_PCT`) or are the sign/size of a number shown in the same sentence.
+Tests: `tests/test_crop_evidence.py`.

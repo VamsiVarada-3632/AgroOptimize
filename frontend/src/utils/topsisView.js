@@ -1,3 +1,5 @@
+import { OFFICIAL_DATA_NA, isMissing } from '../services/officialData';
+
 /**
  * Formatting and validation for the dynamic TOPSIS ranking
  * (backend: app/decision/profiles.py, app/services/topsis_service.py).
@@ -22,7 +24,7 @@ export const CRITERIA = [
   { key: 'market_price', label: 'Market price', direction: 'benefit' },
   { key: 'income', label: 'Income', direction: 'benefit' },
   { key: 'cost', label: 'Production cost', direction: 'cost' },
-  { key: 'water', label: 'Water', direction: 'cost' },
+  { key: 'water', label: 'Irrigated area', direction: 'cost' },
   { key: 'env', label: 'Environmental impact', direction: 'cost' },
   { key: 'budget', label: 'Budget', direction: 'benefit' },
   { key: 'soil', label: 'Soil suitability', direction: 'benefit' },
@@ -79,14 +81,15 @@ const pct = (v) => `${(v * 100).toFixed(1)}%`;
 
 export function formatCriterionValue(row) {
   const v = row.value;
-  if (v === null || v === undefined) return '–';
+  if (isMissing(v)) return OFFICIAL_DATA_NA;
   switch (row.criterion) {
     case 'cost': case 'income': case 'budget':
       return `₹${Math.round(v).toLocaleString('en-IN')}`;
     case 'market_price':
       return `₹${Math.round(v).toLocaleString('en-IN')}/qtl`;
     case 'water':
-      return `${(v / 1e6).toFixed(2)} ML`;
+      // irrigated area (ha) on the official data, not litres
+      return `${v.toFixed(2)} ha`;
     case 'yield':
       return `${v.toFixed(2)} t`;
     case 'soil': case 'land': case 'rainfall':

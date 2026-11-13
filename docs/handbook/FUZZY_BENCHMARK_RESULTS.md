@@ -1,5 +1,7 @@
 # Fuzzy Benchmark Results
 
+> **v1 results.** The measurements in this document were made on the synthetic v1 data (tag `published-v1`, now archived in `legacy/`). They have not been re-run on the official datasets that the runtime uses since 2026-11; see [MIGRATION_REPORT.md](../data_architecture/MIGRATION_REPORT.md) and [OFFICIAL_DATA_PERFORMANCE.md](OFFICIAL_DATA_PERFORMANCE.md).
+
 Measured comparison of the fuzzy models of [FUZZY_MODEL_IMPROVEMENTS.md](FUZZY_MODEL_IMPROVEMENTS.md): the original (published) model, each improvement on its own, the cumulative chain and two screened candidates. Raw data: [benchmarks/fuzzy_models/fuzzy_models_benchmark.json](benchmarks/fuzzy_models/fuzzy_models_benchmark.json).
 
 ## 1. Method

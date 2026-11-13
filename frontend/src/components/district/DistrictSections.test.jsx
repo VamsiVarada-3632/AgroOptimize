@@ -14,17 +14,20 @@ describe('District sections render the real payload', () => {
   it('overview shows backend values and marks the missing zone', () => {
     const html = renderToString(<OverviewSection intel={salem} />);
     clean(html);
-    expect(text(html)).toContain(NA);                                    // agro-climatic zone
-    expect(text(html)).toContain(salem.overview.soil_types[0]);
+    // the official datasets publish no agro-climatic zone, soil type or temperature
+    expect(salem.overview.agricultural_zone).toBeNull();
+    expect(text(html).split(NA).length - 1).toBeGreaterThanOrEqual(3);
     expect(text(html)).toContain(salem.overview.major_crops[0].crop);
-    expect(text(html)).toContain(String(salem.coverage.estimated_years[0]));
+    expect(text(html)).toContain(String(salem.coverage.observed_years[0]));
   });
 
   it('climate section draws charts and the backend observations', () => {
     const html = renderToString(<ClimateSection intel={salem} insights={salem.insights} />);
     clean(html);
-    expect(html.split('role="img"').length - 1).toBeGreaterThanOrEqual(4);
-    const obs = salem.insights.find((i) => i.id === 'rainfall-trend');
+    // rainfall charts are drawn; temperature has no official data
+    expect(html.split('role="img"').length - 1).toBeGreaterThanOrEqual(3);
+    expect(text(html)).toContain(NA);
+    const obs = salem.insights.find((i) => i.id === 'rainfall-normal');
     expect(text(html)).toContain(obs.detail.slice(0, 40));
   });
 
@@ -47,7 +50,7 @@ describe('District sections render the real payload', () => {
 
   it('market section states the prices are historical, not live', () => {
     const t = text(renderToString(<MarketSection key="MarketSection" intel={salem} />));
-    expect(t).toContain('not live');
+    expect(t.toLowerCase()).toContain('not live');
   });
 });
 

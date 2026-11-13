@@ -1,17 +1,9 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import SuccessCheckSvg from '../components/SuccessCheckSvg';
-import { api, DISTRICTS } from '../services/api';
+import { catalogCrops, useCatalog } from '../services/officialData';
 
 // Generic fallback profile SVG
 const defaultAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23707a6f'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>";
-
-// Small fallback crop list, used only if GET /api/catalog is unreachable --
-// same list SettingsView.jsx falls back to, so the two stay consistent.
-const FALLBACK_CROPS = ['Sugarcane', 'Wheat', 'Paddy', 'Maize', 'Cotton', 'Groundnut', 'Sorghum', 'Tapioca'];
-
-// The backend only models these three real growing seasons (see
-// GET /api/catalog -> seasons). No generic spring/summer/fall/winter here.
-const SEASONS = ['Kharif', 'Rabi', 'Summer'];
 
 export default function ProfileSetupView({ onComplete, initialProfile }) {
   const [step, setStep] = useState(1); // 1: Personal Details / Photo, 2: Farm Details, 3: Verification Success
@@ -22,36 +14,23 @@ export default function ProfileSetupView({ onComplete, initialProfile }) {
   const [lastName, setLastName] = useState(initialProfile?.fullName?.split(' ')[1] || '');
   const [avatar, setAvatar] = useState(initialProfile?.avatar || null);
 
-  // Step 2 States -- location & crop are constrained to real backend values
-  // (a farmer picks from what the models actually cover, nothing free-text
+  // Step 2 States -- district, season and crop come from GET /api/catalog
+  // (a farmer picks from what the official datasets cover, nothing free-text
   // that we'd have to silently coerce or fake later).
-  const [location, setLocation] = useState(
-    DISTRICTS.includes(initialProfile?.location) ? initialProfile.location : ''
-  );
-  const [season, setSeason] = useState(
-    SEASONS.includes(initialProfile?.season) ? initialProfile.season : 'Kharif'
-  );
+  const { data: catalog } = useCatalog();
+  const districts = catalog?.locations ?? [];
+  const seasons = catalog?.seasons ?? [];
+  const [locationChoice, setLocation] = useState(initialProfile?.location || '');
+  const location = districts.includes(locationChoice) ? locationChoice : '';
+  const [seasonChoice, setSeason] = useState(initialProfile?.season || '');
+  const season = seasons.includes(seasonChoice) ? seasonChoice : (seasons[0] ?? '');
   const [crop, setCrop] = useState(initialProfile?.primaryCrop || '');
   // Hectares, matching the backend's total_land_ha field -- this used to be
   // mislabeled "acres" while feeding total_land_ha directly, a real ~2.47x
   // unit error. Now the label, unit, and stored value all agree.
   const [landSizeHa, setLandSizeHa] = useState(initialProfile?.landSize || '');
 
-  const [catalog, setCatalog] = useState(null);
-  useEffect(() => {
-    let cancelled = false;
-    api.getCatalog()
-      .then((data) => { if (!cancelled) setCatalog(data); })
-      .catch(() => { if (!cancelled) setCatalog(null); });
-    return () => { cancelled = true; };
-  }, []);
-
-  const cropOptions = useMemo(() => {
-    if (!catalog?.crops_by_season) return FALLBACK_CROPS;
-    const set = new Set();
-    Object.values(catalog.crops_by_season).forEach((list) => list.forEach((c) => set.add(c)));
-    return Array.from(set).sort();
-  }, [catalog]);
+  const cropOptions = useMemo(() => catalogCrops(catalog), [catalog]);
 
   const handlePhotoClick = () => {
     if (fileInputRef.current) {
@@ -242,13 +221,13 @@ export default function ProfileSetupView({ onComplete, initialProfile }) {
                     required
                   >
                     <option value="" disabled>Select your district</option>
-                    {DISTRICTS.map((d) => (
+                    {districts.map((d) => (
                       <option key={d} value={d}>{d}, Tamil Nadu</option>
                     ))}
                   </select>
                   <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
                 </div>
-                <p className="font-label-sm text-label-sm text-on-surface-variant mt-1">Our models currently cover these {DISTRICTS.length} Tamil Nadu districts.</p>
+                <p className="font-label-sm text-label-sm text-on-surface-variant mt-1">The official datasets cover these {districts.length} Tamil Nadu districts.</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -261,7 +240,7 @@ export default function ProfileSetupView({ onComplete, initialProfile }) {
                       onChange={(e) => setSeason(e.target.value)}
                       className="w-full min-h-[48px] pl-4 pr-10 py-3 bg-surface-bright border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors appearance-none cursor-pointer"
                     >
-                      {SEASONS.map((s) => (
+                      {seasons.map((s) => (
                         <option key={s} value={s}>{s}</option>
                       ))}
                     </select>

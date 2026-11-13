@@ -14,3 +14,5 @@ scikit-fuzzy==0.5.0
 networkx==3.5
 matplotlib==3.11.1
 requests==2.32.5  # live weather (Open-Meteo) in app/services/dashboard_service.py
+sqlalchemy==2.1.8
+alembic==1.20.1

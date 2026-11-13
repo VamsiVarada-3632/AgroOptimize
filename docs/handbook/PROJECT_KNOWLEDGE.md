@@ -1,5 +1,7 @@
 # AgroOptimize – Project Knowledge Handbook
 
+> **Written for the v1 data layer.** This document describes the system as it was on the synthetic v1 data (tag `published-v1`). Since 2026-11 the runtime reads only the official datasets: 38 districts, Kharif/Rabi, objectives yield / cultivation cost / irrigated area / nutrient load, `irrigated_ha` instead of `water_liters`, the `official` fuzzy model by default, and live weather disabled. Where this document disagrees, the code and [DATASETS.md](DATASETS.md), [API_REFERENCE.md](API_REFERENCE.md) and [MIGRATION_REPORT.md](../data_architecture/MIGRATION_REPORT.md) are authoritative.
+
 Self-contained handbook. If you read only one file, read this one; it links to the detailed documents. State as of **2026-09-29** (after the audit described in [IMPROVEMENT_LOG.md](IMPROVEMENT_LOG.md)).
 
 ---

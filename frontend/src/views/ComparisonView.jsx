@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { api, BACKEND_UNREACHABLE_MSG } from '../services/api';
+import { api, BACKEND_UNREACHABLE_MSG, describeApiError } from '../services/api';
+import { FIELD_LABELS, OFFICIAL_DATA_NA, isOfficialDataUnavailable, showValue } from '../services/officialData';
 import DataSourceNotice from '../components/DataSourceNotice';
 import { downloadFile, toCsv, slug } from '../utils/download';
 import { ExplanationModal, ExplanationComparison } from '../components/ExplanationPanel';
@@ -15,7 +16,6 @@ function adaptComparisonPlans(apiPlans) {
   for (const key of ['A', 'B', 'C']) {
     const p = apiPlans?.[key];
     if (!p) continue;
-    const topCrop = p.allocations?.[0]?.crop || p.crops?.split(',')[0]?.trim() || 'the primary crop';
     out[key] = {
       name: p.name,
       crops: p.crops,
@@ -34,13 +34,6 @@ function adaptComparisonPlans(apiPlans) {
         pct: a.pct,
         ha: a.ha,
       })),
-      // The optimizer doesn't model a day-by-day irrigation calendar, so
-      // this stays a generic 2-step template (labelled as such in the UI) --
-      // keyed off this plan's real top crop rather than invented detail.
-      schedule: [
-        { time: 'Step 1', desc: `Land preparation & ${topCrop} sowing`, details: 'Generic starting step for this plan’s largest crop', active: true },
-        { time: 'Step 2', desc: 'First irrigation & fertilizer application', details: 'Timing depends on your local crop calendar', active: false },
-      ],
       radarScores: {
         yield: p.radar_scores.yield,
         costEff: p.radar_scores.cost_eff,
@@ -62,7 +55,8 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
 
   const [apiComparison, setApiComparison] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [fetchFailed, setFetchFailed] = useState(false);
+  // '' when the comparison loaded; otherwise the message to show
+  const [fetchFailed, setFetchFailed] = useState('');
 
   const [weights, setWeights] = useState({ yield: 50, cost: 50, water: 50 });
 
@@ -73,12 +67,12 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
       .then((data) => {
         if (cancelled) return;
         setApiComparison(data);
-        setFetchFailed(false);
+        setFetchFailed('');
       })
-      .catch(() => {
+      .catch((err) => {
         if (cancelled) return;
         setApiComparison(null);
-        setFetchFailed(true);
+        setFetchFailed(isOfficialDataUnavailable(err) ? `${OFFICIAL_DATA_NA}: ${describeApiError(err)}` : BACKEND_UNREACHABLE_MSG);
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
@@ -112,8 +106,8 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
       { label: 'crops', value: (r) => r.allocations.map((a) => `${a.crop} ${a.pct} (${a.ha})`).join('; ') },
       { label: 'yield_t_per_ha', value: 'yieldVal' },
       { label: 'cost_rs_per_ha', value: 'cost' },
-      { label: 'env_impact_per_ha', value: 'envImpact' },
-      { label: 'water_use_relative', value: 'water' },
+      { label: 'nutrient_load_kg_per_ha', value: 'envImpact' },
+      { label: 'irrigated_area_relative', value: 'water' },
       ...['yield', 'costEff', 'water', 'land', 'risk', 'market'].map((k) => ({
         label: `radar_${k}_0_100`,
         value: (r) => r.radarScores[k],
@@ -149,7 +143,7 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
             {apiComparison?.total_land_ha ? ` (sized for ${apiComparison.total_land_ha} ha).` : '.'}
           </p>
         </div>
-        <div className="flex gap-3 w-full md:w-auto">
+        <div className="flex flex-wrap gap-3 w-full md:w-auto">
           <button
             onClick={() => setAdjustWeightsOpen(true)}
             disabled={!hasData}
@@ -194,7 +188,7 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
         <div className="text-center py-20 bg-surface-container-lowest rounded-xl border border-dashed border-outline-variant/30">
           <span className="material-symbols-outlined text-5xl text-outline mb-2">compare</span>
           <p className="font-body-lg text-on-surface-variant">
-            {fetchFailed ? BACKEND_UNREACHABLE_MSG : 'No comparison data available for this district yet.'}
+            {fetchFailed || OFFICIAL_DATA_NA}
           </p>
         </div>
       ) : (
@@ -221,7 +215,7 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
 
               <text fill="#404940" fontSize="9" textAnchor="middle" x="0" y="-108" className="font-semibold">Yield</text>
               <text fill="#404940" fontSize="9" textAnchor="start" x="92" y="-52" className="font-semibold">Cost Eff.</text>
-              <text fill="#404940" fontSize="9" textAnchor="start" x="92" y="55" className="font-semibold">Water</text>
+              <text fill="#404940" fontSize="9" textAnchor="start" x="92" y="55" className="font-semibold">Irrigation</text>
               <text fill="#404940" fontSize="9" textAnchor="middle" x="0" y="112" className="font-semibold">Land</text>
               <text fill="#404940" fontSize="9" textAnchor="end" x="-92" y="55" className="font-semibold">Risk</text>
               <text fill="#404940" fontSize="9" textAnchor="end" x="-92" y="-52" className="font-semibold">Market</text>
@@ -262,7 +256,7 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
         </div>
 
         {/* Comparison Table Card */}
-        <div className="bg-surface-container-lowest rounded-xl shadow-ambient lg:col-span-2 overflow-hidden flex flex-col border border-outline-variant/30">
+        <div className="bg-surface-container-lowest rounded-xl shadow-ambient lg:col-span-2 overflow-hidden flex flex-col border border-outline-variant/30 min-w-0">
           <div className="p-6 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-lowest">
             <h3 className="font-headline-md text-headline-md font-bold">Plan Metrics</h3>
             <span className="bg-primary-fixed text-on-primary-fixed px-3 py-1 rounded-full font-label-sm text-label-sm flex items-center gap-1 font-semibold">
@@ -271,7 +265,7 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
             </span>
           </div>
 
-          <div className="overflow-x-auto flex-grow">
+          <div className="relative overflow-x-auto flex-grow">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
@@ -279,8 +273,8 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
                   <th className="p-4 font-semibold">Main Crops</th>
                   <th className="p-4 font-semibold">Yield (t/ha)</th>
                   <th className="p-4 font-semibold">Cost/ha</th>
-                  <th className="p-4 font-semibold" title="Environmental-impact score per hectare (NSGA-II objective f4). Lower is better.">Env. Impact/ha</th>
-                  <th className="p-4 font-semibold">Water Usg.</th>
+                  <th className="p-4 font-semibold" title="Nutrient load: kilograms of N, P and K applied per hectare (NSGA-II objective f4). Lower is better.">Env. Impact/ha</th>
+                  <th className="p-4 font-semibold">{FIELD_LABELS.irrigated_ha}</th>
                   <th className="p-4 font-semibold"><span className="sr-only">Explanation</span></th>
                 </tr>
               </thead>
@@ -320,7 +314,7 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
                               style={{ width: `${((plan.envImpact || 0) / maxEnvImpact) * 100}%` }}
                             ></div>
                           </div>
-                          <span className="text-sm font-semibold">{plan.envImpact}</span>
+                          <span className="text-sm font-semibold">{showValue(plan.envImpact)}</span>
                         </div>
                       </td>
                       <td className="p-4">
@@ -414,29 +408,10 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
           </div>
 
           <div>
-            <h4 className="font-headline-md text-headline-md font-bold mb-1">Getting Started</h4>
-            <p className="text-xs text-on-surface-variant mb-4">
-              Generic template -- the optimizer chooses crop areas and input levels, not a day-by-day calendar.
+            <h4 className="font-headline-md text-headline-md font-bold mb-1">Crop Calendar</h4>
+            <p className="text-sm text-on-surface-variant bg-surface-container-low p-3 rounded-lg border border-outline-variant/20">
+              {OFFICIAL_DATA_NA}: sowing and harvest months are not published in the official datasets loaded, so no calendar is shown.
             </p>
-            <div className="relative pl-6 border-l-2 border-surface-variant space-y-6">
-              {selectedPlan.schedule.map((sch, idx) => (
-                <div key={idx} className="relative">
-                  <div className={`absolute -left-[31px] w-4 h-4 rounded-full border-4 border-surface-container-lowest ${
-                    sch.active ? 'bg-primary' : 'bg-surface-variant'
-                  }`}></div>
-                  <p className={`text-xs font-bold mb-1 uppercase tracking-wide ${sch.active ? 'text-primary' : 'text-on-surface-variant'}`}>
-                    {sch.time}
-                  </p>
-                  <div className={`bg-surface-container-low p-3 rounded-lg border border-outline-variant/20 ${!sch.active ? 'opacity-70' : ''}`}>
-                    <p className="font-semibold text-sm font-body-md text-on-surface">{sch.desc}</p>
-                    <p className="text-xs text-on-surface-variant mt-1 flex items-center gap-1 font-semibold">
-                      <span className="material-symbols-outlined text-[14px]">water_drop</span>
-                      {sch.details}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </div>
@@ -507,7 +482,7 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
 
               <div>
                 <div className="flex justify-between mb-2">
-                  <label className="font-label-md text-label-md text-on-surface-variant">Water Conservation Weight</label>
+                  <label className="font-label-md text-label-md text-on-surface-variant">Less Irrigation Weight</label>
                   <span className="font-label-sm text-label-sm font-bold">{weights.water}%</span>
                 </div>
                 <input

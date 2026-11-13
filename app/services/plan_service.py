@@ -52,11 +52,18 @@ def region_profile_payload(profile: pp.RegionSeasonProfile) -> dict:
                 "sowing_month": c.sowing_month,
                 "harvest_month": c.harvest_month,
                 "crop_duration_days": c.crop_duration_days,
+                "msp_rs_qtl": c.msp_rs_qtl, "cost_rs_qtl": c.cost_rs_qtl,
+                "fert_n_kg_ha": c.fert_n_kg_ha, "fert_p_kg_ha": c.fert_p_kg_ha, "fert_k_kg_ha": c.fert_k_kg_ha,
+                "rainfed_share": c.rainfed_share, "area_ha": c.area_ha, "dose_rule": c.dose_rule, "sources": c.sources,
             }
             for c in profile.candidate_crops
         ],
         "normalized_snapshot": pp.normalized_snapshot(profile),
         "data_year_estimated": profile.data_year_estimated,
+        "excluded_crops": profile.excluded_crops,
+        "fuzzy_available": profile.fuzzy_available,
+        "fuzzy_unavailable_reason": profile.fuzzy_unavailable_reason,
+        "notes": profile.notes,
     }
 
 
@@ -109,12 +116,7 @@ def run_pipeline(
 
     # ---- Stage 2: fuzzy uncertainty modelling ----
     fuzzy_model = fz.resolve_model(request.fuzzy_model)
-    assessment = fz.evaluate_uncertainty(
-        rainfall_deviation_percent=profile.rainfall.avg_deviation_percent,
-        water_storage_percent=profile.water.avg_storage_percent,
-        soil_fertility_index=profile.soil.fertility_index,
-        model=fuzzy_model,
-    )
+    assessment = fz.assess_profile(profile, model=fuzzy_model)
 
     # ---- Stage 3: multi-objective NSGA-II optimisation ----
     problem = FarmPlanProblem(
@@ -147,7 +149,7 @@ def run_pipeline(
     filtered_plans = ranking.filter_plans(
         raw_plans,
         max_cost=request.max_cost_rs,
-        max_water_liters=request.max_water_liters,
+        max_irrigated_ha=request.max_irrigated_ha,
         min_yield_tonnes=request.min_yield_tonnes,
         max_env_impact=request.max_env_impact,
     )
@@ -209,7 +211,7 @@ def run_pipeline(
 
     response = {
         "region_profile": region_payload,
-        "fuzzy_assessment": vars(assessment),
+        "fuzzy_assessment": fz.assessment_payload(assessment, profile),
         "plans": ranking.to_dict_list(ranked),
         "convergence_history": convergence_history,
         "meta": meta,

@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import GroupedBarChart from '../components/charts/GroupedBarChart';
 import DeltaBarChart from '../components/charts/DeltaBarChart';
 import RadarChart from '../components/charts/RadarChart';
+import { OFFICIAL_DATA_NA } from '../services/officialData';
 import {
   changedConditions, contributionCategories, cropShareCategories, deltaItems, formatPct, impactMetrics,
   radarData, simulationTitle,
@@ -53,18 +54,18 @@ export function simulationReportHtml(result, { name, savedAt } = {}) {
       : `<p>${esc(scen.reason)}</p>`}`,
     result.impact ? `<h2>Impact analysis</h2><p class="note">${esc(result.impact.method)} ${esc(result.impact.basis_note)}</p>
       ${table(['Metric', 'Original', 'Simulated', 'Change', 'Verdict', 'p'], metrics.map((m) =>
-        [m.label, m.baselineText, m.scenarioText, formatPct(m.change_pct), m.verdictInfo.label, m.p_value ?? '—']))}
+        [m.label, m.baselineText, m.scenarioText, formatPct(m.change_pct), m.verdictInfo.label, m.p_value ?? OFFICIAL_DATA_NA]))}
       <figure>${svg(<DeltaBarChart items={deltaItems(result)} ariaLabel="Change by metric" />)}
       <figcaption>Change of each metric; gray bars are within the optimiser's run-to-run variation.</figcaption></figure>` : '',
     `<h2>Decision impact</h2>${items(result.decision_impact)}`,
     `<h2>Trade-offs</h2>${table(['Improved', 'Worsened', 'No change', 'Within search variation'], [[
-      result.trade_offs.improved.map((m) => `${m.label} ${formatPct(m.change_pct)}`).join(', ') || '—',
-      result.trade_offs.worsened.map((m) => `${m.label} ${formatPct(m.change_pct)}`).join(', ') || '—',
-      result.trade_offs.unchanged.map((m) => m.label).join(', ') || '—',
-      result.trade_offs.not_significant.map((m) => m.label).join(', ') || '—',
+      result.trade_offs.improved.map((m) => `${m.label} ${formatPct(m.change_pct)}`).join(', ') || 'None',
+      result.trade_offs.worsened.map((m) => `${m.label} ${formatPct(m.change_pct)}`).join(', ') || 'None',
+      result.trade_offs.unchanged.map((m) => m.label).join(', ') || 'None',
+      result.trade_offs.not_significant.map((m) => m.label).join(', ') || 'None',
     ]])}
      <h3>Constraints</h3>${table(['Constraint', 'Original', 'Scenario', 'Harder'], result.constraints.map((c) =>
-      [c.label, c.baseline_status ?? '—', c.scenario_status ?? '—', c.became_harder ? 'Yes' : 'No']))}`,
+      [c.label, c.baseline_status ?? OFFICIAL_DATA_NA, c.scenario_status ?? OFFICIAL_DATA_NA, c.became_harder ? 'Yes' : 'No']))}`,
     `<h2>Optimization difference</h2>
      ${radar ? `<figure>${svg(<RadarChart axes={radar.axes} series={radar.series} ariaLabel="Objective profile" />)}
        <figcaption>${esc(result.optimization.common_scale.note)}</figcaption></figure>` : ''}
@@ -78,8 +79,8 @@ export function simulationReportHtml(result, { name, savedAt } = {}) {
     result.historical.available ? `<h2>Historical comparison</h2><p class="note">${esc(result.historical.method)}</p>
       ${table(['Crop', 'Simulated share', 'Historical share', 'Expected yield (t/ha)', 'Historical yield (t/ha)'],
         (result.historical.scenario || []).map((r) => [r.crop, `${r.plan_share_pct}%`, `${r.historical_share_pct}%`,
-          r.expected_yield_t_ha ?? '—', r.historical_yield_t_ha ?? '—']))}
-      <p>Alignment with the district's observed cropping pattern: ${esc(result.historical.alignment_pct.baseline)}% → ${esc(result.historical.alignment_pct.scenario ?? '—')}%.</p>` : '',
+          r.expected_yield_t_ha ?? OFFICIAL_DATA_NA, r.historical_yield_t_ha ?? OFFICIAL_DATA_NA]))}
+      <p>Alignment with the district's observed cropping pattern: ${esc(result.historical.alignment_pct.baseline)}% → ${esc(result.historical.alignment_pct.scenario ?? OFFICIAL_DATA_NA)}%.</p>` : '',
     scen.available ? `<h2>Recommendation explanation (simulated plan)</h2>${items(scen.explanation.reasons)}
       <h3>Risks</h3>${items(scen.explanation.risks)}` : '',
     `<h2>Scenario summary</h2>${result.summary.sentences.map((s) => `<p>${esc(s)}</p>`).join('')}

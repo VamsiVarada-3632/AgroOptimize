@@ -1,108 +1,93 @@
 # Frontend
 
-`stitch_agrooptimize_app/` – React 19.2, Vite 8.2, Tailwind CSS 4.3 (via `@tailwindcss/vite`), oxlint. ~5,200 lines in `src/`. No router, no state library, no chart library (all charts are hand-written SVG), no test framework. Visual design originates from Google Stitch mock-ups (the `*/code.html` folders) and the token spec `agrooptimize_structural_system/DESIGN.md`.
+`frontend/` – React 19.2, Vite 8.2, Tailwind CSS 4.3 (via `@tailwindcss/vite`), oxlint, Vitest. No router, no state library, no chart library (all charts are hand-written SVG). The app works only with the official-data backend: every district, season, crop and model it offers comes from the API, and anything the official datasets do not publish is shown as **Official Data Not Available**. Migration details: [FRONTEND_MIGRATION_REPORT.md](../data_architecture/FRONTEND_MIGRATION_REPORT.md).
 
 ```bash
-cd stitch_agrooptimize_app
+cd frontend
 npm install
 npm run dev                                   # http://localhost:5173, talks to http://localhost:8000
 VITE_API_BASE=http://localhost:8010 npm run dev   # point at another backend
-npm run lint && npm run build                 # oxlint (0 warnings) + production build to dist/
-npm test                                      # Vitest: charts, district helpers and sections
+npm run lint && npm run build                 # oxlint + production build to dist/
+npm test                                      # Vitest (99 tests)
+node scripts/refresh-fixtures.mjs             # re-record test fixtures from a running backend
 ```
 
 ## 1. Application shell (`src/App.jsx`)
 
 | State | Stored | Purpose |
 |---|---|---|
-| `currentView` | `localStorage.agro_currentView` | which page renders: onboarding, login, register, profile-setup, dashboard, analytics, comparison, run-optimization, history, reports, settings |
+| `currentView` | `localStorage.agro_currentView` | onboarding, login, register, profile-setup, dashboard, analytics, comparison, run-optimization, district-intelligence, scenario-simulation, history, reports, datasets, settings |
 | `user` | `localStorage.agro_user` | profile `{fullName, phoneNumber, email, location, landSize, primaryCrop, avatar, season}` |
-| `selectedLanguage` | memory | en/hi/ta – **no translations exist**; only highlights the chosen option |
+| `selectedLanguage` | memory | en/hi/ta – no translations exist |
 | `dashboardLayout` | memory | 'sidebar' / 'topbar' |
-| `activePlanId` | memory | Comparison's "Select This Plan" |
-| `backendOnline` | memory | result of one `GET /health` at start-up (footer dot) |
+| `backendOnline` | memory | one `GET /health` at start-up (footer dot) |
 
-Guards: a shell view without a valid district (`DISTRICTS.includes(user.location)`) redirects to profile-setup (or onboarding when no user). `handleAuthSuccess` goes to the dashboard only for a login with a complete profile; otherwise profile-setup. Logout clears the two keys and returns to onboarding (the demo password digest and `client_id` are kept).
+Guard: a shell view needs a district the catalog lists (`isCatalogDistrict`). A district saved by the v1 app that the catalog does not list (e.g. the taluk Pollachi) returns the user to profile setup. Until the catalog has loaded, or if it cannot be loaded, the saved district is trusted and each page reports its own error. Layouts: fixed 256 px sidebar (desktop), sticky top bar (toggle on Home), mobile header and drawer (< 768 px). The content column has `min-w-0`, so wide tables scroll inside their cards instead of widening the page.
 
-Layouts: fixed 256 px sidebar (desktop, default), sticky top bar (desktop, toggle on the dashboard), mobile header + slide-in drawer (<768 px). Footer shows backend reachability.
+## 2. Data layer
 
-## 2. API layer (`src/services/api.js`)
+### `src/services/api.js`
+* `resolveApiBase(env, origin)`: `VITE_API_BASE` if set, else the page origin in a production build (the backend serves the build), else `http://localhost:8000`.
+* `districtPath(name)`: lower-cased, URL-encoded district for path parameters.
+* `getOrCreateClientId()`: browser id (`agro_client_id`) sent with dashboard, history, farm-plan and simulation calls.
+* `ApiError {status, detail}`, `describeApiError(err)`, `BACKEND_UNREACHABLE_MSG`.
+* `PREFERENCES`: the `FarmPlanRequest.preference` values (request options, not data).
+* Methods: `checkHealth, getCatalog, getDatasets, getOpenApi, getFuzzyModels, getSoilMaster, getSoilMasterDistrict, getWeather, getDashboard, getHistory, getSoilProfile, getResult, getPlans, getComparison, getFuzzyComparison, getDistrictIntelligence, getResultExplanation, getComparisonExplanation, runOptimization, getTopsisProfiles, rerankResult, runSimulation, saveSimulation, listSimulations, getSimulation, deleteSimulation`. Page-by-page use: [FRONTEND_API_INTEGRATION.md](FRONTEND_API_INTEGRATION.md).
 
-* `API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000'`.
-* Constants `DISTRICTS`, `SEASONS`, `PREFERENCES` mirror backend config.
-* `extractDistrict(str)` → first district name contained in the string, else "Coimbatore".
-* `getOrCreateClientId()` → `crypto.randomUUID()` stored as `agro_client_id`; sent with dashboard, history and farm-plan calls.
-* `ApiError {status, detail}`, `describeApiError(err)`, `BACKEND_UNREACHABLE_MSG` (dev: how to start uvicorn; prod: plain-language) – added 2026-09-29.
-* Methods: `checkHealth, getCatalog, getWeather, getDashboard, getHistory, getSoilProfile, getResult, getPlans, getComparison, getFuzzyComparison, runOptimization`. `runOptimization` maps `land_area_ha→total_land_ha`, `budget→budget_rs` and always sends `save_results: true`.
+### `src/services/officialData.js`
+* `useCatalog()`, `useFuzzyModels()`, `useDatasets()`, `useOpenApi()`: one cached request per resource per page load (a failed request is retried on the next use); each returns `{data, error, loading}`.
+* `catalogCrops(catalog)`, `isCatalogDistrict(catalog, name)`.
+* `OFFICIAL_DATA_NA`, `isMissing(v)` (null, undefined, empty text, NaN – not 0), `showValue(v, format)`, `isOfficialDataUnavailable(err)` (HTTP 400/404/501).
+* `FIELD_LABELS`, `EVIDENCE_LABELS`, `fuzzyModelLabel(name)`: words shown for backend field names, crop-evidence criteria and fuzzy models.
+* `describeRun(run)`: fuzzy model (`meta.fuzzy_model`, missing = original) and whether the run used official data (candidate crops cite official sources).
 
-`src/utils/download.js` (added): `downloadFile(name, text, mime)`, `toCsv(rows, columns)` (quotes and neutralises `= + - @` prefixes in text cells), `slug()`.
+`src/utils/download.js`: `downloadFile`, `toCsv` (neutralises formula prefixes), `slug`.
 
 ## 3. Pages
 
-### OnboardingView (no shell)
-2 s splash (logo + typewriter), then a 4-slide scroll-snap carousel (two stock images from `googleusercontent.com`, a static "Balanced / Max Yield / Safe" illustration, and Create Account / Log In). Language menu (English/हिन्दी). Canvas `ParticleBackground`. No API calls.
+| Page | API | Notes |
+|---|---|---|
+| Onboarding | – | splash, carousel; images hosted on `lh3.googleusercontent.com` |
+| Auth (demo, device-local) | catalog | register step 2: catalog district and crop; OTP is generated in the browser |
+| Profile setup | catalog | district, season, crop from the catalog; land size in hectares |
+| Home | dashboard, datasets | KPIs (active plans, estimated yield, irrigated area, soil health); top three candidate crops by official production at MSP; recommended actions; weather card shows the reason from `disabled_features` while live weather is disabled |
+| Analytics | plans, soil-profile, compare-fuzzy | cost-vs-yield scatter, constraint sliders (cost, yield, irrigated ha per ha), convergence, fuzzy vs non-fuzzy table; CSV export |
+| Comparison | comparison (+ explanation) | radar, metrics table, allocations, crop calendar (Official Data Not Available), browser-side "Adjust weights", CSV export |
+| Run Optimization | catalog, fuzzy/models, farm-plans, topsis | the only page that creates a saved run; server-default fuzzy model preselected; TOPSIS re-ranking panel |
+| District Intelligence | catalog, district-intelligence, soil-master/{district} | overview, climate, soil, Soil Health Card, water, crops, suitability, market, insights; compare districts; text/CSV/JSON export |
+| Scenario Simulation | catalog, datasets, simulations | levers the backend has disabled (fertiliser price) are shown as unavailable; save/reopen/delete; HTML report and JSON export |
+| History | history, results/{id} | model and data badges per run; explanation of the top plan |
+| Reports | history, results/{id}, explanation | plain-text report with crop evidence; copy summary |
+| Official Data | datasets, catalog, soil-master | registry, disabled features, Soil Health Card and geographic coverage |
+| Settings | catalog, openapi, datasets, fuzzy/models | profile; read-only System Information |
 
-### AuthView (no shell) – demo authentication, device-local only
-Sub-views: login (phone or email tab + password), register-1 (name, optional email, phone with `CountryCodeModal`, password ≥ 8 chars), register-2 (district from `DISTRICTS`, land size ≥ 0.5 ha, primary crop from `/api/catalog` or a fallback list), otp. The OTP is generated in the browser and shown in a fake "Messages" toast with an Auto-fill button – **no SMS is sent**. Login verifies only the password against the digest stored in `localStorage` (the phone/email typed at login is not checked). Since 2026-09-29 the password is stored as SHA-256 (`agro_register_password_sha256`), migrating any legacy plaintext entry.
-
-### ProfileSetupView (no shell)
-Step 1 name + avatar (FileReader → data-URL stored in `localStorage`, can be large), skippable. Step 2 district, current season, primary crop, land size (ha). Step 3 "Profile complete" (was "Verification completed" – nothing is verified). Calls `/api/catalog`.
-
-### DashboardView
-Calls in parallel: `getWeather(user.location)`, `getDashboard(user.location)`, `getWeather` × 4 districts. Renders: time-of-day greeting; `DataSourceNotice` (historical); **estimated-data banner** when `data_year_estimated`; 4 KPI cards (Active Plans, Estimated Yield + trend, Water Utilization bar + label, Soil Health + status) – each card navigates to Comparison/Analytics on click; Crop Allocation Overview (revenue shares); Recommended Actions with local-only "Schedule" toggles; weather card with Local / Districts tabs (live vs "Historical estimate" wording from `source`); Quick Links. Skeleton loaders per section; failure text per section.
-
-### AnalyticsView
-Calls `getPlans`, `getSoilProfile`, `getFuzzyComparison` for `user.location` (always 5 ha, current season, latest year – the user's land size is **not** passed). Renders KPI row (Valid Plans, Min Yield Target, Water Limit, Soil Suitability), an SVG cost-vs-yield scatter (500×300 viewBox, hover tooltip, gold recommended point, faded non-compliant points), three range sliders (max cost/ha, min yield/ha, max water ML/ha) with reset, "Best Compliant Plan" (cheapest compliant), a hypervolume convergence line chart, and the fuzzy vs non-fuzzy table. **Export** downloads a CSV of all plans with a `meets_current_constraints` column (was an `alert()`).
-
-### ComparisonView
-Calls `getComparison(user.location)`. Renders a 6-axis SVG radar (selected plan filled, weighted recommendation dashed), a metrics table (crops, t/ha, ₹/ha, **Env. Impact/ha** with relative bar, water label), the selected plan's crop allocations (% and ha), a generic "Getting Started" 2-step template (clearly labelled as generic), an "Adjust Weights" modal (yield/cost/water sliders re-ranking A/B/C), and **Export CSV** (A/B/C metrics + radar). Removed: fabricated "Plots 1, 2, 4" labels, "View Full Calendar" and "Activated Plan" alerts, arbitrary ₹50,000 red threshold, inverted "n/20" impact.
-
-### RunOptimizationView
-Form: district (defaults to profile district, warns when different), season, year ("Latest available" or catalog years), land (≥0.5 ha), optional budget, preference. Submit fires `runOptimization` immediately and shows a full-screen 4-stage progress animation on fixed timers (≈0.9 + 3×1.3 + 0.9 s ≈ 5.7 s minimum, independent of the real ≈0.3 s run); then shows the top plan (t/ha, ₹/ha, confidence, trade-off summary, estimated-year note) with Run Another / View in History / Generate Report. Errors: 4xx → backend's `detail`; network → unreachable message.
-
-### HistoryView
-Calls `getHistory(user.location)` (client-scoped). Search box (matches season text), year filter, timeline cards (season, date, target yield, estimated cost, status), details modal (plans count, preference, fuzzy confidence/risk %). Empty state links to Run Optimization.
-
-### ReportsView
-Calls `getHistory`; lists this browser's saved runs; "Generate Report" fetches `getResult(run_id)` and adds a card to "Recently Generated" (memory only – lost on navigation). Each card: **Download report** (plain-text report built from the saved run – see [REPORT_PIPELINE.md](REPORT_PIPELINE.md)) and **Copy summary** (clipboard). Both were `alert()` stubs.
-
-### SettingsView
-Profile (name, email, phone, avatar, district dropdown, land size, primary crop) → `onUpdateUser` (localStorage only) with an inline "saved on this device" status; language buttons; notification toggles (local state only, nothing is sent); mock Google-link section now labelled "Demo only"; logout.
-
-## 3b. Explanations
-Every recommended plan has a "Why?" entry point: Comparison (Explain per row, "Why this plan?", "Compare explanations"), Run Optimization ("Why this plan?"), History ("Explain top plan"), Reports ("Why?" and the explanation inside the downloaded report). API calls: `api.getResultExplanation(runId, rank)`, `api.getComparisonExplanation(location, plan)`. Details: [EXPLAINABILITY.md](EXPLAINABILITY.md).
-
-## 3c. District Intelligence
-Sidebar item after Run Optimization. One request (`api.getDistrictIntelligence`) per district; sections render the payload; filters run in the browser. Quick actions: run optimization with the district preselected (`navigateTo(view, params)`), compare district, text report, analytics, CSV/JSON export. Details: [DISTRICT_INTELLIGENCE.md](DISTRICT_INTELLIGENCE.md).
-
-## 3d. Scenario Simulation
-Sidebar item after District Intelligence. Form for the original conditions and the scenario controls; `api.runSimulation` (~4 s, spinner) returns the full analysis; sections render it. Save (named), reopen and delete scenarios; export a self-contained HTML report with charts (lazy-loaded module) or JSON. Details: [SCENARIO_SIMULATION.md](SCENARIO_SIMULATION.md).
+### Explanations
+Every recommended plan has a "Why?" entry point (Run Optimization, Comparison, History, Reports). `ExplanationPanel` lays out the backend's explanation; the **Why this crop was selected** section (`CropEvidenceSection`) shows per crop the ten criteria with Status, Evidence, Official source and a plain-language meaning of the status, as collapsible cards. Details: [EXPLAINABILITY.md](EXPLAINABILITY.md).
 
 ## 4. Shared components
 
 | Component | Used by | Notes |
 |---|---|---|
-| `DataSourceNotice` | Dashboard, Analytics, Comparison | Explains historical vs live-generic vs personalised |
-| `CountryCodeModal` | AuthView | searchable country list |
-| `AccountAuthOverlay` | SettingsView | mock consent dialog |
-| `ParticleBackground` | Onboarding | canvas animation |
-| `SuccessCheckSvg` | ProfileSetup | animated check |
-| `charts/LineChart`, `charts/BarChart`, `charts/ChartCard`, `charts/chartTheme` | District Intelligence (reusable) | emphasis colouring, hover tooltips, reference lines, minimum y-span, chart/table toggle |
-| `district/DistrictSections` | District Intelligence | overview, climate, soil, water, crop performance, suitability, market, insights sections |
-| `charts/GroupedBarChart`, `charts/DeltaBarChart`, `charts/RadarChart` | Scenario Simulation (reusable) | two-series bars with run-range whiskers; % change around zero with written verdicts; two-profile radar |
-| `simulation/SimulationSections` | Scenario Simulation | recommendation, impact, decision impact, trade-offs, optimisation difference, crop effects, history, conditions |
-| `ExplanationPanel`, `ExplanationModal`, `ExplanationComparison` | Comparison, Run Optimization, History, Reports | render the backend explanation JSON (no reasoning in the UI); modal handles loading/errors/Escape; side-by-side A/B/C view |
+| `DataSourceNotice` | Home, Analytics, Comparison | official district data vs personalised runs |
+| `ExplanationPanel`, `ExplanationModal`, `ExplanationComparison`, `CropEvidenceSection`, `FuzzyRulesSection`, `TopsisSection` | explanation entry points | render the backend JSON only |
+| `charts/*` (`LineChart`, `BarChart`, `GroupedBarChart`, `DeltaBarChart`, `RadarChart`, `ChartCard`, `chartTheme`) | District Intelligence, Simulation, TOPSIS | chart/table toggle; missing values print the official text |
+| `district/DistrictSections` | District Intelligence | sections incl. `SoilHealthCardSection`, `NotAvailable` |
+| `simulation/SimulationSections` | Scenario Simulation | result sections |
+| `topsis/ProfileSelector`, `topsis/TopsisPanel` | Run Optimization | ranking profiles and custom weights |
+| `CountryCodeModal`, `AccountAuthOverlay`, `ParticleBackground`, `SuccessCheckSvg`, `ViewLoading` | Auth, Settings, Onboarding, Profile setup, shell | |
 
-## 5. Styling system
+## 5. Styling
 
-`src/index.css` defines Tailwind v4 `@theme` tokens: Material-3 colour roles (primary `#005226`, secondary `#795900`, surface scale, error), font families (Montserrat headlines, Inter body), a type scale (`headline-lg`, `body-md`, `label-sm` …), spacing (`gutter`, `touch-target-min` 48 px), shadows (`soft`, `ambient`) and keyframes (`fadeIn`, `slideIn`, `shimmer`, typewriter). Icons are the Material Symbols web font loaded from Google Fonts; if that request fails the icon names render as literal words (observed in testing).
+`src/index.css` defines Tailwind v4 `@theme` tokens (Material-3 colour roles, Montserrat/Inter, type scale, spacing, shadows, keyframes). Icons are the Material Symbols web font from Google Fonts.
 
-## 6. Loading, empty and error states
+## 6. Loading, empty, error and missing-data states
 
-Every data section has a pulse skeleton while loading, an explicit empty state, and a failure message (now the shared `BACKEND_UNREACHABLE_MSG`, or the backend's own `detail`). The app never substitutes fabricated data on failure (an explicit design rule in the codebase comments).
+Every data section has a skeleton while loading and an explicit empty state. Server faults show the backend's `detail` or `BACKEND_UNREACHABLE_MSG`; "no official data" answers (400/404/501) show **Official Data Not Available** with the backend's reason. No page substitutes estimated or sample values.
 
-## 7. Strengths and weaknesses
+## 7. Tests
 
-Strengths: consistent design tokens; honest empty/error states; single API module; cancellation guards on every effect; responsive layout with mobile drawer; minimal dependencies.
+Vitest, 13 files, 99 tests: API base and district paths, official-data helpers, charts, district, simulation and TOPSIS helpers and sections, fuzzy rules and crop evidence rendering, quality metrics, lazy loading. Fixtures in `src/__fixtures__/` are real responses of the official backend, re-recorded with `scripts/refresh-fixtures.mjs`.
 
-Weaknesses (details in [UI_UX_REVIEW.md](UI_UX_REVIEW.md) and [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md)): no URL routing; no tests; inaccessible clickable `<div>` cards and icon-only buttons; language switcher does nothing; Analytics/Comparison ignore the user's land size and budget; simulated progress timing; several external image/font dependencies; large views (AuthView 700 lines, AnalyticsView 600) mixing data, layout and chart code.
+## 8. Known weaknesses
+
+No URL routing; language switcher without translations; Comparison re-weights A/B/C in the browser; external image and font hosts; large views (AuthView, AnalyticsView) mixing data and layout. See [FRONTEND_MIGRATION_REPORT.md](../data_architecture/FRONTEND_MIGRATION_REPORT.md) §7.

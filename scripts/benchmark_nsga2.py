@@ -182,7 +182,7 @@ def _top_objectives(top):
     if top is None:
         return None
     d = ranking.to_dict_list([top])[0]
-    return {k: d[k] for k in ("yield_tonnes", "cost_rs", "water_liters", "env_impact_score") if k in d}
+    return {k: d[k] for k in ("yield_tonnes", "cost_rs", "irrigated_ha", "env_impact_score") if k in d}
 
 
 def score(runs_by_problem, problems_list):

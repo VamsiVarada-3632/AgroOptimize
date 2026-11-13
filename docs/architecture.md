@@ -1,5 +1,7 @@
 # System Architecture
 
+> **Written for the v1 data layer.** This document describes the system as it was on the synthetic v1 data (tag `published-v1`). Since 2026-11 the runtime reads only the official datasets: 38 districts, Kharif/Rabi, objectives yield / cultivation cost / irrigated area / nutrient load, `irrigated_ha` instead of `water_liters`, the `official` fuzzy model by default, and live weather disabled. Where this document disagrees, the code and [DATASETS.md](handbook/DATASETS.md), [API_REFERENCE.md](handbook/API_REFERENCE.md) and [MIGRATION_REPORT.md](data_architecture/MIGRATION_REPORT.md) are authoritative.
+
 **Author:** Garudammagari Sreenithya (CB.SC.U4CSE23061)
 **Project:** AgroOptimize -- Team 52, Amrita Vishwa Vidyapeetham (23CSE498 Project Phase II)
 **Guide:** Dr. G. Jeyakumar

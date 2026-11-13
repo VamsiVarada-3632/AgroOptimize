@@ -10,6 +10,10 @@ All modelling constants live in `agrooptimize-backend/app/config.py`; a few more
 | `PORT` | – (set in fly.toml) | 8000 | **not read**; the Dockerfile CMD hard-codes `--port 8000` |
 | `VITE_API_BASE` | frontend build (`import.meta.env`) | `http://localhost:8000` | backend URL; `.env.production` sets `https://agrooptimize-backend.fly.dev` |
 | `FLY_API_TOKEN` | GitHub Actions secret | – | deploy |
+| `AGROOPTIMIZE_DB_URL` | `app/db/session.py` | `sqlite:///<project>/data/official/official_v1.db` | official-data database (SQLAlchemy URL) |
+| `AGROOPTIMIZE_FUZZY_MODEL` | `app/config.py` | `official` | default fuzzy model |
+| `AGROOPTIMIZE_NSGA2_MODE` | `app/config.py` | `original` | NSGA-II engine mode |
+| `AGROOPTIMIZE_RESULTS_DIR` | `app/config.py` | `<project>/results` | saved runs and simulations |
 
 `agrooptimize-backend/.env.example` lists `DATA_DIR`, `RESULTS_DIR`, `LOG_LEVEL`, `NSGA2_*`, `API_*`, but **nothing reads them** (its own header says so). Making `RESULTS_DIR`, `NSGA2_SEED` and log level environment-configurable is TODO T-14.
 
@@ -18,37 +22,17 @@ All modelling constants live in `agrooptimize-backend/app/config.py`; a few more
 ### Paths and dataset structure
 | Constant | Value | Provenance |
 |---|---|---|
-| `RAW_DATA_DIR` | `<project>/data/raw` | – |
+| `OFFICIAL_DATA_DIR` | `<project>/data/official` (`raw/` tracked; `official_v1.db` and `clean/` rebuilt by `scripts/preprocess_all.py`) | – |
 | `RESULTS_DIR` | `<project>/results` | – (Fly volume mounts here) |
-| `LOCATIONS` | Coimbatore, Erode, Salem, Pollachi | dataset |
-| `DATASET_KINDS` | crop, land, rainfall, water_availability | dataset |
-| `AG_SEASONS` | Kharif, Rabi, Summer | dataset |
-| `SEASON_MONTH_MAP` | Kharif Jun–Sep; Rabi Oct–Mar; Summer Feb–May | Assumption (overlapping; Rabi uses same-year Jan–Mar – DATA_VALIDATION D6) |
-| `DISTRICT_COORDINATES` | lat/lon of town centres | Convention; used only for weather |
+| `LOCATIONS` | the 38 districts with official crop statistics, resolved lazily from the database | official data |
+| `AG_SEASONS` | Kharif, Rabi | official reports (no Summer season) |
+| `SEASON_MONTH_MAP` | re-exported from `app/datasets/reference.py` (`SEASON_MONTHS`) | official reports |
+
+The v1 constants (`RAW_DATA_DIR`, `DATASET_KINDS`, `DISTRICT_COORDINATES`, fertiliser prices, labour wage, litres per mm, rainfall utilisation, carbon factors, rainfall-dependency factors) were removed with the migration; they live on in `legacy/config_v1.py`. The objectives now use official values only (`app/optimization/problem.py`): f2 = yield × CACP cost of cultivation (₹/q), f3 = irrigated hectare-equivalents (area × multiplier × the crop's official irrigated share), f4 = kg of N+P₂O₅+K₂O from the TNAU dose.
 
 ### Candidate crops
-| `DEFAULT_MAX_CANDIDATE_CROPS` | 6 | Assumption (never binding: ≤5 crops per slice) |
-| `MIN_CANDIDATE_CROPS` | 2 | Assumption |
-
-### Economics (objective f2)
-| Constant | Value | Provenance per code comment |
-|---|---|---|
-| `FERTILIZER_PRICE_RS_PER_KG_NUTRIENT["N"]` | 12.87 ₹/kg N | Sourced: urea MRP ₹266.50 / 45 kg bag ÷ 46 % N |
-| `…["P"]` | 58.70 ₹/kg P₂O₅ | Sourced: DAP ₹1,350 / 50 kg ÷ 46 % P₂O₅ (ignores DAP's 18 % N – the N in DAP is not credited) |
-| `…["K"]` | 56.67 ₹/kg K₂O | Sourced (market rate, not MRP): MOP ₹1,700 / 50 kg ÷ 60 % |
-| `LABOR_WAGE_RS_PER_DAY` | 319 | Sourced: MGNREGA Tamil Nadu FY 2024-25 (FY 2025-26 rate ₹336 per the same comment) |
-| `WATER_COST_RS_PER_MM_PER_HA` | 3.0 | Assumption, **not used** |
-
-### Water (objective f3)
-| `LITERS_PER_MM_PER_HA` | 10,000 | Convention (1 mm × 1 ha = 10 m³) |
-| `RAINFALL_UTILIZATION_FACTOR` | 0.7 | Assumption (single effective-rainfall fraction for all soils/months; FAO/USDA-SCS effective-rainfall methods would vary it) |
-
-### Environment (objective f4)
-| `CARBON_FERTILIZER_FACTOR` | 0.15 per kg NPK | Assumption (unitless proxy; comment cites IPCC 2006 EF1 = 0.01 kg N₂O-N/kg N ≈ 4.68 kg CO₂e/kg N as real-world context, deliberately not used) |
-| `CARBON_PUMPING_FACTOR` | 0.01 per mm·ha | Assumption |
-
-### Fuzzy coupling
-| `RAINFALL_DEPENDENCY_FACTOR` | Very Low 0.1, Low 0.3, Medium 0.6, High 1.0 | Assumption |
+| `DEFAULT_MAX_CANDIDATE_CROPS` | 6 | Assumption (binding on the official data: each of the six benchmark cases has 6 candidates, [OFFICIAL_DATA_PERFORMANCE.md](OFFICIAL_DATA_PERFORMANCE.md)) |
+| `MIN_CANDIDATE_CROPS` | 2 | Assumption; fewer complete crops → 400 (Chennai, The Nilgiris) |
 
 ### Decision-variable bounds
 | `ALLOC_MIN, ALLOC_MAX` | 0.0, 1.0 (lower bound overridden to 1e−4 in `problem.py`) | Assumption |
@@ -64,7 +48,7 @@ All modelling constants live in `agrooptimize-backend/app/config.py`; a few more
 | `NSGA2_SEED` | 42 | Convention |
 | `NSGA2_FAST_POP_SIZE / FAST_N_GEN` | 24 / 15 | tests only |
 | `NSGA2_ENGINE_MODE` | `"original"` (env `AGROOPTIMIZE_NSGA2_MODE`) | `original` reproduces published results; `enhanced` is experimental ([NSGAII_IMPROVEMENTS.md](NSGAII_IMPROVEMENTS.md)) |
-| `FUZZY_MODEL` | `"original"` (env `AGROOPTIMIZE_FUZZY_MODEL`) | `original` reproduces published results; `improved` (and the single-improvement models) change the fuzzy outputs ([FUZZY_MODEL_IMPROVEMENTS.md](FUZZY_MODEL_IMPROVEMENTS.md)); a request's `fuzzy_model` overrides it |
+| `FUZZY_MODEL` | `"official"` (env `AGROOPTIMIZE_FUZZY_MODEL`) | `official` is calibrated on the official data (`app/fuzzy/calibration.py`); `original` is the published system, `improved` and the single-improvement models are described in [FUZZY_MODEL_IMPROVEMENTS.md](FUZZY_MODEL_IMPROVEMENTS.md); a request's `fuzzy_model` overrides it |
 | `NSGA2_ENGINE_FEATURES` | per-mode switches | enhanced: smart initialisation, adaptive mutation, constraint-aware initialisation, duplicate avoidance; available but off: adaptive crossover, tolerance duplicate removal, early stopping, LHS initialisation, parallel evaluation ([NSGAII_BENCHMARK_RESULTS.md](NSGAII_BENCHMARK_RESULTS.md)) |
 | `NSGA2_ENGINE_MUTATION_PROB` | original 0.12, enhanced 0.05 | Parameter study (NSGAII_PROFILE.md §4) |
 | `NSGA2_ADAPTIVE_MUTATION` | min 0.02, max 0.30, diversity floor 0.5, converged scale 0.2 | Tuned on seeds 100–104 |
@@ -79,8 +63,8 @@ All modelling constants live in `agrooptimize-backend/app/config.py`; a few more
 
 | Location | Constant | Value | Provenance |
 |---|---|---|---|
-| `preprocessing.py` | fertility weights / pH optimum / slope / OC saturation / status scores | 0.3/0.3/0.4, 6.5, 40, 1.0 %, 30/60/90 | Assumption |
-| `preprocessing.py` | `_REFERENCE_RANGES` | pH 4–9, OC 0–1.5, rain 0–150, dev ±50, storage 0–100 | Assumption (display only) |
+| `official_view.py` | `CLASS_SCORE` for the fertility index (share-weighted Soil Health Card classes, mean of N, P, K, OC) | Low 0 / Medium 0.5 / High 1 | Documented rule |
+| `preprocessing.py` | `_ranges()` | rain 0–max observed, dev ±60, storage 0–100 | Assumption (display only) |
 | `fuzzy/engine.py` | all MF breakpoints; universes; 26 rules; fallback 0.5/0.5; max penalty 0.4 | see ALGORITHMS §2 | Assumption |
 | `optimization/problem.py` | allocation lower bound | 1e−4 | Implementation detail |
 | `nsga2_runner.py` | HV reference point, clip | 1.1 ×4, 1.5 | Convention |
@@ -92,20 +76,19 @@ All modelling constants live in `agrooptimize-backend/app/config.py`; a few more
 | `dashboard_service.py` | irrigation action threshold | storage < 40 % | Assumption |
 | `dashboard_service.py` | action urgency windows | "Next 24 hours" … | Assumption (text) |
 | `dashboard_service.py` | `_REFERENCE_FARM_HA` | 10 ha | Presentation |
-| `dashboard_service.py` | CSV weather thresholds | >100 mm rainy, >50 mm partly cloudy | Assumption |
-| `dashboard_service.py` | Open-Meteo timeout, forecast days | 5 s, 6 | Convention |
 | `dashboard_service.py` | `_cached_pareto_front` size | 32 | Implementation |
 | `main.py` | land upper bound, client_id length | 100,000 ha, 128 | Validation |
 | `schemas.py` | pop 8–300, gen 5–500, candidate crops 2–12 | | Validation |
 | Frontend `DashboardView` | water label thresholds | 70 / 40 | Presentation |
 | Frontend `RunOptimizationView` | progress timers | 900 / 1300 ms | Presentation |
-| Frontend `api.js` | fallback district | Coimbatore | Implementation |
+| Frontend `officialData.js` | text for missing official values | "Official Data Not Available" | Presentation |
+| Frontend `officialData.js` | HTTP statuses treated as "no official data" | 400, 404, 501 | Implementation |
 
 ## 4. Deployment configuration
 
 | File | Key settings |
 |---|---|
-| `Dockerfile` | two stages: `node:22-slim` builds `frontend/dist` (`npm ci`, `vite build`); `python:3.13-slim` installs pinned binary wheels from `requirements.txt`, copies `app/ data/` and the build, runs as user `agro` (uid 10001), `uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers`, 1 worker. See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) |
+| `Dockerfile` | two stages: `node:22-slim` builds `frontend/dist` (`npm ci`, `vite build`); `python:3.13-slim` installs pinned binary wheels from `requirements.txt`, copies `app/ data/` and the build, rebuilds the official database from `data/official/raw` (`build_database()`), runs as user `agro` (uid 10001), `uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers`, 1 worker. See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) |
 | `.dockerignore` | excludes `.git`, `tests/`, `docs/`, `notes/`, `scripts/`, `results/`, caches, `frontend/node_modules`, `frontend/dist`, `frontend/.env*` |
 | `fly.toml` | app `agrooptimize-backend`, region `sin`, `force_https`, `auto_stop_machines=false`, `min_machines_running=1`, 1 shared CPU / 512 MB, health `/health` 15 s, volume `agrooptimize_results → /app/results` |
 | `render.yaml` | one Docker web service `agrooptimize` (frontend + API), free plan, Singapore, health `/health`, auto-deploy with build filters, `AGROOPTIMIZE_NSGA2_MODE=original`; optional persistent disk documented in comments |
@@ -117,3 +100,14 @@ All modelling constants live in `agrooptimize-backend/app/config.py`; a few more
 | `.oxlintrc.json` | react + oxc plugins; `rules-of-hooks` error; ignores `dist/**`, `*/code.html` |
 
 Monorepo note: the workflow's `paths: agrooptimize-backend/**` assumes the GitHub repository root is `final_year_project/`, but locally only `agrooptimize-backend/` is a git repository (and it contains `frontend/`, not `stitch_agrooptimize_app/`). Confirm which layout the GitHub remote actually has (TODO T-9).
+
+## Frontend configuration
+
+| Setting | Where | Default | Meaning |
+|---|---|---|---|
+| `VITE_API_BASE` | build-time env (`frontend/.env*` or the shell) | page origin in a production build, `http://localhost:8000` in `npm run dev` | backend URL (`resolveApiBase` in `src/services/api.js`) |
+| District, season, year and crop lists | `GET /api/catalog` | – | nothing is configured in the frontend; adding a district or crop to the official database adds it to every dropdown |
+| Default fuzzy model | `GET /api/fuzzy/models` → `default` (backend `AGROOPTIMIZE_FUZZY_MODEL`) | `official` | preselected on Run Optimization |
+| Disabled features | `GET /api/datasets` → `disabled_features` | – | weather card and fertiliser-price lever follow this list |
+| Test fixtures | `frontend/scripts/refresh-fixtures.mjs [base URL]` | `http://localhost:8000` | re-records `src/__fixtures__/` from a running backend (saves one run; set `AGROOPTIMIZE_RESULTS_DIR` to a scratch folder) |
+

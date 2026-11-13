@@ -9,3 +9,7 @@ venv/
 
 # Local tool settings
 .claude/
+
+# official-data build artefacts (rebuilt by scripts/preprocess_all.py)
+data/official/*.db
+data/official/clean/

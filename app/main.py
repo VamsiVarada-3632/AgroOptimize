@@ -89,6 +89,25 @@ app.add_middleware(
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
+from fastapi.responses import JSONResponse  # noqa: E402
+from app.errors import FeatureUnavailable  # noqa: E402
+
+
+@app.exception_handler(FeatureUnavailable)
+async def _feature_unavailable(_request, exc: FeatureUnavailable):
+    """A feature is disabled because its official dataset is missing - never silently replaced by estimates."""
+    return JSONResponse(status_code=501, content={"detail": str(exc), "feature": exc.feature,
+                                                  "missing_dataset": exc.missing_dataset, "available": False})
+
+
+@app.get("/api/datasets")
+def get_datasets():
+    """Provenance of every loaded official dataset (file, sha256, report year, rows) plus the disabled features."""
+    from app.datasets import service as svc
+    from app.datasets.status import DISABLED_FEATURES
+    return {"datasets": svc.provenance(), "disabled_features": DISABLED_FEATURES}
+
+
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok"}
@@ -117,11 +136,7 @@ def get_region_profile(location: str, season: str, year: int | None = None):
 
     from app.fuzzy import engine as fz
 
-    assessment = fz.evaluate_uncertainty(
-        profile.rainfall.avg_deviation_percent,
-        profile.water.avg_storage_percent,
-        profile.soil.fertility_index,
-    )
+    assessment = fz.assess_profile(profile)
     return {
         "location": profile.location,
         "year": profile.year,
@@ -132,7 +147,12 @@ def get_region_profile(location: str, season: str, year: int | None = None):
         "candidate_crops": [c.name for c in profile.candidate_crops],
         "normalized_snapshot": pp.normalized_snapshot(profile),
         "data_year_estimated": profile.data_year_estimated,
-        "fuzzy_assessment": vars(assessment),
+        "fuzzy_assessment": fz.assessment_payload(assessment, profile),
+        "fuzzy_available": profile.fuzzy_available,
+        "fuzzy_unavailable_reason": profile.fuzzy_unavailable_reason,
+        "excluded_crops": profile.excluded_crops,
+        "notes": profile.notes,
+        "candidate_sources": {c.name: {"dose_rule": c.dose_rule, **c.sources} for c in profile.candidate_crops},
     }
 
 
@@ -242,17 +262,13 @@ def post_result_topsis(run_id: str, body: TopsisRerankIn):
 # API uses, to match how the frontend derives a district from the user's
 # saved farm location. See app/services/dashboard_service.py for the
 # derivation of every field -- everything here is computed from
-# data/raw/*.csv and the real fuzzy/NSGA-II/TOPSIS pipeline, not hardcoded.
+# the official database and the real fuzzy/NSGA-II/TOPSIS pipeline, not hardcoded.
 # ---------------------------------------------------------------------------
 
 
 @app.get("/api/weather/{location}")
 def get_weather(location: str):
-    """Current conditions + 5-day forecast from the live Open-Meteo API.
-    If that call fails (no network, API down) it falls back to this
-    district's historical rainfall.csv averages for the current and next
-    five calendar months; the `source` field says which path produced the
-    response."""
+    """DISABLED (HTTP 501): needs an official IMD weather feed. See GET /api/datasets -> disabled_features."""
     from app.services import dashboard_service as ds
 
     try:
@@ -265,7 +281,7 @@ def get_weather(location: str):
 def get_dashboard(location: str, client_id: str | None = _CLIENT_ID_QUERY):
     """Dashboard KPI summary: yield/trend, active plans, soil health, water
     utilisation, recommended actions (from N/P/K status), and top-3
-    crop allocation -- all derived from crop.csv/land.csv/water_availability.csv.
+    crop allocation -- all derived from the official datasets.
     `active_plans` is scoped to this browser's own client_id, the same rule
     GET /api/history/{location} uses -- a brand new client_id correctly
     gets 0."""
@@ -295,11 +311,32 @@ def get_history(location: str, client_id: str | None = _CLIENT_ID_QUERY):
 @app.get("/api/soil-profile/{location}")
 def get_soil_profile_by_district(location: str):
     """Soil snapshot for the farm-map section, read directly from the
-    district's land.csv (current season's row)."""
+    district's official land-use / Soil Health Card record."""
     from app.services import dashboard_service as ds
 
     try:
         return ds.get_soil_profile(location)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.get("/api/soil-master")
+def get_soil_master_coverage():
+    """Districts with an official Soil Health Card record (cycle 2024-25) and those without ("Official data unavailable")."""
+    from app.datasets import soil_master as sm
+
+    return sm.coverage()
+
+
+@app.get("/api/soil-master/{location}")
+def get_soil_master(location: str):
+    """Official Soil Health Card record for a district: pH, organic carbon, N, P, K, EC and micronutrient class counts
+    and shares. Soil type and numeric values are not published by the source and are returned as "Official data
+    unavailable"; a district with no record returns available=false with the same message (never an estimate)."""
+    from app.datasets import soil_master as sm
+
+    try:
+        return sm.soil_record(location)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 

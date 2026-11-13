@@ -1,0 +1,168 @@
+[
+  {
+    "dataset": "crops_by_district",
+    "rows_raw": 12558,
+    "rows_clean": 12558,
+    "issues": [
+      {
+        "level": "info",
+        "code": "null_values_kept",
+        "message": "51 values not reported in the source are kept as NULL (never zero-filled)",
+        "rows": 51
+      },
+      {
+        "level": "warning",
+        "code": "production_vs_area_x_yield",
+        "message": "174 of 1238 district-crop rows differ by more than 10% between production and area x yield",
+        "rows": 174
+      }
+    ]
+  },
+  {
+    "dataset": "crops_state_series",
+    "rows_raw": 3420,
+    "rows_clean": 3420,
+    "issues": [
+      {
+        "level": "info",
+        "code": "aggregates_kept",
+        "message": "aggregate rows (foodgrains, total cereals/pulses) kept; use AGGREGATE_CROPS to exclude them from crop-level statistics",
+        "rows": 0
+      }
+    ]
+  },
+  {
+    "dataset": "land_use",
+    "rows_raw": 1833,
+    "rows_clean": 1833,
+    "issues": [
+      {
+        "level": "info",
+        "code": "categories_sum_to_total",
+        "message": "0 of 39 districts: land-use categories differ from total area by more than 1%",
+        "rows": 0
+      }
+    ]
+  },
+  {
+    "dataset": "irrigation",
+    "rows_raw": 8775,
+    "rows_clean": 8775,
+    "issues": [
+      {
+        "level": "info",
+        "code": "null_values_kept",
+        "message": "117 values not reported are kept NULL",
+        "rows": 117
+      },
+      {
+        "level": "warning",
+        "code": "percent_out_of_range",
+        "message": "6 source-reported percentages above 100 (kept as printed; consumers clamp to 100)",
+        "rows": 6
+      }
+    ]
+  },
+  {
+    "dataset": "rainfall_by_district",
+    "rows_raw": 663,
+    "rows_clean": 663,
+    "issues": [
+      {
+        "level": "info",
+        "code": "pct_deviation_recomputed",
+        "message": "0 rows where printed % deviation differs from (actual-normal)/normal by more than 1 point",
+        "rows": 0
+      },
+      {
+        "level": "info",
+        "code": "season_totals_reconcile",
+        "message": "0 of 156 season totals differ from the sum of months by more than 2 mm",
+        "rows": 0
+      }
+    ]
+  },
+  {
+    "dataset": "ground_water_level",
+    "rows_raw": 507,
+    "rows_clean": 507,
+    "issues": [
+      {
+        "level": "info",
+        "code": "null_levels_kept",
+        "message": "12 months with no reading kept NULL",
+        "rows": 12
+      }
+    ]
+  },
+  {
+    "dataset": "reservoir_daily",
+    "rows_raw": 11153,
+    "rows_clean": 11153,
+    "issues": [
+      {
+        "level": "warning",
+        "code": "storage_exceeds_capacity",
+        "message": "45 readings above 100% of capacity: pct clamped to 100, raw storage kept, flagged over_capacity",
+        "rows": 45
+      },
+      {
+        "level": "info",
+        "code": "capacity_changes",
+        "message": "reservoirs whose capacity changes over time: parambikulam",
+        "rows": 0
+      }
+    ]
+  },
+  {
+    "dataset": "msp_extracted",
+    "rows_raw": 88,
+    "rows_clean": 88,
+    "issues": [
+      {
+        "level": "info",
+        "code": "margin_check",
+        "message": "20 rows: margin = MSP/cost-1 within 1 point",
+        "rows": 0
+      }
+    ]
+  },
+  {
+    "dataset": "agronomy_tnau",
+    "rows_raw": 31,
+    "rows_clean": 31,
+    "issues": [
+      {
+        "level": "warning",
+        "code": "source_anomaly",
+        "message": "bengal gram/irrigated: P2O5 printed as '5' (apparent typo vs 25 for the other pulses); stored NULL, not corrected",
+        "rows": 1
+      },
+      {
+        "level": "info",
+        "code": "agronomy_coverage",
+        "message": "15 crops, 31 condition rows; water requirement (mm) and duration NOT provided as numbers by the guide -> left NULL",
+        "rows": 31
+      }
+    ]
+  },
+  {
+    "dataset": "soil_health_tn",
+    "rows_raw": 37,
+    "rows_clean": 37,
+    "issues": [
+      {
+        "level": "info",
+        "code": "totals_consistent",
+        "message": "max spread of per-parameter totals 2.78%",
+        "rows": 37
+      },
+      {
+        "level": "info",
+        "code": "coverage",
+        "message": "37 districts; districts absent from the portal feed for this cycle have no soil data (not estimated)",
+        "rows": 37
+      }
+    ]
+  }
+]

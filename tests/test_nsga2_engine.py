@@ -36,13 +36,15 @@ from app.optimization.problem import FarmPlanProblem
 FAST = dict(pop_size=config.NSGA2_FAST_POP_SIZE, n_gen=config.NSGA2_FAST_N_GEN)
 
 
-def _problem(location="Salem", season="Kharif", year=None, budget=None, land=5.0):
+def _binding_budget(location, season, land=5.0):
+    """A budget that cuts into the search space: 60% of the mean one-hectare cost of the candidate crops, for `land` ha."""
+    m = _problem(location, season, land=land).single_crop_metrics()
+    return 0.6 * land * float(np.mean([x["cost_rs_ha"] for x in m]))
+
+
+def _problem(location="Salem", season="Rabi", year=None, budget=None, land=5.0):
     profile = pp.get_region_season_profile(location, season, year=year)
-    assessment = fz.evaluate_uncertainty(
-        profile.rainfall.avg_deviation_percent,
-        profile.water.avg_storage_percent,
-        profile.soil.fertility_index,
-    )
+    assessment = fz.assess_profile(profile)          # None when an official fuzzy input is unavailable (yield unadjusted)
     return FarmPlanProblem(profile, assessment, total_land_ha=land, budget_rs=budget)
 
 
@@ -66,21 +68,24 @@ def salem():
 # Original engine: published results unchanged
 # ---------------------------------------------------------------------------
 
-# Digests of the final population recorded with the engine as it was before
-# the mode switch, vectorised operators and monitor were added.
+# The golden digests of the paper (synthetic-data) engine runs live in legacy/ and are reproduced from the
+# `published-v1` tag. On the official data the original engine must be deterministic for a seed and must keep
+# the allocation/bounds invariants; its numbers are covered by tests/test_official_pipeline.py.
 @pytest.mark.parametrize(
-    "args, kwargs, digest",
+    "args, kwargs",
     [
-        (("Coimbatore", "Kharif", 2023, 200_000), dict(pop_size=24, n_gen=15, seed=7), "76f9be6f11d8a0c0"),
-        (("Salem", "Kharif", None, None), dict(seed=42), "5e51af2fa33eb620"),
+        (("Coimbatore", "Rabi", 2024, 2_000_000), dict(pop_size=24, n_gen=15, seed=7)),
+        (("Salem", "Rabi", None, None), dict(seed=42)),
         # budget below every plan's cost: exercises the infeasible branch of the tournament
-        (("Erode", "Rabi", None, 120_000), dict(pop_size=40, n_gen=60, seed=3), "715330adb9d41f43"),
+        (("Erode", "Rabi", None, 1_000), dict(pop_size=40, n_gen=60, seed=3)),
     ],
 )
-def test_original_mode_reproduces_published_results(args, kwargs, digest):
+def test_original_mode_is_deterministic_on_official_data(args, kwargs):
     location, season, year, budget = args
-    result = run_nsga2(_problem(location, season, year, budget), mode="original", **kwargs)
-    assert _digest(result) == digest
+    r1 = run_nsga2(_problem(location, season, year, budget), mode="original", **kwargs)
+    r2 = run_nsga2(_problem(location, season, year, budget), mode="original", **kwargs)
+    assert _digest(r1) == _digest(r2)
+    assert np.isfinite(r1.pop.get("F")).all()
 
 
 def test_default_mode_is_original():
@@ -160,23 +165,17 @@ def test_history_tracking_does_not_change_results(salem):
 def test_cached_problem_constants_give_the_same_objectives(salem):
     """FarmPlanProblem now precomputes per-crop constants; the objectives
     must equal the formula written out in full."""
-    from app.optimization.problem import config as pc
     X = np.random.default_rng(0).uniform(salem.xl, salem.xu, (50, salem.n_var))
     F = salem.evaluate(X, return_as_dictionary=True)["F"]
     n, cv = salem.n_crops, salem.crop_vec
     alloc = X[:, :n] / np.clip(X[:, :n].sum(axis=1, keepdims=True), 1e-9, None)
     irr, fert = X[:, n:2 * n], X[:, 2 * n:]
     area = alloc * salem.total_land_ha
-    prices = {k: v * salem.fertilizer_price_factor for k, v in pc.FERTILIZER_PRICE_RS_PER_KG_NUTRIENT.items()}
-    fert_cost = cv.fert_n_kg_ha * prices["N"] + cv.fert_p_kg_ha * prices["P"] + cv.fert_k_kg_ha * prices["K"]
-    cost = (area * (fert * fert_cost + cv.pesticide_cost_rs_ha + cv.labor_days_ha * pc.LABOR_WAGE_RS_PER_DAY)).sum(1)
-    net = np.clip(cv.water_req_mm - salem.effective_rainfall_mm, 0.0, None)
-    water = (area * irr * net * pc.LITERS_PER_MM_PER_HA).sum(1)
-    yld = (area * (cv.yield_kg_ha / 1000.0) * cv.crop_yield_confidence).sum(1)
-    leach = (area * fert * cv.fert_n_kg_ha).sum(1)
-    carbon = (area * fert * (cv.fert_n_kg_ha + cv.fert_p_kg_ha + cv.fert_k_kg_ha) * pc.CARBON_FERTILIZER_FACTOR
-              + area * irr * cv.water_req_mm * pc.CARBON_PUMPING_FACTOR).sum(1)
-    np.testing.assert_array_equal(F, np.column_stack([-yld, cost, water, np.sqrt(leach * carbon)]))
+    yld = (area * (cv.yield_kg_ha / 1000.0) * cv.crop_yield_confidence).sum(1)             # t
+    cost = (area * cv.cost_rs_ha).sum(1)                       # Rs: CACP A2+FL per quintal x quintals (= cost_rs_ha)
+    irrigated = (area * irr * cv.irrigated_share).sum(1)                                   # ha
+    npk = (area * fert * (cv.fert_n_kg_ha + cv.fert_p_kg_ha + cv.fert_k_kg_ha)).sum(1)     # kg of N+P2O5+K2O
+    np.testing.assert_allclose(F, np.column_stack([-yld, cost, irrigated, npk]), rtol=1e-12)
 
 
 # ---------------------------------------------------------------------------
@@ -232,7 +231,7 @@ def _with(feature: str, **params) -> EngineSettings:
 @pytest.mark.parametrize("feature", FEATURES_CHANGING_OUTPUTS)
 def test_each_feature_is_valid_deterministic_and_changes_the_search(salem, feature):
     if feature == "constraint_aware_initialization":   # only acts when there is a budget
-        salem = _problem("Erode", "Kharif", budget=230000.0)
+        salem = _problem("Erode", "Rabi", budget=_binding_budget("Erode", "Rabi"))
     settings = _with(feature, early_stopping_params={"patience": 5, "tolerance": 1e-3, "min_generations": 10})
     r1 = run_nsga2(salem, seed=3, engine=settings, pop_size=30, n_gen=40)
     r2 = run_nsga2(salem, seed=3, engine=settings, pop_size=30, n_gen=40)
@@ -343,7 +342,7 @@ def test_early_stopping_runs_the_full_budget_while_improving(salem):
 def test_pipeline_records_the_engine_report_in_meta(tmp_path):
     from app.schemas import FarmPlanRequest
     from app.services.plan_service import generate_farm_plans
-    request = FarmPlanRequest(location="Salem", season="Kharif", total_land_ha=5.0, save_results=True, **FAST)
+    request = FarmPlanRequest(location="Salem", season="Rabi", total_land_ha=5.0, save_results=True, **FAST)
     response = generate_farm_plans(request, results_dir=tmp_path)
     optimizer = response["meta"]["optimizer"]
     assert optimizer["engine"]["mode"] == "original"
@@ -358,7 +357,7 @@ def test_api_response_meta_is_unchanged():
     from fastapi.testclient import TestClient
     from app.main import app
     client = TestClient(app)
-    body = {"location": "Salem", "season": "Kharif", "total_land_ha": 5.0, "save_results": False, **FAST}
+    body = {"location": "Salem", "season": "Rabi", "total_land_ha": 5.0, "save_results": False, **FAST}
     res = client.post("/api/farm-plans", json=body)
     assert res.status_code == 200
     assert "optimizer" not in res.json()["meta"]

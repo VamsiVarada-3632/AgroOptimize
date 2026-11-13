@@ -1,5 +1,7 @@
 # Fuzzy System Analysis
 
+> **v1 results.** The measurements in this document were made on the synthetic v1 data (tag `published-v1`, now archived in `legacy/`). They have not been re-run on the official datasets that the runtime uses since 2026-11; see [MIGRATION_REPORT.md](../data_architecture/MIGRATION_REPORT.md) and [OFFICIAL_DATA_PERFORMANCE.md](OFFICIAL_DATA_PERFORMANCE.md).
+
 Audit of the Mamdani fuzzy inference system in `app/fuzzy/engine.py`: architecture, data flow, membership functions, rule base, strengths, weaknesses and a prioritised improvement plan. Every figure below is produced by `app/fuzzy/audit.py` (also served by `GET /api/fuzzy/audit`) and checked in `tests/test_fuzzy_audit.py`. Explanation of individual inferences: [FUZZY_EXPLAINABILITY.md](FUZZY_EXPLAINABILITY.md). Literature comparison: [FUZZY_RESEARCH_REVIEW.md](FUZZY_RESEARCH_REVIEW.md). What was changed: [FUZZY_IMPROVEMENT_SUMMARY.md](FUZZY_IMPROVEMENT_SUMMARY.md).
 
 ## 1. Architecture and workflow

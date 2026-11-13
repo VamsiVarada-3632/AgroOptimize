@@ -1,6 +1,22 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { api, BACKEND_UNREACHABLE_MSG } from '../services/api';
 import { ExplanationModal } from '../components/ExplanationPanel';
+import { OFFICIAL_DATA_NA, describeRun, isMissing } from '../services/officialData';
+
+const BADGE = 'px-2.5 py-0.5 rounded-full font-label-sm text-label-sm font-semibold';
+
+/** Model and data-source badges of one run; nothing until its record has loaded. */
+function RunBadges({ info }) {
+  if (!info) return null;
+  return (
+    <div className="flex flex-wrap gap-1.5 mt-2">
+      <span className={`${BADGE} bg-secondary-fixed/50 text-on-secondary-fixed`}>{info.modelLabel}</span>
+      <span className={`${BADGE} ${info.official ? 'bg-primary-fixed/40 text-on-primary-fixed' : 'bg-surface-container-high text-on-surface-variant'}`}>
+        {info.official ? 'Official Data' : 'Legacy Data'}
+      </span>
+    </div>
+  );
+}
 
 // Adapts GET /api/history/{district}'s entries (target_yield, est_cost,
 // fuzzy_weights, ...) onto this view's field names. The backend only ever
@@ -13,12 +29,15 @@ function adaptHistory(apiHistory) {
     season: h.season,
     year: h.season.split(' ').pop(),
     date: h.date,
-    targetYield: h.target_yield,
-    estCost: h.est_cost,
+    // The backend sends "--" when a run has no plan to measure.
+    targetYield: isMissing(h.target_yield) || h.target_yield === '--' ? OFFICIAL_DATA_NA : h.target_yield,
+    estCost: isMissing(h.est_cost) || h.est_cost === '--' ? OFFICIAL_DATA_NA : h.est_cost,
     status: h.status,
     details: `${h.num_plans} Pareto-optimal plan(s) generated (ranking: ${h.ranking || h.preference || 'balanced'}).` +
       (h.fuzzy_weights
-        ? ` Yield confidence ${Math.round(h.fuzzy_weights.yield_confidence * 100)}%, irrigation risk ${Math.round(h.fuzzy_weights.irrigation_risk * 100)}%.`
+        ? (h.fuzzy_weights.applied === false
+          ? ` Fuzzy stage not applied: ${h.fuzzy_weights.reason || OFFICIAL_DATA_NA}.`
+          : ` Yield confidence ${Math.round(h.fuzzy_weights.yield_confidence * 100)}%, irrigation risk ${Math.round(h.fuzzy_weights.irrigation_risk * 100)}%.`)
         : ''),
   }));
 }
@@ -30,6 +49,8 @@ export default function HistoryView({ userLocation, onNavigate }) {
   const [explainRun, setExplainRun] = useState(null);
 
   const [historyData, setHistoryData] = useState([]);
+  // run id -> { model, modelLabel, official }, read from each saved run's record
+  const [runInfo, setRunInfo] = useState({});
   const [loading, setLoading] = useState(true);
   const [fetchFailed, setFetchFailed] = useState(false);
 
@@ -39,8 +60,14 @@ export default function HistoryView({ userLocation, onNavigate }) {
     api.getHistory(userLocation)
       .then((data) => {
         if (cancelled) return;
-        setHistoryData(adaptHistory(data.history));
+        const items = adaptHistory(data.history);
+        setHistoryData(items);
         setFetchFailed(false);
+        Promise.allSettled(items.map((h) => api.getResult(h.id).then((run) => [h.id, describeRun(run)])))
+          .then((results) => {
+            if (cancelled) return;
+            setRunInfo(Object.fromEntries(results.filter((r) => r.status === 'fulfilled').map((r) => r.value)));
+          });
       })
       .catch(() => {
         if (cancelled) return;
@@ -65,12 +92,12 @@ export default function HistoryView({ userLocation, onNavigate }) {
 
   return (
     <div className="animate-[fadeIn_0.2s_ease-out] w-full">
-      <header className="flex flex-col md:flex-row md:justify-between md:items-end space-y-4 md:space-y-0 mb-6 gap-4">
+      <header className="flex flex-col lg:flex-row lg:justify-between lg:items-end space-y-4 lg:space-y-0 mb-6 gap-4">
         <div>
           <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary font-bold">Optimization History</h2>
           <p className="font-body-md text-body-md text-on-surface-variant mt-2">Review past seasons and optimization results.</p>
         </div>
-        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 w-full lg:w-auto min-w-0">
           <div className="relative w-full sm:w-64">
             <span className="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-outline">search</span>
             <input
@@ -121,6 +148,7 @@ export default function HistoryView({ userLocation, onNavigate }) {
                         <span className="material-symbols-outlined text-[18px] mr-1">calendar_month</span>
                         {item.date}
                       </p>
+                      <RunBadges info={runInfo[item.id]} />
                     </div>
                     <span className="px-3 py-1 bg-primary/10 text-primary rounded-full font-label-sm text-label-sm flex items-center space-x-1 font-semibold">
                       <span className="material-symbols-outlined text-[16px]">check_circle</span>
@@ -195,6 +223,7 @@ export default function HistoryView({ userLocation, onNavigate }) {
               <div>
                 <span className="font-label-sm text-label-sm text-on-surface-variant block mb-1">Execution Date</span>
                 <span className="font-body-md text-on-surface font-semibold">{selectedDetail.date}</span>
+                <RunBadges info={runInfo[selectedDetail.id]} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>

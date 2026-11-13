@@ -1,5 +1,7 @@
 # AgroOptimize -- Viva / Review Prep (Q&A)
 
+> **Written for the v1 data layer.** This document describes the system as it was on the synthetic v1 data (tag `published-v1`). Since 2026-11 the runtime reads only the official datasets: 38 districts, Kharif/Rabi, objectives yield / cultivation cost / irrigated area / nutrient load, `irrigated_ha` instead of `water_liters`, the `official` fuzzy model by default, and live weather disabled. Where this document disagrees, the code and [DATASETS.md](../docs/handbook/DATASETS.md), [API_REFERENCE.md](../docs/handbook/API_REFERENCE.md) and [MIGRATION_REPORT.md](../docs/data_architecture/MIGRATION_REPORT.md) are authoritative.
+
 Companion to `methodology_notes.md`. That file explains *what the system
 does and why*; this one is drilling material -- likely questions, with
 answers short enough to say out loud in 15-30 seconds. Read

@@ -1,5 +1,7 @@
 # Paper Tables 4–7: values taken from the implementation
 
+> **v1 results.** The measurements in this document were made on the synthetic v1 data (tag `published-v1`, now archived in `legacy/`). They have not been re-run on the official datasets that the runtime uses since 2026-11; see [MIGRATION_REPORT.md](../data_architecture/MIGRATION_REPORT.md) and [OFFICIAL_DATA_PERFORMANCE.md](OFFICIAL_DATA_PERFORMANCE.md).
+
 Extracted 2026-10-01 from `agrooptimize-backend/` (app/config.py, app/fuzzy/engine.py, app/optimization/*, app/data/*, data/raw/*.csv). Table 7 numbers come from real runs of the system's own pipeline (same functions as `POST /api/farm-plans`).
 
 **Experiment setting for Table 7:** Kharif season 2023 (latest *observed* year; 2024 rows are estimates); 5 ha farm; no budget; "balanced" preference; NSGA-II at the configured settings (population 80, 200 generations, seed 42). Robustness rows use 10 additional independent runs (seeds 1–10).

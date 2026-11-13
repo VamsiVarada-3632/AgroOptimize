@@ -38,7 +38,7 @@ def _plan(attrs, shares, land=4.0, cost=100_000.0):
     area = [s * land for s in shares]
     tonnes = sum(a * y * c for a, y, c in zip(area, attrs.yield_t_ha, attrs.confidence))
     return {"crop_names": attrs.names, "area_ha": area, "yield_tonnes": tonnes, "cost_rs": cost,
-            "water_liters": 1.0, "env_impact_score": 1.0}
+            "irrigated_ha": 1.0, "env_impact_score": 1.0}
 
 
 def _single(attrs, i, **kw):
@@ -58,11 +58,13 @@ class TestAttributes:
             tonnes = float((np.array(p.area_ha) * attrs.yield_t_ha * attrs.confidence).sum())
             assert tonnes == pytest.approx(p.yield_tonnes, abs=1e-3)
 
-    def test_unknown_crop_rejected(self, run):
-        rp = dict(run.response["region_profile"])
-        rp["candidate_crops"] = rp["candidate_crops"] + [{**rp["candidate_crops"][0], "name": "Saffron"}]
-        with pytest.raises(ValueError, match="Saffron"):
-            cr.crop_attributes(rp, run.response["fuzzy_assessment"])
+    def test_attributes_come_from_the_run_profile_only(self, run, monkeypatch):
+        """crop_attributes must not read any dataset: every input is in the saved run's region_profile."""
+        import app.data.loader as loader
+        monkeypatch.setattr(loader, "load_all", lambda: (_ for _ in ()).throw(AssertionError("dataset read")))
+        a = cr.crop_attributes(run.response["region_profile"], run.response["fuzzy_assessment"])
+        assert a.names == [c["name"] for c in run.response["region_profile"]["candidate_crops"]]
+        assert (a.price_rs_qtl > 0).all()
 
 
 class TestDefinitions:
@@ -72,7 +74,7 @@ class TestDefinitions:
         v = cr.plan_criteria(plans, attrs)
         assert v["yield"] == [p.yield_tonnes for p in plans]
         assert v["cost"] == [p.cost_rs for p in plans]
-        assert v["water"] == [p.water_liters for p in plans]
+        assert v["water"] == [p.irrigated_ha for p in plans]
         assert v["env"] == [p.env_impact_score for p in plans]
 
     def test_order_follows_criteria(self, run, attrs):
@@ -110,7 +112,7 @@ class TestDefinitions:
         for i in range(len(attrs.names)):
             v = cr.plan_criteria([_single(attrs, i)], attrs, keys=["rainfall"])["rainfall"][0]
             assert v == pytest.approx(attrs.rainfall_factor[i])
-        assert set(attrs.rainfall_factor) <= set(config.RAINFALL_DEPENDENCY_FACTOR.values())
+        assert all(0.0 <= f <= 1.0 for f in attrs.rainfall_factor)   # official unirrigated area share
 
     def test_soil_is_area_weighted_fit(self, attrs):
         shares = np.linspace(1, 2, len(attrs.names))

@@ -296,7 +296,7 @@ def problems():
 
 def balanced_closeness(plans):
     return ranking.topsis_scores([p.yield_tonnes for p in plans], [p.cost_rs for p in plans],
-                                 [p.water_liters for p in plans], [p.env_impact_score for p in plans],
+                                 [p.irrigated_ha for p in plans], [p.env_impact_score for p in plans],
                                  ranking.preference_weights("balanced"))[0]
 
 
@@ -324,7 +324,7 @@ def pipeline_metrics(model, profs, seeds):
             runs.append({"problem": key, "seed": s, "seconds": sec,
                          "population_feasible_pct": float(np.mean(np.all(G <= 1e-6, axis=1)) * 100),
                          "feasible_front": len(plans),
-                         "F": [[-p.yield_tonnes, p.cost_rs, p.water_liters, p.env_impact_score] for p in plans]})
+                         "F": [[-p.yield_tonnes, p.cost_rs, p.irrigated_ha, p.env_impact_score] for p in plans]})
             fronts.setdefault(key, []).extend(runs[-1]["F"])
             if s == seeds[0]:
                 base_result, base_plans = res, plans

@@ -1,3 +1,4 @@
+import { OFFICIAL_DATA_NA } from '../../services/officialData';
 /**
  * Shared chart colours and helpers.
  *
@@ -38,6 +39,6 @@ export function niceTicks(min, max, count = 5) {
 }
 
 export function formatNumber(value, digits = 0) {
-  if (value === null || value === undefined || Number.isNaN(value)) return '–';
+  if (value === null || value === undefined || Number.isNaN(value)) return OFFICIAL_DATA_NA;
   return Number(value).toLocaleString('en-IN', { maximumFractionDigits: digits, minimumFractionDigits: 0 });
 }

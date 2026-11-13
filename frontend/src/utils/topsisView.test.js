@@ -1,3 +1,4 @@
+import { OFFICIAL_DATA_NA } from '../services/officialData';
 import { describe, expect, it } from 'vitest';
 import rerank from '../__fixtures__/topsis-rerank-salem.json';
 import {
@@ -62,10 +63,10 @@ describe('ranking rows', () => {
   });
 
   it('formats criterion values with units', () => {
-    expect(formatCriterionValue({ criterion: 'water', value: 12_340_000 })).toBe('12.34 ML');
+    expect(formatCriterionValue({ criterion: 'water', value: 1.244 })).toBe('1.24 ha');
     expect(formatCriterionValue({ criterion: 'market_price', value: 1868.4 })).toBe('₹1,868/qtl');
     expect(formatCriterionValue({ criterion: 'soil', value: 0.756 })).toBe('0.76');
-    expect(formatCriterionValue({ criterion: 'yield', value: null })).toBe('–');
+    expect(formatCriterionValue({ criterion: 'yield', value: null })).toBe(OFFICIAL_DATA_NA);
   });
 
   it('summarises a crop mix', () => {

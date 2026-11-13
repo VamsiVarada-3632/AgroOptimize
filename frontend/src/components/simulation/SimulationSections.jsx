@@ -4,6 +4,7 @@ import GroupedBarChart from '../charts/GroupedBarChart';
 import DeltaBarChart from '../charts/DeltaBarChart';
 import RadarChart from '../charts/RadarChart';
 import { NA, SectionHeader } from '../district/DistrictSections';
+import { OFFICIAL_DATA_NA, isMissing, showValue } from '../../services/officialData';
 import {
   OBJECTIVE_LABELS, VERDICTS, confidenceCategories, contributionCategories, cropShareCategories, deltaItems,
   formatMetric, formatPct, impactMetrics, indexedCategories, prettyStatus, radarData,
@@ -60,7 +61,7 @@ function SimpleTable({ columns, rows, caption }) {
         <tbody>
           {rows.map((r, i) => (
             <tr key={r.key ?? i} className={`border-b border-outline-variant/20 ${r.highlight ? 'bg-primary-fixed/30' : ''}`}>
-              {columns.map((c) => <td key={c.key} className="py-2 pr-3 align-top">{c.format ? c.format(r[c.key], r) : (r[c.key] ?? '—')}</td>)}
+              {columns.map((c) => <td key={c.key} className="py-2 pr-3 align-top">{c.format ? c.format(r[c.key], r) : (isMissing(r[c.key]) ? OFFICIAL_DATA_NA : r[c.key])}</td>)}
             </tr>
           ))}
         </tbody>
@@ -131,7 +132,7 @@ export function RecommendationSection({ result }) {
             table={{ columns: [{ key: 'crop', label: 'Crop' }, { key: 'baseline_share_pct', label: 'Original %' },
               { key: 'scenario_share_pct', label: 'Simulated %' }, { key: 'change_pp', label: 'Change (pp)' },
               { key: 'mean', label: `Mean over ${result.meta.runs_per_side} runs`, format: (_, r) => r.ensemble
-                ? `${r.ensemble.baseline_mean_pct}% → ${r.ensemble.scenario_mean_pct}% (p ${r.ensemble.p_value ?? '—'})` : '—' }],
+                ? `${r.ensemble.baseline_mean_pct}% → ${r.ensemble.scenario_mean_pct}% (p ${showValue(r.ensemble.p_value)})` : OFFICIAL_DATA_NA }],
               rows: comparison.crop_shares }}>
             <GroupedBarChart categories={cropShareCategories(result)} series={SERIES} unit="%" digits={0} ariaLabel="Crop shares, original vs simulated" />
           </ChartCard>
@@ -174,7 +175,7 @@ export function ImpactSection({ result }) {
             { key: 'verdictLabel', label: 'Verdict' }], rows: deltaItems(result) }}>
           <DeltaBarChart items={deltaItems(result)} ariaLabel="Percentage change per metric" />
         </ChartCard>
-        <ChartCard title="Yield, cost, water and environmental comparison"
+        <ChartCard title="Yield, cost, irrigated area and environmental comparison"
           subtitle={`Indexed to the original mean = 100 · means of ${result.meta.runs_per_side} runs per side · whiskers show the range across runs`}
           table={{ columns: [{ key: 'label', label: 'Metric' }, { key: 'b', label: 'Original mean' }, { key: 'br', label: 'Original range' },
             { key: 's', label: 'Simulated mean' }, { key: 'sr', label: 'Simulated range' }, { key: 'rec', label: 'Recommended plans' }],
@@ -227,7 +228,7 @@ export function TradeOffSection({ result }) {
           { key: 'label', label: 'Constraint' }, { key: 'baseline_status', label: 'Original', format: prettyStatus },
           { key: 'scenario_status', label: 'Scenario', format: prettyStatus },
           { key: 'became_harder', label: 'Harder?', format: (v) => (v ? <span className="font-bold text-on-error-container">Yes</span> : 'No') },
-          { key: 'scenario_detail', label: 'Detail', format: (v) => <span className="text-xs text-on-surface-variant">{v || '—'}</span> },
+          { key: 'scenario_detail', label: 'Detail', format: (v) => <span className="text-xs text-on-surface-variant">{showValue(v)}</span> },
         ]} rows={result.constraints.map((c) => ({ ...c, key: c.id, highlight: c.became_harder }))} />
       </Card>
     </div>
@@ -315,7 +316,7 @@ export function OptimizationSection({ result }) {
 }
 
 export function CropEffectsSection({ result }) {
-  const pct = (o) => (o.change_pct === null || o.change_pct === undefined ? '—' : formatPct(o.change_pct));
+  const pct = (o) => formatPct(o.change_pct);
   return (
     <div>
       <SectionHeader icon="grass" title="Crop suitability changes"
@@ -326,7 +327,7 @@ export function CropEffectsSection({ result }) {
           { key: 'confidence', label: 'Fuzzy confidence', format: (o) => `${o.baseline.toFixed(3)} → ${o.scenario.toFixed(3)} (${pct(o)})` },
           { key: 'yield', label: 'Yield/ha', format: pct },
           { key: 'cost', label: 'Cost/ha', format: pct },
-          { key: 'water', label: 'Irrigation/ha', format: pct },
+          { key: 'water', label: 'Irrigated area/ha', format: pct },
           { key: 'share', label: 'Mean land share', format: (_, r) => (
             <span>{r.baseline_share_pct}% → {r.scenario_share_pct}%{r.share_shift_reliable ? ' ✓' : ''}</span>) },
         ]} rows={result.crop_effects.map((e) => ({ ...e, key: e.crop, highlight: e.share_shift_reliable }))} />
@@ -349,15 +350,15 @@ export function HistoricalSection({ result }) {
       <div className="grid lg:grid-cols-3 gap-4">
         <Card>
           <p className="text-xs text-on-surface-variant font-semibold uppercase tracking-wide">Alignment with history</p>
-          <p className="text-2xl font-bold mt-1">{h.alignment_pct.baseline}% → {h.alignment_pct.scenario ?? '—'}%</p>
+          <p className="text-2xl font-bold mt-1">{showValue(h.alignment_pct.baseline, (v) => `${v}%`)} → {showValue(h.alignment_pct.scenario, (v) => `${v}%`)}</p>
           <p className="text-xs text-on-surface-variant mt-2">{h.method}</p>
         </Card>
         <Card className="lg:col-span-2">
           <SimpleTable caption="Historical comparison" columns={[
             { key: 'crop', label: 'Crop' }, { key: 'plan_share_pct', label: 'Simulated share', format: (v) => `${v}%` },
             { key: 'historical_share_pct', label: 'Historical share', format: (v) => `${v}%` },
-            { key: 'expected_yield_t_ha', label: 'Expected yield (t/ha)', format: (v) => v ?? NA },
-            { key: 'historical_yield_t_ha', label: 'Historical yield (t/ha)', format: (v, r) => (v === null ? NA : `${v.toFixed(2)} (${r.historical_yield_trend})`) },
+            { key: 'expected_yield_t_ha', label: 'Expected yield (t/ha)', format: (v) => showValue(v) },
+            { key: 'historical_yield_t_ha', label: 'Historical yield (t/ha)', format: (v, r) => (isMissing(v) ? NA : `${v.toFixed(2)} (${r.historical_yield_trend})`) },
           ]} rows={rows} />
         </Card>
       </div>

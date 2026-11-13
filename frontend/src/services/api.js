@@ -3,9 +3,9 @@
  *
  * Every view should go through the `api` object below instead of calling
  * `fetch` directly -- this file is the single place that knows the
- * backend's base URL, its real field names, and how a free-text user
- * location resolves to one of the 4 Tamil Nadu districts the backend
- * actually has data for (Coimbatore / Erode / Salem / Pollachi).
+ * backend's base URL and its real field names. The districts, seasons,
+ * years, crops and fuzzy models the app offers all come from the backend
+ * (GET /api/catalog, GET /api/fuzzy/models); nothing here hardcodes them.
  *
  * Run the backend locally with:
  *   uvicorn app.main:app --reload --port 8000
@@ -24,51 +24,25 @@ export function resolveApiBase(env, origin) {
 
 const API_BASE = resolveApiBase(import.meta.env, typeof window !== 'undefined' ? window.location.origin : '');
 
-export const DISTRICTS = ['Coimbatore', 'Erode', 'Salem', 'Pollachi'];
-
-export const SEASONS = ['Kharif', 'Rabi', 'Summer'];
-
+/**
+ * Classic TOPSIS preferences: the values FarmPlanRequest.preference accepts
+ * (app/schemas.py). They are request options, not data.
+ */
 export const PREFERENCES = [
   { value: 'balanced', label: 'Balanced' },
   { value: 'max_yield', label: 'Max Yield' },
   { value: 'min_cost', label: 'Min Cost' },
-  { value: 'min_water', label: 'Min Water Use' },
+  { value: 'min_water', label: 'Least Irrigated Area' },
   { value: 'min_env_impact', label: 'Min Environmental Impact' },
 ];
 
 /**
- * Fuzzy models a run can use (backend: GET /api/fuzzy/models). "original" is
- * the published model and the server default; "improved" changes the fuzzy
- * outputs (docs/handbook/FUZZY_MODEL_IMPROVEMENTS.md).
+ * Path segment for a district: the backend matches district names
+ * case-insensitively (GET /api/catalog lists them), and some contain spaces
+ * ("The Nilgiris"), so the name is lower-cased and URL-encoded.
  */
-export const FUZZY_MODELS = [
-  { value: 'original', label: 'Original (published)', hint: 'The fuzzy model behind the published results.' },
-  {
-    value: 'improved',
-    label: 'Improved',
-    hint: 'Rainfall sets follow the IMD categories, storage and fertility sets overlap fully, and rules that never change an output are removed.',
-  },
-];
-
-/** Display name of a fuzzy model; runs saved before models existed used the original one. */
-export const fuzzyModelLabel = (name) =>
-  FUZZY_MODELS.find((m) => m.value === (name || 'original'))?.label ?? name;
-
-/**
- * The backend only knows about the 4 districts above. The frontend's user
- * profile stores `location` as one of those 4 names (e.g. "Coimbatore"),
- * chosen from a dropdown during profile setup -- never free text. This
- * pulls out whichever known district name appears in a given string,
- * case-insensitively, and falls back to Coimbatore if none match. That
- * fallback only matters for legacy/malformed values; App.jsx already
- * requires a real, valid district before any dashboard view can render,
- * so in practice every call here receives a genuine user-chosen district.
- */
-export function extractDistrict(locationString) {
-  if (!locationString) return 'Coimbatore';
-  const lower = String(locationString).toLowerCase();
-  const found = DISTRICTS.find((d) => lower.includes(d.toLowerCase()));
-  return found || 'Coimbatore';
+export function districtPath(location) {
+  return encodeURIComponent(String(location ?? '').trim().toLowerCase());
 }
 
 /**
@@ -209,12 +183,26 @@ export const api = {
   /** GET /health -- used for the app-startup connectivity check. */
   checkHealth: () => fetchAPI('/health'),
 
-  /** GET /api/catalog -- locations/seasons/years/crops the dataset covers. */
+  /** GET /api/catalog -- districts, seasons, years and crops of the official datasets. */
   getCatalog: () => fetchAPI('/api/catalog'),
 
-  /** GET /api/weather/{district} */
-  getWeather: (location) =>
-    fetchAPI(`/api/weather/${extractDistrict(location).toLowerCase()}`),
+  /** GET /api/datasets -- every loaded official dataset and the features disabled for lack of one. */
+  getDatasets: () => fetchAPI('/api/datasets'),
+
+  /** GET /openapi.json -- the API's own description (version, schema defaults). */
+  getOpenApi: () => fetchAPI('/openapi.json'),
+
+  /** GET /api/fuzzy/models -- the fuzzy models a run can use and the server default. */
+  getFuzzyModels: () => fetchAPI('/api/fuzzy/models'),
+
+  /** GET /api/soil-master -- districts with and without a Soil Health Card record. */
+  getSoilMaster: () => fetchAPI('/api/soil-master'),
+
+  /** GET /api/soil-master/{district} -- the district's Soil Health Card record. */
+  getSoilMasterDistrict: (location) => fetchAPI(`/api/soil-master/${districtPath(location)}`),
+
+  /** GET /api/weather/{district} -- 501 until an official IMD weather feed is loaded. */
+  getWeather: (location) => fetchAPI(`/api/weather/${districtPath(location)}`),
 
   /**
    * GET /api/dashboard/{district} -- KPI summary. Passes this browser's
@@ -223,7 +211,7 @@ export const api = {
    * gets 0 instead of counting other people's/seed saved runs.
    */
   getDashboard: (location) =>
-    fetchAPI(`/api/dashboard/${extractDistrict(location).toLowerCase()}`, {
+    fetchAPI(`/api/dashboard/${districtPath(location)}`, {
       client_id: getOrCreateClientId(),
     }),
 
@@ -233,13 +221,13 @@ export const api = {
    * flagged "Completed"; a brand-new browser correctly gets none.
    */
   getHistory: (location) =>
-    fetchAPI(`/api/history/${extractDistrict(location).toLowerCase()}`, {
+    fetchAPI(`/api/history/${districtPath(location)}`, {
       client_id: getOrCreateClientId(),
     }),
 
   /** GET /api/soil-profile/{district} */
   getSoilProfile: (location) =>
-    fetchAPI(`/api/soil-profile/${extractDistrict(location).toLowerCase()}`),
+    fetchAPI(`/api/soil-profile/${districtPath(location)}`),
 
   /** GET /api/catalog for years is on getCatalog above; GET /api/results/{run_id}
    * -- full saved record for one of THIS browser's own past runs (id comes
@@ -249,14 +237,14 @@ export const api = {
 
   /** GET /api/plans/{district} -- up to ~100 Pareto-optimal plans. */
   getPlans: (location, { totalLandHa, budgetRs } = {}) =>
-    fetchAPI(`/api/plans/${extractDistrict(location).toLowerCase()}`, {
+    fetchAPI(`/api/plans/${districtPath(location)}`, {
       total_land_ha: totalLandHa,
       budget_rs: budgetRs,
     }),
 
   /** GET /api/comparison/{district} -- Plan A (balanced) / B (max yield) / C (min cost). */
   getComparison: (location, { totalLandHa, budgetRs } = {}) =>
-    fetchAPI(`/api/comparison/${extractDistrict(location).toLowerCase()}`, {
+    fetchAPI(`/api/comparison/${districtPath(location)}`, {
       total_land_ha: totalLandHa,
       budget_rs: budgetRs,
     }),
@@ -268,7 +256,7 @@ export const api = {
    * stats for both so AnalyticsView can render them side by side.
    */
   getFuzzyComparison: (location, { season, year, totalLandHa, budgetRs } = {}) =>
-    fetchAPI(`/api/compare-fuzzy/${extractDistrict(location).toLowerCase()}`, {
+    fetchAPI(`/api/compare-fuzzy/${districtPath(location)}`, {
       season,
       year,
       total_land_ha: totalLandHa,
@@ -281,7 +269,7 @@ export const api = {
    * historical prices, insights, summary). Values the dataset lacks are null.
    */
   getDistrictIntelligence: (location) =>
-    fetchAPI(`/api/district-intelligence/${extractDistrict(location).toLowerCase()}`),
+    fetchAPI(`/api/district-intelligence/${districtPath(location)}`),
 
   /**
    * GET /api/results/{run_id}/explanation -- structured explanation of one
@@ -301,7 +289,7 @@ export const api = {
    * @returns {Promise<Explanation>}
    */
   getComparisonExplanation: (location, plan, { totalLandHa, budgetRs } = {}) =>
-    fetchAPI(`/api/comparison/${extractDistrict(location).toLowerCase()}/explanation`, {
+    fetchAPI(`/api/comparison/${districtPath(location)}/explanation`, {
       plan,
       total_land_ha: totalLandHa,
       budget_rs: budgetRs,
@@ -318,7 +306,7 @@ export const api = {
    */
   runOptimization: ({
     location,
-    season = 'Kharif',
+    season,
     year,
     land_area_ha = 5.0,
     budget,
@@ -329,7 +317,7 @@ export const api = {
     fuzzy_model,
   } = {}) =>
     postAPI('/api/farm-plans', {
-      location: extractDistrict(location),
+      location,
       season,
       year,
       total_land_ha: land_area_ha,

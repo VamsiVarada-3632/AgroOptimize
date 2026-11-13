@@ -1,5 +1,7 @@
 # Technical Debt Register
 
+> **Written for the v1 data layer.** This document describes the system as it was on the synthetic v1 data (tag `published-v1`). Since 2026-11 the runtime reads only the official datasets: 38 districts, Kharif/Rabi, objectives yield / cultivation cost / irrigated area / nutrient load, `irrigated_ha` instead of `water_liters`, the `official` fuzzy model by default, and live weather disabled. Where this document disagrees, the code and [DATASETS.md](DATASETS.md), [API_REFERENCE.md](API_REFERENCE.md) and [MIGRATION_REPORT.md](../data_architecture/MIGRATION_REPORT.md) are authoritative.
+
 Interest = ongoing cost of not fixing. Effort: S (<½ day), M (1–3 days), L (>3 days).
 
 | ID | Debt | Location | Interest | Effort |

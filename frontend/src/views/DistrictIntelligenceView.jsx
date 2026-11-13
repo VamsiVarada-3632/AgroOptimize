@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { api, DISTRICTS, describeApiError } from '../services/api';
+import { api, describeApiError } from '../services/api';
+import { OFFICIAL_DATA_NA, isOfficialDataUnavailable, useCatalog } from '../services/officialData';
 import { downloadFile, slug } from '../utils/download';
 import { compareRows, cropRecordsCsv, districtReportText } from '../utils/districtView';
 import {
   ClimateSection, CropPerformanceSection, InsightsSection, MarketSection, OverviewSection,
-  SoilSection, SuitabilitySection, WaterSection,
+  SoilHealthCardSection, SoilSection, SuitabilitySection, WaterSection,
 } from '../components/district/DistrictSections';
 
 /**
@@ -14,17 +15,29 @@ import {
  * view only lays it out.
  */
 export default function DistrictIntelligenceView({ userLocation, onNavigate }) {
-  const [district, setDistrict] = useState(DISTRICTS.includes(userLocation) ? userLocation : DISTRICTS[0]);
+  const { data: catalog, error: catalogError } = useCatalog();
+  const districts = catalog?.locations ?? [];
+  const [districtChoice, setDistrict] = useState(userLocation || '');
+  const district = districts.includes(districtChoice) ? districtChoice : (districts[0] ?? '');
   const [state, setState] = useState({ loading: true, data: null, error: '' });
+  const [soilCard, setSoilCard] = useState({ record: null, error: null });
   const [compareWith, setCompareWith] = useState('');
   const [compare, setCompare] = useState({ loading: false, data: null, error: '' });
 
   useEffect(() => {
+    if (!district) return undefined;
     let cancelled = false;
     setState({ loading: true, data: null, error: '' });
+    setSoilCard({ record: null, error: null });
     api.getDistrictIntelligence(district)
       .then((data) => { if (!cancelled) setState({ loading: false, data, error: '' }); })
-      .catch((err) => { if (!cancelled) setState({ loading: false, data: null, error: describeApiError(err) }); });
+      .catch((err) => {
+        if (cancelled) return;
+        setState({ loading: false, data: null, error: isOfficialDataUnavailable(err) ? `${OFFICIAL_DATA_NA}: ${describeApiError(err)}` : describeApiError(err) });
+      });
+    api.getSoilMasterDistrict(district)
+      .then((record) => { if (!cancelled) setSoilCard({ record, error: null }); })
+      .catch((error) => { if (!cancelled) setSoilCard({ record: null, error }); });
     return () => { cancelled = true; };
   }, [district]);
 
@@ -41,7 +54,7 @@ export default function DistrictIntelligenceView({ userLocation, onNavigate }) {
   const intel = state.data;
   const actions = [
     { id: 'run', icon: 'model_training', label: 'Run optimization', onClick: () => onNavigate('run-optimization', { district }) },
-    { id: 'compare', icon: 'compare', label: 'Compare district', onClick: () => setCompareWith(DISTRICTS.find((d) => d !== district)) },
+    { id: 'compare', icon: 'compare', label: 'Compare district', onClick: () => setCompareWith(districts.find((d) => d !== district) ?? '') },
     { id: 'report', icon: 'description', label: 'Generate report', disabled: !intel,
       onClick: () => downloadFile(`agrooptimize-district-${slug(district)}.txt`, districtReportText(intel)) },
     { id: 'analytics', icon: 'analytics', label: 'View analytics', onClick: () => onNavigate('analytics') },
@@ -57,19 +70,26 @@ export default function DistrictIntelligenceView({ userLocation, onNavigate }) {
         <div>
           <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary font-bold">District Intelligence</h2>
           <p className="text-on-surface-variant mt-1 max-w-2xl">
-            Climate, soil, water, crop history and suitability for a district, built from the observed records in the dataset.
+            Climate, soil, water, crop history and suitability for a district, built only from the official government datasets.
+            Anything those datasets do not publish is shown as “{OFFICIAL_DATA_NA}”.
           </p>
         </div>
         <label className="flex items-center gap-2 text-sm font-semibold text-on-surface-variant">
           District
           <select value={district} onChange={(e) => { setDistrict(e.target.value); setCompareWith(''); }}
             className="h-11 px-3 rounded-lg border border-outline-variant bg-surface-bright text-on-surface cursor-pointer">
-            {DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
+            {districts.map((d) => <option key={d} value={d}>{d}</option>)}
           </select>
         </label>
       </header>
 
-      {state.loading && (
+      {catalogError && (
+        <p className="text-sm bg-error-container/40 text-on-error-container px-4 py-3 rounded-lg">
+          The district list could not be loaded: {describeApiError(catalogError)}
+        </p>
+      )}
+
+      {state.loading && district && (
         <div className="space-y-4" aria-busy="true">
           <div className="h-28 bg-surface-container-high rounded-xl animate-pulse"></div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">{[0, 1, 2, 3].map((i) => <div key={i} className="h-24 bg-surface-container-high rounded-xl animate-pulse"></div>)}</div>
@@ -107,7 +127,7 @@ export default function DistrictIntelligenceView({ userLocation, onNavigate }) {
                 <div className="flex items-center gap-2">
                   <select value={compareWith} onChange={(e) => setCompareWith(e.target.value)}
                     className="h-9 px-2 rounded-lg border border-outline-variant bg-surface-bright text-sm cursor-pointer" aria-label="District to compare with">
-                    {DISTRICTS.filter((d) => d !== district).map((d) => <option key={d} value={d}>{d}</option>)}
+                    {districts.filter((d) => d !== district).map((d) => <option key={d} value={d}>{d}</option>)}
                   </select>
                   <button onClick={() => setCompareWith('')} aria-label="Close comparison" className="p-1 cursor-pointer text-on-surface-variant hover:text-primary">
                     <span className="material-symbols-outlined" aria-hidden="true">close</span>
@@ -144,6 +164,7 @@ export default function DistrictIntelligenceView({ userLocation, onNavigate }) {
           <OverviewSection intel={intel} />
           <ClimateSection intel={intel} insights={intel.insights} />
           <SoilSection intel={intel} />
+          <SoilHealthCardSection record={soilCard.record} error={soilCard.error} />
           <WaterSection intel={intel} />
           <CropPerformanceSection key={`crops-${intel.district}`} intel={intel} />
           <SuitabilitySection key={`suit-${intel.district}`} intel={intel} />

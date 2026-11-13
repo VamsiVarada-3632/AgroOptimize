@@ -4,6 +4,48 @@ All code modifications made during the 2026-09-29 audit. All changes are submitt
 
 Verification after all changes: backend **205/205 tests pass** (was 165/165); output fingerprint over 48 endpoint/pipeline results is **identical to HEAD** apart from the new additive provenance fields; frontend `oxlint` 0 warnings (was 3 in `src` + noise), `vite build` succeeds; UI flows exercised in Chrome with no console errors.
 
+## [Unreleased] – Frontend on the official-data backend
+
+### Changed
+- Every district, season, year, crop and fuzzy-model choice comes from `GET /api/catalog` and `GET /api/fuzzy/models`; the hard-coded four districts, the Summer season and the fallback crop lists are removed. Run Optimization now preselects the server's default fuzzy model (`official`).
+- Irrigated-area fields replace the removed `water_liters` values and "ML/ha" labels everywhere (Analytics, Comparison, explanations, reports, simulation, TOPSIS tables).
+- Null values and HTTP 400/404/501 answers show "Official Data Not Available" (with the backend's reason) instead of dashes, "null" or "server unreachable".
+- Home's weather card reads the disabled-feature list instead of calling the disabled endpoint; Comparison's generated two-step calendar is replaced by the official-data notice; Scenario Simulation disables the fertiliser-price lever while no official prices are loaded.
+- The shell's content column no longer widens past the viewport on tablet and phone widths.
+
+### Added
+- "Why this crop was selected" in every explanation (crop evidence, collapsible per crop and criterion), Official Data page (registry, disabled features, coverage), Soil Health Card section on District Intelligence, History badges (model, official/legacy data), read-only System Information in Settings.
+- `src/services/officialData.js`, `scripts/refresh-fixtures.mjs`; test fixtures re-recorded from the official backend.
+
+### Measured
+- Frontend 99 tests pass, oxlint clean, build succeeds; 10 pages × 3 widths in Chrome: no console errors or warnings, no horizontal overflow. See [FRONTEND_MIGRATION_REPORT.md](../data_architecture/FRONTEND_MIGRATION_REPORT.md).
+
+## [Unreleased] – Official-data migration
+
+### Changed
+- The runtime reads only the official database `data/official/official_v1.db`, rebuilt from `data/official/raw/` by `scripts/preprocess_all.py` and by the Docker build: TN Season & Crop Report 2024-25 (crops, state series, land use, irrigation, IMD rainfall), groundwater levels, WRD daily reservoir levels, CACP MSP and cost of cultivation, TNAU fertiliser doses and the Soil Health Card 2024-25 cycle ([DATASETS.md](DATASETS.md)). No CSV fallback.
+- 38 districts (`config.LOCATIONS`, from the database) and the seasons Kharif and Rabi. Pollachi is a taluk and returns 400/404 with a note; Chennai and The Nilgiris return 400 (fewer than 2 crops with complete official data).
+- Objectives from official values only: f2 = yield × CACP cost (₹/q), f3 = irrigated hectare-equivalents, f4 = kg N+P₂O₅+K₂O. `irrigated_ha` replaces `water_liters` (also `max_irrigated_ha`, `best_/mean_irrigated_ha`, `irrigated_ha_per_ha`).
+- Default fuzzy model `official` (IMD rainfall bands, percentile-based storage and fertility partitions, inert rules pruned). Where no official reservoir reading exists for the district and season the fuzzy stage is skipped and flagged (`applied: false`).
+- Crops without a complete official record are excluded with the reason (`excluded_crops`); cotton and rice wait for official conversion factors.
+- The synthetic v1 CSVs, loader and tests moved to `legacy/` (tag `published-v1`); `tests/test_no_synthetic_runtime.py` fails if runtime code imports them.
+- The deployment smoke test uses the official-data API (37 checks).
+
+### Added
+- `GET /api/datasets` (provenance and disabled features), `GET /api/soil-master`, `GET /api/soil-master/{district}`; HTTP 501 for features whose official dataset is missing (live weather).
+- Agronomy master, soil master and conversion table with validators and build scripts (`docs/data_architecture/`).
+- `crop_evidence` in plan explanations: ten source-cited criteria per crop. `ExplanationOut` now carries the field, which the API previously dropped.
+- `scripts/benchmark_runtime.py` and [OFFICIAL_DATA_PERFORMANCE.md](OFFICIAL_DATA_PERFORMANCE.md).
+
+### Measured
+- Backend 1,906 tests pass; frontend 91 tests, `oxlint` clean, `vite build` succeeds.
+- Runtime vs `published-v1` (same script, same machine): first data request +0.73 s (dataset load, once per process), import +62 ms, optimisation 278 vs 295 ms median, warm API latency within ±0.4 ms, peak RSS 233 vs 199 MB.
+- Rebuilding the database from the tracked raw files reproduces the shipped database (all 16 tables identical apart from import timestamps).
+
+### Not done
+- The frontend was migrated separately (entry above).
+- Documents written for v1 are marked as such rather than rewritten.
+
 ## [Unreleased] – Fuzzy model improvements
 
 ### Added

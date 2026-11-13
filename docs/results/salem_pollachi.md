@@ -1,5 +1,7 @@
 # Results Analysis -- Salem and Pollachi
 
+> **v1 results.** The measurements in this document were made on the synthetic v1 data (tag `published-v1`, now archived in `legacy/`). They have not been re-run on the official datasets that the runtime uses since 2026-11; see [MIGRATION_REPORT.md](../data_architecture/MIGRATION_REPORT.md) and [OFFICIAL_DATA_PERFORMANCE.md](../handbook/OFFICIAL_DATA_PERFORMANCE.md).
+
 **Author:** Gaddam Jahnavi (CB.SC.U4CSE23023)
 
 Same ground rule as `docs/results/coimbatore_erode.md`: every figure here

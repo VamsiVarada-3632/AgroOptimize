@@ -19,6 +19,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest
 
+from app import config
+
 from app.data import preprocessing as pp
 from app.fuzzy import engine as fz
 from app.fuzzy.engine import UncertaintyAssessment
@@ -119,35 +121,31 @@ class TestFuzzyRuleBaseBehaviour:
 # ---------------------------------------------------------------------------
 
 class TestPerCropConfidenceAdjustment:
+    """The argument is the crop's official rainfed (unirrigated) area share, 0-1 - no hand-picked label factors."""
 
-    def test_higher_rainfall_dependency_is_penalised_more(self):
+    def test_higher_rainfed_share_is_penalised_more(self):
         base_conf, irr_risk = 0.8, 0.8
-        very_low = fz.crop_yield_confidence(base_conf, irr_risk, "Very Low")
-        low = fz.crop_yield_confidence(base_conf, irr_risk, "Low")
-        medium = fz.crop_yield_confidence(base_conf, irr_risk, "Medium")
-        high = fz.crop_yield_confidence(base_conf, irr_risk, "High")
-        assert very_low >= low >= medium >= high
+        vals = [fz.crop_yield_confidence(base_conf, irr_risk, share) for share in (0.0, 0.25, 0.5, 0.75, 1.0)]
+        assert vals == sorted(vals, reverse=True) and vals[0] > vals[-1]
 
     def test_zero_irrigation_risk_means_no_penalty(self):
-        conf = fz.crop_yield_confidence(0.8, 0.0, "High")
-        assert conf == pytest.approx(0.8, abs=1e-9)
+        assert fz.crop_yield_confidence(0.8, 0.0, 1.0) == pytest.approx(0.8, abs=1e-9)
+
+    def test_fully_irrigated_crop_is_not_penalised(self):
+        assert fz.crop_yield_confidence(0.8, 1.0, 0.0) == pytest.approx(0.8, abs=1e-9)
 
     def test_penalty_capped_at_forty_percent_of_base(self):
-        # penalty = irrigation_risk * dependency_factor * 0.4; worst case
-        # (irrigation_risk=1.0, "High"->factor 1.0) caps the penalty at 0.4,
-        # so confidence can't drop below 60% of its base value.
-        conf = fz.crop_yield_confidence(1.0, 1.0, "High")
-        assert conf == pytest.approx(0.6, abs=1e-6)
+        # penalty = irrigation_risk * rainfed_share * 0.4; worst case (1.0, 1.0) caps it at 0.4
+        assert fz.crop_yield_confidence(1.0, 1.0, 1.0) == pytest.approx(0.6, abs=1e-6)
 
-    def test_unknown_dependency_label_falls_back_to_a_mid_factor(self):
-        # app.config.RAINFALL_DEPENDENCY_FACTOR.get(label, 0.5) default
-        conf = fz.crop_yield_confidence(0.8, 0.5, "Unknown")
-        assert conf == pytest.approx(0.72, abs=1e-6)
+    def test_share_is_clipped_to_the_unit_interval(self):
+        # source-reported irrigated percentages can exceed 100 (validation_report.json); shares are clamped
+        assert fz.crop_yield_confidence(0.8, 0.5, 1.7) == fz.crop_yield_confidence(0.8, 0.5, 1.0)
+        assert fz.crop_yield_confidence(0.8, 0.5, -0.2) == fz.crop_yield_confidence(0.8, 0.5, 0.0)
 
     def test_output_stays_in_unit_range_at_worst_case_inputs(self):
-        for dep in ["Very Low", "Low", "Medium", "High"]:
-            conf = fz.crop_yield_confidence(1.0, 1.0, dep)
-            assert 0.0 <= conf <= 1.0
+        for share in (0.0, 0.3, 1.0):
+            assert 0.0 <= fz.crop_yield_confidence(1.0, 1.0, share) <= 1.0
 
 
 # ---------------------------------------------------------------------------
@@ -155,31 +153,43 @@ class TestPerCropConfidenceAdjustment:
 # ---------------------------------------------------------------------------
 
 class TestFuzzyAgainstRealRegionProfiles:
-    """Runs the actual data -> fuzzy pipeline the way
-    app/services/plan_service.py does, for every location, instead of only
-    hand-picked numbers."""
+    """Runs the actual official data -> fuzzy pipeline the way app/services/plan_service.py does."""
 
-    @pytest.mark.parametrize("location", ["Coimbatore", "Erode", "Salem", "Pollachi"])
-    def test_every_location_produces_a_valid_assessment(self, location):
-        profile = pp.get_region_season_profile(location, "Kharif", year=2023)
-        result = fz.evaluate_uncertainty(
-            profile.rainfall.avg_deviation_percent,
-            profile.water.avg_storage_percent,
-            profile.soil.fertility_index,
-        )
-        assert 0.0 <= result.yield_confidence <= 1.0
-        assert 0.0 <= result.irrigation_risk <= 1.0
+    @pytest.fixture(scope="class")
+    def available(self):
+        out = []
+        for loc in config.LOCATIONS:
+            for season in config.AG_SEASONS:
+                try:
+                    p = pp.get_region_season_profile(loc, season)
+                except ValueError:
+                    continue
+                out.append(p)
+        return out
+
+    def test_every_profile_with_all_inputs_has_a_valid_assessment(self, available):
+        done = 0
+        for p in available:
+            result = fz.assess_profile(p)
+            if not p.fuzzy_available:
+                assert result is None and p.fuzzy_unavailable_reason
+                continue
+            assert 0.0 <= result.yield_confidence <= 1.0 and 0.0 <= result.irrigation_risk <= 1.0
+            done += 1
+        assert done >= 9          # the nine districts with a mapped reservoir in the Rabi window
+
+    def test_unavailable_input_is_reported_never_estimated(self):
+        p = pp.get_region_season_profile("Salem", "Kharif")
+        assert p.fuzzy_available is False and "reservoir" in p.fuzzy_unavailable_reason.lower()
+        assert fz.assess_profile(p) is None
+        block = fz.assessment_payload(None, p)
+        assert block["applied"] is False and block["yield_confidence"] == 1.0 and block["irrigation_risk"] == 0.0
 
     def test_assessment_is_deterministic_for_the_same_inputs(self):
-        """Same (rainfall_dev, water_storage, soil_fert) in -> exactly the
-        same outputs, every time -- the fuzzy engine itself has no hidden
-        randomness (unlike the separately-seeded NSGA-II stage)."""
-        profile = pp.get_region_season_profile("Coimbatore", "Kharif", year=2023)
-        args = (
-            profile.rainfall.avg_deviation_percent,
-            profile.water.avg_storage_percent,
-            profile.soil.fertility_index,
-        )
-        first = fz.evaluate_uncertainty(*args)
-        second = fz.evaluate_uncertainty(*args)
-        assert first == second
+        profile = pp.get_region_season_profile("Coimbatore", "Rabi")
+        args = (profile.rainfall.avg_deviation_percent, profile.water.avg_storage_percent, profile.soil.fertility_index)
+        assert fz.evaluate_uncertainty(*args) == fz.evaluate_uncertainty(*args)
+
+    def test_pollachi_is_a_taluk_not_a_district(self):
+        with pytest.raises(ValueError, match="taluk"):
+            pp.get_region_season_profile("Pollachi", "Rabi")
