@@ -9,9 +9,11 @@ multi-objective optimiser (yield, cost, water, environmental impact) over
 real Tamil Nadu district agricultural data -- with every run's Pareto front
 and generation-by-generation convergence history persisted to disk.
 
-This is the **backend only**. A frontend will be built separately once the
-UI is finalised; this API is designed to be consumed by it (or by Swagger UI
-/ the CLI demo in the meantime).
+The React/Vite frontend lives in `frontend/`. The API serves its production
+build (one deployment); `npm run dev` in `frontend/` runs it against a local
+API. It takes every district, season, crop and model from the API and shows
+"Official Data Not Available" where the official datasets have no value
+(see "Frontend" below).
 
 ## Quick start
 
@@ -106,13 +108,27 @@ agrooptimize-backend/
 Full request/response schemas are in `app/schemas.py` and browsable live at
 `/docs` once the server is running.
 
+## Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev                  # http://localhost:5173, expects the API on :8000
+npm run lint && npm run build && npm test
+```
+
+Pages: Home, Analytics, Comparison, Run Optimization, District Intelligence,
+Scenario Simulation, History, Reports, Official Data, Settings. Details:
+`docs/handbook/FRONTEND.md`, `docs/handbook/FRONTEND_API_INTEGRATION.md`,
+`docs/data_architecture/FRONTEND_MIGRATION_REPORT.md`.
+
 ## Status vs. the paper / current review
 
 Done: data pipeline, fuzzy engine, NSGA-II optimiser (custom operators
 matching the paper's parameters) with per-generation convergence/hypervolume
 tracking, TOPSIS decision ranking, file-based results persistence, REST API
-(6 endpoints), automated tests (34, all green). Not yet done: frontend
-(deliberately deferred until the UI is finalised), auth, and calibration of
+(see `docs/handbook/API_REFERENCE.md`), automated tests (backend pytest,
+frontend Vitest), React frontend on the official data. Not yet done: auth, and calibration of
 the economic/carbon assumption constants against real quotes (see
 `app/config.py` and `notes/methodology_notes.md` for what's assumed vs.
 dataset-derived).

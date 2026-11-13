@@ -54,7 +54,7 @@ Official government datasets are the only runtime data source. The synthetic v1 
 
 ## 4. Remaining TODO
 
-- Frontend (React/Vite) not yet migrated: rename `water_liters`->`irrigated_ha`, drop hard-coded `DISTRICTS` (api.js) and `FALLBACK_CROPS` (Auth/ProfileSetup/Settings views), drive lists from `/api/catalog`, show 'Data not available' on 501/400 responses, weather widget 501 state.
+- ~~Frontend (React/Vite) not yet migrated~~ Done: lists from `/api/catalog`, irrigated-area fields, 'Official Data Not Available' on 400/404/501 and null values, crop evidence, Official Data page; see [FRONTEND_MIGRATION_REPORT.md](FRONTEND_MIGRATION_REPORT.md).
 - Load TNAU horticulture doses, official kapas->lint and paddy->rice conversion factors, reservoir->district map and pre-2025 reservoir levels, IMD weather, fertiliser prices, labour/pesticide costs, earlier Season & Crop Reports, taluk statistics.
 - Chennai and The Nilgiris return HTTP 400 ('complete official data'): fewer than 2 crops have all required official fields.
 - Fuzzy stage is applied only where official reservoir data exist (9 districts, Rabi); elsewhere flagged 'not applied' with neutral confidence 1.0.

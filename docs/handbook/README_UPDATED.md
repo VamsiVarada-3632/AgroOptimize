@@ -27,8 +27,8 @@ final_year_project/
 │   ├── data/official/raw/    official datasets (database rebuilt by scripts/preprocess_all.py)
 │   ├── legacy/               archived synthetic v1 data and loader
 │   ├── tests/                pytest suite
+│   ├── frontend/             React 19 + Vite 8 + Tailwind 4 frontend (lists from GET /api/catalog)
 │   └── run_demo.py           CLI demo
-├── stitch_agrooptimize_app/  React 19 + Vite 8 + Tailwind 4 frontend
 ├── docs/                     full documentation (start with PROJECT_KNOWLEDGE.md)
 └── .github/workflows/        test + deploy backend to Fly.io
 ```
@@ -45,16 +45,15 @@ python3 run_demo.py --location Salem --season Rabi --land 5 --budget 250000
 python3 -m pytest -q
 ```
 
-Frontend tests: `cd frontend && npm test`.
-
 Frontend
 ```bash
-cd stitch_agrooptimize_app
+cd agrooptimize-backend/frontend
 npm install
 npm run dev                                      # http://localhost:5173 (expects the API on :8000)
 # another API: VITE_API_BASE=http://localhost:8010 npm run dev
-npm run lint && npm run build
+npm run lint && npm run build && npm test     # oxlint, production build, Vitest
 ```
+The frontend takes every district, season, crop and model from the API and shows "Official Data Not Available" where the official datasets have no value: [FRONTEND.md](FRONTEND.md), [FRONTEND_API_INTEGRATION.md](FRONTEND_API_INTEGRATION.md).
 
 ## How it works
 ```mermaid
@@ -79,7 +78,7 @@ Frontend on Vercel (`vercel.json`, `VITE_API_BASE` in `.env.production`); backen
 Irrigation/fertiliser multipliers currently have no yield benefit (optimiser keeps them at the minimum); the yield objective sums tonnes across crops; fuzzy output affects only expected yield; district-level data for one report year (2024-25), two seasons, no taluk data; features without an official dataset are disabled ([MIGRATION_REPORT.md](../data_architecture/MIGRATION_REPORT.md) §3); demo-only client-side authentication. Full list and roadmap: [RESEARCH_REVIEW.md](RESEARCH_REVIEW.md), [TODO.md](TODO.md).
 
 ## Documentation index
-[PROJECT_KNOWLEDGE](PROJECT_KNOWLEDGE.md) · [ARCHITECTURE](ARCHITECTURE.md) · [FOLDER_STRUCTURE](FOLDER_STRUCTURE.md) · [FRONTEND](FRONTEND.md) · [BACKEND](BACKEND.md) · [DATASETS](DATASETS.md) · [ALGORITHMS](ALGORITHMS.md) · [API_REFERENCE](API_REFERENCE.md) · [DATA_FLOW](DATA_FLOW.md) · [USER_FLOW](USER_FLOW.md) · [OPTIMIZATION_PIPELINE](OPTIMIZATION_PIPELINE.md) · [REPORT_PIPELINE](REPORT_PIPELINE.md) · [HISTORY_PIPELINE](HISTORY_PIPELINE.md) · [SCORING_AND_RANKING](SCORING_AND_RANKING.md) · [CONFIGURATION](CONFIGURATION.md) · [DEPENDENCIES](DEPENDENCIES.md) · [PROJECT_REVIEW](PROJECT_REVIEW.md) · [DATA_VALIDATION](DATA_VALIDATION.md) · [PERFORMANCE_REVIEW](PERFORMANCE_REVIEW.md) · [SECURITY_REVIEW](SECURITY_REVIEW.md) · [UI_UX_REVIEW](UI_UX_REVIEW.md) · [RESEARCH_REVIEW](RESEARCH_REVIEW.md) · [TECHNICAL_DEBT](TECHNICAL_DEBT.md) · [IMPROVEMENT_LOG](IMPROVEMENT_LOG.md) · [CHANGELOG](CHANGELOG.md) · [TODO](TODO.md) · [EXPLAINABILITY](EXPLAINABILITY.md) · [DISTRICT_INTELLIGENCE](DISTRICT_INTELLIGENCE.md) · [SCENARIO_SIMULATION](SCENARIO_SIMULATION.md) · [FUZZY_SYSTEM_ANALYSIS](FUZZY_SYSTEM_ANALYSIS.md) · [FUZZY_EXPLAINABILITY](FUZZY_EXPLAINABILITY.md) · [FUZZY_RESEARCH_REVIEW](FUZZY_RESEARCH_REVIEW.md) · [FUZZY_IMPROVEMENT_SUMMARY](FUZZY_IMPROVEMENT_SUMMARY.md) · [FUZZY_MODEL_IMPROVEMENTS](FUZZY_MODEL_IMPROVEMENTS.md) · [FUZZY_BENCHMARK_RESULTS](FUZZY_BENCHMARK_RESULTS.md) · [NSGAII_ANALYSIS](NSGAII_ANALYSIS.md) · [NSGAII_PROFILE](NSGAII_PROFILE.md) · [NSGAII_RESEARCH_REVIEW](NSGAII_RESEARCH_REVIEW.md) · [NSGAII_IMPROVEMENT_SUMMARY](NSGAII_IMPROVEMENT_SUMMARY.md) · [OFFICIAL_DATA_PERFORMANCE](OFFICIAL_DATA_PERFORMANCE.md)
+[PROJECT_KNOWLEDGE](PROJECT_KNOWLEDGE.md) · [ARCHITECTURE](ARCHITECTURE.md) · [FOLDER_STRUCTURE](FOLDER_STRUCTURE.md) · [FRONTEND](FRONTEND.md) · [FRONTEND_API_INTEGRATION](FRONTEND_API_INTEGRATION.md) · [BACKEND](BACKEND.md) · [DATASETS](DATASETS.md) · [ALGORITHMS](ALGORITHMS.md) · [API_REFERENCE](API_REFERENCE.md) · [DATA_FLOW](DATA_FLOW.md) · [USER_FLOW](USER_FLOW.md) · [OPTIMIZATION_PIPELINE](OPTIMIZATION_PIPELINE.md) · [REPORT_PIPELINE](REPORT_PIPELINE.md) · [HISTORY_PIPELINE](HISTORY_PIPELINE.md) · [SCORING_AND_RANKING](SCORING_AND_RANKING.md) · [CONFIGURATION](CONFIGURATION.md) · [DEPENDENCIES](DEPENDENCIES.md) · [PROJECT_REVIEW](PROJECT_REVIEW.md) · [DATA_VALIDATION](DATA_VALIDATION.md) · [PERFORMANCE_REVIEW](PERFORMANCE_REVIEW.md) · [SECURITY_REVIEW](SECURITY_REVIEW.md) · [UI_UX_REVIEW](UI_UX_REVIEW.md) · [RESEARCH_REVIEW](RESEARCH_REVIEW.md) · [TECHNICAL_DEBT](TECHNICAL_DEBT.md) · [IMPROVEMENT_LOG](IMPROVEMENT_LOG.md) · [CHANGELOG](CHANGELOG.md) · [TODO](TODO.md) · [EXPLAINABILITY](EXPLAINABILITY.md) · [DISTRICT_INTELLIGENCE](DISTRICT_INTELLIGENCE.md) · [SCENARIO_SIMULATION](SCENARIO_SIMULATION.md) · [FUZZY_SYSTEM_ANALYSIS](FUZZY_SYSTEM_ANALYSIS.md) · [FUZZY_EXPLAINABILITY](FUZZY_EXPLAINABILITY.md) · [FUZZY_RESEARCH_REVIEW](FUZZY_RESEARCH_REVIEW.md) · [FUZZY_IMPROVEMENT_SUMMARY](FUZZY_IMPROVEMENT_SUMMARY.md) · [FUZZY_MODEL_IMPROVEMENTS](FUZZY_MODEL_IMPROVEMENTS.md) · [FUZZY_BENCHMARK_RESULTS](FUZZY_BENCHMARK_RESULTS.md) · [NSGAII_ANALYSIS](NSGAII_ANALYSIS.md) · [NSGAII_PROFILE](NSGAII_PROFILE.md) · [NSGAII_RESEARCH_REVIEW](NSGAII_RESEARCH_REVIEW.md) · [NSGAII_IMPROVEMENT_SUMMARY](NSGAII_IMPROVEMENT_SUMMARY.md) · [OFFICIAL_DATA_PERFORMANCE](OFFICIAL_DATA_PERFORMANCE.md)
 
 Official-data migration: [MIGRATION_REPORT](../data_architecture/MIGRATION_REPORT.md) · [MIGRATION_PLAN](../data_architecture/MIGRATION_PLAN.md) · [OFFICIAL_DATASET_MAPPING](../data_architecture/OFFICIAL_DATASET_MAPPING.md) · [SYNTHETIC_DEPENDENCY_AUDIT](../data_architecture/SYNTHETIC_DEPENDENCY_AUDIT.md) · [SOIL_MASTER](../data_architecture/SOIL_MASTER.md) · [AGRONOMY_MASTER](../data_architecture/AGRONOMY_MASTER.md) · [CONVERSION_FACTORS](../data_architecture/CONVERSION_FACTORS.md) · [FINAL_CONVERSION_DECISION](../data_architecture/FINAL_CONVERSION_DECISION.md)
 

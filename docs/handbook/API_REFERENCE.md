@@ -7,20 +7,20 @@ All data comes from the official database (`data/official/official_v1.db`, built
 | Method | Path | Purpose | Used by frontend | Cold / warm latency |
 |---|---|---|---|---|
 | GET | `/health` | Liveness | App.jsx startup | 0.6 ms † |
-| GET | `/api/datasets` | Provenance of every loaded official dataset + disabled features | – | – |
-| GET | `/api/catalog` | Districts, seasons, years, crops, taluk notes, data sources | Auth, ProfileSetup, Settings, RunOptimization | 1.3 ms † |
+| GET | `/api/datasets` | Provenance of every loaded official dataset + disabled features | Official Data, Home (weather card), Scenario Simulation, Settings | 2.3–2.9 ms (curl, warm) |
+| GET | `/api/catalog` | Districts, seasons, years, crops, taluk notes, data sources | every district/season/crop list (cached once per page load) | 1.3 ms † |
 | GET | `/api/region-profile` | Stages 1–2 only (data + fuzzy) | – | 2.4 ms † warm |
 | POST | `/api/farm-plans` | Full pipeline, optionally saved | RunOptimization | 280 ms † (pop 80 × 200 gen) |
 | GET | `/api/results` | List saved runs | – | O(#runs), cached by mtime |
-| GET | `/api/results/{run_id}` | One saved run | Reports | ~1 ms |
-| GET | `/api/topsis/profiles` | Ranking profiles, weights, criteria, custom-weight rules | – | ~1 ms |
+| GET | `/api/results/{run_id}` | One saved run | Reports, History (model/data badges) | ~1 ms |
+| GET | `/api/topsis/profiles` | Ranking profiles, weights, criteria, custom-weight rules | Run Optimization | ~1 ms |
 | GET / POST | `/api/results/{run_id}/topsis` | Re-rank a saved run under a ranking profile or custom weights | Run Optimization | a few ms |
-| GET | `/api/weather/{district}` | **Disabled (501)**: needs an official IMD weather feed | Dashboard (×5 calls) | – |
+| GET | `/api/weather/{district}` | **Disabled (501)**: needs an official IMD weather feed | Home, only if not listed in `disabled_features` (it is) | – |
 | GET | `/api/dashboard/{district}` | KPI cards, actions, crop split | Dashboard | 2.7 ms † |
 | GET | `/api/history/{district}` | This browser's saved runs | History, Reports | ~1 ms |
 | GET | `/api/soil-profile/{district}` | Soil snapshot | Analytics | 0.9 ms † |
-| GET | `/api/soil-master` | Districts with / without a Soil Health Card record | – | – |
-| GET | `/api/soil-master/{district}` | Soil Health Card class counts and shares for one district | – | – |
+| GET | `/api/soil-master` | Districts with / without a Soil Health Card record | Official Data | – |
+| GET | `/api/soil-master/{district}` | Soil Health Card class counts and shares for one district | District Intelligence | – |
 | GET | `/api/plans/{district}` | ≤100 Pareto plans + HV history | Analytics | 966 ms cold / 3 ms cached |
 | GET | `/api/comparison/{district}` | Plans A/B/C + radar | Comparison | 369 ms cold / 3 ms cached |
 | GET | `/api/compare-fuzzy/{district}` | Fuzzy vs non-fuzzy study | Analytics | 746 ms (2 runs, not cached) |
@@ -29,7 +29,7 @@ All data comes from the official database (`data/official/official_v1.db`, built
 | GET | `/api/district-intelligence/{district}` | Aggregated district profile | District Intelligence | 1.4 ms † cached |
 | GET | `/api/fuzzy/explain?rainfall_dev=&water_storage=&soil_fert=&model=` | Rule-level explanation of one fuzzy inference | – | ≈5 ms |
 | GET | `/api/fuzzy/audit?model=` | Rule-base and membership-function audit + firing on the dataset | – | ≈0.7 s cold, cached per model |
-| GET | `/api/fuzzy/models` | Fuzzy models (official default, published, each improvement, improved), their switches, rules and membership functions | – | < 5 ms |
+| GET | `/api/fuzzy/models` | Fuzzy models (official default, published, each improvement, improved), their switches, rules and membership functions | Run Optimization, Settings | < 5 ms |
 | POST | `/api/simulations/run` | Run a scenario simulation (baseline + scenario, 5 seeds each) | Scenario Simulation | ~4 s, never cached |
 | POST | `/api/simulations` | Save a simulation result by token | Scenario Simulation | fast |
 | GET | `/api/simulations?client_id=` | This browser's saved simulations | Scenario Simulation | fast |
@@ -49,7 +49,7 @@ All data comes from the official database (`data/official/official_v1.db`, built
 | 503 | `/api/plans` optimisation failure | `{"detail": {"error": "Optimization failed", "message": "...", "location": "..."}}` |
 | 500 | Unhandled exception | FastAPI default |
 
-The frontend's `describeApiError` (src/services/api.js) turns any of these into user text.
+The frontend's `describeApiError` (src/services/api.js) turns any of these into user text; 400, 404 and 501 are shown as "Official Data Not Available" with the detail ([FRONTEND_API_INTEGRATION.md](FRONTEND_API_INTEGRATION.md)).
 
 ---
 
