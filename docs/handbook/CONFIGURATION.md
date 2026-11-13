@@ -81,7 +81,8 @@ The v1 constants (`RAW_DATA_DIR`, `DATASET_KINDS`, `DISTRICT_COORDINATES`, ferti
 | `schemas.py` | pop 8–300, gen 5–500, candidate crops 2–12 | | Validation |
 | Frontend `DashboardView` | water label thresholds | 70 / 40 | Presentation |
 | Frontend `RunOptimizationView` | progress timers | 900 / 1300 ms | Presentation |
-| Frontend `api.js` | fallback district | Coimbatore | Implementation |
+| Frontend `officialData.js` | text for missing official values | "Official Data Not Available" | Presentation |
+| Frontend `officialData.js` | HTTP statuses treated as "no official data" | 400, 404, 501 | Implementation |
 
 ## 4. Deployment configuration
 
@@ -99,3 +100,14 @@ The v1 constants (`RAW_DATA_DIR`, `DATASET_KINDS`, `DISTRICT_COORDINATES`, ferti
 | `.oxlintrc.json` | react + oxc plugins; `rules-of-hooks` error; ignores `dist/**`, `*/code.html` |
 
 Monorepo note: the workflow's `paths: agrooptimize-backend/**` assumes the GitHub repository root is `final_year_project/`, but locally only `agrooptimize-backend/` is a git repository (and it contains `frontend/`, not `stitch_agrooptimize_app/`). Confirm which layout the GitHub remote actually has (TODO T-9).
+
+## Frontend configuration
+
+| Setting | Where | Default | Meaning |
+|---|---|---|---|
+| `VITE_API_BASE` | build-time env (`frontend/.env*` or the shell) | page origin in a production build, `http://localhost:8000` in `npm run dev` | backend URL (`resolveApiBase` in `src/services/api.js`) |
+| District, season, year and crop lists | `GET /api/catalog` | – | nothing is configured in the frontend; adding a district or crop to the official database adds it to every dropdown |
+| Default fuzzy model | `GET /api/fuzzy/models` → `default` (backend `AGROOPTIMIZE_FUZZY_MODEL`) | `official` | preselected on Run Optimization |
+| Disabled features | `GET /api/datasets` → `disabled_features` | – | weather card and fertiliser-price lever follow this list |
+| Test fixtures | `frontend/scripts/refresh-fixtures.mjs [base URL]` | `http://localhost:8000` | re-records `src/__fixtures__/` from a running backend (saves one run; set `AGROOPTIMIZE_RESULTS_DIR` to a scratch folder) |
+
