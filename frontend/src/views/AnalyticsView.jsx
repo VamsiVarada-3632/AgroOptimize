@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { api, BACKEND_UNREACHABLE_MSG } from '../services/api';
+import { api, BACKEND_UNREACHABLE_MSG, describeApiError } from '../services/api';
+import { FIELD_LABELS, OFFICIAL_DATA_NA, isMissing, isOfficialDataUnavailable, showValue } from '../services/officialData';
 import DataSourceNotice from '../components/DataSourceNotice';
 import { downloadFile, toCsv, slug } from '../utils/download';
 
@@ -13,7 +14,8 @@ const DEFAULT_BOUNDS = { minCostVal: 0, maxCostVal: 1, minYieldVal: 0, maxYieldV
 export default function AnalyticsView({ onNavigate, userLocation }) {
   const [plansData, setPlansData] = useState(null);
   const [plansLoading, setPlansLoading] = useState(true);
-  const [fetchFailed, setFetchFailed] = useState(false);
+  // '' when the plans loaded; otherwise the message to show
+  const [fetchFailed, setFetchFailed] = useState('');
   const [soilProfile, setSoilProfile] = useState(null);
 
   const [hoveredPoint, setHoveredPoint] = useState(null);
@@ -22,7 +24,7 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
   // loading/error state, independent of the scatter-plot data above.
   const [fuzzyComparison, setFuzzyComparison] = useState(null);
   const [fuzzyLoading, setFuzzyLoading] = useState(true);
-  const [fuzzyFailed, setFuzzyFailed] = useState(false);
+  const [fuzzyFailed, setFuzzyFailed] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -31,12 +33,12 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
       .then((data) => {
         if (cancelled) return;
         setPlansData(data);
-        setFetchFailed(false);
+        setFetchFailed('');
       })
-      .catch(() => {
+      .catch((err) => {
         if (cancelled) return;
         setPlansData(null);
-        setFetchFailed(true);
+        setFetchFailed(isOfficialDataUnavailable(err) ? `${OFFICIAL_DATA_NA}: ${describeApiError(err)}` : BACKEND_UNREACHABLE_MSG);
       })
       .finally(() => { if (!cancelled) setPlansLoading(false); });
 
@@ -49,12 +51,12 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
       .then((data) => {
         if (cancelled) return;
         setFuzzyComparison(data);
-        setFuzzyFailed(false);
+        setFuzzyFailed('');
       })
-      .catch(() => {
+      .catch((err) => {
         if (cancelled) return;
         setFuzzyComparison(null);
-        setFuzzyFailed(true);
+        setFuzzyFailed(isOfficialDataUnavailable(err) ? `${OFFICIAL_DATA_NA}: ${describeApiError(err)}` : "Couldn't load the fuzzy comparison for this district.");
       })
       .finally(() => { if (!cancelled) setFuzzyLoading(false); });
 
@@ -75,7 +77,7 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
         id: p.id,
         cost: p.cost,
         yieldVal: p.yield_val,
-        waterVal: p.water_val, // million litres / ha
+        waterVal: p.water_val, // irrigated hectares per hectare of farm (= irrigated_ha_per_ha)
         isRecommended: p.is_recommended,
       }));
     }
@@ -166,15 +168,15 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
       { label: 'recommended', value: (r) => (r.is_recommended ? 'yes' : 'no') },
       { label: 'cost_rs_per_ha', value: 'cost' },
       { label: 'yield_t_per_ha', value: 'yield_val' },
-      { label: 'water_million_litres_per_ha', value: 'water_val' },
-      { label: 'env_impact_per_ha', value: 'env_impact' },
+      { label: 'irrigated_ha_per_ha', value: 'water_val' },
+      { label: 'nutrient_load_kg_per_ha', value: 'env_impact' },
       { label: 'crop_mix', value: (r) => Object.entries(r.crops || {}).map(([c, f]) => `${c} ${Math.round(f * 100)}%`).join('; ') },
       { label: 'meets_current_constraints', value: 'meets' },
     ]);
     downloadFile(`agrooptimize-pareto-plans-${slug(plansData?.location || userLocation)}.csv`, csv, 'text/csv;charset=utf-8');
   };
 
-  const soilPct = soilProfile ? Math.round(soilProfile.fertility_index * 100) : null;
+  const soilPct = soilProfile && !isMissing(soilProfile.fertility_index) ? Math.round(soilProfile.fertility_index * 100) : null;
   const soilLabel = soilPct == null ? null : soilPct >= 70 ? 'Optimal' : soilPct >= 45 ? 'Moderate' : 'Needs Attention';
 
   // --- Convergence (hypervolume vs generation) chart geometry ---
@@ -213,7 +215,7 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
       />
       {fetchFailed && (
         <div className="mb-4 font-label-sm text-label-sm bg-error-container/40 text-on-error-container px-3 py-2 rounded-lg flex items-center gap-2 w-fit">
-          <span className="material-symbols-outlined text-[16px]">cloud_off</span> {BACKEND_UNREACHABLE_MSG}
+          <span className="material-symbols-outlined text-[16px]">cloud_off</span> {fetchFailed}
         </div>
       )}
 
@@ -240,21 +242,29 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="font-headline-lg text-headline-lg text-on-surface">{hasData ? minYield : '--'}</span>
-            <span className="font-body-md text-body-md text-on-surface-variant">t/ha (Min)</span>
+            {hasData ? (
+              <>
+                <span className="font-headline-lg text-headline-lg text-on-surface">{minYield}</span>
+                <span className="font-body-md text-body-md text-on-surface-variant">t/ha (Min)</span>
+              </>
+            ) : <span className="font-body-md text-body-md text-on-surface-variant">{OFFICIAL_DATA_NA}</span>}
           </div>
         </div>
 
         <div className="bg-surface-container-lowest rounded-xl p-6 shadow-ambient flex flex-col justify-between">
           <div className="flex justify-between items-start mb-4">
-            <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">Water Limit</h3>
+            <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">{FIELD_LABELS.irrigated_ha} Limit</h3>
             <div className="bg-secondary-container/20 p-2 rounded-full text-secondary">
               <span className="material-symbols-outlined">water_drop</span>
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="font-headline-lg text-headline-lg text-on-surface">{hasData ? maxWater : '--'}</span>
-            <span className="font-label-sm text-label-sm text-on-surface-variant">ML/ha (Max)</span>
+            {hasData ? (
+              <>
+                <span className="font-headline-lg text-headline-lg text-on-surface">{maxWater}</span>
+                <span className="font-label-sm text-label-sm text-on-surface-variant">ha irrigated per ha (Max)</span>
+              </>
+            ) : <span className="font-body-md text-body-md text-on-surface-variant">{OFFICIAL_DATA_NA}</span>}
           </div>
         </div>
 
@@ -267,7 +277,7 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="font-headline-lg text-headline-lg text-primary">{soilLabel ?? '--'}</span>
+            <span className={soilLabel ? 'font-headline-lg text-headline-lg text-primary' : 'font-body-md text-body-md text-on-surface-variant'}>{soilLabel ?? OFFICIAL_DATA_NA}</span>
           </div>
           {soilPct != null && (
             <div className="w-full bg-surface-variant rounded-full h-2 mt-3">
@@ -308,7 +318,7 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
               <div className="text-center py-16">
                 <span className="material-symbols-outlined text-5xl text-outline mb-2">scatter_plot</span>
                 <p className="font-body-lg text-on-surface-variant">
-                  {fetchFailed ? BACKEND_UNREACHABLE_MSG : 'No optimization plans available for this district yet.'}
+                  {fetchFailed || OFFICIAL_DATA_NA}
                 </p>
                 <p className="text-sm text-on-surface-variant mt-1">
                   <button onClick={() => onNavigate('run-optimization')} className="text-primary font-semibold hover:underline cursor-pointer">
@@ -372,7 +382,7 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
                     </p>
                     <p>Cost: ₹{hoveredPoint.cost.toLocaleString()}/ha</p>
                     <p>Yield: {hoveredPoint.yieldVal} t/ha</p>
-                    <p>Water Usage: {hoveredPoint.waterVal} ML/ha</p>
+                    <p>{FIELD_LABELS.irrigated_ha}: {hoveredPoint.waterVal} ha per ha</p>
                     <p className="mt-1 font-semibold">
                       {hoveredPoint.isValid ? '✓ Meets Constraints' : '✗ Violates Constraints'}
                     </p>
@@ -426,7 +436,7 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
 
               <div>
                 <div className="flex justify-between mb-2">
-                  <label className="font-label-md text-label-md text-on-surface-variant font-medium">Max Water (ML/ha)</label>
+                  <label className="font-label-md text-label-md text-on-surface-variant font-medium">Max {FIELD_LABELS.irrigated_ha} (ha per ha)</label>
                   <span className="font-label-sm text-label-sm text-on-surface bg-surface-container-low px-2 py-0.5 rounded font-bold">{maxWater}</span>
                 </div>
                 <input
@@ -544,7 +554,7 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
           ) : fuzzyFailed || !fuzzyComparison ? (
             <div className="text-center py-10">
               <span className="material-symbols-outlined text-4xl text-outline mb-2">difference</span>
-              <p className="font-body-md text-on-surface-variant">Couldn't load the fuzzy comparison for this district.</p>
+              <p className="font-body-md text-on-surface-variant">{fuzzyFailed || OFFICIAL_DATA_NA}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -559,28 +569,30 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
                 <tbody>
                   <tr className="border-b border-outline-variant/50">
                     <td className="py-2 pr-3 text-on-surface-variant">Best yield (t)</td>
-                    <td className="py-2 px-3 font-semibold text-on-surface">{fuzzyComparison.fuzzy.best_yield_tonnes_per_ha ?? '--'}</td>
-                    <td className="py-2 pl-3 font-semibold text-on-surface">{fuzzyComparison.non_fuzzy.best_yield_tonnes_per_ha ?? '--'}</td>
+                    <td className="py-2 px-3 font-semibold text-on-surface">{showValue(fuzzyComparison.fuzzy.best_yield_tonnes_per_ha)}</td>
+                    <td className="py-2 pl-3 font-semibold text-on-surface">{showValue(fuzzyComparison.non_fuzzy.best_yield_tonnes_per_ha)}</td>
                   </tr>
                   <tr className="border-b border-outline-variant/50">
                     <td className="py-2 pr-3 text-on-surface-variant">Min cost (₹)</td>
-                    <td className="py-2 px-3 font-semibold text-on-surface">{fuzzyComparison.fuzzy.min_cost_rs_per_ha?.toLocaleString() ?? '--'}</td>
-                    <td className="py-2 pl-3 font-semibold text-on-surface">{fuzzyComparison.non_fuzzy.min_cost_rs_per_ha?.toLocaleString() ?? '--'}</td>
+                    <td className="py-2 px-3 font-semibold text-on-surface">{showValue(fuzzyComparison.fuzzy.min_cost_rs_per_ha, (v) => v.toLocaleString())}</td>
+                    <td className="py-2 pl-3 font-semibold text-on-surface">{showValue(fuzzyComparison.non_fuzzy.min_cost_rs_per_ha, (v) => v.toLocaleString())}</td>
                   </tr>
                   <tr className="border-b border-outline-variant/50">
-                    <td className="py-2 pr-3 text-on-surface-variant">Min water (L)</td>
-                    <td className="py-2 px-3 font-semibold text-on-surface">{fuzzyComparison.fuzzy.min_water_liters_per_ha?.toLocaleString() ?? '--'}</td>
-                    <td className="py-2 pl-3 font-semibold text-on-surface">{fuzzyComparison.non_fuzzy.min_water_liters_per_ha?.toLocaleString() ?? '--'}</td>
+                    <td className="py-2 pr-3 text-on-surface-variant">Min {FIELD_LABELS.irrigated_ha.toLowerCase()} (ha)</td>
+                    <td className="py-2 px-3 font-semibold text-on-surface">{showValue(fuzzyComparison.fuzzy.min_irrigated_ha_per_ha)}</td>
+                    <td className="py-2 pl-3 font-semibold text-on-surface">{showValue(fuzzyComparison.non_fuzzy.min_irrigated_ha_per_ha)}</td>
                   </tr>
                   <tr>
-                    <td className="py-2 pr-3 text-on-surface-variant">Min env. impact</td>
-                    <td className="py-2 px-3 font-semibold text-on-surface">{fuzzyComparison.fuzzy.min_env_impact_per_ha ?? '--'}</td>
-                    <td className="py-2 pl-3 font-semibold text-on-surface">{fuzzyComparison.non_fuzzy.min_env_impact_per_ha ?? '--'}</td>
+                    <td className="py-2 pr-3 text-on-surface-variant">Min nutrient load (kg)</td>
+                    <td className="py-2 px-3 font-semibold text-on-surface">{showValue(fuzzyComparison.fuzzy.min_env_impact_per_ha)}</td>
+                    <td className="py-2 pl-3 font-semibold text-on-surface">{showValue(fuzzyComparison.non_fuzzy.min_env_impact_per_ha)}</td>
                   </tr>
                 </tbody>
               </table>
               <p className="text-xs text-on-surface-variant mt-4">
-                Yield confidence: {fuzzyComparison.fuzzy_assessment?.yield_confidence ?? '--'} &middot; Irrigation risk: {fuzzyComparison.fuzzy_assessment?.irrigation_risk ?? '--'}
+                {fuzzyComparison.fuzzy_assessment?.applied === false
+                  ? `Fuzzy stage not applied: ${fuzzyComparison.fuzzy_assessment.reason || OFFICIAL_DATA_NA}. Both columns describe the same unadjusted problem.`
+                  : `Yield confidence: ${showValue(fuzzyComparison.fuzzy_assessment?.yield_confidence)} · Irrigation risk: ${showValue(fuzzyComparison.fuzzy_assessment?.irrigation_risk)}`}
               </p>
             </div>
           )}

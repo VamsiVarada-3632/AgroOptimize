@@ -20,13 +20,15 @@ export const MARKET_OPTIONS = [
   { value: 'stable', label: 'Stable' },
   { value: 'increase', label: 'Increase' },
 ];
+import { OFFICIAL_DATA_NA, isMissing } from '../services/officialData';
+
 export const OBJECTIVES = ['yield', 'cost', 'water', 'env'];
 export const OBJECTIVE_LABELS = {
-  yield: 'Expected yield', cost: 'Production cost', water: 'Irrigation water', env: 'Environmental impact',
+  yield: 'Expected yield', cost: 'Production cost', water: 'Irrigated Area', env: 'Environmental impact',
   profit: 'Indicative profit', confidence: 'Confidence',
 };
 export const PRIORITY_LABELS = {
-  yield: 'Yield priority', cost: 'Production cost priority', water: 'Water conservation priority', env: 'Environmental priority',
+  yield: 'Yield priority', cost: 'Production cost priority', water: 'Less irrigated area priority', env: 'Environmental priority',
 };
 
 export const VERDICTS = {
@@ -34,7 +36,7 @@ export const VERDICTS = {
   worsened: { label: 'Worsened', icon: 'trending_down' },
   unchanged: { label: 'No change', icon: 'trending_flat' },
   not_significant: { label: 'Within search variation', icon: 'blur_on' },
-  not_available: { label: 'Data not available', icon: 'help' },
+  not_available: { label: OFFICIAL_DATA_NA, icon: 'help' },
 };
 
 /** Slider position (0–100) → Low / Medium / High wording. */
@@ -44,9 +46,10 @@ export function priorityLevel(value) {
   return 'High';
 }
 
-export function defaultForm(district, landHa = 5) {
+/** Starting form: `district` and `season` come from the catalog (GET /api/catalog). */
+export function defaultForm(district, landHa = 5, season = '') {
   return {
-    location: district, season: 'Kharif', year: '', total_land_ha: landHa, budget_rs: '', preference: 'balanced',
+    location: district, season, year: '', total_land_ha: landHa, budget_rs: '', preference: 'balanced',
     rainfall_change_pct: 0, water_availability: 'current', fertilizer_cost_change_pct: 0, market_price: 'stable',
     scenario_land_ha: '', scenario_budget_rs: '', use_priorities: false,
     priorities: { yield: 50, cost: 50, water: 50, env: 50 },
@@ -72,7 +75,7 @@ export function buildRequest(form) {
 
 /** A saved simulation's inputs → form state (for reopening). */
 export function formFromInputs(inputs, fallbackDistrict) {
-  const f = defaultForm(inputs?.base?.location || fallbackDistrict, inputs?.base?.total_land_ha ?? 5);
+  const f = defaultForm(inputs?.base?.location || fallbackDistrict, inputs?.base?.total_land_ha ?? 5, inputs?.base?.season || '');
   const b = inputs?.base || {};
   const s = inputs?.scenario || {};
   return {
@@ -85,21 +88,24 @@ export function formFromInputs(inputs, fallbackDistrict) {
   };
 }
 
-const UNITS = { yield: 't', cost: '₹', water: 'L', env: '' };
+const UNITS = { yield: 't', cost: '₹', water: 'ha', env: '' };
 
-/** Human-readable value for an objective (totals or per hectare). */
+/**
+ * Human-readable value for an objective (totals or per hectare). The water
+ * objective is the irrigated area in hectares (official data), not litres.
+ */
 export function formatMetric(id, value, perHa = false) {
-  if (value === null || value === undefined || !Number.isFinite(value)) return 'Data not available';
+  if (isMissing(value)) return OFFICIAL_DATA_NA;
   const suffix = perHa ? '/ha' : '';
   if (id === 'cost' || id === 'profit') return `₹${Math.round(value).toLocaleString('en-IN')}${suffix}`;
-  if (id === 'water') return `${(value / 1e6).toLocaleString('en-IN', { maximumFractionDigits: 2 })} ML${suffix}`;
+  if (id === 'water') return `${value.toLocaleString('en-IN', { maximumFractionDigits: 2 })} ha irrigated${suffix}`;
   if (id === 'yield') return `${value.toLocaleString('en-IN', { maximumFractionDigits: 2 })} t${suffix}`;
   if (id === 'confidence') return `${value.toFixed(1)}%`;
   return `${value.toLocaleString('en-IN', { maximumFractionDigits: 1 })}${UNITS[id] || ''}${suffix ? ' per ha' : ''}`;
 }
 
 export function formatPct(v) {
-  if (v === null || v === undefined || !Number.isFinite(v)) return '—';
+  if (isMissing(v)) return OFFICIAL_DATA_NA;
   return `${v > 0 ? '+' : ''}${v.toFixed(1)}%`;
 }
 
@@ -144,7 +150,7 @@ export function indexedCategories(result) {
   });
 }
 
-export const prettyStatus = (s) => (s ? String(s).replace(/_/g, ' ') : '—');
+export const prettyStatus = (s) => (s ? String(s).replace(/_/g, ' ') : OFFICIAL_DATA_NA);
 
 /** Crop share categories: the two recommended plans side by side. */
 export function cropShareCategories(result) {
@@ -171,7 +177,7 @@ export function radarData(result) {
   const cs = result?.optimization?.common_scale;
   if (!cs) return null;
   return {
-    axes: OBJECTIVES.map((o) => ({ key: o, label: { yield: 'Yield', cost: 'Low cost', water: 'Low water', env: 'Low impact' }[o] })),
+    axes: OBJECTIVES.map((o) => ({ key: o, label: { yield: 'Yield', cost: 'Low cost', water: 'Less irrigation', env: 'Low impact' }[o] })),
     series: [{ label: 'Original plan', values: cs.baseline }, { label: 'Simulated plan', values: cs.scenario }],
   };
 }

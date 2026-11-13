@@ -1,3 +1,4 @@
+import { OFFICIAL_DATA_NA } from '../services/officialData';
 import { describe, expect, it } from 'vitest';
 import drought from '../__fixtures__/simulation-drought.json';
 import infeasible from '../__fixtures__/simulation-infeasible.json';
@@ -8,21 +9,21 @@ import {
 
 describe('request building', () => {
   it('maps the form onto the API schema and drops empty optional fields', () => {
-    const form = { ...defaultForm('Salem', 5), budget_rs: '', year: '2023', rainfall_change_pct: -20, scenario_land_ha: '' };
+    const form = { ...defaultForm('Salem', 5, 'Rabi'), budget_rs: '', year: '2024', rainfall_change_pct: -20, scenario_land_ha: '' };
     const { base, scenario } = buildRequest(form);
-    expect(base).toEqual({ location: 'Salem', season: 'Kharif', year: 2023, total_land_ha: 5, budget_rs: undefined, preference: 'balanced' });
+    expect(base).toEqual({ location: 'Salem', season: 'Rabi', year: 2024, total_land_ha: 5, budget_rs: undefined, preference: 'balanced' });
     expect(scenario.rainfall_change_pct).toBe(-20);
     expect(scenario.total_land_ha).toBeUndefined();
     expect(scenario.priorities).toBeUndefined();
   });
 
   it('sends priorities only when custom priorities are switched on', () => {
-    const form = { ...defaultForm('Erode'), use_priorities: true, priorities: { yield: 10, cost: 20, water: 70, env: 0 } };
+    const form = { ...defaultForm('Erode', 5, 'Kharif'), use_priorities: true, priorities: { yield: 10, cost: 20, water: 70, env: 0 } };
     expect(buildRequest(form).scenario.priorities).toEqual({ yield: 10, cost: 20, water: 70, env: 0 });
   });
 
   it('reopens a saved simulation into the same form', () => {
-    const form = formFromInputs(drought.inputs, 'Coimbatore');
+    const form = formFromInputs(drought.inputs, 'Salem');
     const again = buildRequest(form);
     expect(again.base.location).toBe(drought.inputs.base.location);
     expect(again.scenario.rainfall_change_pct).toBe(drought.inputs.scenario.rainfall_change_pct);
@@ -37,11 +38,11 @@ describe('formatting', () => {
   });
 
   it('formats metrics and missing values', () => {
-    expect(formatMetric('water', 21_504_151.5)).toBe('21.5 ML');
+    expect(formatMetric('water', 1.47)).toBe('1.47 ha irrigated');
     expect(formatMetric('cost', 39589.6, true)).toMatch(/^₹39,590\/ha$/);
-    expect(formatMetric('yield', null)).toBe('Data not available');
+    expect(formatMetric('yield', null)).toBe(OFFICIAL_DATA_NA);
     expect(formatPct(-3.04)).toBe('-3.0%');
-    expect(formatPct(null)).toBe('—');
+    expect(formatPct(null)).toBe(OFFICIAL_DATA_NA);
   });
 });
 
@@ -86,7 +87,7 @@ describe('selection from a real result', () => {
   });
 
   it('titles a simulation from its changed conditions', () => {
-    expect(simulationTitle(drought)).toMatch(/^Salem Kharif · Rainfall -20%/);
+    expect(simulationTitle(drought)).toMatch(/^Salem Rabi · Rainfall -20%/);
     expect(simulationTitle(infeasible)).toContain('Budget');
   });
 });

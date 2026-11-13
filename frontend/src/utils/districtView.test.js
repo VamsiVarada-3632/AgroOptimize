@@ -1,3 +1,4 @@
+import { OFFICIAL_DATA_NA } from '../services/officialData';
 import { describe, expect, it } from 'vitest';
 import salem from '../__fixtures__/district-salem.json';
 import {
@@ -13,9 +14,9 @@ describe('filterCropRecords', () => {
   });
 
   it('applies season, crop and year together', () => {
-    const rows = filterCropRecords(records, { season: 'Kharif', crop: 'Maize', year: '2022' });
+    const rows = filterCropRecords(records, { season: 'Kharif', crop: 'maize', year: '2024' });
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ season: 'Kharif', crop: 'Maize', year: 2022 });
+    expect(rows[0]).toMatchObject({ season: 'Kharif', crop: 'maize', year: 2024 });
   });
 
   it('handles missing input', () => {
@@ -33,20 +34,20 @@ describe('cropSeries', () => {
   });
 
   it('emphasises only the selected crop and keeps backend values unchanged', () => {
-    const { series } = cropSeries(records, 'Kharif', 'production_t', 'Paddy');
-    expect(series.filter((s) => s.emphasis).map((s) => s.id)).toEqual(['Paddy']);
-    const paddy = series.find((s) => s.id === 'Paddy');
-    const raw = records.filter((r) => r.season === 'Kharif' && r.crop === 'Paddy');
+    const { series } = cropSeries(records, 'Kharif', 'production_t', 'rice');
+    expect(series.filter((s) => s.emphasis).map((s) => s.id)).toEqual(['rice']);
+    const paddy = series.find((s) => s.id === 'rice');
+    const raw = records.filter((r) => r.season === 'Kharif' && r.crop === 'rice');
     expect(paddy.points.map((p) => p.y)).toEqual(raw.map((r) => r.production_t));
   });
 });
 
 describe('yearDistribution', () => {
   it('sorts crops by the metric, largest first, and highlights the selection', () => {
-    const bars = yearDistribution(records, 'Kharif', 2023, 'area_share_pct', 'Cotton');
+    const bars = yearDistribution(records, 'Kharif', 2024, 'area_share_pct', 'cotton');
     const values = bars.map((b) => b.value);
     expect(values).toEqual([...values].sort((a, b) => b - a));
-    expect(bars.find((b) => b.key === 'Cotton').highlight).toBe(true);
+    expect(bars.find((b) => b.key === 'cotton').highlight).toBe(true);
     expect(bars.filter((b) => b.highlight === false).length).toBe(bars.length - 1);
     expect(values.reduce((a, b) => a + b, 0)).toBeCloseTo(100, 0);
   });
@@ -62,7 +63,7 @@ describe('monthlyRainSeries', () => {
   });
 
   it('can emphasise another year', () => {
-    expect(monthlyRainSeries(salem.climate.monthly, '2021').selectedYear).toBe(2021);
+    expect(monthlyRainSeries(salem.climate.monthly, '2024').selectedYear).toBe(2024);
   });
 });
 
@@ -76,19 +77,19 @@ describe('exports', () => {
   it('report text uses the backend summary and marks missing values', () => {
     const text = districtReportText(salem);
     expect(text).toContain(salem.summary.text);
-    expect(text).toContain('Agro-climatic zone : Data not available');
+    expect(text).toContain(`Agro-climatic zone : ${OFFICIAL_DATA_NA}`);
     salem.insights.forEach((i) => expect(text).toContain(i.detail));
     expect(text).not.toMatch(/undefined|NaN/);
   });
 });
 
 describe('compareRows', () => {
-  it('shows "Data not available" when a section is missing', () => {
+  it('shows "Official Data Not Available" when a section is missing', () => {
     const noWater = { ...salem, water: { available: false }, soil: { available: false } };
     const rows = compareRows(salem, noWater);
     const storage = rows.find((r) => r.label === 'Lowest seasonal storage');
-    expect(storage.b).toBe('Data not available');
+    expect(storage.b).toBe(OFFICIAL_DATA_NA);
     expect(storage.a).toMatch(/%/);
-    expect(rows.find((r) => r.label === 'Soil fertility index').b).toBe('Data not available');
+    expect(rows.find((r) => r.label === 'Soil fertility index').b).toBe(OFFICIAL_DATA_NA);
   });
 });
