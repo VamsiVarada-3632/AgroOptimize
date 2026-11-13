@@ -1,0 +1,4922 @@
+{
+  "request": {
+    "location": "Salem",
+    "season": "Rabi",
+    "year": 2024,
+    "total_land_ha": 5.0,
+    "preference": "balanced",
+    "save_results": true,
+    "client_id": "ppt-snapshot"
+  },
+  "stages": [
+    {
+      "stage": "Start-up",
+      "ms": 1883.85,
+      "detail": "import app.main (FastAPI app)"
+    },
+    {
+      "stage": "Input validation",
+      "ms": 63.21,
+      "accepted": {
+        "location": "Salem",
+        "season": "Rabi",
+        "year": 2024,
+        "total_land_ha": 5.0,
+        "preference": "balanced",
+        "save_results": true,
+        "client_id": "ppt-snapshot"
+      },
+      "rejected_examples": [
+        {
+          "input": {
+            "location": "Salem",
+            "season": "Rabi",
+            "total_land_ha": -1
+          },
+          "status": 422,
+          "detail": "[{'type': 'greater_than', 'loc': ['body', 'total_land_ha'], 'msg': 'Input should be greater than 0', 'input': -1, 'ctx': {'gt': 0.0}}]"
+        },
+        {
+          "input": {
+            "location": "Salem",
+            "season": "Summer",
+            "total_land_ha": 5.0
+          },
+          "status": 400,
+          "detail": "Unknown season 'Summer'. Choose one of ['Kharif', 'Rabi']."
+        },
+        {
+          "input": {
+            "location": "Pollachi",
+            "season": "Rabi",
+            "total_land_ha": 5.0
+          },
+          "status": 400,
+          "detail": "Pollachi is a taluk of Coimbatore district. The official datasets are published per district, so taluk data is not available; use 'Coimbatore'."
+        }
+      ]
+    },
+    {
+      "stage": "Official dataset loading",
+      "ms": 668.13,
+      "frames_rows": {
+        "crop": 985,
+        "land": 76,
+        "rainfall": 456,
+        "water": 456
+      },
+      "registry": [
+        {
+          "name": "crops_by_district",
+          "filename": "crops_by_district.csv",
+          "report_year": "2024-25",
+          "rows_clean": 12558,
+          "sha256": "67415e6a9ea260ade6897cb47c679c8520c00ed99d9c50a51c69e34207f31f1f"
+        },
+        {
+          "name": "crops_state_series",
+          "filename": "crops_state_series.csv",
+          "report_year": "2024-25",
+          "rows_clean": 3420,
+          "sha256": "e5db6eca1a411dffb390610efac951d835fffa84e42fa9e3dae737ffab285006"
+        },
+        {
+          "name": "land_use",
+          "filename": "land_use.csv",
+          "report_year": "2024-25",
+          "rows_clean": 1833,
+          "sha256": "22a9488e919d8468bc5b7f69de32bfd9d9e240297dcaa1eae0f8208f2e7d9a5b"
+        },
+        {
+          "name": "irrigation",
+          "filename": "irrigation.csv",
+          "report_year": "2024-25",
+          "rows_clean": 8775,
+          "sha256": "49f47e6a1e6086e196e6aabba29c53e382c2e945088b3fafdbab9af4efc79f04"
+        },
+        {
+          "name": "rainfall_by_district",
+          "filename": "rainfall_by_district.csv",
+          "report_year": "2024-25",
+          "rows_clean": 663,
+          "sha256": "e4e98b9e6aeb5f04823212415a991b61ad5dd566decb6b727586a735fa6faf20"
+        },
+        {
+          "name": "ground_water_level",
+          "filename": "ground_water_level.csv",
+          "report_year": "2024-25",
+          "rows_clean": 507,
+          "sha256": "10f22112238a626e0c5f7953190a7417d01b117e731fb86e9a17782275dd4413"
+        },
+        {
+          "name": "reservoir_daily",
+          "filename": "reservoir_daily.csv",
+          "report_year": "2024-25",
+          "rows_clean": 11153,
+          "sha256": "4a2cd24d7c0a3540cfb6215fcf8644d75bba8a69a4adceb7e46d2806cde755b1"
+        },
+        {
+          "name": "msp_extracted",
+          "filename": "msp_extracted.csv",
+          "report_year": "2024-25",
+          "rows_clean": 88,
+          "sha256": "f9891161881d12361e4b90ac9cd5752707ee02b02d8db0831ee88cf0efdeeb06"
+        },
+        {
+          "name": "agronomy_tnau",
+          "filename": "agronomy_tnau.csv",
+          "report_year": "2024-25",
+          "rows_clean": 31,
+          "sha256": "1835903c3c6c41da51831ccad5628d8e2fef20bc705251c8fe0dffa3e46fa97b"
+        },
+        {
+          "name": "soil_health_tn",
+          "filename": "soil_health_tn.csv",
+          "report_year": "2024-25",
+          "rows_clean": 37,
+          "sha256": "d036673888be7260d161656cb299cd595a4366ac3154e909d658407dc6f53127"
+        }
+      ],
+      "disabled_features": [
+        {
+          "feature": "Live weather widget (/api/weather)",
+          "missing_dataset": "IMD district weather: observed temperature, humidity, forecast",
+          "source": "mausam.imd.gov.in",
+          "scope": "weather widget only"
+        },
+        {
+          "feature": "Crop water requirement in mm / irrigation litres (NSGA-II f3)",
+          "missing_dataset": "Crop-wise water requirement (mm) - TNAU guide gives schedules, not totals",
+          "source": "TNAU crop guides (per-crop pages) / Agriculture Dept",
+          "scope": "f3 uses irrigated area share instead"
+        },
+        {
+          "feature": "Fertiliser-price scenarios",
+          "missing_dataset": "Notified fertiliser prices (Dept. of Fertilizers) - not loaded",
+          "source": "fert.nic.in",
+          "scope": "scenario lever only; cost objective uses CACP cost of cultivation"
+        },
+        {
+          "feature": "Labour / pesticide cost, crop duration, sowing & harvest months",
+          "missing_dataset": "Per-crop cultivation calendar and input costs (TNAU / CACP state cost tables)",
+          "source": "TNAU, CACP",
+          "scope": "display fields only"
+        },
+        {
+          "feature": "Crops without TNAU dose or CACP cost (e.g. horticulture, coconut, sugarcane, pulses beyond MSP list)",
+          "missing_dataset": "TNAU horticulture guide doses; MSP/FRP and cost of cultivation for the report year",
+          "source": "agritech.tnau.ac.in/pdf/HORTICULTURE.pdf, CACP",
+          "scope": "crop excluded from candidate lists (reason shown)"
+        },
+        {
+          "feature": "Cotton and rice as optimisation candidates",
+          "missing_dataset": "Official conversion factors: kapas to lint (ginning outturn) and paddy to rice (milling outturn); official yield is lint / rice, MSP and CACP cost are per quintal kapas / paddy",
+          "source": "CACP / Dept. of Agriculture TN / Season & Crop Report notes",
+          "scope": "crop excluded from candidate lists (reason shown); nothing converted with an assumed factor"
+        },
+        {
+          "feature": "Reservoir storage for Kharif 2024 and for districts without a mapped reservoir",
+          "missing_dataset": "Reservoir daily levels before 2025-01-01; district command-area map",
+          "source": "TN Water Resources Dept",
+          "scope": "fuzzy stage skipped for the district/season (yield left unadjusted, flagged)"
+        },
+        {
+          "feature": "District year-on-year trends and multi-year history",
+          "missing_dataset": "Season & Crop Reports of earlier years (district level)",
+          "source": "Dept. of Economics & Statistics TN",
+          "scope": "trend widgets; state-level series is available"
+        },
+        {
+          "feature": "Taluk-level analysis (Pollachi)",
+          "missing_dataset": "Taluk-wise statistics",
+          "source": "Dept. of Economics & Statistics TN",
+          "scope": "Pollachi reported as 'taluk data not available'"
+        }
+      ]
+    },
+    {
+      "stage": "Preprocessing and crop filtering",
+      "ms": 2.92,
+      "district": "Salem",
+      "season": "Rabi",
+      "year": 2024,
+      "rainfall": {
+        "months": [
+          "October",
+          "November",
+          "December",
+          "January",
+          "February"
+        ],
+        "season_actual_mm": 544.8,
+        "season_normal_mm": 341.6,
+        "deviation_pct": 59.48
+      },
+      "water": {
+        "storage_pct": 87.44,
+        "reservoirs": [
+          "Mettur"
+        ]
+      },
+      "soil": {
+        "fertility_index": 30.57,
+        "N": "Low",
+        "P": "Medium",
+        "K": "High"
+      },
+      "candidate_crops": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "excluded_crops": [
+        {
+          "crop": "cotton",
+          "reasons": [
+            "price/yield unit basis differs and no official conversion factor is loaded: official yield is kg of lint/ha; MSP and CACP cost are per quintal of kapas (seed cotton)"
+          ]
+        },
+        {
+          "crop": "cowpea",
+          "reasons": [
+            "no complete TNAU fertiliser recommendation (no TNAU dose for this crop)",
+            "no MSP for the report year in the official MSP notifications"
+          ]
+        },
+        {
+          "crop": "horse gram",
+          "reasons": [
+            "no complete TNAU fertiliser recommendation (no TNAU dose for this crop)",
+            "no MSP for the report year in the official MSP notifications"
+          ]
+        },
+        {
+          "crop": "onion",
+          "reasons": [
+            "no complete TNAU fertiliser recommendation (no TNAU dose for this crop)",
+            "no MSP for the report year in the official MSP notifications"
+          ]
+        },
+        {
+          "crop": "other pulses",
+          "reasons": [
+            "no complete TNAU fertiliser recommendation (no TNAU dose for this crop)",
+            "no MSP for the report year in the official MSP notifications",
+            "irrigated/unirrigated area not reported"
+          ]
+        },
+        {
+          "crop": "rice",
+          "reasons": [
+            "price/yield unit basis differs and no official conversion factor is loaded: official production/yield is in terms of rice; MSP and CACP cost are per quintal of paddy"
+          ]
+        },
+        {
+          "crop": "samai",
+          "reasons": [
+            "no complete TNAU fertiliser recommendation (no TNAU dose for this crop)",
+            "no MSP for the report year in the official MSP notifications"
+          ]
+        },
+        {
+          "crop": "varagu",
+          "reasons": [
+            "no complete TNAU fertiliser recommendation (no TNAU dose for this crop)",
+            "no MSP for the report year in the official MSP notifications"
+          ]
+        }
+      ],
+      "notes": [
+        "Reservoir storage covers 2 of the season's 5 months (the official daily reservoir record starts 2025-01-01).",
+        "Seasons follow the official reports (Kharif/Rabi); rice uses Kar/Kuruvai/Sornavari for Kharif and Samba/Thaladi/Pishanam for Rabi."
+      ]
+    },
+    {
+      "stage": "Fuzzy inference",
+      "ms": 166.34,
+      "model": "official",
+      "assessment": {
+        "yield_confidence": 0.532,
+        "irrigation_risk": 0.12,
+        "rainfall_label": "surplus",
+        "water_label": "high",
+        "soil_label": "medium",
+        "applied": true,
+        "reason": null
+      }
+    },
+    {
+      "stage": "NSGA-II optimisation",
+      "ms": 329.0,
+      "pop_size": 80,
+      "n_gen": 200,
+      "crossover_prob": 0.85,
+      "mutation_prob": 0.12,
+      "pareto_solutions": 80,
+      "quality_metrics": {
+        "reference_front": "front + lower-bound-multiplier copies (non-dominated union)",
+        "pareto_size": 80,
+        "feasible_pareto_size": 80,
+        "constraint_satisfaction_rate": 1.0,
+        "dominated_by_lower_bound_copy": 1.0,
+        "runtime_seconds": 0.3235,
+        "generations": 200,
+        "evaluations": 16000,
+        "mean_objectives": {
+          "yield_tonnes": 11.748043,
+          "cost_rs": 457765.444278,
+          "irrigated_ha": 2.459976,
+          "env_impact_score": 761.762474
+        },
+        "hypervolume": 0.595125,
+        "hypervolume_ratio": 0.876146,
+        "gd": 0.37944,
+        "igd": 0.146445,
+        "igd_plus": 0.115974,
+        "spread": 0.526927,
+        "spacing": 0.119168
+      }
+    },
+    {
+      "stage": "TOPSIS ranking",
+      "plans_ranked": 50,
+      "topsis": {
+        "profile": "balanced",
+        "label": "Balanced",
+        "weights": {
+          "yield": 0.3,
+          "cost": 0.2333333333333333,
+          "water": 0.2333333333333333,
+          "env": 0.2333333333333333,
+          "market_price": 0.0,
+          "income": 0.0,
+          "budget": 0.0,
+          "soil": 0.0,
+          "land": 0.0,
+          "rainfall": 0.0
+        },
+        "criteria": [
+          {
+            "key": "yield",
+            "label": "Yield",
+            "direction": "benefit",
+            "weight": 0.3
+          },
+          {
+            "key": "cost",
+            "label": "Production cost",
+            "direction": "cost",
+            "weight": 0.2333333333333333
+          },
+          {
+            "key": "water",
+            "label": "Irrigated area",
+            "direction": "cost",
+            "weight": 0.2333333333333333
+          },
+          {
+            "key": "env",
+            "label": "Environmental impact",
+            "direction": "cost",
+            "weight": 0.2333333333333333
+          }
+        ],
+        "preference": "balanced",
+        "method": "TOPSIS: min\u2013max normalisation, weighted Euclidean distance to the ideal and anti-ideal plan",
+        "budget_active": false
+      },
+      "top5": [
+        {
+          "rank": 1,
+          "composite_score": 0.6398,
+          "yield_tonnes": 15.776,
+          "cost_rs": 880840.24,
+          "irrigated_ha": 1.244,
+          "env_impact_score": 377.253
+        },
+        {
+          "rank": 2,
+          "composite_score": 0.6354,
+          "yield_tonnes": 13.912,
+          "cost_rs": 771936.08,
+          "irrigated_ha": 1.2,
+          "env_impact_score": 480.851
+        },
+        {
+          "rank": 3,
+          "composite_score": 0.635,
+          "yield_tonnes": 11.947,
+          "cost_rs": 675356.13,
+          "irrigated_ha": 1.449,
+          "env_impact_score": 343.63
+        },
+        {
+          "rank": 4,
+          "composite_score": 0.6266,
+          "yield_tonnes": 17.708,
+          "cost_rs": 535957.8,
+          "irrigated_ha": 3.225,
+          "env_impact_score": 828.497
+        },
+        {
+          "rank": 5,
+          "composite_score": 0.6227,
+          "yield_tonnes": 15.969,
+          "cost_rs": 891155.15,
+          "irrigated_ha": 1.859,
+          "env_impact_score": 379.774
+        }
+      ]
+    },
+    {
+      "stage": "Recommendation",
+      "api_status": 200,
+      "api_ms": 515.84,
+      "run_id": "salem_rabi_2024_20261112T185732Z",
+      "plan": {
+        "crops": [
+          [
+            "ragi",
+            82.46
+          ],
+          [
+            "green gram",
+            17.5
+          ]
+        ],
+        "yield_tonnes": 15.776,
+        "cost_rs": 880840.24,
+        "irrigated_ha": 1.244,
+        "env_impact_score": 377.253,
+        "composite_score": 0.6398,
+        "confidence_label": "Moderate",
+        "trade_off_summary": "High yield, High cost, Low water use, Low environmental impact (confidence: moderate)"
+      }
+    },
+    {
+      "stage": "Explanation",
+      "ms": 34.26,
+      "api_status": 200,
+      "summary": {
+        "recommendation": "Recommended",
+        "confidence_pct": 60.7,
+        "closeness": 0.6398,
+        "crop_mix": [
+          {
+            "crop": "ragi",
+            "share_pct": 82.46,
+            "area_ha": 4.123
+          },
+          {
+            "crop": "green gram",
+            "share_pct": 17.5,
+            "area_ha": 0.875
+          }
+        ]
+      },
+      "sections": [
+        "subject",
+        "summary",
+        "reasons",
+        "objectives",
+        "trade_offs",
+        "constraints",
+        "benefits",
+        "risks",
+        "historical_context",
+        "confidence",
+        "insights",
+        "alternatives",
+        "economics",
+        "crop_breakdown",
+        "consistency_checks",
+        "timeline",
+        "fuzzy_reasoning",
+        "topsis",
+        "crop_evidence"
+      ],
+      "n_reasons": 5,
+      "n_risks": 4,
+      "reasons": [
+        "Best balance for the chosen preference",
+        "High yield",
+        "Low irrigation demand",
+        "Low fertiliser load",
+        "Soil supports the crops"
+      ],
+      "confidence_components": [
+        {
+          "id": "climate_soil",
+          "score": 51.4
+        },
+        {
+          "id": "data_quality",
+          "score": 100.0
+        },
+        {
+          "id": "convergence",
+          "score": 92.7
+        },
+        {
+          "id": "constraints",
+          "score": 100.0
+        },
+        {
+          "id": "historical",
+          "score": 0.0
+        },
+        {
+          "id": "robustness",
+          "score": 20.0
+        }
+      ],
+      "crop_evidence": [
+        {
+          "crop": "ragi",
+          "criteria": [
+            {
+              "id": "rainfall",
+              "status": "supported"
+            },
+            {
+              "id": "soil",
+              "status": "caution"
+            },
+            {
+              "id": "water",
+              "status": "supported"
+            },
+            {
+              "id": "budget",
+              "status": "info"
+            },
+            {
+              "id": "fertiliser",
+              "status": "info"
+            },
+            {
+              "id": "market_price",
+              "status": "unavailable"
+            },
+            {
+              "id": "msp",
+              "status": "supported"
+            },
+            {
+              "id": "duration",
+              "status": "info"
+            },
+            {
+              "id": "yield",
+              "status": "caution"
+            },
+            {
+              "id": "risks",
+              "status": "caution"
+            }
+          ]
+        },
+        {
+          "crop": "green gram",
+          "criteria": [
+            {
+              "id": "rainfall",
+              "status": "supported"
+            },
+            {
+              "id": "soil",
+              "status": "caution"
+            },
+            {
+              "id": "water",
+              "status": "supported"
+            },
+            {
+              "id": "budget",
+              "status": "info"
+            },
+            {
+              "id": "fertiliser",
+              "status": "info"
+            },
+            {
+              "id": "market_price",
+              "status": "unavailable"
+            },
+            {
+              "id": "msp",
+              "status": "supported"
+            },
+            {
+              "id": "duration",
+              "status": "info"
+            },
+            {
+              "id": "yield",
+              "status": "caution"
+            },
+            {
+              "id": "risks",
+              "status": "caution"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "convergence_history": [
+    {
+      "generation": 1,
+      "population_size": 80,
+      "best_yield_tonnes": 15.167,
+      "mean_yield_tonnes": 8.708,
+      "best_cost_rs": 247182.25,
+      "mean_cost_rs": 458624.49,
+      "best_irrigated_ha": 0.817,
+      "mean_irrigated_ha": 1.65,
+      "best_env_impact": 395.706,
+      "mean_env_impact": 645.282,
+      "hypervolume": 0.5526
+    },
+    {
+      "generation": 2,
+      "population_size": 80,
+      "best_yield_tonnes": 15.799,
+      "mean_yield_tonnes": 8.881,
+      "best_cost_rs": 229307.56,
+      "mean_cost_rs": 462780.85,
+      "best_irrigated_ha": 0.817,
+      "mean_irrigated_ha": 1.645,
+      "best_env_impact": 386.175,
+      "mean_env_impact": 652.758,
+      "hypervolume": 0.5716
+    },
+    {
+      "generation": 3,
+      "population_size": 80,
+      "best_yield_tonnes": 17.183,
+      "mean_yield_tonnes": 9.035,
+      "best_cost_rs": 229307.56,
+      "mean_cost_rs": 464856.86,
+      "best_irrigated_ha": 0.812,
+      "mean_irrigated_ha": 1.697,
+      "best_env_impact": 386.175,
+      "mean_env_impact": 641.705,
+      "hypervolume": 0.5891
+    },
+    {
+      "generation": 4,
+      "population_size": 80,
+      "best_yield_tonnes": 17.183,
+      "mean_yield_tonnes": 9.753,
+      "best_cost_rs": 229307.56,
+      "mean_cost_rs": 494108.13,
+      "best_irrigated_ha": 0.812,
+      "mean_irrigated_ha": 1.794,
+      "best_env_impact": 354.471,
+      "mean_env_impact": 654.25,
+      "hypervolume": 0.6051
+    },
+    {
+      "generation": 5,
+      "population_size": 80,
+      "best_yield_tonnes": 17.311,
+      "mean_yield_tonnes": 10.074,
+      "best_cost_rs": 179693.01,
+      "mean_cost_rs": 507442.53,
+      "best_irrigated_ha": 0.807,
+      "mean_irrigated_ha": 1.816,
+      "best_env_impact": 328.693,
+      "mean_env_impact": 652.219,
+      "hypervolume": 0.6289
+    },
+    {
+      "generation": 6,
+      "population_size": 80,
+      "best_yield_tonnes": 17.467,
+      "mean_yield_tonnes": 10.628,
+      "best_cost_rs": 173563.94,
+      "mean_cost_rs": 521646.23,
+      "best_irrigated_ha": 0.648,
+      "mean_irrigated_ha": 1.929,
+      "best_env_impact": 328.693,
+      "mean_env_impact": 658.027,
+      "hypervolume": 0.647
+    },
+    {
+      "generation": 7,
+      "population_size": 80,
+      "best_yield_tonnes": 17.467,
+      "mean_yield_tonnes": 10.626,
+      "best_cost_rs": 170896.73,
+      "mean_cost_rs": 520796.64,
+      "best_irrigated_ha": 0.648,
+      "mean_irrigated_ha": 1.923,
+      "best_env_impact": 328.693,
+      "mean_env_impact": 659.839,
+      "hypervolume": 0.6542
+    },
+    {
+      "generation": 8,
+      "population_size": 80,
+      "best_yield_tonnes": 17.515,
+      "mean_yield_tonnes": 10.64,
+      "best_cost_rs": 170896.73,
+      "mean_cost_rs": 503502.33,
+      "best_irrigated_ha": 0.629,
+      "mean_irrigated_ha": 2.013,
+      "best_env_impact": 327.366,
+      "mean_env_impact": 681.138,
+      "hypervolume": 0.6495
+    },
+    {
+      "generation": 9,
+      "population_size": 80,
+      "best_yield_tonnes": 17.857,
+      "mean_yield_tonnes": 10.941,
+      "best_cost_rs": 129895.74,
+      "mean_cost_rs": 514132.93,
+      "best_irrigated_ha": 0.623,
+      "mean_irrigated_ha": 2.042,
+      "best_env_impact": 327.366,
+      "mean_env_impact": 713.861,
+      "hypervolume": 0.6617
+    },
+    {
+      "generation": 10,
+      "population_size": 80,
+      "best_yield_tonnes": 17.857,
+      "mean_yield_tonnes": 10.39,
+      "best_cost_rs": 129895.74,
+      "mean_cost_rs": 504056.49,
+      "best_irrigated_ha": 0.407,
+      "mean_irrigated_ha": 1.927,
+      "best_env_impact": 305.84,
+      "mean_env_impact": 695.062,
+      "hypervolume": 0.6621
+    },
+    {
+      "generation": 11,
+      "population_size": 80,
+      "best_yield_tonnes": 17.857,
+      "mean_yield_tonnes": 11.027,
+      "best_cost_rs": 109543.0,
+      "mean_cost_rs": 528173.07,
+      "best_irrigated_ha": 0.403,
+      "mean_irrigated_ha": 2.023,
+      "best_env_impact": 291.717,
+      "mean_env_impact": 714.55,
+      "hypervolume": 0.6781
+    },
+    {
+      "generation": 12,
+      "population_size": 80,
+      "best_yield_tonnes": 18.18,
+      "mean_yield_tonnes": 10.719,
+      "best_cost_rs": 105594.67,
+      "mean_cost_rs": 514762.33,
+      "best_irrigated_ha": 0.344,
+      "mean_irrigated_ha": 1.955,
+      "best_env_impact": 289.036,
+      "mean_env_impact": 716.87,
+      "hypervolume": 0.6923
+    },
+    {
+      "generation": 13,
+      "population_size": 80,
+      "best_yield_tonnes": 18.408,
+      "mean_yield_tonnes": 10.75,
+      "best_cost_rs": 104955.96,
+      "mean_cost_rs": 506212.48,
+      "best_irrigated_ha": 0.339,
+      "mean_irrigated_ha": 1.984,
+      "best_env_impact": 270.48,
+      "mean_env_impact": 725.547,
+      "hypervolume": 0.7037
+    },
+    {
+      "generation": 14,
+      "population_size": 80,
+      "best_yield_tonnes": 18.711,
+      "mean_yield_tonnes": 10.815,
+      "best_cost_rs": 104501.41,
+      "mean_cost_rs": 499880.08,
+      "best_irrigated_ha": 0.213,
+      "mean_irrigated_ha": 2.07,
+      "best_env_impact": 230.342,
+      "mean_env_impact": 720.579,
+      "hypervolume": 0.708
+    },
+    {
+      "generation": 15,
+      "population_size": 80,
+      "best_yield_tonnes": 18.711,
+      "mean_yield_tonnes": 11.172,
+      "best_cost_rs": 104501.41,
+      "mean_cost_rs": 509088.61,
+      "best_irrigated_ha": 0.213,
+      "mean_irrigated_ha": 2.162,
+      "best_env_impact": 230.342,
+      "mean_env_impact": 711.457,
+      "hypervolume": 0.7092
+    },
+    {
+      "generation": 16,
+      "population_size": 80,
+      "best_yield_tonnes": 18.711,
+      "mean_yield_tonnes": 10.961,
+      "best_cost_rs": 104501.41,
+      "mean_cost_rs": 510009.54,
+      "best_irrigated_ha": 0.213,
+      "mean_irrigated_ha": 2.085,
+      "best_env_impact": 230.01,
+      "mean_env_impact": 687.993,
+      "hypervolume": 0.7236
+    },
+    {
+      "generation": 17,
+      "population_size": 80,
+      "best_yield_tonnes": 18.87,
+      "mean_yield_tonnes": 11.443,
+      "best_cost_rs": 104501.41,
+      "mean_cost_rs": 519092.2,
+      "best_irrigated_ha": 0.213,
+      "mean_irrigated_ha": 2.179,
+      "best_env_impact": 186.837,
+      "mean_env_impact": 702.979,
+      "hypervolume": 0.738
+    },
+    {
+      "generation": 18,
+      "population_size": 80,
+      "best_yield_tonnes": 18.87,
+      "mean_yield_tonnes": 10.688,
+      "best_cost_rs": 103313.31,
+      "mean_cost_rs": 469561.16,
+      "best_irrigated_ha": 0.211,
+      "mean_irrigated_ha": 2.136,
+      "best_env_impact": 186.837,
+      "mean_env_impact": 681.314,
+      "hypervolume": 0.7313
+    },
+    {
+      "generation": 19,
+      "population_size": 80,
+      "best_yield_tonnes": 18.887,
+      "mean_yield_tonnes": 11.438,
+      "best_cost_rs": 103313.31,
+      "mean_cost_rs": 501028.84,
+      "best_irrigated_ha": 0.211,
+      "mean_irrigated_ha": 2.233,
+      "best_env_impact": 186.837,
+      "mean_env_impact": 698.664,
+      "hypervolume": 0.7304
+    },
+    {
+      "generation": 20,
+      "population_size": 80,
+      "best_yield_tonnes": 18.887,
+      "mean_yield_tonnes": 11.188,
+      "best_cost_rs": 103313.31,
+      "mean_cost_rs": 480156.75,
+      "best_irrigated_ha": 0.211,
+      "mean_irrigated_ha": 2.208,
+      "best_env_impact": 186.837,
+      "mean_env_impact": 693.37,
+      "hypervolume": 0.7351
+    },
+    {
+      "generation": 21,
+      "population_size": 80,
+      "best_yield_tonnes": 18.887,
+      "mean_yield_tonnes": 11.343,
+      "best_cost_rs": 103313.19,
+      "mean_cost_rs": 474378.51,
+      "best_irrigated_ha": 0.211,
+      "mean_irrigated_ha": 2.28,
+      "best_env_impact": 183.502,
+      "mean_env_impact": 699.951,
+      "hypervolume": 0.7423
+    },
+    {
+      "generation": 22,
+      "population_size": 80,
+      "best_yield_tonnes": 18.887,
+      "mean_yield_tonnes": 11.509,
+      "best_cost_rs": 103313.19,
+      "mean_cost_rs": 481912.68,
+      "best_irrigated_ha": 0.211,
+      "mean_irrigated_ha": 2.282,
+      "best_env_impact": 183.502,
+      "mean_env_impact": 701.868,
+      "hypervolume": 0.7437
+    },
+    {
+      "generation": 23,
+      "population_size": 80,
+      "best_yield_tonnes": 18.959,
+      "mean_yield_tonnes": 12.132,
+      "best_cost_rs": 102576.38,
+      "mean_cost_rs": 513950.01,
+      "best_irrigated_ha": 0.205,
+      "mean_irrigated_ha": 2.376,
+      "best_env_impact": 181.696,
+      "mean_env_impact": 710.986,
+      "hypervolume": 0.7446
+    },
+    {
+      "generation": 24,
+      "population_size": 80,
+      "best_yield_tonnes": 18.959,
+      "mean_yield_tonnes": 11.469,
+      "best_cost_rs": 75873.26,
+      "mean_cost_rs": 499091.17,
+      "best_irrigated_ha": 0.117,
+      "mean_irrigated_ha": 2.204,
+      "best_env_impact": 181.696,
+      "mean_env_impact": 681.366,
+      "hypervolume": 0.7465
+    },
+    {
+      "generation": 25,
+      "population_size": 80,
+      "best_yield_tonnes": 18.974,
+      "mean_yield_tonnes": 11.002,
+      "best_cost_rs": 75873.26,
+      "mean_cost_rs": 470191.67,
+      "best_irrigated_ha": 0.117,
+      "mean_irrigated_ha": 2.161,
+      "best_env_impact": 181.696,
+      "mean_env_impact": 689.269,
+      "hypervolume": 0.7479
+    },
+    {
+      "generation": 26,
+      "population_size": 80,
+      "best_yield_tonnes": 18.974,
+      "mean_yield_tonnes": 10.67,
+      "best_cost_rs": 75873.26,
+      "mean_cost_rs": 448136.66,
+      "best_irrigated_ha": 0.117,
+      "mean_irrigated_ha": 2.155,
+      "best_env_impact": 181.696,
+      "mean_env_impact": 685.547,
+      "hypervolume": 0.7558
+    },
+    {
+      "generation": 27,
+      "population_size": 80,
+      "best_yield_tonnes": 18.987,
+      "mean_yield_tonnes": 11.451,
+      "best_cost_rs": 75873.26,
+      "mean_cost_rs": 482677.7,
+      "best_irrigated_ha": 0.117,
+      "mean_irrigated_ha": 2.26,
+      "best_env_impact": 181.468,
+      "mean_env_impact": 717.523,
+      "hypervolume": 0.7649
+    },
+    {
+      "generation": 28,
+      "population_size": 80,
+      "best_yield_tonnes": 18.987,
+      "mean_yield_tonnes": 11.003,
+      "best_cost_rs": 75873.26,
+      "mean_cost_rs": 479967.97,
+      "best_irrigated_ha": 0.117,
+      "mean_irrigated_ha": 2.101,
+      "best_env_impact": 181.468,
+      "mean_env_impact": 679.627,
+      "hypervolume": 0.7726
+    },
+    {
+      "generation": 29,
+      "population_size": 80,
+      "best_yield_tonnes": 18.987,
+      "mean_yield_tonnes": 11.641,
+      "best_cost_rs": 75573.01,
+      "mean_cost_rs": 493047.29,
+      "best_irrigated_ha": 0.117,
+      "mean_irrigated_ha": 2.265,
+      "best_env_impact": 181.468,
+      "mean_env_impact": 705.352,
+      "hypervolume": 0.7673
+    },
+    {
+      "generation": 30,
+      "population_size": 80,
+      "best_yield_tonnes": 18.987,
+      "mean_yield_tonnes": 11.364,
+      "best_cost_rs": 75547.61,
+      "mean_cost_rs": 490746.14,
+      "best_irrigated_ha": 0.117,
+      "mean_irrigated_ha": 2.22,
+      "best_env_impact": 179.823,
+      "mean_env_impact": 668.851,
+      "hypervolume": 0.7774
+    },
+    {
+      "generation": 31,
+      "population_size": 80,
+      "best_yield_tonnes": 18.987,
+      "mean_yield_tonnes": 11.64,
+      "best_cost_rs": 75547.61,
+      "mean_cost_rs": 492872.85,
+      "best_irrigated_ha": 0.117,
+      "mean_irrigated_ha": 2.297,
+      "best_env_impact": 179.823,
+      "mean_env_impact": 683.649,
+      "hypervolume": 0.7477
+    },
+    {
+      "generation": 32,
+      "population_size": 80,
+      "best_yield_tonnes": 18.987,
+      "mean_yield_tonnes": 11.807,
+      "best_cost_rs": 72921.21,
+      "mean_cost_rs": 506825.66,
+      "best_irrigated_ha": 0.117,
+      "mean_irrigated_ha": 2.296,
+      "best_env_impact": 179.823,
+      "mean_env_impact": 692.701,
+      "hypervolume": 0.7475
+    },
+    {
+      "generation": 33,
+      "population_size": 80,
+      "best_yield_tonnes": 18.987,
+      "mean_yield_tonnes": 11.573,
+      "best_cost_rs": 72217.99,
+      "mean_cost_rs": 489356.62,
+      "best_irrigated_ha": 0.117,
+      "mean_irrigated_ha": 2.266,
+      "best_env_impact": 179.823,
+      "mean_env_impact": 668.522,
+      "hypervolume": 0.7705
+    },
+    {
+      "generation": 34,
+      "population_size": 80,
+      "best_yield_tonnes": 18.987,
+      "mean_yield_tonnes": 10.709,
+      "best_cost_rs": 72217.99,
+      "mean_cost_rs": 442953.65,
+      "best_irrigated_ha": 0.105,
+      "mean_irrigated_ha": 2.199,
+      "best_env_impact": 175.604,
+      "mean_env_impact": 660.56,
+      "hypervolume": 0.7619
+    },
+    {
+      "generation": 35,
+      "population_size": 80,
+      "best_yield_tonnes": 18.987,
+      "mean_yield_tonnes": 11.819,
+      "best_cost_rs": 72217.99,
+      "mean_cost_rs": 479127.21,
+      "best_irrigated_ha": 0.105,
+      "mean_irrigated_ha": 2.409,
+      "best_env_impact": 175.604,
+      "mean_env_impact": 722.725,
+      "hypervolume": 0.7719
+    },
+    {
+      "generation": 36,
+      "population_size": 80,
+      "best_yield_tonnes": 18.987,
+      "mean_yield_tonnes": 11.767,
+      "best_cost_rs": 72217.91,
+      "mean_cost_rs": 494209.28,
+      "best_irrigated_ha": 0.105,
+      "mean_irrigated_ha": 2.294,
+      "best_env_impact": 175.604,
+      "mean_env_impact": 680.314,
+      "hypervolume": 0.7847
+    },
+    {
+      "generation": 37,
+      "population_size": 80,
+      "best_yield_tonnes": 18.987,
+      "mean_yield_tonnes": 11.721,
+      "best_cost_rs": 72217.91,
+      "mean_cost_rs": 480260.23,
+      "best_irrigated_ha": 0.105,
+      "mean_irrigated_ha": 2.31,
+      "best_env_impact": 175.604,
+      "mean_env_impact": 680.881,
+      "hypervolume": 0.7973
+    },
+    {
+      "generation": 38,
+      "population_size": 80,
+      "best_yield_tonnes": 18.987,
+      "mean_yield_tonnes": 11.599,
+      "best_cost_rs": 72204.83,
+      "mean_cost_rs": 463715.92,
+      "best_irrigated_ha": 0.103,
+      "mean_irrigated_ha": 2.348,
+      "best_env_impact": 175.604,
+      "mean_env_impact": 693.733,
+      "hypervolume": 0.7927
+    },
+    {
+      "generation": 39,
+      "population_size": 80,
+      "best_yield_tonnes": 18.987,
+      "mean_yield_tonnes": 12.483,
+      "best_cost_rs": 72204.83,
+      "mean_cost_rs": 504856.94,
+      "best_irrigated_ha": 0.089,
+      "mean_irrigated_ha": 2.472,
+      "best_env_impact": 175.604,
+      "mean_env_impact": 738.628,
+      "hypervolume": 0.7744
+    },
+    {
+      "generation": 40,
+      "population_size": 80,
+      "best_yield_tonnes": 18.987,
+      "mean_yield_tonnes": 11.216,
+      "best_cost_rs": 72204.83,
+      "mean_cost_rs": 457499.34,
+      "best_irrigated_ha": 0.089,
+      "mean_irrigated_ha": 2.27,
+      "best_env_impact": 175.604,
+      "mean_env_impact": 695.484,
+      "hypervolume": 0.7676
+    },
+    {
+      "generation": 41,
+      "population_size": 80,
+      "best_yield_tonnes": 18.987,
+      "mean_yield_tonnes": 12.062,
+      "best_cost_rs": 72204.83,
+      "mean_cost_rs": 490795.96,
+      "best_irrigated_ha": 0.089,
+      "mean_irrigated_ha": 2.369,
+      "best_env_impact": 175.604,
+      "mean_env_impact": 728.758,
+      "hypervolume": 0.7703
+    },
+    {
+      "generation": 42,
+      "population_size": 80,
+      "best_yield_tonnes": 18.987,
+      "mean_yield_tonnes": 11.82,
+      "best_cost_rs": 72204.83,
+      "mean_cost_rs": 479326.23,
+      "best_irrigated_ha": 0.089,
+      "mean_irrigated_ha": 2.335,
+      "best_env_impact": 175.6,
+      "mean_env_impact": 714.031,
+      "hypervolume": 0.7666
+    },
+    {
+      "generation": 43,
+      "population_size": 80,
+      "best_yield_tonnes": 18.987,
+      "mean_yield_tonnes": 12.339,
+      "best_cost_rs": 72204.83,
+      "mean_cost_rs": 507279.37,
+      "best_irrigated_ha": 0.089,
+      "mean_irrigated_ha": 2.4,
+      "best_env_impact": 175.6,
+      "mean_env_impact": 727.415,
+      "hypervolume": 0.7636
+    },
+    {
+      "generation": 44,
+      "population_size": 80,
+      "best_yield_tonnes": 18.987,
+      "mean_yield_tonnes": 11.514,
+      "best_cost_rs": 72071.01,
+      "mean_cost_rs": 456190.15,
+      "best_irrigated_ha": 0.089,
+      "mean_irrigated_ha": 2.327,
+      "best_env_impact": 175.6,
+      "mean_env_impact": 713.254,
+      "hypervolume": 0.7603
+    },
+    {
+      "generation": 45,
+      "population_size": 80,
+      "best_yield_tonnes": 18.987,
+      "mean_yield_tonnes": 11.699,
+      "best_cost_rs": 72032.59,
+      "mean_cost_rs": 466461.27,
+      "best_irrigated_ha": 0.089,
+      "mean_irrigated_ha": 2.393,
+      "best_env_impact": 175.55,
+      "mean_env_impact": 715.888,
+      "hypervolume": 0.7586
+    },
+    {
+      "generation": 46,
+      "population_size": 80,
+      "best_yield_tonnes": 18.987,
+      "mean_yield_tonnes": 12.056,
+      "best_cost_rs": 72032.59,
+      "mean_cost_rs": 482237.64,
+      "best_irrigated_ha": 0.089,
+      "mean_irrigated_ha": 2.477,
+      "best_env_impact": 175.55,
+      "mean_env_impact": 750.303,
+      "hypervolume": 0.7526
+    },
+    {
+      "generation": 47,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.332,
+      "best_cost_rs": 71996.11,
+      "mean_cost_rs": 494055.84,
+      "best_irrigated_ha": 0.089,
+      "mean_irrigated_ha": 2.483,
+      "best_env_impact": 175.328,
+      "mean_env_impact": 738.754,
+      "hypervolume": 0.7675
+    },
+    {
+      "generation": 48,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.251,
+      "best_cost_rs": 71996.11,
+      "mean_cost_rs": 483996.61,
+      "best_irrigated_ha": 0.089,
+      "mean_irrigated_ha": 2.477,
+      "best_env_impact": 175.328,
+      "mean_env_impact": 743.259,
+      "hypervolume": 0.7646
+    },
+    {
+      "generation": 49,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.993,
+      "best_cost_rs": 71996.11,
+      "mean_cost_rs": 466818.93,
+      "best_irrigated_ha": 0.089,
+      "mean_irrigated_ha": 2.493,
+      "best_env_impact": 175.328,
+      "mean_env_impact": 739.516,
+      "hypervolume": 0.7783
+    },
+    {
+      "generation": 50,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.08,
+      "best_cost_rs": 71996.05,
+      "mean_cost_rs": 480297.5,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.487,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 723.556,
+      "hypervolume": 0.7721
+    },
+    {
+      "generation": 51,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.355,
+      "best_cost_rs": 71996.05,
+      "mean_cost_rs": 479989.02,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.613,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 762.58,
+      "hypervolume": 0.7658
+    },
+    {
+      "generation": 52,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.882,
+      "best_cost_rs": 71995.96,
+      "mean_cost_rs": 482152.07,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.381,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 723.764,
+      "hypervolume": 0.7771
+    },
+    {
+      "generation": 53,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.302,
+      "best_cost_rs": 71995.96,
+      "mean_cost_rs": 501821.33,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.462,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 720.946,
+      "hypervolume": 0.7723
+    },
+    {
+      "generation": 54,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.544,
+      "best_cost_rs": 71995.96,
+      "mean_cost_rs": 481948.22,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.262,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 687.066,
+      "hypervolume": 0.7741
+    },
+    {
+      "generation": 55,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.065,
+      "best_cost_rs": 71995.96,
+      "mean_cost_rs": 493939.95,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.377,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 740.139,
+      "hypervolume": 0.7643
+    },
+    {
+      "generation": 56,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.856,
+      "best_cost_rs": 71995.96,
+      "mean_cost_rs": 475938.13,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.358,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 731.237,
+      "hypervolume": 0.7708
+    },
+    {
+      "generation": 57,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.633,
+      "best_cost_rs": 71995.96,
+      "mean_cost_rs": 501318.93,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.557,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 786.488,
+      "hypervolume": 0.764
+    },
+    {
+      "generation": 58,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.194,
+      "best_cost_rs": 71995.96,
+      "mean_cost_rs": 497113.13,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.414,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 736.478,
+      "hypervolume": 0.7786
+    },
+    {
+      "generation": 59,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.299,
+      "best_cost_rs": 71995.92,
+      "mean_cost_rs": 492939.53,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.477,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 755.493,
+      "hypervolume": 0.7741
+    },
+    {
+      "generation": 60,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.157,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 497461.48,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.441,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 735.521,
+      "hypervolume": 0.77
+    },
+    {
+      "generation": 61,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.57,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 504253.5,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.558,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 770.774,
+      "hypervolume": 0.7689
+    },
+    {
+      "generation": 62,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.911,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 479989.37,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.451,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 727.391,
+      "hypervolume": 0.7625
+    },
+    {
+      "generation": 63,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.255,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 482848.14,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.588,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 749.177,
+      "hypervolume": 0.7655
+    },
+    {
+      "generation": 64,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.46,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 461640.33,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.417,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 723.101,
+      "hypervolume": 0.7683
+    },
+    {
+      "generation": 65,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.343,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 498086.2,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.524,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 748.053,
+      "hypervolume": 0.7708
+    },
+    {
+      "generation": 66,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.769,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 458648.16,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.516,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 744.935,
+      "hypervolume": 0.7734
+    },
+    {
+      "generation": 67,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.532,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 501429.19,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.617,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 733.696,
+      "hypervolume": 0.7711
+    },
+    {
+      "generation": 68,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.962,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 483085.96,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.482,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 692.206,
+      "hypervolume": 0.7867
+    },
+    {
+      "generation": 69,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.313,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 490396.26,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.576,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 732.916,
+      "hypervolume": 0.7807
+    },
+    {
+      "generation": 70,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.904,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 476602.02,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.537,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 729.563,
+      "hypervolume": 0.7744
+    },
+    {
+      "generation": 71,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.893,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 461180.94,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.563,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 744.693,
+      "hypervolume": 0.7772
+    },
+    {
+      "generation": 72,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.577,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 452543.25,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.461,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 744.705,
+      "hypervolume": 0.778
+    },
+    {
+      "generation": 73,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.722,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 468522.34,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.422,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 750.393,
+      "hypervolume": 0.7803
+    },
+    {
+      "generation": 74,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.562,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 445408.18,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.518,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 793.252,
+      "hypervolume": 0.7706
+    },
+    {
+      "generation": 75,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.028,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 474177.84,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.573,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 785.18,
+      "hypervolume": 0.7726
+    },
+    {
+      "generation": 76,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.301,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 482216.2,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.623,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 815.626,
+      "hypervolume": 0.7689
+    },
+    {
+      "generation": 77,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.606,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 450245.26,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.535,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 777.899,
+      "hypervolume": 0.7728
+    },
+    {
+      "generation": 78,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.458,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 453990.11,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.445,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 772.791,
+      "hypervolume": 0.7644
+    },
+    {
+      "generation": 79,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.271,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 485160.85,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.611,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 788.231,
+      "hypervolume": 0.7638
+    },
+    {
+      "generation": 80,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.656,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 468011.25,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.471,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 754.722,
+      "hypervolume": 0.7703
+    },
+    {
+      "generation": 81,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.998,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 485770.0,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.535,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 757.749,
+      "hypervolume": 0.7762
+    },
+    {
+      "generation": 82,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.665,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 470587.99,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.465,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 754.708,
+      "hypervolume": 0.7703
+    },
+    {
+      "generation": 83,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.94,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 469498.79,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.579,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 792.125,
+      "hypervolume": 0.7638
+    },
+    {
+      "generation": 84,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.459,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 465760.7,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.403,
+      "best_env_impact": 175.187,
+      "mean_env_impact": 752.659,
+      "hypervolume": 0.7682
+    },
+    {
+      "generation": 85,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.163,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 492078.36,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.531,
+      "best_env_impact": 175.186,
+      "mean_env_impact": 799.704,
+      "hypervolume": 0.7717
+    },
+    {
+      "generation": 86,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.668,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 470225.38,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.452,
+      "best_env_impact": 175.186,
+      "mean_env_impact": 770.527,
+      "hypervolume": 0.7764
+    },
+    {
+      "generation": 87,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.897,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 480758.05,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.46,
+      "best_env_impact": 175.186,
+      "mean_env_impact": 768.136,
+      "hypervolume": 0.7801
+    },
+    {
+      "generation": 88,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.366,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 449436.7,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.433,
+      "best_env_impact": 175.186,
+      "mean_env_impact": 771.147,
+      "hypervolume": 0.7703
+    },
+    {
+      "generation": 89,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.197,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 451700.93,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.338,
+      "best_env_impact": 175.186,
+      "mean_env_impact": 756.761,
+      "hypervolume": 0.78
+    },
+    {
+      "generation": 90,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.06,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 482413.41,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.518,
+      "best_env_impact": 175.186,
+      "mean_env_impact": 791.474,
+      "hypervolume": 0.7854
+    },
+    {
+      "generation": 91,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.693,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 474078.93,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.483,
+      "best_env_impact": 175.186,
+      "mean_env_impact": 771.735,
+      "hypervolume": 0.7781
+    },
+    {
+      "generation": 92,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.299,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 504296.75,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.592,
+      "best_env_impact": 175.186,
+      "mean_env_impact": 768.653,
+      "hypervolume": 0.7823
+    },
+    {
+      "generation": 93,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.196,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 494384.26,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.586,
+      "best_env_impact": 175.186,
+      "mean_env_impact": 771.508,
+      "hypervolume": 0.7937
+    },
+    {
+      "generation": 94,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.615,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 479630.95,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.461,
+      "best_env_impact": 175.186,
+      "mean_env_impact": 743.343,
+      "hypervolume": 0.7883
+    },
+    {
+      "generation": 95,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.395,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 494135.82,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.694,
+      "best_env_impact": 175.186,
+      "mean_env_impact": 803.576,
+      "hypervolume": 0.7829
+    },
+    {
+      "generation": 96,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.143,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 478916.75,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.674,
+      "best_env_impact": 175.186,
+      "mean_env_impact": 794.714,
+      "hypervolume": 0.7832
+    },
+    {
+      "generation": 97,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.096,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 478076.67,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.64,
+      "best_env_impact": 175.184,
+      "mean_env_impact": 783.261,
+      "hypervolume": 0.7774
+    },
+    {
+      "generation": 98,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.923,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 472100.46,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.553,
+      "best_env_impact": 175.183,
+      "mean_env_impact": 734.072,
+      "hypervolume": 0.785
+    },
+    {
+      "generation": 99,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.921,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 468989.66,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.635,
+      "best_env_impact": 175.183,
+      "mean_env_impact": 755.497,
+      "hypervolume": 0.7828
+    },
+    {
+      "generation": 100,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.814,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 477964.5,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.488,
+      "best_env_impact": 175.181,
+      "mean_env_impact": 725.311,
+      "hypervolume": 0.7783
+    },
+    {
+      "generation": 101,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.888,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 519360.6,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.691,
+      "best_env_impact": 175.181,
+      "mean_env_impact": 787.136,
+      "hypervolume": 0.7789
+    },
+    {
+      "generation": 102,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.383,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 501414.22,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.575,
+      "best_env_impact": 175.181,
+      "mean_env_impact": 757.474,
+      "hypervolume": 0.7654
+    },
+    {
+      "generation": 103,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.113,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 490320.39,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.537,
+      "best_env_impact": 175.181,
+      "mean_env_impact": 745.416,
+      "hypervolume": 0.7749
+    },
+    {
+      "generation": 104,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.405,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 448300.36,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.518,
+      "best_env_impact": 175.181,
+      "mean_env_impact": 738.945,
+      "hypervolume": 0.7899
+    },
+    {
+      "generation": 105,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.087,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 477482.79,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.652,
+      "best_env_impact": 175.181,
+      "mean_env_impact": 756.318,
+      "hypervolume": 0.7886
+    },
+    {
+      "generation": 106,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.111,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 475739.47,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.687,
+      "best_env_impact": 175.181,
+      "mean_env_impact": 767.088,
+      "hypervolume": 0.7889
+    },
+    {
+      "generation": 107,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.695,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 465997.44,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.596,
+      "best_env_impact": 175.181,
+      "mean_env_impact": 764.396,
+      "hypervolume": 0.7944
+    },
+    {
+      "generation": 108,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.002,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 486314.18,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.565,
+      "best_env_impact": 175.18,
+      "mean_env_impact": 759.627,
+      "hypervolume": 0.7976
+    },
+    {
+      "generation": 109,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.146,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 503476.16,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.513,
+      "best_env_impact": 175.18,
+      "mean_env_impact": 745.762,
+      "hypervolume": 0.7992
+    },
+    {
+      "generation": 110,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.283,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 505572.86,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.561,
+      "best_env_impact": 175.18,
+      "mean_env_impact": 740.53,
+      "hypervolume": 0.7961
+    },
+    {
+      "generation": 111,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.878,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 478439.87,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.5,
+      "best_env_impact": 175.18,
+      "mean_env_impact": 738.59,
+      "hypervolume": 0.8043
+    },
+    {
+      "generation": 112,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.533,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 518416.44,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.602,
+      "best_env_impact": 175.18,
+      "mean_env_impact": 726.105,
+      "hypervolume": 0.8035
+    },
+    {
+      "generation": 113,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.655,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 511014.66,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.682,
+      "best_env_impact": 175.18,
+      "mean_env_impact": 761.24,
+      "hypervolume": 0.7958
+    },
+    {
+      "generation": 114,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.038,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 504447.48,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.435,
+      "best_env_impact": 175.18,
+      "mean_env_impact": 704.855,
+      "hypervolume": 0.8036
+    },
+    {
+      "generation": 115,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.543,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 477213.95,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.4,
+      "best_env_impact": 175.18,
+      "mean_env_impact": 712.668,
+      "hypervolume": 0.7988
+    },
+    {
+      "generation": 116,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.858,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 474403.66,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.577,
+      "best_env_impact": 175.18,
+      "mean_env_impact": 760.212,
+      "hypervolume": 0.792
+    },
+    {
+      "generation": 117,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.652,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 470873.99,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.466,
+      "best_env_impact": 175.18,
+      "mean_env_impact": 713.452,
+      "hypervolume": 0.8013
+    },
+    {
+      "generation": 118,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.458,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 453636.74,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.512,
+      "best_env_impact": 175.18,
+      "mean_env_impact": 731.702,
+      "hypervolume": 0.8008
+    },
+    {
+      "generation": 119,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.738,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 461594.92,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.574,
+      "best_env_impact": 175.18,
+      "mean_env_impact": 722.857,
+      "hypervolume": 0.7953
+    },
+    {
+      "generation": 120,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.116,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 484942.31,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.606,
+      "best_env_impact": 175.175,
+      "mean_env_impact": 743.925,
+      "hypervolume": 0.7813
+    },
+    {
+      "generation": 121,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.086,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 487666.25,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.508,
+      "best_env_impact": 175.175,
+      "mean_env_impact": 726.349,
+      "hypervolume": 0.7922
+    },
+    {
+      "generation": 122,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.39,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 494024.22,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.546,
+      "best_env_impact": 175.175,
+      "mean_env_impact": 751.905,
+      "hypervolume": 0.7839
+    },
+    {
+      "generation": 123,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.018,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 489255.49,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.393,
+      "best_env_impact": 175.175,
+      "mean_env_impact": 741.681,
+      "hypervolume": 0.7994
+    },
+    {
+      "generation": 124,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.44,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 499845.39,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.508,
+      "best_env_impact": 175.175,
+      "mean_env_impact": 765.338,
+      "hypervolume": 0.7986
+    },
+    {
+      "generation": 125,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.908,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 492251.81,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.39,
+      "best_env_impact": 175.175,
+      "mean_env_impact": 749.113,
+      "hypervolume": 0.7943
+    },
+    {
+      "generation": 126,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.05,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 496214.53,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.433,
+      "best_env_impact": 175.175,
+      "mean_env_impact": 754.149,
+      "hypervolume": 0.7875
+    },
+    {
+      "generation": 127,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.966,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 491813.94,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.473,
+      "best_env_impact": 175.175,
+      "mean_env_impact": 726.903,
+      "hypervolume": 0.7881
+    },
+    {
+      "generation": 128,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.081,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 483435.93,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.525,
+      "best_env_impact": 175.175,
+      "mean_env_impact": 753.107,
+      "hypervolume": 0.7875
+    },
+    {
+      "generation": 129,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.087,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 487885.6,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.508,
+      "best_env_impact": 175.175,
+      "mean_env_impact": 732.433,
+      "hypervolume": 0.7872
+    },
+    {
+      "generation": 130,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.48,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 461720.14,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.359,
+      "best_env_impact": 175.175,
+      "mean_env_impact": 711.589,
+      "hypervolume": 0.7947
+    },
+    {
+      "generation": 131,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.296,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 456317.67,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.329,
+      "best_env_impact": 175.175,
+      "mean_env_impact": 738.095,
+      "hypervolume": 0.7954
+    },
+    {
+      "generation": 132,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.591,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 454248.93,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.426,
+      "best_env_impact": 175.175,
+      "mean_env_impact": 777.562,
+      "hypervolume": 0.7902
+    },
+    {
+      "generation": 133,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.466,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 443306.45,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.422,
+      "best_env_impact": 175.175,
+      "mean_env_impact": 789.248,
+      "hypervolume": 0.7987
+    },
+    {
+      "generation": 134,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.39,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 436636.3,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.414,
+      "best_env_impact": 175.175,
+      "mean_env_impact": 815.565,
+      "hypervolume": 0.791
+    },
+    {
+      "generation": 135,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.898,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 465856.53,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.448,
+      "best_env_impact": 175.175,
+      "mean_env_impact": 793.601,
+      "hypervolume": 0.7982
+    },
+    {
+      "generation": 136,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.715,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 457599.8,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.426,
+      "best_env_impact": 175.175,
+      "mean_env_impact": 804.058,
+      "hypervolume": 0.7963
+    },
+    {
+      "generation": 137,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.024,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 455848.04,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.549,
+      "best_env_impact": 175.175,
+      "mean_env_impact": 813.131,
+      "hypervolume": 0.802
+    },
+    {
+      "generation": 138,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.677,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 470422.41,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.376,
+      "best_env_impact": 175.175,
+      "mean_env_impact": 743.688,
+      "hypervolume": 0.7878
+    },
+    {
+      "generation": 139,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.543,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 445548.78,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.467,
+      "best_env_impact": 175.175,
+      "mean_env_impact": 781.647,
+      "hypervolume": 0.7809
+    },
+    {
+      "generation": 140,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.712,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 462899.66,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.442,
+      "best_env_impact": 175.175,
+      "mean_env_impact": 748.138,
+      "hypervolume": 0.7784
+    },
+    {
+      "generation": 141,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.586,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 469609.8,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.358,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 729.391,
+      "hypervolume": 0.8023
+    },
+    {
+      "generation": 142,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.182,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 498963.33,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.414,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 721.643,
+      "hypervolume": 0.808
+    },
+    {
+      "generation": 143,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.23,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 495891.55,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.433,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 739.79,
+      "hypervolume": 0.8099
+    },
+    {
+      "generation": 144,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.72,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 460895.0,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.448,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 753.654,
+      "hypervolume": 0.8103
+    },
+    {
+      "generation": 145,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.512,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 463012.86,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.357,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 725.106,
+      "hypervolume": 0.8119
+    },
+    {
+      "generation": 146,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.957,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 466434.89,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.473,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 761.362,
+      "hypervolume": 0.7971
+    },
+    {
+      "generation": 147,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.518,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 467708.55,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.282,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 720.574,
+      "hypervolume": 0.8029
+    },
+    {
+      "generation": 148,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.9,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 463402.32,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.479,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 770.211,
+      "hypervolume": 0.798
+    },
+    {
+      "generation": 149,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.417,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 450669.85,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.309,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 722.148,
+      "hypervolume": 0.7992
+    },
+    {
+      "generation": 150,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.762,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 458761.76,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.403,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 742.941,
+      "hypervolume": 0.8094
+    },
+    {
+      "generation": 151,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.738,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 453087.58,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.435,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 739.618,
+      "hypervolume": 0.8183
+    },
+    {
+      "generation": 152,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.661,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 449898.38,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.395,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 716.221,
+      "hypervolume": 0.816
+    },
+    {
+      "generation": 153,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.214,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 475652.07,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.473,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 727.167,
+      "hypervolume": 0.8222
+    },
+    {
+      "generation": 154,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.649,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 456332.79,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.351,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 707.132,
+      "hypervolume": 0.8234
+    },
+    {
+      "generation": 155,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.172,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 472478.49,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.51,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 747.067,
+      "hypervolume": 0.8215
+    },
+    {
+      "generation": 156,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.031,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 475215.63,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.402,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 718.343,
+      "hypervolume": 0.8178
+    },
+    {
+      "generation": 157,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.91,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 481147.62,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.314,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 719.203,
+      "hypervolume": 0.8097
+    },
+    {
+      "generation": 158,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.793,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 463629.54,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.42,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 746.324,
+      "hypervolume": 0.8106
+    },
+    {
+      "generation": 159,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.978,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 470318.45,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.47,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 750.65,
+      "hypervolume": 0.8123
+    },
+    {
+      "generation": 160,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.564,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 450714.59,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.421,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 739.69,
+      "hypervolume": 0.8071
+    },
+    {
+      "generation": 161,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.264,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 488962.1,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.514,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 745.063,
+      "hypervolume": 0.7956
+    },
+    {
+      "generation": 162,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.91,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 465341.82,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.5,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 759.593,
+      "hypervolume": 0.7913
+    },
+    {
+      "generation": 163,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.063,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 490962.84,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.461,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 735.079,
+      "hypervolume": 0.7857
+    },
+    {
+      "generation": 164,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.911,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 484656.28,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.44,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 732.925,
+      "hypervolume": 0.7914
+    },
+    {
+      "generation": 165,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.351,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 453138.09,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.381,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 735.559,
+      "hypervolume": 0.7888
+    },
+    {
+      "generation": 166,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.118,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 485476.33,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.518,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 762.305,
+      "hypervolume": 0.7871
+    },
+    {
+      "generation": 167,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.364,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 467131.84,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.32,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 693.439,
+      "hypervolume": 0.8038
+    },
+    {
+      "generation": 168,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.153,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 494755.65,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.442,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 728.795,
+      "hypervolume": 0.8029
+    },
+    {
+      "generation": 169,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.941,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 481187.24,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.4,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 726.325,
+      "hypervolume": 0.8076
+    },
+    {
+      "generation": 170,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.971,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 482632.34,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.449,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 721.763,
+      "hypervolume": 0.8048
+    },
+    {
+      "generation": 171,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.742,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 459349.74,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.481,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 752.188,
+      "hypervolume": 0.8008
+    },
+    {
+      "generation": 172,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.933,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 487341.85,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.351,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 726.65,
+      "hypervolume": 0.8003
+    },
+    {
+      "generation": 173,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.529,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 450193.43,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.416,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 746.117,
+      "hypervolume": 0.8101
+    },
+    {
+      "generation": 174,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.979,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 492533.31,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.38,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 720.016,
+      "hypervolume": 0.8076
+    },
+    {
+      "generation": 175,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.916,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 474031.19,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.531,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 745.103,
+      "hypervolume": 0.8055
+    },
+    {
+      "generation": 176,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.86,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 477599.06,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.416,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 724.198,
+      "hypervolume": 0.8106
+    },
+    {
+      "generation": 177,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.999,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 484336.4,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.398,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 730.302,
+      "hypervolume": 0.8124
+    },
+    {
+      "generation": 178,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.495,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 467523.49,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.269,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 693.938,
+      "hypervolume": 0.8212
+    },
+    {
+      "generation": 179,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.866,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 473169.02,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.384,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 737.269,
+      "hypervolume": 0.8151
+    },
+    {
+      "generation": 180,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.805,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 476279.25,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.369,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 727.648,
+      "hypervolume": 0.8085
+    },
+    {
+      "generation": 181,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.863,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 483042.8,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.296,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 708.567,
+      "hypervolume": 0.8126
+    },
+    {
+      "generation": 182,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.992,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 471725.42,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.48,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 768.599,
+      "hypervolume": 0.7976
+    },
+    {
+      "generation": 183,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.079,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 480565.71,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.473,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 768.9,
+      "hypervolume": 0.7927
+    },
+    {
+      "generation": 184,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.783,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 469284.8,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.437,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 757.007,
+      "hypervolume": 0.795
+    },
+    {
+      "generation": 185,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.397,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 479104.77,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.614,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 774.875,
+      "hypervolume": 0.799
+    },
+    {
+      "generation": 186,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.176,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 446792.19,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.272,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 699.64,
+      "hypervolume": 0.7974
+    },
+    {
+      "generation": 187,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.061,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 457032.84,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.595,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 773.022,
+      "hypervolume": 0.7925
+    },
+    {
+      "generation": 188,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.878,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 455173.21,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.593,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 745.144,
+      "hypervolume": 0.7996
+    },
+    {
+      "generation": 189,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.037,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 457323.37,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.601,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 772.336,
+      "hypervolume": 0.7989
+    },
+    {
+      "generation": 190,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.008,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 469796.63,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.51,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 733.796,
+      "hypervolume": 0.8071
+    },
+    {
+      "generation": 191,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.797,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 465958.86,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.485,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 740.115,
+      "hypervolume": 0.8101
+    },
+    {
+      "generation": 192,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.35,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 485054.81,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.626,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 758.318,
+      "hypervolume": 0.8029
+    },
+    {
+      "generation": 193,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.133,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 487977.82,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.562,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 745.049,
+      "hypervolume": 0.8012
+    },
+    {
+      "generation": 194,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.932,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 494441.56,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.44,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 721.16,
+      "hypervolume": 0.8099
+    },
+    {
+      "generation": 195,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.391,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 490325.19,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.647,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 776.814,
+      "hypervolume": 0.8
+    },
+    {
+      "generation": 196,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.873,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 476917.62,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.458,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 755.4,
+      "hypervolume": 0.8022
+    },
+    {
+      "generation": 197,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.982,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 468484.84,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.527,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 769.952,
+      "hypervolume": 0.8074
+    },
+    {
+      "generation": 198,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 12.163,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 479891.4,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.543,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 773.5,
+      "hypervolume": 0.8146
+    },
+    {
+      "generation": 199,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.954,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 478926.58,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.476,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 750.728,
+      "hypervolume": 0.8185
+    },
+    {
+      "generation": 200,
+      "population_size": 80,
+      "best_yield_tonnes": 18.988,
+      "mean_yield_tonnes": 11.748,
+      "best_cost_rs": 71995.87,
+      "mean_cost_rs": 457765.44,
+      "best_irrigated_ha": 0.088,
+      "mean_irrigated_ha": 2.46,
+      "best_env_impact": 175.174,
+      "mean_env_impact": 761.762,
+      "hypervolume": 0.8148
+    }
+  ],
+  "front": [
+    {
+      "yield_tonnes": 0.737,
+      "cost_rs": 80992.84,
+      "irrigated_ha": 0.118,
+      "env_impact_score": 175.174
+    },
+    {
+      "yield_tonnes": 18.988,
+      "cost_rs": 1052402.08,
+      "irrigated_ha": 1.586,
+      "env_impact_score": 420.11
+    },
+    {
+      "yield_tonnes": 18.96,
+      "cost_rs": 519718.28,
+      "irrigated_ha": 5.51,
+      "env_impact_score": 1608.154
+    },
+    {
+      "yield_tonnes": 0.633,
+      "cost_rs": 71995.87,
+      "irrigated_ha": 0.088,
+      "env_impact_score": 175.179
+    },
+    {
+      "yield_tonnes": 0.633,
+      "cost_rs": 71995.87,
+      "irrigated_ha": 0.088,
+      "env_impact_score": 175.247
+    },
+    {
+      "yield_tonnes": 18.96,
+      "cost_rs": 519718.28,
+      "irrigated_ha": 5.51,
+      "env_impact_score": 1591.602
+    },
+    {
+      "yield_tonnes": 0.633,
+      "cost_rs": 71995.87,
+      "irrigated_ha": 0.088,
+      "env_impact_score": 198.719
+    },
+    {
+      "yield_tonnes": 18.988,
+      "cost_rs": 1052402.08,
+      "irrigated_ha": 2.215,
+      "env_impact_score": 420.046
+    },
+    {
+      "yield_tonnes": 17.041,
+      "cost_rs": 793553.67,
+      "irrigated_ha": 2.619,
+      "env_impact_score": 576.979
+    },
+    {
+      "yield_tonnes": 18.369,
+      "cost_rs": 694040.45,
+      "irrigated_ha": 4.045,
+      "env_impact_score": 1153.023
+    },
+    {
+      "yield_tonnes": 12.968,
+      "cost_rs": 377872.02,
+      "irrigated_ha": 3.737,
+      "env_impact_score": 955.118
+    },
+    {
+      "yield_tonnes": 4.836,
+      "cost_rs": 176450.23,
+      "irrigated_ha": 1.392,
+      "env_impact_score": 686.305
+    },
+    {
+      "yield_tonnes": 18.832,
+      "cost_rs": 845883.67,
+      "irrigated_ha": 3.122,
+      "env_impact_score": 882.621
+    },
+    {
+      "yield_tonnes": 5.509,
+      "cost_rs": 286308.19,
+      "irrigated_ha": 0.769,
+      "env_impact_score": 374.739
+    },
+    {
+      "yield_tonnes": 18.08,
+      "cost_rs": 613537.19,
+      "irrigated_ha": 4.238,
+      "env_impact_score": 1222.484
+    },
+    {
+      "yield_tonnes": 18.975,
+      "cost_rs": 831256.94,
+      "irrigated_ha": 3.578,
+      "env_impact_score": 916.371
+    },
+    {
+      "yield_tonnes": 15.969,
+      "cost_rs": 891155.15,
+      "irrigated_ha": 1.859,
+      "env_impact_score": 379.774
+    },
+    {
+      "yield_tonnes": 15.66,
+      "cost_rs": 725440.31,
+      "irrigated_ha": 2.349,
+      "env_impact_score": 727.338
+    },
+    {
+      "yield_tonnes": 13.912,
+      "cost_rs": 771936.08,
+      "irrigated_ha": 1.2,
+      "env_impact_score": 480.851
+    },
+    {
+      "yield_tonnes": 11.947,
+      "cost_rs": 675356.13,
+      "irrigated_ha": 1.449,
+      "env_impact_score": 343.63
+    },
+    {
+      "yield_tonnes": 8.2,
+      "cost_rs": 258369.78,
+      "irrigated_ha": 1.95,
+      "env_impact_score": 847.907
+    },
+    {
+      "yield_tonnes": 12.198,
+      "cost_rs": 357778.0,
+      "irrigated_ha": 2.988,
+      "env_impact_score": 704.732
+    },
+    {
+      "yield_tonnes": 6.026,
+      "cost_rs": 203398.35,
+      "irrigated_ha": 1.024,
+      "env_impact_score": 641.899
+    },
+    {
+      "yield_tonnes": 8.949,
+      "cost_rs": 293289.0,
+      "irrigated_ha": 2.158,
+      "env_impact_score": 523.735
+    },
+    {
+      "yield_tonnes": 14.968,
+      "cost_rs": 451604.17,
+      "irrigated_ha": 3.91,
+      "env_impact_score": 1233.675
+    },
+    {
+      "yield_tonnes": 14.262,
+      "cost_rs": 404927.02,
+      "irrigated_ha": 4.137,
+      "env_impact_score": 1024.45
+    },
+    {
+      "yield_tonnes": 3.403,
+      "cost_rs": 213506.72,
+      "irrigated_ha": 0.38,
+      "env_impact_score": 267.833
+    },
+    {
+      "yield_tonnes": 18.511,
+      "cost_rs": 509034.18,
+      "irrigated_ha": 5.135,
+      "env_impact_score": 1579.916
+    },
+    {
+      "yield_tonnes": 17.96,
+      "cost_rs": 649666.53,
+      "irrigated_ha": 4.267,
+      "env_impact_score": 773.665
+    },
+    {
+      "yield_tonnes": 14.877,
+      "cost_rs": 425403.29,
+      "irrigated_ha": 3.338,
+      "env_impact_score": 1285.154
+    },
+    {
+      "yield_tonnes": 11.298,
+      "cost_rs": 353448.92,
+      "irrigated_ha": 3.185,
+      "env_impact_score": 1031.633
+    },
+    {
+      "yield_tonnes": 7.34,
+      "cost_rs": 336897.49,
+      "irrigated_ha": 1.019,
+      "env_impact_score": 427.217
+    },
+    {
+      "yield_tonnes": 16.777,
+      "cost_rs": 758527.86,
+      "irrigated_ha": 3.048,
+      "env_impact_score": 783.682
+    },
+    {
+      "yield_tonnes": 15.235,
+      "cost_rs": 429904.47,
+      "irrigated_ha": 3.407,
+      "env_impact_score": 1303.027
+    },
+    {
+      "yield_tonnes": 7.805,
+      "cost_rs": 414625.35,
+      "irrigated_ha": 1.741,
+      "env_impact_score": 445.263
+    },
+    {
+      "yield_tonnes": 10.723,
+      "cost_rs": 321435.77,
+      "irrigated_ha": 1.677,
+      "env_impact_score": 960.336
+    },
+    {
+      "yield_tonnes": 17.987,
+      "cost_rs": 495945.74,
+      "irrigated_ha": 5.275,
+      "env_impact_score": 1533.451
+    },
+    {
+      "yield_tonnes": 17.91,
+      "cost_rs": 936161.69,
+      "irrigated_ha": 2.415,
+      "env_impact_score": 463.895
+    },
+    {
+      "yield_tonnes": 8.611,
+      "cost_rs": 270683.26,
+      "irrigated_ha": 1.339,
+      "env_impact_score": 790.138
+    },
+    {
+      "yield_tonnes": 6.678,
+      "cost_rs": 231485.47,
+      "irrigated_ha": 1.853,
+      "env_impact_score": 440.639
+    },
+    {
+      "yield_tonnes": 16.248,
+      "cost_rs": 459411.04,
+      "irrigated_ha": 4.56,
+      "env_impact_score": 1317.644
+    },
+    {
+      "yield_tonnes": 15.776,
+      "cost_rs": 880840.24,
+      "irrigated_ha": 1.244,
+      "env_impact_score": 377.253
+    },
+    {
+      "yield_tonnes": 8.224,
+      "cost_rs": 256531.65,
+      "irrigated_ha": 2.488,
+      "env_impact_score": 937.469
+    },
+    {
+      "yield_tonnes": 1.283,
+      "cost_rs": 93147.02,
+      "irrigated_ha": 0.29,
+      "env_impact_score": 241.828
+    },
+    {
+      "yield_tonnes": 10.211,
+      "cost_rs": 306814.17,
+      "irrigated_ha": 2.424,
+      "env_impact_score": 992.764
+    },
+    {
+      "yield_tonnes": 15.343,
+      "cost_rs": 485418.29,
+      "irrigated_ha": 3.908,
+      "env_impact_score": 1228.732
+    },
+    {
+      "yield_tonnes": 18.666,
+      "cost_rs": 983295.02,
+      "irrigated_ha": 2.096,
+      "env_impact_score": 539.84
+    },
+    {
+      "yield_tonnes": 10.901,
+      "cost_rs": 323951.49,
+      "irrigated_ha": 2.539,
+      "env_impact_score": 1054.275
+    },
+    {
+      "yield_tonnes": 13.542,
+      "cost_rs": 399881.21,
+      "irrigated_ha": 3.315,
+      "env_impact_score": 669.807
+    },
+    {
+      "yield_tonnes": 4.037,
+      "cost_rs": 155159.02,
+      "irrigated_ha": 0.623,
+      "env_impact_score": 303.5
+    },
+    {
+      "yield_tonnes": 16.728,
+      "cost_rs": 466976.08,
+      "irrigated_ha": 4.69,
+      "env_impact_score": 1419.386
+    },
+    {
+      "yield_tonnes": 17.753,
+      "cost_rs": 586747.57,
+      "irrigated_ha": 4.696,
+      "env_impact_score": 1366.351
+    },
+    {
+      "yield_tonnes": 18.695,
+      "cost_rs": 515275.31,
+      "irrigated_ha": 5.432,
+      "env_impact_score": 1540.394
+    },
+    {
+      "yield_tonnes": 6.085,
+      "cost_rs": 208488.79,
+      "irrigated_ha": 1.526,
+      "env_impact_score": 454.107
+    },
+    {
+      "yield_tonnes": 12.432,
+      "cost_rs": 367197.49,
+      "irrigated_ha": 3.557,
+      "env_impact_score": 1118.347
+    },
+    {
+      "yield_tonnes": 2.622,
+      "cost_rs": 120583.58,
+      "irrigated_ha": 0.411,
+      "env_impact_score": 330.756
+    },
+    {
+      "yield_tonnes": 2.14,
+      "cost_rs": 160170.1,
+      "irrigated_ha": 0.52,
+      "env_impact_score": 273.434
+    },
+    {
+      "yield_tonnes": 13.424,
+      "cost_rs": 386781.26,
+      "irrigated_ha": 2.997,
+      "env_impact_score": 1096.836
+    },
+    {
+      "yield_tonnes": 9.551,
+      "cost_rs": 585835.21,
+      "irrigated_ha": 1.291,
+      "env_impact_score": 279.35
+    },
+    {
+      "yield_tonnes": 13.282,
+      "cost_rs": 640868.22,
+      "irrigated_ha": 2.535,
+      "env_impact_score": 807.783
+    },
+    {
+      "yield_tonnes": 4.701,
+      "cost_rs": 224921.53,
+      "irrigated_ha": 1.108,
+      "env_impact_score": 397.755
+    },
+    {
+      "yield_tonnes": 6.996,
+      "cost_rs": 227666.33,
+      "irrigated_ha": 1.089,
+      "env_impact_score": 666.717
+    },
+    {
+      "yield_tonnes": 6.815,
+      "cost_rs": 316148.15,
+      "irrigated_ha": 0.953,
+      "env_impact_score": 418.352
+    },
+    {
+      "yield_tonnes": 17.708,
+      "cost_rs": 535957.8,
+      "irrigated_ha": 3.225,
+      "env_impact_score": 828.497
+    },
+    {
+      "yield_tonnes": 2.835,
+      "cost_rs": 156419.17,
+      "irrigated_ha": 0.491,
+      "env_impact_score": 307.288
+    },
+    {
+      "yield_tonnes": 18.169,
+      "cost_rs": 1011959.41,
+      "irrigated_ha": 2.146,
+      "env_impact_score": 407.835
+    },
+    {
+      "yield_tonnes": 1.58,
+      "cost_rs": 150683.25,
+      "irrigated_ha": 0.296,
+      "env_impact_score": 184.572
+    },
+    {
+      "yield_tonnes": 9.979,
+      "cost_rs": 397332.23,
+      "irrigated_ha": 1.42,
+      "env_impact_score": 708.148
+    },
+    {
+      "yield_tonnes": 16.481,
+      "cost_rs": 466864.87,
+      "irrigated_ha": 4.349,
+      "env_impact_score": 1353.359
+    },
+    {
+      "yield_tonnes": 17.777,
+      "cost_rs": 490723.9,
+      "irrigated_ha": 5.187,
+      "env_impact_score": 1521.08
+    },
+    {
+      "yield_tonnes": 3.056,
+      "cost_rs": 165203.98,
+      "irrigated_ha": 0.506,
+      "env_impact_score": 372.25
+    },
+    {
+      "yield_tonnes": 18.983,
+      "cost_rs": 971836.65,
+      "irrigated_ha": 2.223,
+      "env_impact_score": 614.322
+    },
+    {
+      "yield_tonnes": 11.227,
+      "cost_rs": 332030.05,
+      "irrigated_ha": 2.576,
+      "env_impact_score": 1042.527
+    },
+    {
+      "yield_tonnes": 18.988,
+      "cost_rs": 1052402.08,
+      "irrigated_ha": 2.499,
+      "env_impact_score": 488.105
+    },
+    {
+      "yield_tonnes": 18.816,
+      "cost_rs": 706820.45,
+      "irrigated_ha": 4.314,
+      "env_impact_score": 723.363
+    },
+    {
+      "yield_tonnes": 15.72,
+      "cost_rs": 440585.6,
+      "irrigated_ha": 4.554,
+      "env_impact_score": 1089.814
+    },
+    {
+      "yield_tonnes": 14.626,
+      "cost_rs": 419446.96,
+      "irrigated_ha": 4.436,
+      "env_impact_score": 1311.831
+    },
+    {
+      "yield_tonnes": 4.267,
+      "cost_rs": 257671.65,
+      "irrigated_ha": 0.62,
+      "env_impact_score": 289.217
+    },
+    {
+      "yield_tonnes": 12.432,
+      "cost_rs": 367197.49,
+      "irrigated_ha": 3.557,
+      "env_impact_score": 1118.347
+    },
+    {
+      "yield_tonnes": 1.396,
+      "cost_rs": 105886.97,
+      "irrigated_ha": 0.3,
+      "env_impact_score": 222.049
+    }
+  ],
+  "ranked_plans": [
+    {
+      "rank": 1,
+      "composite_score": 0.6398,
+      "yield_tonnes": 15.776,
+      "cost_rs": 880840.24,
+      "irrigated_ha": 1.244,
+      "env_impact_score": 377.253,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        0.01,
+        0.01,
+        0.01,
+        82.46,
+        0.01,
+        17.5
+      ]
+    },
+    {
+      "rank": 2,
+      "composite_score": 0.6354,
+      "yield_tonnes": 13.912,
+      "cost_rs": 771936.08,
+      "irrigated_ha": 1.2,
+      "env_impact_score": 480.851,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        0.01,
+        0.01,
+        14.37,
+        70.61,
+        0.01,
+        14.99
+      ]
+    },
+    {
+      "rank": 3,
+      "composite_score": 0.635,
+      "yield_tonnes": 11.947,
+      "cost_rs": 675356.13,
+      "irrigated_ha": 1.449,
+      "env_impact_score": 343.63,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        0.01,
+        0.01,
+        3.35,
+        61.01,
+        1.88,
+        33.74
+      ]
+    },
+    {
+      "rank": 4,
+      "composite_score": 0.6266,
+      "yield_tonnes": 17.708,
+      "cost_rs": 535957.8,
+      "irrigated_ha": 3.225,
+      "env_impact_score": 828.497,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        88.95,
+        11.01,
+        0.01,
+        0.01,
+        0.01,
+        0.01
+      ]
+    },
+    {
+      "rank": 5,
+      "composite_score": 0.6227,
+      "yield_tonnes": 15.969,
+      "cost_rs": 891155.15,
+      "irrigated_ha": 1.859,
+      "env_impact_score": 379.774,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        0.01,
+        0.01,
+        0.01,
+        83.51,
+        0.01,
+        16.45
+      ]
+    },
+    {
+      "rank": 6,
+      "composite_score": 0.6224,
+      "yield_tonnes": 9.551,
+      "cost_rs": 585835.21,
+      "irrigated_ha": 1.291,
+      "env_impact_score": 279.35,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        0.04,
+        0.04,
+        0.04,
+        42.33,
+        57.51,
+        0.04
+      ]
+    },
+    {
+      "rank": 7,
+      "composite_score": 0.6195,
+      "yield_tonnes": 7.34,
+      "cost_rs": 336897.49,
+      "irrigated_ha": 1.019,
+      "env_impact_score": 427.217,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        18.67,
+        3.81,
+        10.04,
+        14.64,
+        5.88,
+        46.96
+      ]
+    },
+    {
+      "rank": 8,
+      "composite_score": 0.6172,
+      "yield_tonnes": 9.979,
+      "cost_rs": 397332.23,
+      "irrigated_ha": 1.42,
+      "env_impact_score": 708.148,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        33.93,
+        0.01,
+        3.28,
+        15.23,
+        13.1,
+        34.45
+      ]
+    },
+    {
+      "rank": 9,
+      "composite_score": 0.6168,
+      "yield_tonnes": 18.988,
+      "cost_rs": 1052402.08,
+      "irrigated_ha": 1.586,
+      "env_impact_score": 420.11,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        0.01,
+        0.01,
+        0.01,
+        99.95,
+        0.01,
+        0.01
+      ]
+    },
+    {
+      "rank": 10,
+      "composite_score": 0.6154,
+      "yield_tonnes": 17.041,
+      "cost_rs": 793553.67,
+      "irrigated_ha": 2.619,
+      "env_impact_score": 576.979,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        29.09,
+        0.02,
+        0.62,
+        60.23,
+        0.07,
+        9.97
+      ]
+    },
+    {
+      "rank": 11,
+      "composite_score": 0.6147,
+      "yield_tonnes": 6.815,
+      "cost_rs": 316148.15,
+      "irrigated_ha": 0.953,
+      "env_impact_score": 418.352,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        17.21,
+        3.52,
+        9.25,
+        13.49,
+        5.42,
+        51.11
+      ]
+    },
+    {
+      "rank": 12,
+      "composite_score": 0.6143,
+      "yield_tonnes": 13.542,
+      "cost_rs": 399881.21,
+      "irrigated_ha": 3.315,
+      "env_impact_score": 669.807,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        68.26,
+        0.01,
+        0.01,
+        1.98,
+        1.67,
+        28.07
+      ]
+    },
+    {
+      "rank": 13,
+      "composite_score": 0.6137,
+      "yield_tonnes": 8.949,
+      "cost_rs": 293289.0,
+      "irrigated_ha": 2.158,
+      "env_impact_score": 523.735,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        41.05,
+        0.01,
+        9.75,
+        2.9,
+        2.44,
+        43.85
+      ]
+    },
+    {
+      "rank": 14,
+      "composite_score": 0.6089,
+      "yield_tonnes": 17.91,
+      "cost_rs": 936161.69,
+      "irrigated_ha": 2.415,
+      "env_impact_score": 463.895,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        10.78,
+        0.01,
+        2.24,
+        83.07,
+        0.01,
+        3.89
+      ]
+    },
+    {
+      "rank": 15,
+      "composite_score": 0.6085,
+      "yield_tonnes": 12.198,
+      "cost_rs": 357778.0,
+      "irrigated_ha": 2.988,
+      "env_impact_score": 704.732,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        62.2,
+        0.01,
+        4.91,
+        0.01,
+        2.75,
+        30.12
+      ]
+    },
+    {
+      "rank": 16,
+      "composite_score": 0.6074,
+      "yield_tonnes": 18.666,
+      "cost_rs": 983295.02,
+      "irrigated_ha": 2.096,
+      "env_impact_score": 539.84,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        9.54,
+        0.01,
+        1.98,
+        88.45,
+        0.01,
+        0.01
+      ]
+    },
+    {
+      "rank": 17,
+      "composite_score": 0.6065,
+      "yield_tonnes": 18.169,
+      "cost_rs": 1011959.41,
+      "irrigated_ha": 2.146,
+      "env_impact_score": 407.835,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        0.01,
+        0.01,
+        0.01,
+        94.96,
+        5.0,
+        0.01
+      ]
+    },
+    {
+      "rank": 18,
+      "composite_score": 0.6057,
+      "yield_tonnes": 15.66,
+      "cost_rs": 725440.31,
+      "irrigated_ha": 2.349,
+      "env_impact_score": 727.338,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        29.99,
+        0.01,
+        0.79,
+        50.05,
+        16.29,
+        2.87
+      ]
+    },
+    {
+      "rank": 19,
+      "composite_score": 0.6033,
+      "yield_tonnes": 8.611,
+      "cost_rs": 270683.26,
+      "irrigated_ha": 1.339,
+      "env_impact_score": 790.138,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        43.18,
+        0.9,
+        0.01,
+        0.01,
+        0.01,
+        55.89
+      ]
+    },
+    {
+      "rank": 20,
+      "composite_score": 0.6025,
+      "yield_tonnes": 18.983,
+      "cost_rs": 971836.65,
+      "irrigated_ha": 2.223,
+      "env_impact_score": 614.322,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        15.13,
+        0.01,
+        0.01,
+        84.83,
+        0.01,
+        0.01
+      ]
+    },
+    {
+      "rank": 21,
+      "composite_score": 0.6022,
+      "yield_tonnes": 5.509,
+      "cost_rs": 286308.19,
+      "irrigated_ha": 0.769,
+      "env_impact_score": 374.739,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        11.23,
+        0.01,
+        3.27,
+        12.4,
+        23.9,
+        49.19
+      ]
+    },
+    {
+      "rank": 22,
+      "composite_score": 0.6021,
+      "yield_tonnes": 18.988,
+      "cost_rs": 1052402.08,
+      "irrigated_ha": 2.215,
+      "env_impact_score": 420.046,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        0.01,
+        0.01,
+        0.01,
+        99.95,
+        0.01,
+        0.01
+      ]
+    },
+    {
+      "rank": 23,
+      "composite_score": 0.601,
+      "yield_tonnes": 6.996,
+      "cost_rs": 227666.33,
+      "irrigated_ha": 1.089,
+      "env_impact_score": 666.717,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        34.69,
+        0.01,
+        0.01,
+        0.01,
+        0.19,
+        65.09
+      ]
+    },
+    {
+      "rank": 24,
+      "composite_score": 0.6006,
+      "yield_tonnes": 4.037,
+      "cost_rs": 155159.02,
+      "irrigated_ha": 0.623,
+      "env_impact_score": 303.5,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        18.57,
+        0.01,
+        0.01,
+        0.01,
+        0.01,
+        81.39
+      ]
+    },
+    {
+      "rank": 25,
+      "composite_score": 0.5994,
+      "yield_tonnes": 10.723,
+      "cost_rs": 321435.77,
+      "irrigated_ha": 1.677,
+      "env_impact_score": 960.336,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        54.76,
+        0.01,
+        0.01,
+        0.03,
+        2.31,
+        42.88
+      ]
+    },
+    {
+      "rank": 26,
+      "composite_score": 0.5971,
+      "yield_tonnes": 6.678,
+      "cost_rs": 231485.47,
+      "irrigated_ha": 1.853,
+      "env_impact_score": 440.639,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        30.2,
+        1.75,
+        10.48,
+        0.88,
+        0.01,
+        56.68
+      ]
+    },
+    {
+      "rank": 27,
+      "composite_score": 0.5971,
+      "yield_tonnes": 6.085,
+      "cost_rs": 208488.79,
+      "irrigated_ha": 1.526,
+      "env_impact_score": 454.107,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        27.54,
+        0.01,
+        15.87,
+        0.01,
+        2.98,
+        53.59
+      ]
+    },
+    {
+      "rank": 28,
+      "composite_score": 0.5938,
+      "yield_tonnes": 4.267,
+      "cost_rs": 257671.65,
+      "irrigated_ha": 0.62,
+      "env_impact_score": 289.217,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        0.02,
+        0.01,
+        12.91,
+        18.26,
+        0.01,
+        68.79
+      ]
+    },
+    {
+      "rank": 29,
+      "composite_score": 0.5919,
+      "yield_tonnes": 7.805,
+      "cost_rs": 414625.35,
+      "irrigated_ha": 1.741,
+      "env_impact_score": 445.263,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        14.71,
+        14.71,
+        14.71,
+        14.71,
+        21.94,
+        19.22
+      ]
+    },
+    {
+      "rank": 30,
+      "composite_score": 0.5907,
+      "yield_tonnes": 3.403,
+      "cost_rs": 213506.72,
+      "irrigated_ha": 0.38,
+      "env_impact_score": 267.833,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        0.01,
+        0.01,
+        9.85,
+        13.92,
+        0.01,
+        76.2
+      ]
+    },
+    {
+      "rank": 31,
+      "composite_score": 0.5904,
+      "yield_tonnes": 6.026,
+      "cost_rs": 203398.35,
+      "irrigated_ha": 1.024,
+      "env_impact_score": 641.899,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        27.53,
+        0.01,
+        15.87,
+        0.01,
+        0.01,
+        56.57
+      ]
+    },
+    {
+      "rank": 32,
+      "composite_score": 0.5897,
+      "yield_tonnes": 18.988,
+      "cost_rs": 1052402.08,
+      "irrigated_ha": 2.499,
+      "env_impact_score": 488.105,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        0.01,
+        0.01,
+        0.01,
+        99.95,
+        0.01,
+        0.01
+      ]
+    },
+    {
+      "rank": 33,
+      "composite_score": 0.5855,
+      "yield_tonnes": 4.701,
+      "cost_rs": 224921.53,
+      "irrigated_ha": 1.108,
+      "env_impact_score": 397.755,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        15.81,
+        11.76,
+        13.41,
+        0.01,
+        3.11,
+        55.9
+      ]
+    },
+    {
+      "rank": 34,
+      "composite_score": 0.5829,
+      "yield_tonnes": 2.622,
+      "cost_rs": 120583.58,
+      "irrigated_ha": 0.411,
+      "env_impact_score": 330.756,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        10.86,
+        0.01,
+        0.01,
+        0.01,
+        0.01,
+        89.1
+      ]
+    },
+    {
+      "rank": 35,
+      "composite_score": 0.5828,
+      "yield_tonnes": 2.835,
+      "cost_rs": 156419.17,
+      "irrigated_ha": 0.491,
+      "env_impact_score": 307.288,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        9.33,
+        0.01,
+        0.01,
+        0.01,
+        24.96,
+        65.68
+      ]
+    },
+    {
+      "rank": 36,
+      "composite_score": 0.5808,
+      "yield_tonnes": 16.777,
+      "cost_rs": 758527.86,
+      "irrigated_ha": 3.048,
+      "env_impact_score": 783.682,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        33.02,
+        0.02,
+        0.7,
+        54.86,
+        0.08,
+        11.32
+      ]
+    },
+    {
+      "rank": 37,
+      "composite_score": 0.5802,
+      "yield_tonnes": 3.056,
+      "cost_rs": 165203.98,
+      "irrigated_ha": 0.506,
+      "env_impact_score": 372.25,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        9.23,
+        6.87,
+        7.83,
+        0.05,
+        3.89,
+        72.13
+      ]
+    },
+    {
+      "rank": 38,
+      "composite_score": 0.5766,
+      "yield_tonnes": 18.816,
+      "cost_rs": 706820.45,
+      "irrigated_ha": 4.314,
+      "env_impact_score": 723.363,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        63.86,
+        1.33,
+        0.01,
+        34.76,
+        0.02,
+        0.02
+      ]
+    },
+    {
+      "rank": 39,
+      "composite_score": 0.5761,
+      "yield_tonnes": 1.58,
+      "cost_rs": 150683.25,
+      "irrigated_ha": 0.296,
+      "env_impact_score": 184.572,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        0.02,
+        1.72,
+        0.02,
+        0.5,
+        37.22,
+        60.52
+      ]
+    },
+    {
+      "rank": 40,
+      "composite_score": 0.5753,
+      "yield_tonnes": 1.396,
+      "cost_rs": 105886.97,
+      "irrigated_ha": 0.3,
+      "env_impact_score": 222.049,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        1.94,
+        0.01,
+        7.38,
+        0.01,
+        12.57,
+        78.09
+      ]
+    },
+    {
+      "rank": 41,
+      "composite_score": 0.5741,
+      "yield_tonnes": 0.737,
+      "cost_rs": 80992.84,
+      "irrigated_ha": 0.118,
+      "env_impact_score": 175.174,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        0.01,
+        0.01,
+        0.01,
+        0.01,
+        5.27,
+        94.69
+      ]
+    },
+    {
+      "rank": 42,
+      "composite_score": 0.574,
+      "yield_tonnes": 0.633,
+      "cost_rs": 71995.87,
+      "irrigated_ha": 0.088,
+      "env_impact_score": 175.179,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        0.01,
+        0.01,
+        0.01,
+        0.01,
+        0.01,
+        99.95
+      ]
+    },
+    {
+      "rank": 43,
+      "composite_score": 0.5739,
+      "yield_tonnes": 0.633,
+      "cost_rs": 71995.87,
+      "irrigated_ha": 0.088,
+      "env_impact_score": 175.247,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        0.01,
+        0.01,
+        0.01,
+        0.01,
+        0.01,
+        99.95
+      ]
+    },
+    {
+      "rank": 44,
+      "composite_score": 0.5739,
+      "yield_tonnes": 17.96,
+      "cost_rs": 649666.53,
+      "irrigated_ha": 4.267,
+      "env_impact_score": 773.665,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        64.69,
+        0.01,
+        6.25,
+        29.03,
+        0.01,
+        0.01
+      ]
+    },
+    {
+      "rank": 45,
+      "composite_score": 0.5738,
+      "yield_tonnes": 1.283,
+      "cost_rs": 93147.02,
+      "irrigated_ha": 0.29,
+      "env_impact_score": 241.828,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        2.12,
+        0.01,
+        8.06,
+        0.01,
+        4.44,
+        85.36
+      ]
+    },
+    {
+      "rank": 46,
+      "composite_score": 0.5735,
+      "yield_tonnes": 2.14,
+      "cost_rs": 160170.1,
+      "irrigated_ha": 0.52,
+      "env_impact_score": 273.434,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        1.83,
+        0.02,
+        13.29,
+        0.53,
+        39.79,
+        44.54
+      ]
+    },
+    {
+      "rank": 47,
+      "composite_score": 0.5727,
+      "yield_tonnes": 18.832,
+      "cost_rs": 845883.67,
+      "irrigated_ha": 3.122,
+      "env_impact_score": 882.621,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        37.22,
+        0.03,
+        0.79,
+        61.84,
+        0.08,
+        0.04
+      ]
+    },
+    {
+      "rank": 48,
+      "composite_score": 0.5726,
+      "yield_tonnes": 0.633,
+      "cost_rs": 71995.87,
+      "irrigated_ha": 0.088,
+      "env_impact_score": 198.719,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        0.01,
+        0.01,
+        0.01,
+        0.01,
+        0.01,
+        99.95
+      ]
+    },
+    {
+      "rank": 49,
+      "composite_score": 0.5701,
+      "yield_tonnes": 13.282,
+      "cost_rs": 640868.22,
+      "irrigated_ha": 2.535,
+      "env_impact_score": 807.783,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        25.44,
+        18.93,
+        21.58,
+        33.75,
+        0.15,
+        0.15
+      ]
+    },
+    {
+      "rank": 50,
+      "composite_score": 0.5691,
+      "yield_tonnes": 8.2,
+      "cost_rs": 258369.78,
+      "irrigated_ha": 1.95,
+      "env_impact_score": 847.907,
+      "crop_names": [
+        "maize",
+        "groundnut",
+        "jowar",
+        "ragi",
+        "red gram",
+        "green gram"
+      ],
+      "allocation_percent": [
+        37.51,
+        0.01,
+        28.48,
+        0.4,
+        0.01,
+        33.59
+      ]
+    }
+  ],
+  "same_top_plan_as_rerun": true,
+  "environment": {
+    "nsga2_mode": "original",
+    "seed": 42,
+    "fuzzy_model": "official"
+  }
+}
