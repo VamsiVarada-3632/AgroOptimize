@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { showValue } from '../../services/officialData';
 
 /**
  * Card wrapper for a chart with a chart/table toggle, so every chart's data
@@ -41,7 +42,7 @@ export default function ChartCard({ title, subtitle, table, actions, children })
               {table.rows.map((row, i) => (
                 <tr key={i} className="border-b border-outline-variant/20">
                   {table.columns.map((c) => (
-                    <td key={c.key} className="py-1.5 pr-3">{c.format ? c.format(row[c.key], row) : (row[c.key] ?? '–')}</td>
+                    <td key={c.key} className="py-1.5 pr-3">{c.format ? c.format(row[c.key], row) : showValue(row[c.key])}</td>
                   ))}
                 </tr>
               ))}

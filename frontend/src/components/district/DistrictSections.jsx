@@ -6,15 +6,21 @@ import { formatNumber } from '../charts/chartTheme';
 import {
   CROP_METRICS, MONTH_SHORT, cropSeries, filterCropRecords, monthlyRainSeries, yearDistribution,
 } from '../../utils/districtView';
+import { OFFICIAL_DATA_NA, isMissing } from '../../services/officialData';
 
 /**
  * Section components for the District Intelligence page. They render the
  * payload of GET /api/district-intelligence/{district}; every number and
- * sentence comes from the backend. Missing values show "Data not available".
+ * sentence comes from the backend. Missing values show "Official Data Not Available".
  */
 
-export const NA = 'Data not available';
-const show = (v, suffix = '', digits = 0) => (v === null || v === undefined ? NA : `${formatNumber(v, digits)}${suffix}`);
+export const NA = OFFICIAL_DATA_NA;
+const show = (v, suffix = '', digits = 0) => (isMissing(v) ? NA : `${formatNumber(v, digits)}${suffix}`);
+
+/** Placeholder for a chart whose official dataset has no values. */
+export function NotAvailable() {
+  return <p className="text-sm italic text-on-surface-variant py-6 text-center">{NA}</p>;
+}
 
 export function SectionHeader({ icon, title, subtitle }) {
   return (
@@ -75,7 +81,7 @@ export function OverviewSection({ intel }) {
   const seasons = Object.entries(c.seasons_available).filter(([, ys]) => ys.length).map(([s, ys]) => `${s} (${ys[0]}–${ys[ys.length - 1]})`);
   return (
     <section>
-      <SectionHeader icon="map" title="District overview" subtitle={`${o.land_basis} Land figures from ${o.land_year_basis ?? '–'}.`} />
+      <SectionHeader icon="map" title="District overview" subtitle={`${o.land_basis} Land figures from ${o.land_year_basis ?? NA}.`} />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatTile label="Agricultural area" icon="agriculture" value={show(o.agricultural_area_ha, ' ha')}
           hint={o.total_area_ha ? `of ${formatNumber(o.total_area_ha)} ha total land` : undefined} />
@@ -152,10 +158,12 @@ export function ClimateSection({ intel, insights }) {
         <ChartCard title="Temperature and humidity" subtitle="Annual means of the monthly records."
           table={{ columns: [{ key: 'year', label: 'Year' }, { key: 'mean_temp_c', label: 'Mean °C' }, { key: 'max_temp_c', label: 'Max °C' },
             { key: 'min_temp_c', label: 'Min °C' }, { key: 'humidity_pct', label: 'Humidity %' }], rows: cl.annual }}>
-          <LineChart ariaLabel="Mean annual temperature" xValues={years} unit=" °C" digits={1} yLabel="°C" minSpan={2}
-            series={[{ id: 'temp', label: 'Mean', emphasis: true, points: cl.annual.map((a) => ({ x: a.year, y: a.mean_temp_c })) }]} />
+          {cl.annual.some((a) => !isMissing(a.mean_temp_c)) ? (
+            <LineChart ariaLabel="Mean annual temperature" xValues={years} unit=" °C" digits={1} yLabel="°C" minSpan={2}
+              series={[{ id: 'temp', label: 'Mean', emphasis: true, points: cl.annual.map((a) => ({ x: a.year, y: a.mean_temp_c })) }]} />
+          ) : <NotAvailable />}
           <p className="text-xs text-on-surface-variant mt-2">
-            Humidity: {cl.annual.map((a) => `${a.year} ${a.humidity_pct}%`).join(' · ')}
+            Humidity: {cl.annual.map((a) => `${a.year} ${show(a.humidity_pct, '%')}`).join(' · ')}
           </p>
         </ChartCard>
       </div>
@@ -170,19 +178,20 @@ export function ClimateSection({ intel, insights }) {
 export function SoilSection({ intel }) {
   const s = intel.soil;
   if (!s.available) return <section><SectionHeader icon="landscape" title="Soil profile" /><p className="italic text-sm text-on-surface-variant">{NA}</p></section>;
-  const kharif = s.records.filter((r) => r.season === 'Kharif');
+  // Records are per season where the source has seasons, otherwise one 'All' record a year.
+  const kharif = s.records.some((r) => r.season === 'Kharif') ? s.records.filter((r) => r.season === 'Kharif') : s.records;
   return (
     <section>
       <SectionHeader icon="landscape" title="Soil profile" subtitle={`Latest observed year: ${s.latest_year}.`} />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatTile label="Soil type" value={s.soil_types.join(', ')} />
+        <StatTile label="Soil type" value={s.soil_types.length ? s.soil_types.join(', ') : NA} />
         <StatTile label="pH" value={show(s.latest.ph, '', 2)} />
         <StatTile label="Organic carbon" value={show(s.latest.organic_carbon_pct, '%', 2)} />
-        <StatTile label="Fertility index" value={`${s.latest.fertility_index_mean} / 100`}
+        <StatTile label="Fertility index" value={show(s.latest.fertility_index_mean, ' / 100', 1)}
           hint={`Fuzzy soil set: ${s.latest.fuzzy_set} (memberships ${Object.entries(s.latest.fuzzy_membership).map(([k, v]) => `${k} ${v}`).join(', ')})`} />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-3">
-        <ChartCard title="Soil fertility index over time" subtitle="Kharif records; index = 0.3·pH score + 0.3·organic-carbon score + 0.4·N/P/K score."
+        <ChartCard title="Soil fertility index over time" subtitle="Soil Health Card fertility index (0–100) from the district's tested samples."
           table={{ columns: [{ key: 'year', label: 'Year' }, { key: 'season', label: 'Season' }, { key: 'ph', label: 'pH' },
             { key: 'organic_carbon_pct', label: 'OC %' }, { key: 'n_status', label: 'N' }, { key: 'p_status', label: 'P' },
             { key: 'k_status', label: 'K' }, { key: 'fertility_index', label: 'Index' }], rows: s.records }}>
@@ -215,6 +224,64 @@ export function SoilSection({ intel }) {
   );
 }
 
+const SOIL_CARD_PARAMS = [
+  ['ph', 'Soil pH'], ['organic_carbon', 'Organic Carbon'], ['nitrogen', 'Nitrogen (N)'],
+  ['phosphorus', 'Phosphorus (P)'], ['potassium', 'Potassium (K)'], ['electrical_conductivity', 'Soil Salinity'],
+];
+
+/**
+ * The district's Soil Health Card record (GET /api/soil-master/{district}):
+ * the share of tested samples in each class for every parameter. `record`
+ * null with `error` set means the request failed; `available: false` means
+ * the portal has no record for the district.
+ */
+export function SoilHealthCardSection({ record, error }) {
+  const header = <SectionHeader icon="science" title="Soil Health Card"
+    subtitle={record?.available ? `${record.cycle} cycle · ${formatNumber(record.samples_tested)} samples tested in the district.` : undefined} />;
+  if (error || !record || !record.available) {
+    return <section>{header}<p className="italic text-sm text-on-surface-variant">{NA}</p></section>;
+  }
+  const micro = Object.values(record.micronutrients || {});
+  return (
+    <section>
+      {header}
+      <div className="overflow-x-auto bg-surface-container-lowest rounded-xl border border-outline-variant/30">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs text-on-surface-variant bg-surface-container-low">
+              <th scope="col" className="py-2 px-3 font-semibold">Parameter</th>
+              <th scope="col" className="py-2 px-3 font-semibold">Most samples</th>
+              <th scope="col" className="py-2 px-3 font-semibold">Share of samples by class</th>
+              <th scope="col" className="py-2 px-3 font-semibold">Samples</th>
+            </tr>
+          </thead>
+          <tbody>
+            {SOIL_CARD_PARAMS.map(([key, label]) => {
+              const p = record[key];
+              return (
+                <tr key={key} className="border-t border-outline-variant/30">
+                  <th scope="row" className="py-2 px-3 text-left font-semibold">{label}</th>
+                  <td className="py-2 px-3">{p && !isMissing(p.dominant_class) ? p.dominant_class : NA}</td>
+                  <td className="py-2 px-3 text-on-surface-variant">
+                    {p?.share_pct ? Object.entries(p.share_pct).map(([k, v]) => `${k} ${v}%`).join(' · ') : NA}
+                  </td>
+                  <td className="py-2 px-3">{p ? show(p.samples) : NA}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      {micro.length > 0 && (
+        <p className="text-xs text-on-surface-variant mt-2">
+          Micronutrients, share of samples deficient: {micro.map((m) => `${m.label} ${show(m.share_pct?.Deficient, '%', 1)}`).join(' · ')}
+        </p>
+      )}
+      <p className="text-xs text-on-surface-variant mt-1">Soil type: {record.soil_type === 'Official data unavailable' ? NA : show(record.soil_type)}</p>
+    </section>
+  );
+}
+
 export function WaterSection({ intel }) {
   const w = intel.water;
   if (!w.available) return <section><SectionHeader icon="water_drop" title="Water profile" /><p className="italic text-sm text-on-surface-variant">{NA}</p></section>;
@@ -225,7 +292,7 @@ export function WaterSection({ intel }) {
         subtitle={w.storage_identical_every_year ? 'Reservoir storage is recorded identically every year, so the chart shows the seasonal pattern only.' : undefined} />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {w.storage_by_season.map((s) => (
-          <StatTile key={s.season} label={`${s.season} storage`} value={`${s.storage_pct}%`}
+          <StatTile key={s.season} label={`${s.season} storage`} value={show(s.storage_pct, '%', 1)}
             hint={`Fuzzy water set: ${s.fuzzy_set}${s.below_action_threshold ? ' · below the 40% irrigation-action threshold' : ''}`} />
         ))}
         <StatTile label="Reservoir capacity" value={show(w.reservoir_capacity_mcm, ' MCM', 1)} hint={w.glossary.storage_pct} />
@@ -242,13 +309,15 @@ export function WaterSection({ intel }) {
           table={{ columns: [{ key: 'year', label: 'Year' }, { key: 'irrigation_mcm', label: 'Irrigation' }, { key: 'drinking_mcm', label: 'Drinking' },
             { key: 'industrial_mcm', label: 'Industrial' }, { key: 'total_demand_mcm', label: 'Total (MCM)' },
             { key: 'irrigation_share_pct', label: 'Irrigation %' }, { key: 'inflow_mcm', label: 'Inflow (MCM)' }], rows: w.yearly }}>
-          <BarChart ariaLabel="Irrigation demand by year" unit=" MCM" digits={1}
-            data={w.yearly.map((y) => ({ key: y.year, label: String(y.year), value: y.irrigation_mcm, detail: `${y.irrigation_share_pct}% of total demand` }))} />
+          {w.yearly.some((y) => !isMissing(y.irrigation_mcm)) ? (
+            <BarChart ariaLabel="Irrigation demand by year" unit=" MCM" digits={1}
+              data={w.yearly.map((y) => ({ key: y.year, label: String(y.year), value: y.irrigation_mcm, detail: `${show(y.irrigation_share_pct, '%')} of total demand` }))} />
+          ) : <NotAvailable />}
         </ChartCard>
-        <ChartCard title="Groundwater status" subtitle={`Share of monthly records by status. Depth: ${Object.entries(w.groundwater.level_mbgl_by_year).map(([y, v]) => `${y} ${v} m`).join(', ')}${w.groundwater.level_varies ? '' : ' (constant in the data)'}.`}
+        <ChartCard title="Groundwater status" subtitle={`Share of monthly records by status. Depth: ${Object.entries(w.groundwater.level_mbgl_by_year).map(([y, v]) => `${y} ${show(v, ' m', 2)}`).join(', ') || NA}${w.groundwater.level_varies ? '' : ' (constant in the data)'}.`}
           table={{ columns: [{ key: 'status', label: 'Status' }, { key: 'months', label: 'Months' }, { key: 'share_pct', label: 'Share %' }], rows: w.groundwater.status_distribution }}>
-          <BarChart ariaLabel="Groundwater status distribution" orientation="horizontal" unit="%" digits={1}
-            data={w.groundwater.status_distribution.map((s) => ({ key: s.status, label: s.status, value: s.share_pct, detail: `${s.months} months` }))} />
+          {w.groundwater.status_distribution.length ? <BarChart ariaLabel="Groundwater status distribution" orientation="horizontal" unit="%" digits={1}
+            data={w.groundwater.status_distribution.map((s) => ({ key: s.status, label: s.status, value: s.share_pct, detail: `${s.months} months` }))} /> : <NotAvailable />}
         </ChartCard>
         <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-4">
           <p className="text-xs text-on-surface-variant font-semibold uppercase tracking-wide mb-2">Water stress indicators</p>
@@ -264,11 +333,11 @@ export function WaterSection({ intel }) {
 
 export function CropPerformanceSection({ intel }) {
   const c = intel.crops;
-  const [season, setSeason] = useState(c.filters?.seasons?.[0] || 'Kharif');
+  const [season, setSeason] = useState(c.filters?.seasons?.[0] || '');
   // Default to highlighting the season's most widely grown crop: with every
   // line in the accent colour, crops cannot be told apart.
   const topCrop = (s) => c.trends?.filter((t) => t.season === s).sort((a, b) => (b.mean_area_ha ?? 0) - (a.mean_area_ha ?? 0))[0]?.crop || 'all';
-  const [crop, setCrop] = useState(() => topCrop(c.filters?.seasons?.[0] || 'Kharif'));
+  const [crop, setCrop] = useState(() => topCrop(c.filters?.seasons?.[0] || ''));
   const [year, setYear] = useState(String(c.filters?.years?.[c.filters.years.length - 1] ?? ''));
   const [metric, setMetric] = useState('yield_t_ha');
   const seasonCrops = useMemo(() => [...new Set(filterCropRecords(c.records, { season }).map((r) => r.crop))].sort(), [c.records, season]);
@@ -337,13 +406,13 @@ export function SuitabilitySection({ intel }) {
       </details>
       <div className="mb-3">
         <Select label="Season" value={season} onChange={setSeason}
-          options={[{ value: 'all', label: 'All seasons' }, ...['Kharif', 'Rabi', 'Summer'].map((x) => ({ value: x, label: x }))]} />
+          options={[{ value: 'all', label: 'All seasons' }, ...[...new Set(s.rankings.map((r) => r.season))].map((x) => ({ value: x, label: x }))]} />
       </div>
       <div className="overflow-x-auto bg-surface-container-lowest rounded-xl border border-outline-variant/30">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-xs text-on-surface-variant bg-surface-container-low">
-              {['Rank', 'Crop', 'Season', 'Suitability', 'Expected yield', 'Historical yield', 'Water need', 'Cost', 'Env. impact', 'Area share', 'Production trend'].map((h) => (
+              {['Rank', 'Crop', 'Season', 'Suitability', 'Expected yield', 'Historical yield', 'Irrigated share', 'Cost', 'Nutrient load', 'Area share', 'Production trend'].map((h) => (
                 <th key={h} scope="col" className="py-2 px-3 font-semibold whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -354,7 +423,7 @@ export function SuitabilitySection({ intel }) {
                 <td className="py-2 px-3 font-bold">#{season === 'all' ? r.rank : r.season_rank}</td>
                 <td className="py-2 px-3 font-semibold">{r.crop}</td>
                 <td className="py-2 px-3">{r.season}</td>
-                <td className="py-2 px-3 min-w-[140px]" title={Object.entries(r.components).map(([k, v]) => `${compLabels[k]}: ${v === null ? 'n/a' : v}`).join('\n')}>
+                <td className="py-2 px-3 min-w-[140px]" title={Object.entries(r.components).map(([k, v]) => `${compLabels[k]}: ${isMissing(v) ? NA : v}`).join('\n')}>
                   <div className="flex items-center gap-2">
                     <div className="flex-1 h-2 bg-surface-variant rounded-full overflow-hidden" aria-hidden="true">
                       <div className="h-full bg-primary rounded-full" style={{ width: `${r.score}%` }}></div>
@@ -362,11 +431,11 @@ export function SuitabilitySection({ intel }) {
                     <span className="font-semibold w-10 text-right">{r.score}</span>
                   </div>
                 </td>
-                <td className="py-2 px-3 whitespace-nowrap">{r.expected_yield_t_ha} t/ha</td>
+                <td className="py-2 px-3 whitespace-nowrap">{show(r.expected_yield_t_ha, ' t/ha', 2)}</td>
                 <td className="py-2 px-3 whitespace-nowrap">{show(r.historical_mean_yield_t_ha, ' t/ha', 2)}</td>
-                <td className="py-2 px-3 whitespace-nowrap">{r.water_req_mm} mm</td>
-                <td className="py-2 px-3 whitespace-nowrap">₹{formatNumber(r.cost_rs_ha)}/ha</td>
-                <td className="py-2 px-3 whitespace-nowrap">{r.env_impact_per_ha}/ha</td>
+                <td className="py-2 px-3 whitespace-nowrap">{show(isMissing(r.irrigated_share) ? null : r.irrigated_share * 100, '%', 0)}</td>
+                <td className="py-2 px-3 whitespace-nowrap">{isMissing(r.cost_rs_ha) ? NA : `₹${formatNumber(r.cost_rs_ha)}/ha`}</td>
+                <td className="py-2 px-3 whitespace-nowrap">{show(r.env_impact_per_ha, ' kg/ha')}</td>
                 <td className="py-2 px-3 whitespace-nowrap">{show(r.mean_area_share_pct, '%', 1)}</td>
                 <td className="py-2 px-3">{r.production_trend ?? NA}</td>
               </tr>

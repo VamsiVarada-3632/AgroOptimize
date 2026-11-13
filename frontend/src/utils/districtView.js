@@ -4,6 +4,7 @@
  * every statistic is computed by the backend (app/services/district_service.py).
  */
 import { toCsv } from './download';
+import { OFFICIAL_DATA_NA, isMissing } from '../services/officialData';
 
 export const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -86,7 +87,7 @@ export function cropRecordsCsv(intel) {
 /** Plain-text district report assembled from the backend's generated text. */
 export function districtReportText(intel) {
   const o = intel.overview;
-  const na = (v, suffix = '') => (v === null || v === undefined ? 'Data not available' : `${v}${suffix}`);
+  const na = (v, suffix = '') => (isMissing(v) ? OFFICIAL_DATA_NA : `${v}${suffix}`);
   const lines = [
     `AGROOPTIMIZE DISTRICT INTELLIGENCE REPORT – ${intel.district.toUpperCase()}`,
     '='.repeat(60),
@@ -99,20 +100,20 @@ export function districtReportText(intel) {
     `  ${intel.summary.text}`,
     '',
     'OVERVIEW',
-    `  Agricultural area  : ${na(o.agricultural_area_ha, ' ha')} (${o.land_year_basis ?? '–'})`,
+    `  Agricultural area  : ${na(o.agricultural_area_ha, ' ha')} (${o.land_year_basis ?? OFFICIAL_DATA_NA})`,
     `  Irrigated share    : ${na(o.irrigated_pct, '%')}`,
-    `  Soil types         : ${o.soil_types.join(', ') || 'Data not available'}`,
+    `  Soil types         : ${o.soil_types.join(', ') || OFFICIAL_DATA_NA}`,
     `  Annual rainfall    : ${na(o.average_annual_rainfall_mm, ' mm')} (stated normal ${na(o.stated_annual_normal_mm, ' mm')})`,
     `  Mean temperature   : ${na(o.average_temperature_c, ' °C')}`,
-    `  Agro-climatic zone : Data not available`,
-    `  Irrigation sources : ${o.primary_irrigation_sources.map((s) => `${s.source} (${s.share_of_months_pct}% of months)`).join(', ') || 'Data not available'}`,
+    `  Agro-climatic zone : ${na(o.agricultural_zone)}`,
+    `  Irrigation sources : ${o.primary_irrigation_sources.map((s) => `${s.source} (${s.share_of_months_pct}% of months)`).join(', ') || OFFICIAL_DATA_NA}`,
     '',
     'INSIGHTS',
     ...intel.insights.map((i) => `  - ${i.title}: ${i.detail}`),
     '',
-    `CROP SUITABILITY (basis year ${intel.suitability.year_basis ?? '–'})`,
+    `CROP SUITABILITY (basis year ${intel.suitability.year_basis ?? OFFICIAL_DATA_NA})`,
     ...(intel.suitability.rankings || []).map((r) => `  ${String(r.rank).padStart(2)}. ${r.crop} (${r.season}) – score ${r.score}`),
-    `  Method: ${intel.suitability.method || 'Data not available'}`,
+    `  Method: ${intel.suitability.method || OFFICIAL_DATA_NA}`,
     '',
     'MARKET (historical, not live)',
     `  ${intel.market.note}`,
@@ -125,19 +126,19 @@ export function districtReportText(intel) {
 export function compareRows(a, b) {
   const lowestStorage = (x) => {
     const s = x.water.available ? [...x.water.storage_by_season].sort((p, q) => p.storage_pct - q.storage_pct)[0] : null;
-    return s ? `${s.storage_pct}% (${s.season})` : 'Data not available';
+    return s ? `${s.storage_pct}% (${s.season})` : OFFICIAL_DATA_NA;
   };
-  const top = (x) => (x.suitability.rankings?.[0] ? `${x.suitability.rankings[0].crop} (${x.suitability.rankings[0].season}, ${x.suitability.rankings[0].score})` : 'Data not available');
-  const val = (v, suffix = '') => (v === null || v === undefined ? 'Data not available' : `${v.toLocaleString('en-IN')}${suffix}`);
+  const top = (x) => (x.suitability.rankings?.[0] ? `${x.suitability.rankings[0].crop} (${x.suitability.rankings[0].season}, ${x.suitability.rankings[0].score})` : OFFICIAL_DATA_NA);
+  const val = (v, suffix = '') => (isMissing(v) ? OFFICIAL_DATA_NA : `${v.toLocaleString('en-IN')}${suffix}`);
   return [
     { label: 'Agricultural area', a: val(a.overview.agricultural_area_ha, ' ha'), b: val(b.overview.agricultural_area_ha, ' ha') },
     { label: 'Irrigated share', a: val(a.overview.irrigated_pct, '%'), b: val(b.overview.irrigated_pct, '%') },
     { label: 'Average annual rainfall', a: val(a.overview.average_annual_rainfall_mm, ' mm'), b: val(b.overview.average_annual_rainfall_mm, ' mm') },
     { label: 'Mean temperature', a: val(a.overview.average_temperature_c, ' °C'), b: val(b.overview.average_temperature_c, ' °C') },
-    { label: 'Soil', a: a.overview.soil_types.join(', ') || 'Data not available', b: b.overview.soil_types.join(', ') || 'Data not available' },
-    { label: 'Soil fertility index', a: a.soil.available ? `${a.soil.latest.fertility_index_mean} (${a.soil.latest.fuzzy_set})` : 'Data not available', b: b.soil.available ? `${b.soil.latest.fertility_index_mean} (${b.soil.latest.fuzzy_set})` : 'Data not available' },
+    { label: 'Soil', a: a.overview.soil_types.join(', ') || OFFICIAL_DATA_NA, b: b.overview.soil_types.join(', ') || OFFICIAL_DATA_NA },
+    { label: 'Soil fertility index', a: a.soil.available ? `${a.soil.latest.fertility_index_mean} (${a.soil.latest.fuzzy_set})` : OFFICIAL_DATA_NA, b: b.soil.available ? `${b.soil.latest.fertility_index_mean} (${b.soil.latest.fuzzy_set})` : OFFICIAL_DATA_NA },
     { label: 'Lowest seasonal storage', a: lowestStorage(a), b: lowestStorage(b) },
-    { label: 'Largest crop by area', a: a.overview.major_crops[0] ? `${a.overview.major_crops[0].crop} (${a.overview.major_crops[0].season})` : 'Data not available', b: b.overview.major_crops[0] ? `${b.overview.major_crops[0].crop} (${b.overview.major_crops[0].season})` : 'Data not available' },
+    { label: 'Largest crop by area', a: a.overview.major_crops[0] ? `${a.overview.major_crops[0].crop} (${a.overview.major_crops[0].season})` : OFFICIAL_DATA_NA, b: b.overview.major_crops[0] ? `${b.overview.major_crops[0].crop} (${b.overview.major_crops[0].season})` : OFFICIAL_DATA_NA },
     { label: 'Top suitability score', a: top(a), b: top(b) },
   ];
 }

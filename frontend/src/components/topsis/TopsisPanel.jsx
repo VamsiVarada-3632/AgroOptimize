@@ -1,3 +1,4 @@
+import { showValue } from '../../services/officialData';
 import React, { useEffect, useMemo, useState } from 'react';
 import { api, describeApiError } from '../../services/api';
 import BarChart from '../charts/BarChart';
@@ -89,7 +90,7 @@ export function ProfileComparison({ comparison }) {
                   <td className="py-1.5 pr-3">{r.bestScore.toFixed(4)}</td>
                   <td className="py-1.5 pr-3">#{r.bestRankUnderReference}</td>
                   <td className="py-1.5 pr-3">#{r.referenceTopRank}</td>
-                  <td className="py-1.5 pr-3">{r.tau === null || r.tau === undefined ? '–' : r.tau.toFixed(2)}</td>
+                  <td className="py-1.5 pr-3">{showValue(r.tau, (v) => v.toFixed(2))}</td>
                   <td className="py-1.5 pr-3">{r.overlap}</td>
                 </tr>
               ))}

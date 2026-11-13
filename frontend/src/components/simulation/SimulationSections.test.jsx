@@ -63,9 +63,9 @@ describe('infeasible scenario', () => {
     expect(render(<OptimizationSection result={infeasible} />)).not.toContain('Objective profile');
   });
 
-  it('shows Data not available when there is no history', () => {
+  it('shows Official Data Not Available when there is no history', () => {
     const html = render(<HistoricalSection result={{ ...drought, historical: { available: false } }} />);
-    expect(html).toContain('Data not available');
+    expect(html).toContain('Official Data Not Available');
   });
 });
 
