@@ -88,6 +88,12 @@ The script runs 37 checks: health, docs, the frontend and an asset, the SPA fall
 
 The first request after the free service has slept takes ~30–60 s while the instance starts.
 
+NSGA-II results differ between a Mac and Render's Linux (DEPLOYMENT_REPORT.md §4), so to check that a deployment is stable, record the reference from the deployment itself and compare a second run against it. A request that gets no answer is reported as a failed check.
+
+Browser check of every feature (needs `pip install playwright` and Google Chrome): `python scripts/verify_production_ui.py https://<service>.onrender.com <screenshot dir> <result.json>`. It runs optimisation, explanation, history, reports, District Intelligence, Soil Health Card, simulation and the other pages, and fails on console errors, failed API calls or raw null/NaN text. Last production run: [PRODUCTION_VERIFICATION.md](../deployment/PRODUCTION_VERIFICATION.md).
+
+The Render service must deploy `main` (Settings → Build & Deploy → Branch); until 13 Nov 2026 it still deployed `feature/render-deployment`.
+
 ## 7. Local production run (without Docker)
 
 ```bash
