@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { api, DISTRICTS, PREFERENCES, SEASONS, describeApiError } from '../services/api';
+import { api, PREFERENCES, describeApiError } from '../services/api';
+import { OFFICIAL_DATA_NA, useCatalog, useDatasets } from '../services/officialData';
 import { downloadFile, slug } from '../utils/download';
 import {
   FERTILIZER_OPTIONS, MARKET_OPTIONS, PRIORITY_LABELS, RAINFALL_OPTIONS, WATER_OPTIONS,
@@ -39,21 +40,30 @@ function Segmented({ label, value, options, onChange, format = (o) => o.label })
  * baseline and a modified scenario; POST /api/simulations/run optimises both
  * through the full pipeline and returns the analysis this page renders.
  */
-export default function SimulationView({ userLocation, landSizeHa = 5, onNavigate }) {
-  const [form, setForm] = useState(() => defaultForm(DISTRICTS.includes(userLocation) ? userLocation : DISTRICTS[0], landSizeHa));
-  const [years, setYears] = useState([]);
+export default function SimulationView({ userLocation, userSeason, landSizeHa = 5, onNavigate }) {
+  // Districts, seasons and years from GET /api/catalog; the form falls back
+  // to the catalog's first entry when the profile's value is not listed.
+  const { data: catalog, error: catalogError } = useCatalog();
+  const districts = catalog?.locations ?? [];
+  const seasons = catalog?.seasons ?? [];
+  const years = catalog?.years ?? [];
+  // The fertiliser-price lever needs notified fertiliser prices; GET /api/datasets
+  // lists it under disabled_features while that dataset is missing.
+  const { data: datasetInfo } = useDatasets();
+  const fertiliserDisabled = (datasetInfo?.disabled_features ?? []).find((f) => /fertili[sz]er[- ]price/i.test(f.feature));
+  const [formState, setForm] = useState(() => defaultForm(userLocation || '', landSizeHa, userSeason || ''));
+  const form = {
+    ...formState,
+    location: districts.includes(formState.location) ? formState.location : (districts[0] ?? ''),
+    season: seasons.includes(formState.season) ? formState.season : (seasons[0] ?? ''),
+    fertilizer_cost_change_pct: fertiliserDisabled ? 0 : formState.fertilizer_cost_change_pct,
+  };
   const [run, setRun] = useState({ loading: false, error: '', result: null, saved: null });
   const [saved, setSaved] = useState({ loading: true, items: [], error: '' });
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
-
-  useEffect(() => {
-    let cancelled = false;
-    api.getCatalog().then((c) => { if (!cancelled) setYears(c.years || []); }).catch(() => {});
-    return () => { cancelled = true; };
-  }, []);
 
   const refreshSaved = () => {
     api.listSimulations()
@@ -140,15 +150,20 @@ export default function SimulationView({ userLocation, landSizeHa = 5, onNavigat
             <h3 className="font-bold text-on-surface flex items-center gap-2">
               <span className="material-symbols-outlined text-primary" aria-hidden="true">agriculture</span>Original conditions
             </h3>
+            {catalogError && (
+              <p className="text-xs bg-error-container/40 text-on-error-container px-3 py-2 rounded-lg">
+                The district list could not be loaded: {describeApiError(catalogError)}
+              </p>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <label className="col-span-2"><span className={labelCls}>District</span>
                 <select value={form.location} onChange={(e) => set({ location: e.target.value })} className={`${field} cursor-pointer`}>
-                  {DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
+                  {districts.map((d) => <option key={d} value={d}>{d}</option>)}
                 </select>
               </label>
               <label><span className={labelCls}>Season</span>
                 <select value={form.season} onChange={(e) => set({ season: e.target.value })} className={`${field} cursor-pointer`}>
-                  {SEASONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                  {seasons.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
               </label>
               <label><span className={labelCls}>Year</span>
@@ -179,8 +194,17 @@ export default function SimulationView({ userLocation, landSizeHa = 5, onNavigat
               onChange={(v) => set({ rainfall_change_pct: v })} format={(o) => (o === 0 ? 'Current' : `${o > 0 ? '+' : ''}${o}%`)} />
             <Segmented label="Water availability" value={form.water_availability} options={WATER_OPTIONS}
               onChange={(v) => set({ water_availability: v })} />
-            <Segmented label="Fertiliser cost" value={form.fertilizer_cost_change_pct} options={FERTILIZER_OPTIONS}
-              onChange={(v) => set({ fertilizer_cost_change_pct: v })} format={(o) => (o === 0 ? 'Current' : `${o > 0 ? '+' : ''}${o}%`)} />
+            {fertiliserDisabled ? (
+              <div>
+                <p className={labelCls}>Fertiliser cost</p>
+                <p className="text-xs text-on-surface-variant bg-surface-container-low rounded-lg px-3 py-2">
+                  {OFFICIAL_DATA_NA}: {fertiliserDisabled.missing_dataset}.
+                </p>
+              </div>
+            ) : (
+              <Segmented label="Fertiliser cost" value={form.fertilizer_cost_change_pct} options={FERTILIZER_OPTIONS}
+                onChange={(v) => set({ fertilizer_cost_change_pct: v })} format={(o) => (o === 0 ? 'Current' : `${o > 0 ? '+' : ''}${o}%`)} />
+            )}
             <Segmented label="Market price" value={form.market_price} options={MARKET_OPTIONS} onChange={(v) => set({ market_price: v })} />
             <div className="grid grid-cols-2 gap-3">
               <label><span className={labelCls}>Scenario land (ha)</span>
@@ -215,7 +239,7 @@ export default function SimulationView({ userLocation, landSizeHa = 5, onNavigat
               )}
             </div>
 
-            <button type="submit" disabled={run.loading}
+            <button type="submit" disabled={run.loading || !form.location || !form.season}
               className="w-full bg-primary text-on-primary font-bold py-3 rounded-lg hover:opacity-90 transition-opacity shadow-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2">
               <span className="material-symbols-outlined" aria-hidden="true">play_arrow</span>
               {run.loading ? 'Running…' : 'Run simulation'}

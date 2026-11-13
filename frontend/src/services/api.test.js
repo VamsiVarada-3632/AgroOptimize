@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { FUZZY_MODELS, api, fuzzyModelLabel, resolveApiBase } from './api';
+import { api, districtPath, resolveApiBase } from './api';
 
 describe('resolveApiBase', () => {
   it('uses the page origin in a production build', () => {
@@ -20,14 +20,14 @@ describe('resolveApiBase', () => {
   });
 });
 
-describe('fuzzy models', () => {
-  it('offers the published model first and the improved one', () => {
-    expect(FUZZY_MODELS.map((m) => m.value)).toEqual(['original', 'improved']);
-    expect(fuzzyModelLabel('improved')).toBe('Improved');
-    expect(fuzzyModelLabel(undefined)).toBe('Original (published)');
-    expect(fuzzyModelLabel('strong_partition')).toBe('strong_partition');
+describe('district paths', () => {
+  it('lower-cases and encodes catalog district names', () => {
+    expect(districtPath('Salem')).toBe('salem');
+    expect(districtPath(' The Nilgiris ')).toBe('the%20nilgiris');
   });
+});
 
+describe('fuzzy models', () => {
   it('sends the chosen fuzzy model with a plan request and omits it when unset', async () => {
     const bodies = [];
     const store = {};

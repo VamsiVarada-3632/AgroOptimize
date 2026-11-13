@@ -1,11 +1,55 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import AccountAuthOverlay from '../components/AccountAuthOverlay';
-import { api, DISTRICTS, extractDistrict } from '../services/api';
+import { describeApiError } from '../services/api';
+import {
+  OFFICIAL_DATA_NA, catalogCrops, fuzzyModelLabel, useCatalog, useDatasets, useFuzzyModels, useOpenApi,
+} from '../services/officialData';
 
 const defaultAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23707a6f'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>";
 
-// Small fallback crop list, used only if GET /api/catalog is unreachable.
-const FALLBACK_CROPS = ['Sugarcane', 'Wheat', 'Paddy', 'Maize', 'Cotton', 'Groundnut', 'Sorghum', 'Tapioca'];
+/**
+ * Read-only facts about the running backend and its data, each read from an
+ * API response (no value is typed into the page).
+ */
+function SystemInfo() {
+  const openapi = useOpenApi();
+  const datasets = useDatasets();
+  const fuzzy = useFuzzyModels();
+  const value = (state, pick) => {
+    if (state.loading) return '…';
+    if (state.error) return `${OFFICIAL_DATA_NA} (${describeApiError(state.error)})`;
+    return pick(state.data) ?? OFFICIAL_DATA_NA;
+  };
+  const list = datasets.data?.datasets ?? [];
+  const years = [...new Set(list.map((d) => d.report_year))].join(', ');
+  const imported = list.map((d) => d.imported_at).sort().pop();
+  const rows = [
+    { label: 'Backend version', value: value(openapi, (d) => d.info?.version) },
+    { label: 'Dataset version', value: value(datasets, () => (list.length ? `Report year ${years} · imported ${imported?.slice(0, 10)}` : null)) },
+    { label: 'Optimization engine', value: value(openapi, (d) => (d.components?.schemas?.RunMeta?.properties?.algorithm?.default
+      ? `${d.components.schemas.RunMeta.properties.algorithm.default} + TOPSIS ranking` : null)) },
+    { label: 'Fuzzy model', value: value(fuzzy, (d) => (d.default ? `${fuzzyModelLabel(d.default)} (default)` : null)) },
+    { label: 'Official dataset mode', value: value(datasets, (d) => (list.length
+      ? `On · ${list.length} official datasets · ${d.disabled_features?.length ?? 0} features disabled for missing data` : null)) },
+  ];
+  return (
+    <section className="bg-surface-container-lowest rounded-xl p-6 shadow-soft border border-outline-variant/20 w-full">
+      <h3 className="font-headline-md text-headline-md text-on-surface mb-4 flex items-center gap-2 font-bold">
+        <span className="material-symbols-outlined text-primary">info</span>
+        System Information
+      </h3>
+      <dl className="space-y-3">
+        {rows.map((r) => (
+          <div key={r.label}>
+            <dt className="font-label-sm text-label-sm text-on-surface-variant font-semibold">{r.label}</dt>
+            <dd className="font-body-md text-body-md text-on-surface break-words">{r.value}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="font-label-sm text-label-sm text-on-surface-variant mt-4">Read-only, reported by the server.</p>
+    </section>
+  );
+}
 
 export default function SettingsView({ user, onUpdateUser, onLogout, onChangeLanguage, selectedLanguage }) {
   const fileInputRef = useRef(null);
@@ -13,28 +57,13 @@ export default function SettingsView({ user, onUpdateUser, onLogout, onChangeLan
   const [email, setEmail] = useState(user.email || '');
   const [phone, setPhone] = useState(user.phoneNumber || '');
 
-  // Farm profile fields -- location is constrained to a dropdown of the 4
-  // districts the backend actually has data for (any pre-existing
-  // free-text location is resolved onto one of them via extractDistrict).
-  const [location, setLocation] = useState(extractDistrict(user.location));
+  // Farm profile fields -- district and crop come from GET /api/catalog.
+  const { data: catalog } = useCatalog();
+  const districts = catalog?.locations ?? [];
+  const [location, setLocation] = useState(user.location || '');
   const [landSize, setLandSize] = useState(user.landSize || '5');
   const [primaryCrop, setPrimaryCrop] = useState(user.primaryCrop || '');
-
-  const [catalog, setCatalog] = useState(null);
-  useEffect(() => {
-    let cancelled = false;
-    api.getCatalog()
-      .then((data) => { if (!cancelled) setCatalog(data); })
-      .catch(() => { if (!cancelled) setCatalog(null); });
-    return () => { cancelled = true; };
-  }, []);
-
-  const cropOptions = useMemo(() => {
-    if (!catalog?.crops_by_season) return FALLBACK_CROPS;
-    const set = new Set();
-    Object.values(catalog.crops_by_season).forEach((list) => list.forEach((c) => set.add(c)));
-    return Array.from(set).sort();
-  }, [catalog]);
+  const cropOptions = useMemo(() => catalogCrops(catalog), [catalog]);
 
   const handlePhotoClick = () => {
     if (fileInputRef.current) {
@@ -161,17 +190,18 @@ export default function SettingsView({ user, onUpdateUser, onLogout, onChangeLan
             </div>
 
             {/* Farm profile: district, land size, primary crop -- feeds
-                every other view's district-scoped API calls via
-                extractDistrict(user.location). */}
+                every other view's district-scoped API calls. */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
               <div>
                 <label className="block font-label-sm text-label-sm text-on-surface-variant mb-1 font-semibold">Farm Location</label>
                 <select
-                  value={location}
+                  value={districts.includes(location) ? location : ''}
                   onChange={(e) => setLocation(e.target.value)}
+                  required
                   className="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-bright focus:border-primary focus:ring-1 focus:ring-primary text-on-surface font-body-md outline-none transition-colors cursor-pointer"
                 >
-                  {DISTRICTS.map((d) => (
+                  {!districts.includes(location) && <option value="" disabled>Select your district</option>}
+                  {districts.map((d) => (
                     <option key={d} value={d}>{d}, Tamil Nadu</option>
                   ))}
                 </select>
@@ -256,6 +286,8 @@ export default function SettingsView({ user, onUpdateUser, onLogout, onChangeLan
             </div>
           </section>
 
+          <SystemInfo />
+
           {/* Quick Logout Button for mobile */}
           <div className="w-full">
             <button 
@@ -283,7 +315,7 @@ export default function SettingsView({ user, onUpdateUser, onLogout, onChangeLan
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-body-md text-body-md text-on-surface font-semibold">Irrigation Reminders</p>
-                  <p className="font-label-sm text-label-sm text-on-surface-variant">Alerts based on moisture sensors</p>
+                  <p className="font-label-sm text-label-sm text-on-surface-variant">Preference saved on this device; no alerts are sent yet</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input 
@@ -299,7 +331,7 @@ export default function SettingsView({ user, onUpdateUser, onLogout, onChangeLan
               <div className="flex items-center justify-between pt-2">
                 <div>
                   <p className="font-body-md text-body-md text-on-surface font-semibold">Weather Warnings</p>
-                  <p className="font-label-sm text-label-sm text-on-surface-variant">Frost, heavy rain, or extreme heat</p>
+                  <p className="font-label-sm text-label-sm text-on-surface-variant">Needs an official IMD weather feed: {OFFICIAL_DATA_NA}</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input 

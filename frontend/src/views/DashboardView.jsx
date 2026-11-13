@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { api, DISTRICTS, BACKEND_UNREACHABLE_MSG } from '../services/api';
+import { api, BACKEND_UNREACHABLE_MSG, describeApiError } from '../services/api';
+import { OFFICIAL_DATA_NA, isMissing, isOfficialDataUnavailable, showValue, useDatasets } from '../services/officialData';
 import DataSourceNotice from '../components/DataSourceNotice';
 
 const ACTION_ICONS = {
@@ -33,43 +34,38 @@ function waterLabel(pct) {
 
 export default function DashboardView({ user, onNavigate, layout = 'sidebar', onToggleLayout }) {
   const [scheduledActions, setScheduledActions] = useState({});
-  const [weatherTab, setWeatherTab] = useState('local'); // 'local' | 'districts'
 
-  const [weather, setWeather] = useState(null);
-  const [weatherLoading, setWeatherLoading] = useState(true);
+  // Live weather needs an official IMD feed. GET /api/datasets lists the
+  // widget under disabled_features while that feed is missing; the card then
+  // shows the reason without calling /api/weather (which would answer 501).
+  const datasets = useDatasets();
+  const weatherDisabled = (datasets.data?.disabled_features ?? []).find((f) => f.feature.includes('/api/weather'));
+  const [weatherState, setWeatherState] = useState({ loading: true, reason: '' });
 
   const [dashboardData, setDashboardData] = useState(null);
   const [dashboardLoading, setDashboardLoading] = useState(true);
   const [dashboardFailed, setDashboardFailed] = useState(false);
 
-  const [allDistrictsWeather, setAllDistrictsWeather] = useState({});
-  const [districtsLoading, setDistrictsLoading] = useState(true);
 
   const toggleAction = (key) => {
     setScheduledActions((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  // Real weather for the user's district. If the backend truly can't be
-  // reached (not running, network error), we show an honest "unavailable"
-  // state -- never a fabricated reading. Note the backend itself already
-  // has its own real fallback (live Open-Meteo -> historical CSV average)
-  // baked into GET /api/weather, so `source` on a successful response
-  // tells you which of those two actually produced this reading.
   useEffect(() => {
+    if (datasets.loading) return undefined;
+    if (weatherDisabled) {
+      setWeatherState({ loading: false, reason: `${weatherDisabled.feature}: missing ${weatherDisabled.missing_dataset} (${weatherDisabled.source}).` });
+      return undefined;
+    }
     let cancelled = false;
-    setWeatherLoading(true);
     api.getWeather(user.location)
-      .then((data) => {
+      .then(() => { if (!cancelled) setWeatherState({ loading: false, reason: '' }); })
+      .catch((err) => {
         if (cancelled) return;
-        setWeather(data);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setWeather(null);
-      })
-      .finally(() => { if (!cancelled) setWeatherLoading(false); });
+        setWeatherState({ loading: false, reason: isOfficialDataUnavailable(err) ? describeApiError(err) : BACKEND_UNREACHABLE_MSG });
+      });
     return () => { cancelled = true; };
-  }, [user.location]);
+  }, [user.location, datasets.loading, weatherDisabled]);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,22 +84,6 @@ export default function DashboardView({ user, onNavigate, layout = 'sidebar', on
       .finally(() => { if (!cancelled) setDashboardLoading(false); });
     return () => { cancelled = true; };
   }, [user.location]);
-
-  // Weather across all 4 districts, for the "Districts" tab -- real API
-  // calls in parallel; a district that fails is simply omitted rather
-  // than shown with a made-up reading.
-  useEffect(() => {
-    let cancelled = false;
-    setDistrictsLoading(true);
-    Promise.allSettled(DISTRICTS.map((d) => api.getWeather(d).then((data) => [d, data])))
-      .then((results) => {
-        if (cancelled) return;
-        const entries = results.filter((r) => r.status === 'fulfilled').map((r) => r.value);
-        setAllDistrictsWeather(Object.fromEntries(entries));
-      })
-      .finally(() => { if (!cancelled) setDistrictsLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
 
   const actions = dashboardData?.recommended_actions ?? [];
   const cropAllocations = dashboardData?.crop_allocations ?? [];
@@ -162,7 +142,7 @@ export default function DashboardView({ user, onNavigate, layout = 'sidebar', on
             {dashboardLoading ? (
               <div className="h-8 w-12 bg-surface-container-high rounded animate-pulse"></div>
             ) : (
-              <p className="font-headline-md text-headline-md text-on-surface">{dashboardData?.active_plans ?? '--'}</p>
+              <p className="font-headline-md text-headline-md text-on-surface">{showValue(dashboardData?.active_plans)}</p>
             )}
           </div>
         </div>
@@ -176,7 +156,7 @@ export default function DashboardView({ user, onNavigate, layout = 'sidebar', on
             <div className="p-2 bg-primary-container/10 rounded-lg text-primary">
               <span className="material-symbols-outlined">agriculture</span>
             </div>
-            {dashboardData && (
+            {dashboardData && !isMissing(dashboardData.yield_trend) && (
               <span className="font-label-sm text-label-sm text-primary-fixed-dim bg-primary-fixed/20 px-2 py-1 rounded-full flex items-center gap-1 font-semibold">
                 <span className="material-symbols-outlined text-[14px]">
                   {String(dashboardData.yield_trend).trim().startsWith('-') ? 'trending_down' : 'trending_up'}
@@ -190,7 +170,11 @@ export default function DashboardView({ user, onNavigate, layout = 'sidebar', on
               <div className="h-8 w-20 bg-surface-container-high rounded animate-pulse"></div>
             ) : (
               <p className="font-headline-md text-headline-md text-on-surface">
-                {dashboardData ? dashboardData.estimated_yield : '--'} <span className="text-body-md text-on-surface-variant">t/ha</span>
+                {isMissing(dashboardData?.estimated_yield) ? (
+                  <span className="text-body-md text-on-surface-variant">{OFFICIAL_DATA_NA}</span>
+                ) : (
+                  <>{dashboardData.estimated_yield} <span className="text-body-md text-on-surface-variant">t/ha</span></>
+                )}
               </p>
             )}
           </div>
@@ -205,22 +189,25 @@ export default function DashboardView({ user, onNavigate, layout = 'sidebar', on
             <div className="p-2 bg-primary-container/10 rounded-lg text-primary">
               <span className="material-symbols-outlined">water_drop</span>
             </div>
-            {dashboardData && (
+            {dashboardData && !isMissing(dashboardData.water_utilization_pct) && (
               <span className="font-label-sm text-label-sm text-primary-container bg-primary-fixed/30 px-2 py-1 rounded-full font-semibold">
                 {waterLabel(dashboardData.water_utilization_pct)}
               </span>
             )}
           </div>
           <div>
-            <p className="font-label-md text-label-md text-on-surface-variant mb-1">Water Utilization</p>
+            <p className="font-label-md text-label-md text-on-surface-variant mb-1">Irrigated Area</p>
             {dashboardLoading ? (
               <div className="h-2.5 w-full bg-surface-container-high rounded-full mt-3 animate-pulse"></div>
-            ) : dashboardData ? (
-              <div className="w-full bg-surface-variant rounded-full h-2.5 mt-2">
-                <div className="bg-primary-container h-2.5 rounded-full transition-all duration-500" style={{ width: `${Math.min(100, dashboardData.water_utilization_pct)}%` }}></div>
-              </div>
+            ) : !isMissing(dashboardData?.water_utilization_pct) ? (
+              <>
+                <div className="w-full bg-surface-variant rounded-full h-2.5 mt-2">
+                  <div className="bg-primary-container h-2.5 rounded-full transition-all duration-500" style={{ width: `${Math.min(100, dashboardData.water_utilization_pct)}%` }}></div>
+                </div>
+                <p className="font-label-sm text-label-sm text-on-surface-variant mt-1.5">{dashboardData.water_utilization_pct}% of cropped area is irrigated</p>
+              </>
             ) : (
-              <p className="font-headline-md text-headline-md text-on-surface">--</p>
+              <p className="font-body-md text-on-surface-variant">{OFFICIAL_DATA_NA}</p>
             )}
           </div>
         </div>
@@ -234,7 +221,7 @@ export default function DashboardView({ user, onNavigate, layout = 'sidebar', on
             <div className="p-2 bg-primary-container/10 rounded-lg text-primary">
               <span className="material-symbols-outlined">eco</span>
             </div>
-            {dashboardData && (
+            {dashboardData && !isMissing(dashboardData.soil_status) && (
               <span className="font-label-sm text-label-sm text-primary-container bg-primary-fixed/30 px-2 py-1 rounded-full font-semibold">{dashboardData.soil_status}</span>
             )}
           </div>
@@ -243,7 +230,9 @@ export default function DashboardView({ user, onNavigate, layout = 'sidebar', on
             {dashboardLoading ? (
               <div className="h-8 w-14 bg-surface-container-high rounded animate-pulse"></div>
             ) : (
-              <p className="font-headline-md text-headline-md text-on-surface">{dashboardData ? `${dashboardData.soil_health_pct}%` : '--'}</p>
+              <p className={isMissing(dashboardData?.soil_health_pct) ? 'font-body-md text-on-surface-variant' : 'font-headline-md text-headline-md text-on-surface'}>
+                {showValue(dashboardData?.soil_health_pct, (v) => `${v}%`)}
+              </p>
             )}
           </div>
         </div>
@@ -291,11 +280,11 @@ export default function DashboardView({ user, onNavigate, layout = 'sidebar', on
                       <span className="text-on-surface-variant w-20 text-right">{c.pct}% · {c.ha}ha</span>
                     </div>
                   ))}
-                  <p className="text-xs text-on-surface-variant pt-1">Top revenue-ranked candidate crops for this district and season, from historical crop data.</p>
+                  <p className="text-xs text-on-surface-variant pt-1">The district's top three candidate crops this season, ranked by official production valued at MSP. This is not an optimised plan.</p>
                 </div>
               ) : (
                 <p className="text-sm text-on-surface-variant py-6 text-center">
-                  {dashboardFailed ? 'Crop data unavailable -- backend unreachable.' : 'No crop allocation data available for this district/season.'}
+                  {dashboardFailed ? 'Crop data unavailable -- backend unreachable.' : OFFICIAL_DATA_NA}
                 </p>
               )}
             </div>
@@ -352,93 +341,19 @@ export default function DashboardView({ user, onNavigate, layout = 'sidebar', on
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary-fixed/20 rounded-bl-full -mr-4 -mt-4 z-0"></div>
             <div className="relative z-10 w-full">
 
-              {/* Tabs header */}
-              <div className="flex bg-surface-container-low p-1 rounded-lg mb-6 text-center border border-outline-variant/20">
-                <button
-                  onClick={() => setWeatherTab('local')}
-                  className={`flex-1 py-1.5 rounded font-label-sm text-label-sm cursor-pointer transition-all ${
-                    weatherTab === 'local' ? 'bg-surface-container-lowest text-primary font-bold shadow-sm' : 'text-on-surface-variant hover:text-primary'
-                  }`}
-                >
-                  Local
-                </button>
-                <button
-                  onClick={() => setWeatherTab('districts')}
-                  className={`flex-1 py-1.5 rounded font-label-sm text-label-sm cursor-pointer transition-all ${
-                    weatherTab === 'districts' ? 'bg-surface-container-lowest text-primary font-bold shadow-sm' : 'text-on-surface-variant hover:text-primary'
-                  }`}
-                >
-                  Districts
-                </button>
-              </div>
-
-              {weatherTab === 'local' ? (
-                <div className="animate-[fadeIn_0.2s_ease-out]">
-                  {weatherLoading ? (
-                    <div className="space-y-3">
-                      <div className="h-6 w-32 bg-surface-container-high rounded animate-pulse"></div>
-                      <div className="h-12 w-24 bg-surface-container-high rounded animate-pulse"></div>
-                    </div>
-                  ) : weather ? (
-                    <>
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <h3 className="font-headline-md text-headline-md text-on-surface">{weather.location}</h3>
-                          <p className="font-label-sm text-label-sm text-on-surface-variant">
-                            {weather.source === 'Live (Open-Meteo)' ? "Today's Weather (live)" : 'Historical estimate'}
-                          </p>
-                        </div>
-                        <span className="material-symbols-outlined text-4xl text-secondary">{weather.condition}</span>
-                      </div>
-                      <div className="mb-6 flex items-baseline gap-2">
-                        <span className="font-headline-lg text-[48px] leading-none font-bold text-on-surface">{weather.temp}°</span>
-                        <span className="font-body-md text-on-surface-variant">C</span>
-                      </div>
-                      <div className="space-y-3 pt-4 border-t border-outline-variant/30">
-                        <p className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2 font-bold">
-                          {weather.source === 'Live (Open-Meteo)' ? '5-Day Forecast' : 'Seasonal Estimate'}
-                        </p>
-                        {weather.forecast.map((f) => (
-                          <div key={f.day} className="flex justify-between items-center text-sm">
-                            <span className="font-body-md text-on-surface w-12">{f.day}</span>
-                            <span className="material-symbols-outlined text-on-surface-variant text-[20px]">{f.icon}</span>
-                            <span className="font-body-md text-on-surface-variant">{f.temp}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="py-10 text-center">
-                      <span className="material-symbols-outlined text-4xl text-outline mb-2">cloud_off</span>
-                      <p className="text-sm text-on-surface-variant">Weather unavailable right now.</p>
-                    </div>
-                  )}
+              <h3 className="font-headline-md text-headline-md text-on-surface">Weather · {user.location}</h3>
+              {weatherState.loading ? (
+                <div className="space-y-3 mt-4">
+                  <div className="h-6 w-32 bg-surface-container-high rounded animate-pulse"></div>
+                  <div className="h-12 w-24 bg-surface-container-high rounded animate-pulse"></div>
                 </div>
               ) : (
-                <div className="animate-[fadeIn_0.2s_ease-out] w-full">
-                  <p className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-3.5 font-bold">Weather across districts</p>
-                  {districtsLoading ? (
-                    <div className="space-y-3">
-                      {[0, 1, 2, 3].map((i) => <div key={i} className="h-8 w-full bg-surface-container-high rounded animate-pulse"></div>)}
-                    </div>
-                  ) : Object.keys(allDistrictsWeather).length > 0 ? (
-                    <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
-                      {Object.entries(allDistrictsWeather).map(([district, data]) => (
-                        <div key={district} className="flex justify-between items-center py-2 border-b border-outline-variant/10 text-sm last:border-b-0">
-                          <span className="font-body-md text-on-surface font-semibold">{district}</span>
-                          <div className="flex items-center gap-2.5">
-                            <span className="material-symbols-outlined text-on-surface-variant text-[20px]">{data.condition}</span>
-                            <span className="font-mono text-on-surface font-bold text-right w-8">{data.temp}°C</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-on-surface-variant py-6 text-center">Unable to load -- backend unreachable.</p>
-                  )}
+                <div className="py-8 text-center animate-[fadeIn_0.2s_ease-out]">
+                  <span className="material-symbols-outlined text-4xl text-outline mb-2">cloud_off</span>
+                  <p className="text-sm font-semibold text-on-surface">{OFFICIAL_DATA_NA}</p>
+                  {weatherState.reason && <p className="text-xs text-on-surface-variant mt-2">{weatherState.reason}</p>}
                 </div>
               )}
-
             </div>
           </div>
 

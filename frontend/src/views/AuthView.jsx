@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import CountryCodeModal from '../components/CountryCodeModal';
-import { api, DISTRICTS } from '../services/api';
-
-// Small fallback crop list, used only if GET /api/catalog is unreachable --
-// kept in sync with the same fallback in SettingsView.jsx / ProfileSetupView.jsx.
-const FALLBACK_CROPS = ['Sugarcane', 'Wheat', 'Paddy', 'Maize', 'Cotton', 'Groundnut', 'Sorghum', 'Tapioca'];
+import { catalogCrops, useCatalog } from '../services/officialData';
 
 // Demo-only, device-local "account": there is no auth backend, so the
 // credential never leaves this browser. We keep a SHA-256 digest rather
@@ -67,21 +63,10 @@ export default function AuthView({ initialMode = 'login', onSuccess }) {
   const [landSize, setLandSize] = useState('');
   const [primaryCrop, setPrimaryCrop] = useState('');
 
-  const [catalog, setCatalog] = useState(null);
-  useEffect(() => {
-    let cancelled = false;
-    api.getCatalog()
-      .then((data) => { if (!cancelled) setCatalog(data); })
-      .catch(() => { if (!cancelled) setCatalog(null); });
-    return () => { cancelled = true; };
-  }, []);
-
-  const cropOptions = useMemo(() => {
-    if (!catalog?.crops_by_season) return FALLBACK_CROPS;
-    const set = new Set();
-    Object.values(catalog.crops_by_season).forEach((list) => list.forEach((c) => set.add(c)));
-    return Array.from(set).sort();
-  }, [catalog]);
+  // Districts and crops come from GET /api/catalog (official datasets).
+  const { data: catalog } = useCatalog();
+  const districts = catalog?.locations ?? [];
+  const cropOptions = useMemo(() => catalogCrops(catalog), [catalog]);
 
   // OTP Verification details
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -534,13 +519,13 @@ export default function AuthView({ initialMode = 'login', onSuccess }) {
                       required
                     >
                       <option value="" disabled>Select your district</option>
-                      {DISTRICTS.map((d) => (
+                      {districts.map((d) => (
                         <option key={d} value={d}>{d}, Tamil Nadu</option>
                       ))}
                     </select>
                     <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
                   </div>
-                  <p className="font-label-sm text-label-sm text-on-surface-variant mt-1">Our models currently cover these {DISTRICTS.length} Tamil Nadu districts.</p>
+                  <p className="font-label-sm text-label-sm text-on-surface-variant mt-1">The official datasets cover these {districts.length} Tamil Nadu districts.</p>
                 </div>
 
                 <div className="flex flex-col gap-1">
