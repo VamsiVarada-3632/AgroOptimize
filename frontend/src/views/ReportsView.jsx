@@ -3,6 +3,7 @@ import { api, BACKEND_UNREACHABLE_MSG, describeApiError } from '../services/api'
 import { downloadFile, slug } from '../utils/download';
 import { ExplanationModal } from '../components/ExplanationPanel';
 import { headlineQuality, qualityReportLines } from '../utils/qualityMetrics';
+import { EVIDENCE_LABELS, OFFICIAL_DATA_NA, describeRun, showValue } from '../services/officialData';
 
 const fmtInt = (n) => Math.round(n).toLocaleString('en-IN');
 
@@ -33,7 +34,16 @@ function explanationLines(explanation) {
     ...(explanation.risks.length ? explanation.risks.map((r) => `  - [${r.severity}] ${r.title}: ${r.detail}`) : ['  (none detected)']),
     '',
     `CONFIDENCE BREAKDOWN (${explanation.confidence.method})`,
-    ...explanation.confidence.components.map((c) => `  - ${c.label}: ${c.score === null ? 'not available' : `${c.score}%`} -- ${c.detail}`),
+    ...explanation.confidence.components.map((c) => `  - ${c.label}: ${showValue(c.score, (v) => `${v}%`)} -- ${c.detail}`),
+    '',
+    'WHY EACH CROP WAS SELECTED (official records)',
+    ...(explanation.crop_evidence?.length
+      ? explanation.crop_evidence.flatMap((crop) => [
+        `  ${crop.crop} (${showValue(crop.share_pct, (v) => `${v.toFixed(1)}% of land`)})`,
+        ...crop.criteria.map((c) => `    - ${EVIDENCE_LABELS[c.id] || c.label} [${c.status}]: ${showValue(c.statement)}`
+          + ` Source: ${c.sources?.map((src) => src.dataset).join('; ') || OFFICIAL_DATA_NA}`),
+      ])
+      : [`  ${OFFICIAL_DATA_NA}`]),
     '',
   ];
 }
@@ -48,6 +58,7 @@ function buildReportText(result, explanation) {
     `Generated        : ${new Date().toLocaleString()}`,
     `Run ID           : ${result.run_id || '(unsaved run)'}`,
     `District / season: ${rp.location} / ${rp.season} ${rp.year}`,
+    `Fuzzy model / data: ${describeRun(result).modelLabel} / ${describeRun(result).official ? 'Official Data' : 'Legacy Data'}`,
   ];
   if (rp.data_year_estimated) {
     lines.push(`NOTE             : ${rp.year} inputs are estimates carried forward from the previous year, not observations.`);
@@ -55,13 +66,15 @@ function buildReportText(result, explanation) {
   lines.push(
     '',
     'REGION SNAPSHOT (district-level historical data)',
-    `  Soil            : ${rp.soil.soil_type}, pH ${rp.soil.avg_ph}, organic carbon ${rp.soil.organic_carbon_percent}%, fertility index ${rp.soil.fertility_index}/100`,
-    `  Rainfall        : ${rp.rainfall.avg_monthly_rainfall_mm} mm/month average over ${rp.rainfall.months_used.join(', ')}; deviation from normal ${rp.rainfall.avg_deviation_percent}%`,
-    `  Water storage   : ${rp.water.avg_storage_percent}% of reservoir capacity; groundwater status "${rp.water.groundwater_status}"`,
+    `  Soil            : type ${showValue(rp.soil.soil_type)}; pH ${showValue(rp.soil.avg_ph)}; organic carbon ${showValue(rp.soil.organic_carbon_percent, (v) => `${v}%`)}; fertility index ${showValue(rp.soil.fertility_index, (v) => `${v}/100`)}`,
+    `  Rainfall        : ${showValue(rp.rainfall.avg_monthly_rainfall_mm, (v) => `${v} mm/month`)} average over ${rp.rainfall.months_used.join(', ')}; deviation from normal ${showValue(rp.rainfall.avg_deviation_percent, (v) => `${v}%`)}`,
+    `  Water storage   : ${showValue(rp.water.avg_storage_percent, (v) => `${v}% of reservoir capacity`)}; groundwater status ${showValue(rp.water.groundwater_status)}`,
     '',
     'UNCERTAINTY ASSESSMENT (Mamdani fuzzy inference)',
-    `  Yield confidence: ${fz.yield_confidence} (rainfall ${fz.rainfall_label}, water ${fz.water_label}, soil ${fz.soil_label})`,
-    `  Irrigation risk : ${fz.irrigation_risk}`,
+    ...(fz.applied === false
+      ? [`  Not applied     : ${fz.reason || OFFICIAL_DATA_NA} (yield left unadjusted)`]
+      : [`  Yield confidence: ${fz.yield_confidence} (rainfall ${fz.rainfall_label}, water ${fz.water_label}, soil ${fz.soil_label})`,
+        `  Irrigation risk : ${fz.irrigation_risk}`]),
     '',
     'OPTIMISATION',
     `  ${meta.algorithm}, population ${meta.pop_size}, ${meta.n_gen} generations; ${meta.n_pareto_solutions_found} feasible Pareto-optimal plans found`,
@@ -80,9 +93,9 @@ function buildReportText(result, explanation) {
       `PLAN #${plan.rank}  (TOPSIS closeness ${plan.composite_score})`,
       `  Crop mix        : ${mix}`,
       `  Expected yield  : ${plan.yield_tonnes} t total (${(plan.yield_tonnes / area).toFixed(2)} t/ha)`,
-      `  Input cost      : Rs ${fmtInt(plan.cost_rs)} total (Rs ${fmtInt(plan.cost_rs / area)}/ha) -- fertilizer, pesticide and labour only`,
-      `  Irrigation water: ${fmtInt(plan.water_liters)} litres`,
-      `  Env. impact     : ${plan.env_impact_score} (relative score, lower is better)`,
+      `  Cost            : Rs ${fmtInt(plan.cost_rs)} total (Rs ${fmtInt(plan.cost_rs / area)}/ha) -- CACP cost of production`,
+      `  Irrigated area  : ${showValue(plan.irrigated_ha, (v) => `${v} ha`)}`,
+      `  Nutrient load   : ${showValue(plan.env_impact_score, (v) => `${v} kg NPK`)} (lower is better)`,
       `  Confidence      : ${plan.confidence_label}`,
       `  Summary         : ${plan.trade_off_summary}`,
       '',
@@ -95,8 +108,8 @@ function buildReportText(result, explanation) {
   }
   lines.push(
     'LIMITATIONS',
-    '  Estimates come from district-level averages and documented modelling assumptions',
-    '  (listed in docs/CONFIGURATION.md). They are decision support, not agronomic advice.',
+    '  Inputs are the official 2024-25 district datasets (GET /api/datasets lists them); anything they',
+    '  do not publish is reported as "Official Data Not Available". Decision support, not agronomic advice.',
   );
   return lines.join('\n');
 }
