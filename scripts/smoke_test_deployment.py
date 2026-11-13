@@ -31,7 +31,7 @@ import uuid
 # Keys whose values legitimately differ between two identical runs
 # (wall-clock timings, timestamps, generated identifiers).
 VOLATILE_KEYS = {
-    "optimize_seconds", "total_seconds", "avg_generation_ms", "saved_at", "run_id",
+    "optimize_seconds", "runtime_seconds", "total_seconds", "avg_generation_ms", "saved_at", "run_id",
     "token", "simulation_id", "client_id", "seconds", "elapsed_seconds", "generated_at",
     "saved_files",  # absolute paths on the server
     "last_dataset_update",  # modification date of the CSV files on the server (checkout time)
@@ -73,6 +73,11 @@ class Client:
                 raw, status, ctype = resp.read(), resp.status, resp.headers.get("Content-Type", "")
         except urllib.error.HTTPError as exc:
             raw, status, ctype = exc.read(), exc.code, exc.headers.get("Content-Type", "")
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
+            # No HTTP answer (timeout, reset, DNS): report it as a failed check
+            # instead of stopping the whole run.
+            elapsed = time.perf_counter() - start
+            return 0, f"no response after {elapsed:.0f}s: {type(exc).__name__}: {exc}", "", elapsed
         elapsed = time.perf_counter() - start
         payload = json.loads(raw) if "json" in ctype and raw else raw.decode(errors="replace")
         return status, payload, ctype, elapsed
