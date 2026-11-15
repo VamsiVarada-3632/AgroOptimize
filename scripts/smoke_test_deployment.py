@@ -124,7 +124,8 @@ def run(base_url: str) -> tuple[list, dict]:
     check("catalog", "GET", "/api/catalog", record=True,
           test=lambda p, t: len(p["locations"]) == 38 and p["seasons"] == ["Kharif", "Rabi"])
     check("datasets", "GET", "/api/datasets",
-          test=lambda p, t: len(p["datasets"]) == 10 and "disabled_features" in p and all(d.get("source") for d in p["datasets"]))
+          test=lambda p, t: len(p["datasets"]) == 10 and "disabled_features" in p and all(d.get("source") for d in p["datasets"])
+          and all(d["rows_raw"] >= d["rows_clean"] for d in p["datasets"]))
     check("region-profile", "GET", "/api/region-profile", params={"location": "Salem", "season": "Rabi", "year": 2024},
           record=True)
     check("farm-plans", "POST", "/api/farm-plans", body={**farm, "save_results": False}, record=True,
@@ -139,7 +140,8 @@ def run(base_url: str) -> tuple[list, dict]:
         check("result", "GET", f"/api/results/{run_id}", record=True)
         check("result-explanation", "GET", f"/api/results/{run_id}/explanation", params={"rank": 1}, record=True)
         check("history", "GET", "/api/history/salem", params={"client_id": client_id},
-              test=lambda p, t: any(h["id"] == run_id for h in p["history"]))
+              test=lambda p, t: any(h["id"] == run_id and h.get("fuzzy_model") == "official" and h.get("official_data") is True
+                                    for h in p["history"]))
     check("results-list", "GET", "/api/results", test=lambda p, t: isinstance(p, list))
 
     # Dashboard pages
@@ -157,6 +159,10 @@ def run(base_url: str) -> tuple[list, dict]:
     check("district-intelligence", "GET", "/api/district-intelligence/salem", record=True)
     check("fuzzy-explain", "GET", "/api/fuzzy/explain",
           params={"rainfall_dev": -20, "water_storage": 60, "soil_fert": 65}, record=True)
+    check("fuzzy-explain-district", "GET", "/api/fuzzy/explain", params={"location": "Salem", "season": "Rabi"}, record=True,
+          test=lambda p, t: p["inputs_from"]["location"] == "Salem")
+    check("fuzzy-explain-no-reservoir-400", "GET", "/api/fuzzy/explain", params={"location": "Salem", "season": "Kharif"},
+          expect=400)
     check("fuzzy-audit", "GET", "/api/fuzzy/audit", record=True)
 
     # Scenario simulation: run, save, list, load, delete
