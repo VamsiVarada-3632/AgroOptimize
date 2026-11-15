@@ -417,6 +417,8 @@ export default function App() {
                   <AnalyticsView
                     onNavigate={navigateTo}
                     userLocation={user.location}
+                    userSeason={user.season}
+                    landSizeHa={Number(user.landSize) || 5}
                   />
                 )}
 
