@@ -19,6 +19,25 @@ const ACTION_ICON_STYLES = {
   monitor: 'bg-tertiary-fixed/30 text-tertiary',
 };
 
+/**
+ * Props that make a whole KPI card act as a link: focusable, announced as a
+ * button, and opened with Enter or Space as well as a click.
+ */
+function cardLink(onActivate, label) {
+  return {
+    role: 'button',
+    tabIndex: 0,
+    'aria-label': label,
+    onClick: onActivate,
+    onKeyDown: (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onActivate();
+      }
+    },
+  };
+}
+
 function timeOfDayGreeting(date = new Date()) {
   const hour = date.getHours();
   if (hour < 12) return 'Good Morning';
@@ -128,8 +147,8 @@ export default function DashboardView({ user, onNavigate, layout = 'sidebar', on
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Metric 1 */}
         <div
-          onClick={() => onNavigate('comparison')}
-          className="bg-surface-container-lowest rounded-xl p-4 soft-shadow border border-outline-variant/30 flex flex-col justify-between min-h-[140px] cursor-pointer hover:border-primary transition-all duration-200"
+          {...cardLink(() => onNavigate('comparison'), 'Active Plans: open Comparison')}
+          className="bg-surface-container-lowest rounded-xl p-4 soft-shadow border border-outline-variant/30 flex flex-col justify-between min-h-[140px] cursor-pointer hover:border-primary transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <div className="flex justify-between items-start mb-4">
             <div className="p-2 bg-primary-container/10 rounded-lg text-primary">
@@ -149,8 +168,8 @@ export default function DashboardView({ user, onNavigate, layout = 'sidebar', on
 
         {/* Metric 2 */}
         <div
-          onClick={() => onNavigate('analytics')}
-          className="bg-surface-container-lowest rounded-xl p-4 soft-shadow border border-outline-variant/30 flex flex-col justify-between min-h-[140px] cursor-pointer hover:border-primary transition-all duration-200"
+          {...cardLink(() => onNavigate('analytics'), 'Estimated Yield: open Analytics')}
+          className="bg-surface-container-lowest rounded-xl p-4 soft-shadow border border-outline-variant/30 flex flex-col justify-between min-h-[140px] cursor-pointer hover:border-primary transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <div className="flex justify-between items-start mb-4">
             <div className="p-2 bg-primary-container/10 rounded-lg text-primary">
@@ -182,8 +201,8 @@ export default function DashboardView({ user, onNavigate, layout = 'sidebar', on
 
         {/* Metric 3 */}
         <div
-          onClick={() => onNavigate('comparison')}
-          className="bg-surface-container-lowest rounded-xl p-4 soft-shadow border border-outline-variant/30 flex flex-col justify-between min-h-[140px] cursor-pointer hover:border-primary transition-all duration-200"
+          {...cardLink(() => onNavigate('comparison'), 'Irrigated Area: open Comparison')}
+          className="bg-surface-container-lowest rounded-xl p-4 soft-shadow border border-outline-variant/30 flex flex-col justify-between min-h-[140px] cursor-pointer hover:border-primary transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <div className="flex justify-between items-start mb-4">
             <div className="p-2 bg-primary-container/10 rounded-lg text-primary">
@@ -214,8 +233,8 @@ export default function DashboardView({ user, onNavigate, layout = 'sidebar', on
 
         {/* Metric 4 */}
         <div
-          onClick={() => onNavigate('analytics')}
-          className="bg-surface-container-lowest rounded-xl p-4 soft-shadow border border-outline-variant/30 flex flex-col justify-between min-h-[140px] cursor-pointer hover:border-primary transition-all duration-200"
+          {...cardLink(() => onNavigate('analytics'), 'Soil Health: open Analytics')}
+          className="bg-surface-container-lowest rounded-xl p-4 soft-shadow border border-outline-variant/30 flex flex-col justify-between min-h-[140px] cursor-pointer hover:border-primary transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <div className="flex justify-between items-start mb-4">
             <div className="p-2 bg-primary-container/10 rounded-lg text-primary">
