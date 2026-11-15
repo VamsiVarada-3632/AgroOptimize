@@ -8,7 +8,7 @@ Status legend: **Active** = part of the running system · **Reference** = docume
 ```
 final_year_project/
 ├── agrooptimize-backend/          Active   Python/FastAPI backend (its own git repo, branch main)
-├── stitch_agrooptimize_app/       Active   Local working copy of the React frontend (same source as frontend/ in the git repo)
+├── stitch_agrooptimize_app/       Retired  Old local copy of the React frontend (pre-migration); frontend/ in the git repo is the only maintained copy
 ├── datasets/                      Stale    Older copy of the 16 CSVs (differs from backend data/raw/)
 ├── docs/                          Active   This documentation set (added 2026-09-29)
 ├── reference_docs/                Reference Paper PDF, rubric PDF, viva-prep .docx
@@ -63,11 +63,11 @@ final_year_project/
 | `docs/*.md` | Reference (partly stale) | Team-written docs (architecture, API, assumptions, fuzzy rules, literature survey, results). Several numbers are outdated – see [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md) TD-12 |
 | `notes/methodology_notes.md`, `notes/viva_prep.md` | Reference (partly stale) | Narrative methodology and viva Q&A |
 | `notes/AgroOptimize_Guide_Review_Status.docx` | Reference | Guide review tracker |
-| `README.md`, `CONTRIBUTING.md` | Stale | README still says "34 tests", "6 endpoints", "frontend not built". Replacement: [README_UPDATED.md](README_UPDATED.md) |
-| `frontend/` | Active | **The React app in version control** (GitHub `main`). Same source as the local `stitch_agrooptimize_app/` working copy described below. (A local checkout that is behind `origin/main` may show only part of it – always `git fetch` first.) |
+| `README.md`, `CONTRIBUTING.md` | Active | README covers the official-data backend, the frontend and the test commands; the handbook index is [README_UPDATED.md](README_UPDATED.md) |
+| `frontend/` | Active | **The React app in version control** (GitHub `main`), migrated to the official-data API; the local `stitch_agrooptimize_app/` copy described below predates that and is no longer kept in sync. Always `git fetch` first. |
 | `.pytest_cache/`, `app/**/__pycache__/` | Generated | Tool caches (git-ignored) |
 
-## `stitch_agrooptimize_app/` (frontend; in the git repo this is `frontend/`)
+## `frontend/` (formerly the local `stitch_agrooptimize_app/` copy)
 
 | Path | Status | Purpose |
 |---|---|---|
@@ -94,7 +94,7 @@ final_year_project/
 | `vite.config.js` | Active | `react()` + `tailwindcss()` plugins |
 | `.oxlintrc.json` | Active | Lint rules; now ignores `dist/` and the mock-up HTML |
 | `vercel.json` | Active | SPA rewrite `/(.*) → /index.html`, output `dist` |
-| `.env.production` | Active | `VITE_API_BASE=https://agrooptimize-backend.fly.dev` |
+| `.env.production` | Local only | Not in git; sets `VITE_API_BASE` to the old Fly.io URL. The Docker build ignores `frontend/.env*`, so production calls the API on its own origin |
 | `.vercel/project.json` | Active | Vercel project link (`agrooptimize`) |
 | `<screen_name>/code.html` (28 folders) | Reference | Static HTML mock-ups exported from Google Stitch (Tailwind CDN). Design source for the React views; not built or served |
 | `agrooptimize_structural_system/DESIGN.md` | Reference | Design-token spec (colours, type scale) the Tailwind theme mirrors |
