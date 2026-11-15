@@ -4,7 +4,7 @@ import drought from '../__fixtures__/simulation-drought.json';
 import infeasible from '../__fixtures__/simulation-infeasible.json';
 import {
   buildRequest, confidenceCategories, contributionCategories, cropShareCategories, defaultForm, deltaItems,
-  formFromInputs, formatMetric, formatPct, impactMetrics, indexedCategories, prettyStatus, priorityLevel, radarData, simulationTitle,
+  defaultScenarioName, formFromInputs, formatMetric, formatPct, impactMetrics, indexedCategories, prettyStatus, priorityLevel, radarData, simulationTitle,
 } from './simulationView';
 
 describe('request building', () => {
@@ -89,5 +89,14 @@ describe('selection from a real result', () => {
   it('titles a simulation from its changed conditions', () => {
     expect(simulationTitle(drought)).toMatch(/^Salem Rabi · Rainfall -20%/);
     expect(simulationTitle(infeasible)).toContain('Budget');
+  });
+
+  it('suggests a save name the backend accepts (at most 80 characters)', () => {
+    // the recorded drought scenario uses custom priorities, so its title is longer than 80
+    expect(simulationTitle(drought).length).toBeGreaterThan(80);
+    const name = defaultScenarioName(drought);
+    expect(name.length).toBeLessThanOrEqual(80);
+    expect(name.endsWith('…')).toBe(true);
+    expect(defaultScenarioName(infeasible)).toBe(simulationTitle(infeasible));
   });
 });

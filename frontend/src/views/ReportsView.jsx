@@ -189,6 +189,11 @@ export default function ReportsView({ userLocation, onNavigate }) {
     setGeneratingId(run.id);
     try {
       const result = await api.getResult(run.id);
+      if (!result.plans?.length) {
+        // A run whose budget no plan could meet has nothing to report on.
+        setGenError(`The run "${run.season}" has no feasible plan to report on: no plan fitted its budget.`);
+        return;
+      }
       // The explanation is part of the report but must not block it: if it
       // fails, the report says so instead of inventing one.
       const explanation = await api.getResultExplanation(run.id, 1).catch(() => null);

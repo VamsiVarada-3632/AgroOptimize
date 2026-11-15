@@ -3,8 +3,8 @@ import { api, PREFERENCES, describeApiError } from '../services/api';
 import { OFFICIAL_DATA_NA, useCatalog, useDatasets } from '../services/officialData';
 import { downloadFile, slug } from '../utils/download';
 import {
-  FERTILIZER_OPTIONS, MARKET_OPTIONS, PRIORITY_LABELS, RAINFALL_OPTIONS, WATER_OPTIONS,
-  buildRequest, defaultForm, formFromInputs, priorityLevel, simulationTitle,
+  FERTILIZER_OPTIONS, MARKET_OPTIONS, PRIORITY_LABELS, RAINFALL_OPTIONS, SCENARIO_NAME_MAX, WATER_OPTIONS,
+  buildRequest, defaultForm, defaultScenarioName, formFromInputs, priorityLevel,
 } from '../utils/simulationView';
 import {
   ConditionsSection, CropEffectsSection, DecisionImpactSection, HistoricalSection, ImpactSection,
@@ -79,7 +79,7 @@ export default function SimulationView({ userLocation, userSeason, landSizeHa = 
       const { base, scenario } = buildRequest(form);
       const result = await api.runSimulation(base, scenario);
       setRun({ loading: false, error: '', result, saved: null });
-      setName(simulationTitle(result));
+      setName(defaultScenarioName(result));
     } catch (err) {
       setRun({ loading: false, error: describeApiError(err), result: null, saved: null });
     }
@@ -321,7 +321,7 @@ export default function SimulationView({ userLocation, userSeason, landSizeHa = 
                   </span>
                 ) : (
                   <>
-                    <input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} aria-label="Scenario name"
+                    <input value={name} onChange={(e) => setName(e.target.value)} maxLength={SCENARIO_NAME_MAX} aria-label="Scenario name"
                       className="h-10 px-3 rounded-full border border-outline-variant bg-surface-bright text-sm min-w-0 flex-1 sm:flex-none sm:w-72" />
                     <button onClick={onSave} disabled={saving || !result.token}
                       className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-on-primary text-sm font-semibold cursor-pointer disabled:opacity-50">

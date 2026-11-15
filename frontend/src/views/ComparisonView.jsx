@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { api, BACKEND_UNREACHABLE_MSG, describeApiError } from '../services/api';
+import { api, describeApiError } from '../services/api';
 import { FIELD_LABELS, OFFICIAL_DATA_NA, isOfficialDataUnavailable, showValue } from '../services/officialData';
 import DataSourceNotice from '../components/DataSourceNotice';
 import { downloadFile, toCsv, slug } from '../utils/download';
@@ -72,7 +72,7 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
       .catch((err) => {
         if (cancelled) return;
         setApiComparison(null);
-        setFetchFailed(isOfficialDataUnavailable(err) ? `${OFFICIAL_DATA_NA}: ${describeApiError(err)}` : BACKEND_UNREACHABLE_MSG);
+        setFetchFailed(isOfficialDataUnavailable(err) ? `${OFFICIAL_DATA_NA}: ${describeApiError(err)}` : describeApiError(err));
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
