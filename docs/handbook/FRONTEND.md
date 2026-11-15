@@ -8,7 +8,7 @@ npm install
 npm run dev                                   # http://localhost:5173, talks to http://localhost:8000
 VITE_API_BASE=http://localhost:8010 npm run dev   # point at another backend
 npm run lint && npm run build                 # oxlint + production build to dist/
-npm test                                      # Vitest (99 tests)
+npm test                                      # Vitest unit and render tests
 node scripts/refresh-fixtures.mjs             # re-record test fixtures from a running backend
 ```
 
@@ -86,7 +86,7 @@ Every data section has a skeleton while loading and an explicit empty state. Ser
 
 ## 7. Tests
 
-Vitest, 13 files, 99 tests: API base and district paths, official-data helpers, charts, district, simulation and TOPSIS helpers and sections, fuzzy rules and crop evidence rendering, quality metrics, lazy loading. Fixtures in `src/__fixtures__/` are real responses of the official backend, re-recorded with `scripts/refresh-fixtures.mjs`.
+Vitest, 13 files, 101 tests: API base and district paths, official-data helpers, charts, district, simulation and TOPSIS helpers and sections, the Soil Health Card section, fuzzy rules and crop evidence rendering, quality metrics, lazy loading. Fixtures in `src/__fixtures__/` are real responses of the official backend (including the Salem and Chennai Soil Health Card records), re-recorded with `scripts/refresh-fixtures.mjs`. Browser-level checks: `scripts/verify_production_ui.py` (production) and `final_demo/qa_scripts/ui_flows.py` (every workflow at four widths), both Python Playwright.
 
 ## 8. Known weaknesses
 
