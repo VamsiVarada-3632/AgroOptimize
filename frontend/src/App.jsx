@@ -427,6 +427,7 @@ export default function App() {
                     activePlanId={activePlanId}
                     onSelectPlan={setActivePlanId}
                     userLocation={user.location}
+                    landSizeHa={Number(user.landSize) || 5}
                     onNavigate={navigateTo}
                   />
                 )}
