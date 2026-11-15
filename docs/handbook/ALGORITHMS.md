@@ -37,7 +37,18 @@ index     = 0.3·ph_score + 0.3·oc_score + 0.4·npk_score  ∈ [0, 100], rounde
 
 ## 2. Mamdani fuzzy inference (`fuzzy/engine.py`)
 
-### 2.1 Variables and membership functions (all triangular, `skfuzzy.trimf`)
+### 2.1 Variables and membership functions
+
+**Official model (`official`, the runtime default; `app/fuzzy/calibration.py`, served by `GET /api/fuzzy/models`):** 20 rules (the 6 provably inert rules of the published 26 are pruned); rainfall sets on the IMD bands; storage and fertility sets placed at percentiles of the official data. Three-point sets are triangles, four-point sets are shoulder trapezoids (`skfuzzy.trapmf`).
+
+| Variable | Sets |
+|---|---|
+| **rainfall_dev** (%) | deficit [−60, −60, −39.5, 0] · normal [−39.5, 0, 39.5] · surplus [0, 39.5, 60, 60] |
+| **water_storage** (%) | low [0, 0, 17.89, 57.04] · medium [17.89, 57.04, 93.8] · high [57.04, 93.8, 100, 100] |
+| **soil_fert** (index) | poor [0, 0, 26.6, 34.51] · medium [26.6, 34.51, 39.66] · good [34.51, 39.66, 100, 100] |
+| yield_conf, irrigation_risk (outputs) | as in the published model below |
+
+**Published model (`original`, all triangular, `skfuzzy.trimf`; selectable for comparison):**
 
 | Variable | Universe (step 1) | Set: [a, b, c] |
 |---|---|---|
@@ -106,6 +117,10 @@ Rule-base properties worth knowing for the viva:
 Centroid (scikit-fuzzy default) on each output universe, divided by 100 → `[0, 1]`. If `compute()` raises (no rule fired – cannot happen after clipping, but guarded) the engine returns 0.5/0.5. Dominant linguistic labels (`rainfall_label`, …) are the set with maximum membership at the clipped input.
 
 ### 2.4 Per-crop adjustment (`crop_yield_confidence`)
+
+Official data: `κ = clip(yield_confidence · (1 − 0.4 · irrigation_risk · s), 0, 1)`, rounded to 3 decimals, where `s` is the crop's official rainfed (unirrigated) share of its area in the district (0–1, Season & Crop Report). A fully irrigated crop keeps the regional confidence; the largest penalty is 40 %. Where the fuzzy stage is not applied (no official reservoir reading), κ = 1. Tested in `tests/test_fuzzy_official.py`.
+
+v1 (categorical dependency label):
 ```
 factor  = {Very Low: 0.1, Low: 0.3, Medium: 0.6, High: 1.0}[Rainfall_Dependency]   (unknown → 0.5)
 penalty = irrigation_risk · factor · 0.4
