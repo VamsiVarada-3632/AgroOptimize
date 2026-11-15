@@ -191,3 +191,16 @@ export function simulationTitle(result) {
   const changes = changedConditions(result).map((c) => `${c.label} ${c.scenario}`);
   return `${b.location} ${b.season}${changes.length ? ` · ${changes.join(', ')}` : ' · no changes'}`;
 }
+
+/** Longest name POST /api/simulations accepts (SaveSimulationRequest.name). */
+export const SCENARIO_NAME_MAX = 80;
+
+/**
+ * Suggested name for saving a simulation: its title, shortened with an
+ * ellipsis when it is longer than the backend allows (custom priorities
+ * alone add about 50 characters).
+ */
+export function defaultScenarioName(result) {
+  const title = simulationTitle(result);
+  return title.length <= SCENARIO_NAME_MAX ? title : `${title.slice(0, SCENARIO_NAME_MAX - 1).trimEnd()}…`;
+}
