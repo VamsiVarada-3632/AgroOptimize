@@ -5,6 +5,7 @@ from app.datasets.normalize import district_key
 
 class Rainfall(OfficialDataset):
     name, filename, table = "rainfall_by_district", "rainfall_by_district.csv", "rainfall"
+    source = "India Meteorological Department district rainfall, as published in the TN Season & Crop Report 2024-25"
     required_columns = ("report_year", "district", "season", "period", "actual_mm", "normal_mm", "pct_deviation", "printed_page")
 
     def _clean(self, df, res):

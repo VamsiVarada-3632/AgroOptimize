@@ -14,6 +14,7 @@ LIMITS = {"n_kg_ha": (0, 400), "p_kg_ha": (0, 200), "k_kg_ha": (0, 300), "s_kg_h
 
 class AgronomyTnau(OfficialDataset):
     name, filename, table = "agronomy_tnau", "agronomy_tnau.csv", "agronomy_reference"
+    source = "Tamil Nadu Agricultural University: Crop Production Guide (agritech.tnau.ac.in)"
     required_columns = tuple(COLUMNS)
 
     def _clean(self, df: pd.DataFrame, res: CleanResult) -> pd.DataFrame:

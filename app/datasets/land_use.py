@@ -10,6 +10,7 @@ PARTITION = ["Forest", "Barren and unculturable area", "Land put to non-agricult
 
 class LandUse(OfficialDataset):
     name, filename, table = "land_use", "land_use.csv", "land_use"
+    source = "Dept. of Economics & Statistics, Government of Tamil Nadu: Season & Crop Report 2024-25 (land-use classification)"
     required_columns = ("report_year", "district", "category", "measure", "unit", "value", "printed_page")
 
     def _clean(self, df, res):

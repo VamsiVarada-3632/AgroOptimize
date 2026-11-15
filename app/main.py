@@ -102,10 +102,13 @@ async def _feature_unavailable(_request, exc: FeatureUnavailable):
 
 @app.get("/api/datasets")
 def get_datasets():
-    """Provenance of every loaded official dataset (file, sha256, report year, rows) plus the disabled features."""
+    """Provenance of every loaded official dataset (file, sha256, report year, rows, publishing source) plus the disabled features."""
     from app.datasets import service as svc
     from app.datasets.status import DISABLED_FEATURES
-    return {"datasets": svc.provenance(), "disabled_features": DISABLED_FEATURES}
+    from app.datasets.pipeline import all_datasets
+    sources = {d.name: d.source for d in all_datasets()}
+    datasets = [{**row, "source": sources.get(row["name"])} for row in svc.provenance()]
+    return {"datasets": datasets, "disabled_features": DISABLED_FEATURES}
 
 
 @app.get("/health")
