@@ -144,6 +144,17 @@ class FarmPlanProblem(Problem):
             for i, name in enumerate(self.crop_vec.names)
         ]
 
+    def cheapest_plan(self) -> tuple:
+        """(crop, cost in Rs) of the lowest-cost plan possible: all land in the
+        cheapest crop at the lowest fertiliser level. Cost is linear in the
+        allocation, so no mixture can be cheaper; used to explain a budget
+        that leaves no feasible plan."""
+        n = self.n_crops
+        X = np.hstack([np.eye(n), np.ones((n, n)), np.full((n, n), config.FERTILIZER_MULT_MIN)])
+        costs = self.evaluate(X, return_as_dictionary=True)["F"][:, 1]
+        i = int(np.argmin(costs))
+        return self.crop_vec.names[i], float(costs[i])
+
     def decode(self, x: np.ndarray) -> dict:
         """Decode a single chromosome (1D array) into farmer-readable fields."""
         n = self.n_crops

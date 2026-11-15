@@ -304,17 +304,6 @@ def _run_metrics(run: PipelineRun, price_factor: float) -> Optional[dict]:
             "shares": dict(zip(top["crop_names"], top["allocation_percent"]))}
 
 
-def _cheapest_plan(run: PipelineRun) -> Tuple[str, float]:
-    """Lowest cost any plan can have: all land in the cheapest crop at the
-    lowest fertiliser level (cost is linear in the allocation)."""
-    problem = run.problem
-    n = problem.n_crops
-    X = np.hstack([np.eye(n), np.ones((n, n)), np.full((n, n), config.FERTILIZER_MULT_MIN)])
-    costs = problem.evaluate(X, return_as_dictionary=True)["F"][:, 1]
-    i = int(np.argmin(costs))
-    return problem.crop_vec.names[i], float(costs[i])
-
-
 def _side(runs: List[PipelineRun], price_factor: float) -> dict:
     run = runs[0]
     resp = run.response
@@ -334,7 +323,7 @@ def _side(runs: List[PipelineRun], price_factor: float) -> dict:
     }
     side["feasible_runs"] = sum(m is not None for m in side["runs"])
     if not plans:
-        crop, cost = _cheapest_plan(run)
+        crop, cost = run.problem.cheapest_plan()
         side["reason"] = (f"NSGA-II found no feasible plan for {resp['meta']['total_land_ha']:g} ha"
                           + (f" within the budget of {_fmt_money(resp['meta']['budget_rs'])}. The cheapest possible plan "
                              f"(all land in {crop} at the lowest fertiliser level) costs {_fmt_money(cost)}."
