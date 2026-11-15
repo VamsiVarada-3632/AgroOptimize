@@ -24,7 +24,7 @@ Only lower bounds are pinned (`>=`); there is no lock file, so a fresh install t
 
 Since the Render deployment: `requirements.txt` pins exact versions (the ones the tests and published results use) and `requirements-dev.txt` adds pytest and httpx; the Dockerfile installs binary wheels only (no gcc/g++). A full lock with hashes (`pip-compile --generate-hashes`) remains a possible next step.
 
-## 2. Frontend (`stitch_agrooptimize_app/package.json`)
+## 2. Frontend (`frontend/package.json`)
 
 | Package | Range | Locked | Why | Kind |
 |---|---|---|---|---|
@@ -36,6 +36,8 @@ Since the Render deployment: `requirements.txt` pins exact versions (the ones th
 | oxlint | ^1.75.0 | 1.78.0 | lint (`react`, `oxc` plugins) | dev |
 | @types/react, @types/react-dom | ^19 | 19.2.18 / 19.2.4 | editor type hints only (project is JS, not TS) | dev |
 | vitest | ^5.0.4 | 5.0.4 | frontend unit/render tests (`npm test`); components rendered with react-dom/server | dev |
+
+Not in `package.json`: the browser QA scripts (`scripts/verify_production_ui.py`, `final_demo/qa_scripts/ui_flows.py`) use Python Playwright with the installed Google Chrome (`pip install playwright`); they are run by hand, not in CI.
 
 `package-lock.json` is committed → reproducible installs. Tailwind is listed under `dependencies` though it is build-time only (harmless for a static build).
 
