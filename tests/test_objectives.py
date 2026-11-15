@@ -75,3 +75,20 @@ def test_shares_are_normalised_to_the_farm_area(salem_rabi):
     b = _chromosome(n, np.full(n, 7.0), irr=1.0, fert=1.0)   # same proportions, different scale
     Fa, Fb = (problem.evaluate(v[None, :], return_as_dictionary=True)["F"][0] for v in (a, b))
     assert np.allclose(Fa, Fb)
+
+
+def test_budget_constraint_is_cost_minus_budget(salem_rabi):
+    problem = _problem(salem_rabi, budget=300_000)
+    n = problem.n_crops
+    x = _chromosome(n, np.ones(n), irr=1.0, fert=1.0)
+    out = problem.evaluate(x[None, :], return_as_dictionary=True)
+    # pymoo treats G <= 0 as feasible: within budget exactly when cost <= budget
+    assert out["G"][0, 0] == pytest.approx(out["F"][0, 1] - 300_000)
+
+
+def test_no_budget_means_no_constraint(salem_rabi):
+    problem = _problem(salem_rabi, budget=None)
+    assert problem.n_ieq_constr == 0
+    n = problem.n_crops
+    out = problem.evaluate(_chromosome(n, np.ones(n), 1.0, 1.0)[None, :], return_as_dictionary=True)
+    assert out.get("G") is None or np.size(out["G"]) == 0
