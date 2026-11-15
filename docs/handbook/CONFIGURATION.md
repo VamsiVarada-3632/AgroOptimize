@@ -6,9 +6,9 @@ All modelling constants live in `agrooptimize-backend/app/config.py`; a few more
 
 | Variable | Read by | Default | Purpose |
 |---|---|---|---|
-| `CORS_ALLOW_ORIGINS` | `app/main.py` | empty | comma-separated extra allowed origins (production sets `https://agrooptimize.vercel.app` in `fly.toml`/`render.yaml`) |
+| `CORS_ALLOW_ORIGINS` | `app/main.py` | empty | comma-separated extra allowed origins; not needed on Render, where the frontend is served from the same origin (`fly.toml` from the earlier deployment sets `https://agrooptimize.vercel.app`) |
 | `PORT` | – (set in fly.toml) | 8000 | **not read**; the Dockerfile CMD hard-codes `--port 8000` |
-| `VITE_API_BASE` | frontend build (`import.meta.env`) | `http://localhost:8000` | backend URL; `.env.production` sets `https://agrooptimize-backend.fly.dev` |
+| `VITE_API_BASE` | frontend build (`import.meta.env`) | page origin in a production build, `http://localhost:8000` in `npm run dev` | backend URL; leave unset for the Render image (the Docker build ignores `frontend/.env*`); a local `.env.production` with the old Fly.io URL would override it |
 | `FLY_API_TOKEN` | GitHub Actions secret | – | deploy |
 | `AGROOPTIMIZE_DB_URL` | `app/db/session.py` | `sqlite:///<project>/data/official/official_v1.db` | official-data database (SQLAlchemy URL) |
 | `AGROOPTIMIZE_FUZZY_MODEL` | `app/config.py` | `official` | default fuzzy model |
