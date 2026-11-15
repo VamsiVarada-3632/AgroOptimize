@@ -92,3 +92,25 @@ def test_no_budget_means_no_constraint(salem_rabi):
     n = problem.n_crops
     out = problem.evaluate(_chromosome(n, np.ones(n), 1.0, 1.0)[None, :], return_as_dictionary=True)
     assert out.get("G") is None or np.size(out["G"]) == 0
+
+
+def test_decode_gives_hectares_and_bounded_multipliers(salem_rabi):
+    problem = _problem(salem_rabi)
+    n = problem.n_crops
+    x = _chromosome(n, np.arange(1, n + 1), irr=0.7, fert=1.3)
+    plan = problem.decode(x)
+    assert sum(plan["area_ha"]) == pytest.approx(LAND_HA)
+    assert sum(plan["allocation_fraction"]) == pytest.approx(1.0)
+    assert plan["crop_names"] == [c.name for c in salem_rabi[0].candidate_crops]
+    assert all(0.7 <= m <= 1.3 for m in plan["irrigation_multiplier"] + plan["fertilizer_multiplier"])
+
+
+def test_single_crop_metrics_are_one_hectare_of_each_crop(salem_rabi):
+    problem = _problem(salem_rabi)
+    metrics = {m["crop"]: m for m in problem.single_crop_metrics()}
+    for c in salem_rabi[0].candidate_crops:
+        m = metrics[c.name]
+        assert m["cost_rs_ha"] == pytest.approx(c.cost_rs_ha, rel=1e-9)
+        assert m["irrigated_ha_per_ha"] == pytest.approx(c.irrigated_share, rel=1e-9)
+        assert m["env_per_ha"] == pytest.approx(c.fert_n_kg_ha + c.fert_p_kg_ha + c.fert_k_kg_ha, rel=1e-9)
+        assert m["yield_t_ha"] == pytest.approx(c.yield_kg_ha / 1000.0 * m["crop_confidence"], rel=1e-9)
