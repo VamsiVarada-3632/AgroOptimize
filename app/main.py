@@ -539,22 +539,44 @@ def fuzzy_models():
 
 @app.get("/api/fuzzy/explain")
 def explain_fuzzy(
-    rainfall_dev: float = Query(..., description="Season rainfall deviation from normal, %."),
-    water_storage: float = Query(..., description="Seasonal reservoir storage, %."),
-    soil_fert: float = Query(..., description="Soil fertility index, 0-100."),
+    rainfall_dev: Optional[float] = Query(None, description="Season rainfall deviation from normal, %."),
+    water_storage: Optional[float] = Query(None, description="Seasonal reservoir storage, %."),
+    soil_fert: Optional[float] = Query(None, description="Soil fertility index, 0-100."),
+    location: Optional[str] = Query(None, description="District: explain the inference on its official inputs instead."),
+    season: Optional[str] = Query(None, description="Season (Kharif/Rabi), with location."),
+    year: Optional[int] = Query(None, description="Report year, with location; latest if omitted."),
     model: Optional[str] = Query(None, description="Fuzzy model (GET /api/fuzzy/models); default if omitted."),
 ):
     """Rule-level explanation of the Mamdani engine for one input triple:
     memberships, every rule's firing strength, status (decisive / masked /
     not fired), contribution and leave-one-out importance, and per output
-    the term cuts and crisp value. Inputs are clipped like the engine's."""
+    the term cuts and crisp value. Inputs are clipped like the engine's.
+
+    Either give the three inputs, or a district and season to explain the
+    inference on that district's official rainfall, reservoir and soil
+    values (400 when an official input is not available there)."""
     import math
 
     from app.fuzzy import engine as fz
 
+    fuzzy_model = _fuzzy_model_or_400(model)
+    if location is not None or season is not None:
+        if location is None or season is None:
+            raise HTTPException(status_code=422, detail="Give both location and season.")
+        try:
+            profile = pp.get_region_season_profile(location, season, year=year)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        if not profile.fuzzy_available:
+            raise HTTPException(status_code=400, detail=f"Official Data Not Available: {profile.fuzzy_unavailable_reason}")
+        out = fz.explain_inference(profile.rainfall.avg_deviation_percent, profile.water.avg_storage_percent,
+                                   profile.soil.fertility_index, model=fuzzy_model)
+        return {**out, "inputs_from": {"location": profile.location, "season": profile.season, "year": profile.year}}
+    if None in (rainfall_dev, water_storage, soil_fert):
+        raise HTTPException(status_code=422, detail="Give rainfall_dev, water_storage and soil_fert, or location and season.")
     if not all(math.isfinite(v) for v in (rainfall_dev, water_storage, soil_fert)):
         raise HTTPException(status_code=422, detail="Inputs must be finite numbers.")
-    return fz.explain_inference(rainfall_dev, water_storage, soil_fert, model=_fuzzy_model_or_400(model))
+    return fz.explain_inference(rainfall_dev, water_storage, soil_fert, model=fuzzy_model)
 
 
 @app.get("/api/fuzzy/audit")
