@@ -295,6 +295,10 @@ def get_history(location: str, client_id: str | None = None) -> dict:
             "ranking": summary.get("ranking"),
             "fuzzy_weights": record["fuzzy_assessment"],
             "is_estimated": False,
+            # Fuzzy model of the run (runs saved before models existed used the published one)
+            # and whether its candidate crops cite official sources (runs on the v1 data do not).
+            "fuzzy_model": (record.get("meta") or {}).get("fuzzy_model") or "original",
+            "official_data": any((c.get("sources") or {}) for c in (record.get("region_profile") or {}).get("candidate_crops", [])),
         })
     # Most recently saved run first. (Sorting on the "Kharif 2023" display
     # string ordered runs alphabetically by season name instead.)
