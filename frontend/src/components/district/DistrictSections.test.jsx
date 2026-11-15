@@ -2,9 +2,11 @@ import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import salem from '../../__fixtures__/district-salem.json';
+import soilSalem from '../../__fixtures__/soil-master-salem.json';
+import soilChennai from '../../__fixtures__/soil-master-chennai.json';
 import {
   ClimateSection, CropPerformanceSection, InsightsSection, MarketSection, NA, OverviewSection,
-  SoilSection, SuitabilitySection, WaterSection,
+  SoilHealthCardSection, SoilSection, SuitabilitySection, WaterSection,
 } from './DistrictSections';
 
 const text = (html) => html.replace(/<[^>]+>/g, ' ').replace(/&#x27;/g, "'").replace(/&amp;/g, '&');
@@ -82,5 +84,26 @@ describe('Missing data', () => {
     const html = renderToString(<OverviewSection intel={{ ...salem, overview: o }} />);
     clean(html);
     expect(text(html).split(NA).length - 1).toBeGreaterThanOrEqual(5);
+  });
+});
+
+describe('Soil Health Card section', () => {
+  it('lists every parameter with its dominant class, shares and sample count', () => {
+    const t = text(renderToString(<SoilHealthCardSection record={soilSalem} />));
+    clean(renderToString(<SoilHealthCardSection record={soilSalem} />));
+    expect(t).toContain(`${soilSalem.cycle} cycle`);
+    for (const [key, label] of [['ph', 'Soil pH'], ['organic_carbon', 'Organic Carbon'], ['nitrogen', 'Nitrogen (N)'],
+      ['phosphorus', 'Phosphorus (P)'], ['potassium', 'Potassium (K)'], ['electrical_conductivity', 'Soil Salinity']]) {
+      expect(t).toContain(label);
+      expect(t).toContain(soilSalem[key].dominant_class);
+    }
+    expect(t).toContain('Micronutrients, share of samples deficient');
+    expect(t).toMatch(new RegExp(`Soil type:\\s+${NA}`));
+  });
+
+  it('says official data is not available for a district without a record or on an error', () => {
+    expect(soilChennai.available).toBe(false);
+    expect(text(renderToString(<SoilHealthCardSection record={soilChennai} />))).toContain(NA);
+    expect(text(renderToString(<SoilHealthCardSection record={null} error={new Error('down')} />))).toContain(NA);
   });
 });
