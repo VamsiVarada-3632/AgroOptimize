@@ -73,3 +73,21 @@ def test_missing_official_input_means_fuzzy_not_applied_and_yield_unadjusted():
     problem = FarmPlanProblem(p, None, total_land_ha=1.0)
     for m in problem.single_crop_metrics():
         assert m["crop_confidence"] == 1.0
+
+
+@pytest.mark.parametrize("cy", [0.0, 0.3, 0.532, 0.816, 1.0])
+@pytest.mark.parametrize("ri", [0.0, 0.12, 0.5, 1.0])
+@pytest.mark.parametrize("s", [0.0, 0.15, 0.73, 1.0])
+def test_crop_yield_factor_follows_the_documented_formula(cy, ri, s):
+    # kappa_i = C_y * (1 - 0.4 * R_I * s_i), rounded to 3 decimals
+    assert fz.crop_yield_confidence(cy, ri, s) == pytest.approx(round(cy * (1 - 0.4 * ri * s), 3), abs=1e-9)
+
+
+def test_crop_yield_factor_edge_cases():
+    # a fully irrigated crop (rainfed share 0) keeps the regional confidence
+    assert fz.crop_yield_confidence(0.6, 1.0, 0.0) == 0.6
+    # the largest possible penalty is 40 %
+    assert fz.crop_yield_confidence(1.0, 1.0, 1.0) == pytest.approx(0.6)
+    # out-of-range rainfed shares are clipped to [0, 1]
+    assert fz.crop_yield_confidence(0.5, 1.0, 1.7) == fz.crop_yield_confidence(0.5, 1.0, 1.0)
+    assert fz.crop_yield_confidence(0.5, 1.0, -0.2) == 0.5
