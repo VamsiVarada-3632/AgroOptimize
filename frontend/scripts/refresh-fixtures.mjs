@@ -27,6 +27,9 @@ async function save(name, data) {
 const base = { location: 'Salem', season: 'Rabi', total_land_ha: 5, preference: 'balanced' };
 
 await save('district-salem.json', await call('/api/district-intelligence/salem'));
+// Soil Health Card: a district with a record and one the portal does not cover.
+await save('soil-master-salem.json', await call('/api/soil-master/salem'));
+await save('soil-master-chennai.json', await call('/api/soil-master/chennai'));
 
 await save('simulation-drought.json', await call('/api/simulations/run', {
   base,

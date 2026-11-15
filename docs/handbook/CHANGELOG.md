@@ -4,6 +4,17 @@ All code modifications made during the 2026-09-29 audit. All changes are submitt
 
 Verification after all changes: backend **205/205 tests pass** (was 165/165); output fingerprint over 48 endpoint/pipeline results is **identical to HEAD** apart from the new additive provenance fields; frontend `oxlint` 0 warnings (was 3 in `src` + noise), `vite build` succeeds; UI flows exercised in Chrome with no console errors.
 
+## [Unreleased] – Documentation and test follow-up (16 Nov 2026)
+
+### Changed
+- Scenario Simulation's loading message gives the real duration: a few seconds locally, about a minute on the hosted server.
+- API reference, architecture, folder structure, dependency and configuration guides describe the current deployment: one Render service at https://agrooptimize.onrender.com serving the frontend and the API from `main`; the Vercel and Fly.io configs are kept but unused; `frontend/` is the only maintained copy of the app.
+- The explainability guide's worked example uses the official Salem Rabi 2024 run instead of the v1 estimated-year example.
+- TODO and technical-debt registers record what the official-data release resolved (T-1, T-2, T-7, T-9, TD-2) and what is partly done (T-12, T-31).
+
+### Added
+- Soil Health Card fixtures for Salem and Chennai and tests of the Soil Health Card section (101 frontend tests).
+
 ## [Unreleased] – Frontend on the official-data backend
 
 ### Changed

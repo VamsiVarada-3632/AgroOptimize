@@ -4,6 +4,16 @@
 
 **Official-data migration TODOs** (frontend migration, datasets still to load, disabled features): [MIGRATION_REPORT.md](../data_architecture/MIGRATION_REPORT.md) §3–4.
 
+**Status after the official-data release (16 Nov 2026)**
+
+| ID | Status |
+|---|---|
+| T-1, T-2 | Resolved: the synthetic 2020–2024 rows are no longer used; every input is an official 2024-25 dataset with a recorded checksum ([DATASETS.md](DATASETS.md)) |
+| T-7 | Done in practice: `frontend/` is the maintained, migrated app; the local `stitch_agrooptimize_app/` copy is retired |
+| T-9 | Superseded: production is the Render service, which auto-deploys `main` (`render.yaml`); the Fly.io workflow is no longer needed |
+| T-12 | Partly done: `README.md` and the API reference use real official-data responses; `docs/results/` and `notes/viva_prep.md` still describe v1 |
+| T-31 | Partly done: 100 Vitest unit/render tests; Playwright browser checks in `scripts/verify_production_ui.py` and `final_demo/qa_scripts/ui_flows.py`, run by hand, not in CI |
+
 Ordered by priority. IDs are referenced from the other documents. "Decision" items need the team/guide, not code.
 
 ## P0 – before the next review / viva

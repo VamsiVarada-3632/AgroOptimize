@@ -285,7 +285,7 @@ export default function SimulationView({ userLocation, userSeason, landSizeHa = 
               <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-5 flex items-center gap-3">
                 <span className="material-symbols-outlined animate-spin text-primary" aria-hidden="true">progress_activity</span>
                 <p className="text-sm text-on-surface-variant">
-                  Optimising the original and the modified conditions with the same five seeds (preprocessing → fuzzy → NSGA-II → TOPSIS → explanation). This takes a few seconds.
+                  Optimising the original and the modified conditions with the same five seeds (preprocessing → fuzzy → NSGA-II → TOPSIS → explanation). That is ten optimisations: a few seconds on a local server, about a minute on the hosted one.
                 </p>
               </div>
               <div className="h-40 bg-surface-container-high rounded-xl animate-pulse"></div>

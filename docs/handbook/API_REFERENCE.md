@@ -1,6 +1,6 @@
 # API Reference
 
-Base URL: local `http://localhost:8000`; production `https://agrooptimize-backend.fly.dev` (from `stitch_agrooptimize_app/.env.production`). Interactive schema: `GET /docs` (Swagger) and `/openapi.json`. No authentication on any endpoint. All bodies are JSON. Latencies are measured in-process (TestClient, Apple Silicon laptop); network adds to them. Rows marked † were re-measured on the official data on 2026-11-13 ([OFFICIAL_DATA_PERFORMANCE.md](OFFICIAL_DATA_PERFORMANCE.md)); the others are from 2026-09-29. The first data request in a new process also pays a one-off ≈0.75 s to load the official datasets.
+Base URL: local `http://localhost:8000`; production `https://agrooptimize.onrender.com` (one Render service that also serves the frontend, so the browser calls the API on the same origin). Interactive schema: `GET /docs` (Swagger) and `/openapi.json`. No authentication on any endpoint. All bodies are JSON. Latencies are measured in-process (TestClient, Apple Silicon laptop); network adds to them. Rows marked † were re-measured on the official data on 2026-11-13 ([OFFICIAL_DATA_PERFORMANCE.md](OFFICIAL_DATA_PERFORMANCE.md)); the others are from 2026-09-29. The first data request in a new process also pays a one-off ≈0.75 s to load the official datasets.
 
 All data comes from the official database (`data/official/official_v1.db`, built from `data/official/raw/`); see [DATASETS.md](DATASETS.md). Features whose official dataset is missing return **501** instead of an estimate; `GET /api/datasets` lists them.
 
@@ -224,7 +224,7 @@ Real response (Salem Rabi):
 Cost/irrigated-area/impact minima are identical by construction up to rounding (fuzzy only scales yield) – see [ALGORITHMS.md](ALGORITHMS.md) §4.6. Where the fuzzy stage is not applied (no official reservoir reading) both columns describe the same unadjusted problem.
 
 ## CORS
-Allowed origins: `http://localhost:5173`, `http://localhost:5174`, `http://localhost:3000` plus comma-separated `CORS_ALLOW_ORIGINS` (production: `https://agrooptimize.vercel.app`). All methods and headers; `allow_credentials=True` (not needed – no cookies are used).
+Allowed origins: `http://localhost:5173`, `http://localhost:5174`, `http://localhost:3000` plus comma-separated `CORS_ALLOW_ORIGINS` (not needed in production, where the frontend is served from the API's own origin; `fly.toml` from the earlier Fly.io deployment still sets `https://agrooptimize.vercel.app`). All methods and headers; `allow_credentials=True` (not needed – no cookies are used).
 
 ## GET /api/topsis/profiles
 
