@@ -510,6 +510,9 @@ def get_plans(location: str, total_land_ha: float = 5.0, budget_rs: Optional[flo
             "is_fallback": False,
             "hypervolume_history": hypervolume_history,
         }
+    except ValueError:
+        # No complete official data for this district (e.g. Chennai): a data answer, not a failed run.
+        raise
     except Exception as live_exc:  # noqa: BLE001 -- deliberate: catch broadly so we can raise one clean, honest error below
         logger.warning("live NSGA-II run failed for %s: %r", location, live_exc)
         raise PlanGenerationError(

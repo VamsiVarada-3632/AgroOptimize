@@ -303,3 +303,11 @@ class TestComparisonEndpoint:
     def test_unknown_district_is_404(self):
         r = client.get("/api/comparison/chennai")
         assert r.status_code == 404
+
+
+def test_plans_for_a_district_without_complete_official_data_is_a_404_with_the_reason():
+    from fastapi.testclient import TestClient
+    from app.main import app
+    r = TestClient(app).get("/api/plans/chennai", params={"total_land_ha": 5})
+    assert r.status_code == 404
+    assert "complete official data" in r.json()["detail"]
