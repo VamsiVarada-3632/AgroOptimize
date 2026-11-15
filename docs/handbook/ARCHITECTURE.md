@@ -2,7 +2,7 @@
 
 > **Written for the v1 data layer.** This document describes the system as it was on the synthetic v1 data (tag `published-v1`). Since 2026-11 the runtime reads only the official datasets: 38 districts, Kharif/Rabi, objectives yield / cultivation cost / irrigated area / nutrient load, `irrigated_ha` instead of `water_liters`, the `official` fuzzy model by default, and live weather disabled. Where this document disagrees, the code and [DATASETS.md](DATASETS.md), [API_REFERENCE.md](API_REFERENCE.md) and [MIGRATION_REPORT.md](../data_architecture/MIGRATION_REPORT.md) are authoritative.
 
-AgroOptimize is a two-tier web application: a **React SPA** (`stitch_agrooptimize_app/`) talking JSON over HTTPS to a **stateless FastAPI service** (`agrooptimize-backend/`) that runs a data → fuzzy → NSGA-II → TOPSIS pipeline over 16 CSV files. There is **no database** and **no server-side user model**: user profiles live in browser `localStorage`, saved optimisation runs live as files on a disk volume.
+AgroOptimize is a two-tier web application: a **React SPA** (`frontend/`) talking JSON over HTTPS to a **stateless FastAPI service** (`agrooptimize-backend/`) that runs a data → fuzzy → NSGA-II → TOPSIS pipeline over 16 CSV files. There is **no database** and **no server-side user model**: user profiles live in browser `localStorage`, saved optimisation runs live as files on a disk volume.
 
 ## 1. System context
 
@@ -159,9 +159,9 @@ flowchart TB
 
 | Component | Platform | Config file | Notes |
 |---|---|---|---|
-| Frontend | Vercel (project `agrooptimize`) | `vercel.json`, `.env.production` | Static build; `VITE_API_BASE` baked in at build time |
-| Backend | Fly.io app `agrooptimize-backend` | `fly.toml`, `Dockerfile` | `min_machines_running = 1`, health check `GET /health` every 15 s, `CORS_ALLOW_ORIGINS=https://agrooptimize.vercel.app` |
-| Backend (alt.) | Render.com | `render.yaml` | Free plan, no persistent disk → saved runs lost on restart |
+| Frontend + backend (production) | Render.com web service `agrooptimize`, https://agrooptimize.onrender.com | `render.yaml`, `Dockerfile` | One Docker image: the React build is served by FastAPI on the same origin; the official database is rebuilt at image build; deploys branch `main`; free plan, no persistent disk → saved runs lost on restart. Verified in [PRODUCTION_VERIFICATION.md](../deployment/PRODUCTION_VERIFICATION.md) |
+| Frontend (earlier) | Vercel (project `agrooptimize`) | `frontend/vercel.json` | No longer the production frontend; config kept |
+| Backend (earlier) | Fly.io app `agrooptimize-backend` | `fly.toml` | No longer the production backend; config kept |
 | CI | GitHub Actions | `.github/workflows/deploy-backend.yml` | On push to `main` touching `agrooptimize-backend/**`: `pytest` job, then `flyctl deploy` (deploy now `needs: test`) |
 
 ## 7. Concurrency model
