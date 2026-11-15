@@ -176,9 +176,13 @@ export default function RunOptimizationView({ userLocation, userSeason, landSize
           {result && !error ? (
             <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/20 shadow-soft p-6">
               <div className="flex items-center gap-3 mb-4">
-                <span className="material-symbols-outlined text-primary text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                <span className={`material-symbols-outlined text-3xl ${topPlan ? 'text-primary' : 'text-error'}`} style={{ fontVariationSettings: "'FILL' 1" }}>
+                  {topPlan ? 'check_circle' : 'error'}
+                </span>
                 <div>
-                  <h3 className="font-headline-md text-headline-md text-on-surface font-bold">Optimization complete and saved</h3>
+                  <h3 className="font-headline-md text-headline-md text-on-surface font-bold">
+                    {topPlan ? 'Optimization complete and saved' : 'No feasible plan found'}
+                  </h3>
                   <p className="font-label-sm text-label-sm text-on-surface-variant">
                     {result.region_profile.location} · {result.region_profile.season} {result.region_profile.year}
                     {result.region_profile.data_year_estimated && ' (estimated-year inputs)'}
@@ -186,6 +190,14 @@ export default function RunOptimizationView({ userLocation, userSeason, landSize
                   </p>
                 </div>
               </div>
+
+              {!topPlan && (
+                <p className="mb-4 font-body-md text-body-md bg-error-container/40 text-on-error-container px-4 py-3 rounded-lg">
+                  {result.meta?.budget_rs
+                    ? `No crop plan for ${result.meta.total_land_ha ?? landArea} ha fits within the budget of ₹${Math.round(result.meta.budget_rs).toLocaleString('en-IN')}. Raise the budget or reduce the land area and run again.`
+                    : 'The optimiser found no feasible plan for these inputs. Change the inputs and run again.'}
+                </p>
+              )}
 
               {topPlan && (
                 <div className="bg-surface-container-low rounded-lg p-4 mb-4">
@@ -210,16 +222,18 @@ export default function RunOptimizationView({ userLocation, userSeason, landSize
                 </div>
               )}
 
-              {result.run_id && (
+              {result.run_id && topPlan && (
                 <div className="mb-6">
                   <TopsisPanel key={result.run_id} runId={result.run_id}
                     initialProfile={rankedWith.profile} initialCustomPercent={rankedWith.customPercent} />
                 </div>
               )}
 
-              <p className="font-label-sm text-label-sm text-on-surface-variant mb-4">
-                Saved to your History for {result.region_profile.location}. Generate a written report from it any time on the Reports page.
-              </p>
+              {topPlan && (
+                <p className="font-label-sm text-label-sm text-on-surface-variant mb-4">
+                  Saved to your History for {result.region_profile.location}. Generate a written report from it any time on the Reports page.
+                </p>
+              )}
 
               <div className="flex flex-col sm:flex-row gap-3">
                 {topPlan && result.run_id && (
@@ -243,12 +257,14 @@ export default function RunOptimizationView({ userLocation, userSeason, landSize
                 >
                   View in History
                 </button>
-                <button
-                  onClick={() => onNavigate && onNavigate('reports')}
-                  className="flex-1 bg-primary text-on-primary font-label-md text-label-md py-3 rounded-lg hover:opacity-90 transition-opacity shadow-sm cursor-pointer font-bold"
-                >
-                  Generate Report
-                </button>
+                {topPlan && (
+                  <button
+                    onClick={() => onNavigate && onNavigate('reports')}
+                    className="flex-1 bg-primary text-on-primary font-label-md text-label-md py-3 rounded-lg hover:opacity-90 transition-opacity shadow-sm cursor-pointer font-bold"
+                  >
+                    Generate Report
+                  </button>
+                )}
               </div>
             </div>
           ) : (
