@@ -7,7 +7,7 @@ Interest = ongoing cost of not fixing. Effort: S (<½ day), M (1–3 days), L (>
 | ID | Debt | Location | Interest | Effort |
 |---|---|---|---|---|
 | TD-1 | Custom GA operators use NumPy's global RNG → all optimisation serialised behind `_NSGA2_RUN_LOCK` | `optimization/operators.py`, `nsga2_runner.py` | Head-of-line blocking; hidden coupling | M (changes outputs → re-baseline results) |
-| TD-2 | Two copies of the frontend (repo `frontend/` and local `stitch_agrooptimize_app/`) | `stitch_agrooptimize_app/`, `frontend/` | Edits made in the wrong copy are lost; risk of confusion about which UI is deployed | S |
+| TD-2 | ~~Two copies of the frontend (repo `frontend/` and local `stitch_agrooptimize_app/`)~~ **Resolved Nov 2026:** only `frontend/` is maintained; the local copy is retired ([FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md)) | `stitch_agrooptimize_app/`, `frontend/` | Edits made in the wrong copy are lost; risk of confusion about which UI is deployed | S |
 | TD-3 | Two dataset copies with different content | `datasets/`, `data/raw/` | Wrong file edited; unreproducible results | S |
 | TD-4 | Pipeline wiring duplicated (plan_service vs dashboard_service) | services | Divergent behaviour (pop 80 vs 100, filters, persistence) | M |
 | TD-5 | `dashboard_service.py` is a 770-line grab-bag | services | Hard to test/change | M |
