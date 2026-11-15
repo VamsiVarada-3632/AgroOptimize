@@ -135,6 +135,19 @@ Lower bound 1e−4 means **every candidate crop always receives a non-zero area*
 
 ### 3.2 Objectives (vectorised over the population), with aᵢ = share·total_land_ha
 
+**Official data (current, `app/optimization/problem.py`):**
+
+| | Formula | Direction |
+|---|---|---|
+| f1 expected yield (t) | Σ aᵢ · Yᵢ/1000 · κᵢ,  κᵢ = C_y·(1 − 0.4·R_I·sᵢ) | maximise (stored as −f1) |
+| f2 cultivation cost (₹) | Σ aᵢ · (Yᵢ/100) · CACPᵢ  (official yield in q/ha × CACP A2+FL cost per quintal) | minimise |
+| f3 irrigated area (ha-equivalents) | Σ aᵢ · irrᵢ · σᵢ  (σᵢ = official irrigated share of the crop's area) | minimise |
+| f4 nutrient load (kg) | Σ aᵢ · fertᵢ · (N + P₂O₅ + K₂O)ᵢ  (TNAU recommended dose) | minimise |
+
+Yᵢ is the official district yield (kg/ha), sᵢ the official rainfed share, C_y and R_I the fuzzy outputs (κᵢ = 1 where the fuzzy stage is not applied). Checked against hand calculations in `tests/test_objectives.py`; the factor κᵢ in `tests/test_fuzzy_official.py`.
+
+**v1 synthetic data (tag `published-v1`, kept for reference):**
+
 | | Formula | Direction |
 |---|---|---|
 | f1 yield (t) | Σ aᵢ · Yieldᵢ/1000 · crop_confidenceᵢ | maximise (stored as −f1) |
