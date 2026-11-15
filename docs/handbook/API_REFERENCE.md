@@ -43,10 +43,10 @@ All data comes from the official database (`data/official/official_v1.db`, built
 | Status | When | Body |
 |---|---|---|
 | 400 | `ValueError` in the pipeline for core endpoints (unknown location/season, a taluk such as Pollachi, <2 crops with complete official data, e.g. Chennai and The Nilgiris) | `{"detail": "Unknown season 'Summer'. Choose one of ['Kharif', 'Rabi']."}` |
-| 404 | Unknown district on dashboard endpoints; unknown/invalid `run_id`; `ValueError` in comparison/compare-fuzzy | `{"detail": "..."}` |
+| 404 | Unknown district on dashboard endpoints; unknown/invalid `run_id`; `ValueError` in plans/comparison/compare-fuzzy, including a district with fewer than two complete crops (Chennai, The Nilgiris) | `{"detail": "..."}` |
 | 422 | Pydantic/Query validation | `{"detail": [{"loc": [...], "msg": "...", "type": "..."}]}` |
 | 501 | Feature disabled because its official dataset is missing (`FeatureUnavailable`) | `{"detail": "Live weather widget is unavailable: official dataset missing - ...", "feature": "Live weather widget", "missing_dataset": "...", "available": false}` |
-| 503 | `/api/plans` optimisation failure | `{"detail": {"error": "Optimization failed", "message": "...", "location": "..."}}` |
+| 503 | `/api/plans` optimisation run failed (not a data gap: those are 404) | `{"detail": {"error": "Optimization failed", "message": "...", "location": "..."}}` |
 | 500 | Unhandled exception | FastAPI default |
 
 The frontend's `describeApiError` (src/services/api.js) turns any of these into user text; 400, 404 and 501 are shown as "Official Data Not Available" with the detail ([FRONTEND_API_INTEGRATION.md](FRONTEND_API_INTEGRATION.md)).
@@ -94,7 +94,7 @@ Request (`FarmPlanRequest`):
 | location | str | one of catalog locations (case-insensitive) | required | |
 | season | str | Kharif/Rabi (case-insensitive) | required | |
 | year | int | must exist for location | latest (2024) | |
-| total_land_ha | float | > 0 | required | farm size |
+| total_land_ha | float | > 0 and ≤ 100 000 | required | farm size (same limit as plans, comparison and simulation) |
 | budget_rs | float | > 0 | none | hard constraint cost ≤ budget |
 | preference | enum | balanced, max_yield, min_cost, min_water, min_env_impact | balanced | TOPSIS weights (classic preferences) |
 | profile | enum | balanced, profit, water, sustainability, low_cost, custom | none | ranking profile ([TOPSIS_PROFILE_GUIDE.md](TOPSIS_PROFILE_GUIDE.md)); cannot be combined with a preference other than balanced |
@@ -131,6 +131,8 @@ Response (`FarmPlanResponse`). Abbreviated real response (Salem Rabi, 5 ha):
 Crops are named as in the official reports (lower case). `water_req_mm`, sowing/harvest months and duration are `null`: no official per-crop totals are loaded ([MIGRATION_REPORT.md](../data_architecture/MIGRATION_REPORT.md) §3). The water objective is the **irrigated area** (`irrigated_ha`), which replaced `water_liters`.
 
 `meta.topsis` (optional; absent in runs saved before it existed) records the weights that ranked the run: `profile` (null for a classic preference other than balanced, or for simulation priorities), `label`, `preference`, `weights` (all ten criteria), `criteria` (those with a positive weight, with label and direction), `method`, `budget_active`. With `compare_profiles: true`, `meta.profile_comparison` holds the front ranked under every standard profile ([TOPSIS_COMPARISON.md](TOPSIS_COMPARISON.md)). Saved runs also store the ranked front (`ranked_front`, not returned by the API) so they can be re-ranked exactly.
+
+`meta.no_feasible_plan` (only when a budget leaves no feasible plan, `plans` empty): `{"reason": "budget below the cheapest possible plan", "cheapest_crop": "green gram", "cheapest_cost_rs": 71771.0}` – the lowest cost any plan can have (all land in one crop at the lowest fertiliser level; cost is linear in the allocation).
 
 `meta.quality_metrics` (optional; absent in runs saved before it existed) describes the quality of the run's Pareto front: hypervolume and its ratio to a reference front, generational distance (GD), inverted generational distance (IGD), IGD+, generalised spread and spacing, on objectives normalised to the reference front's ideal and nadir, where the reference is the front plus each plan's copy with irrigation and fertiliser multipliers at 0.7 (never worse in this model). Lower is better for GD, IGD, IGD+, spread and spacing. Values that cannot be computed (no feasible plan, fewer than two plans) are `null`. See [NSGAII_IMPROVEMENTS.md](NSGAII_IMPROVEMENTS.md) §2.3.
 
@@ -185,7 +187,7 @@ The N/P/K status is the dominant Soil Health Card class; numeric pH and organic 
 `GET /api/soil-master/{district}` → the Soil Health Card record: `district, available, cycle, samples_tested, soil_type` (always "Official data unavailable"), and per parameter (`ph, organic_carbon, nitrogen, phosphorus, potassium, electrical_conductivity`, micronutrients) `{label, unit, samples, counts, share_pct, dominant_class}`. A district without a record returns `{"available": false, "message": "Official data unavailable", "reason": "..."}`; an unknown district → 404. See [SOIL_MASTER.md](../data_architecture/SOIL_MASTER.md).
 
 ## GET /api/datasets
-`{"datasets": [{id, name, filename, sha256, report_year, rows_clean, imported_at}, ...10], "disabled_features": [...]}` – the provenance of every table in the official database and the features switched off because their dataset is missing.
+`{"datasets": [{id, name, filename, source, sha256, report_year, rows_clean, imported_at}, ...10], "disabled_features": [...]}` – the provenance of every table in the official database and the features switched off because their dataset is missing.
 
 ## GET /api/plans/{district}?total_land_ha=5&budget_rs=
 `total_land_ha` > 0 and ≤ 100 000 (default 5); `budget_rs` > 0. Abbreviated real response (Salem):
