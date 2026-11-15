@@ -269,3 +269,13 @@ def test_same_second_saves_get_distinct_run_ids(tmp_path, monkeypatch):
     assert second.run_id == "salem_kharif_2024_20260101T000000Z-2"
     assert results_store.load_run(first.run_id, out_dir=tmp_path)["run_id"] == first.run_id
     assert results_store.load_run(second.run_id, out_dir=tmp_path)["run_id"] == second.run_id
+
+
+def test_farm_plan_land_has_the_same_upper_limit_as_the_other_endpoints():
+    from fastapi.testclient import TestClient
+    from app.main import app
+    client = TestClient(app)
+    body = {"location": "Salem", "season": "Rabi", "save_results": False, "pop_size": 8, "n_gen": 5}
+    assert client.post("/api/farm-plans", json={**body, "total_land_ha": 100_000}).status_code == 200
+    r = client.post("/api/farm-plans", json={**body, "total_land_ha": 100_001})
+    assert r.status_code == 422 and r.json()["detail"][0]["loc"] == ["body", "total_land_ha"]

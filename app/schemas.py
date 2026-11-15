@@ -66,7 +66,7 @@ class FarmPlanRequest(RankingProfileIn):
     location: str = Field(..., examples=["Coimbatore"])
     season: str = Field(..., examples=["Kharif"])
     year: Optional[int] = Field(None, description="Defaults to the latest year in the dataset.")
-    total_land_ha: float = Field(..., gt=0, examples=[5.0])
+    total_land_ha: float = Field(..., gt=0, le=100_000, examples=[5.0])
     budget_rs: Optional[float] = Field(None, gt=0, description="Optional hard budget cap (Rs).")
     preference: Preference = "balanced"
     max_candidate_crops: Optional[int] = Field(None, ge=2, le=12)
