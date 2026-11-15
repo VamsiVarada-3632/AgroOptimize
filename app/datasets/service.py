@@ -43,7 +43,7 @@ def resolve_district(name: str) -> str:
 
 @ttl_cache()
 def provenance() -> list:
-    return _q("select id, name, filename, sha256, report_year, rows_clean, imported_at from dataset_registry").to_dict("records")
+    return _q("select id, name, filename, sha256, report_year, rows_raw, rows_clean, imported_at from dataset_registry").to_dict("records")
 
 
 @ttl_cache()
