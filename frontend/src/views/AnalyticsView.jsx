@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { api, BACKEND_UNREACHABLE_MSG, describeApiError } from '../services/api';
+import { api, describeApiError } from '../services/api';
 import { FIELD_LABELS, OFFICIAL_DATA_NA, isMissing, isOfficialDataUnavailable, showValue } from '../services/officialData';
 import DataSourceNotice from '../components/DataSourceNotice';
 import { downloadFile, toCsv, slug } from '../utils/download';
@@ -38,7 +38,7 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
       .catch((err) => {
         if (cancelled) return;
         setPlansData(null);
-        setFetchFailed(isOfficialDataUnavailable(err) ? `${OFFICIAL_DATA_NA}: ${describeApiError(err)}` : BACKEND_UNREACHABLE_MSG);
+        setFetchFailed(isOfficialDataUnavailable(err) ? `${OFFICIAL_DATA_NA}: ${describeApiError(err)}` : describeApiError(err));
       })
       .finally(() => { if (!cancelled) setPlansLoading(false); });
 
