@@ -123,7 +123,8 @@ def run(base_url: str) -> tuple[list, dict]:
     # Data and optimisation
     check("catalog", "GET", "/api/catalog", record=True,
           test=lambda p, t: len(p["locations"]) == 38 and p["seasons"] == ["Kharif", "Rabi"])
-    check("datasets", "GET", "/api/datasets", test=lambda p, t: len(p["datasets"]) == 10 and "disabled_features" in p)
+    check("datasets", "GET", "/api/datasets",
+          test=lambda p, t: len(p["datasets"]) == 10 and "disabled_features" in p and all(d.get("source") for d in p["datasets"]))
     check("region-profile", "GET", "/api/region-profile", params={"location": "Salem", "season": "Rabi", "year": 2024},
           record=True)
     check("farm-plans", "POST", "/api/farm-plans", body={**farm, "save_results": False}, record=True,
@@ -175,6 +176,11 @@ def run(base_url: str) -> tuple[list, dict]:
 
     # Input validation and safe errors
     check("validation-422", "POST", "/api/farm-plans", expect=422, body={**farm, "total_land_ha": -1})
+    check("land-limit-422", "POST", "/api/farm-plans", expect=422, body={**farm, "total_land_ha": 100_001, "save_results": False})
+    check("budget-no-plan", "POST", "/api/farm-plans", body={**farm, "budget_rs": 1000, "save_results": False},
+          test=lambda p, t: p["plans"] == [] and p["meta"]["no_feasible_plan"]["cheapest_cost_rs"] > 1000)
+    check("no-official-data-plans-404", "GET", "/api/plans/chennai", expect=404,
+          test=lambda p, t: "complete official data" in p.get("detail", ""))
     check("unknown-district-404", "GET", "/api/district-intelligence/atlantis", expect=404)
     check("bad-run-id-404", "GET", "/api/results/..%2F..%2Fetc", expect=404)
     return checks, prints
