@@ -240,6 +240,9 @@ class RunMeta(BaseModel):
     profile_comparison: Optional[Dict[str, Any]] = None
     # Fuzzy model that produced the run; absent on runs saved before models existed (= "original").
     fuzzy_model: Optional[str] = None
+    # Set only when a budget leaves no feasible plan: the cheapest possible plan
+    # (all land in one crop at the lowest fertiliser level) and its cost.
+    no_feasible_plan: Optional[Dict[str, Any]] = None
 
 
 class MeanObjectivesOut(BaseModel):

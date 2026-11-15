@@ -296,3 +296,16 @@ def test_history_entries_carry_the_fuzzy_model_and_data_source(monkeypatch):
     by_id = {h["id"]: h for h in ds.get_history("salem", client_id="me")["history"]}
     assert by_id["officialrun"]["fuzzy_model"] == "official" and by_id["officialrun"]["official_data"] is True
     assert by_id["v1run"]["fuzzy_model"] == "original" and by_id["v1run"]["official_data"] is False
+
+
+def test_budget_below_the_cheapest_plan_is_explained_in_meta():
+    from fastapi.testclient import TestClient
+    from app.main import app
+    body = {"location": "Salem", "season": "Rabi", "total_land_ha": 5, "save_results": False, "pop_size": 8, "n_gen": 5}
+    r = TestClient(app).post("/api/farm-plans", json={**body, "budget_rs": 1000}).json()
+    assert r["plans"] == []
+    info = r["meta"]["no_feasible_plan"]
+    assert info["cheapest_cost_rs"] > 1000 and info["cheapest_crop"]
+    full_search = {k: v for k, v in body.items() if k not in ("pop_size", "n_gen")}
+    ok = TestClient(app).post("/api/farm-plans", json={**full_search, "budget_rs": info["cheapest_cost_rs"] * 1.5}).json()
+    assert ok["plans"] and ok["meta"].get("no_feasible_plan") is None

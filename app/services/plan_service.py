@@ -194,6 +194,11 @@ def run_pipeline(
         "topsis": topsis_service.topsis_meta(spec, request.preference, adj.topsis_weights, request.budget_rs),
         "fuzzy_model": fuzzy_model.name,
     }
+    if request.budget_rs and not ranked:
+        # Explain an empty result: the budget is below the cheapest possible plan.
+        crop, cost = problem.cheapest_plan()
+        meta["no_feasible_plan"] = {"reason": "budget below the cheapest possible plan",
+                                    "cheapest_crop": crop, "cheapest_cost_rs": round(cost, 2)}
     if request.compare_profiles and filtered_plans:
         reference = spec or resolve_profile("balanced")
         meta["profile_comparison"] = topsis_service.profile_comparison(filtered_plans, attrs, request.budget_rs, reference)
