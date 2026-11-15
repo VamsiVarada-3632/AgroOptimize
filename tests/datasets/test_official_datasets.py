@@ -136,3 +136,13 @@ def test_service_raises_clear_error_without_database(tmp_path, monkeypatch):
     with pytest.raises(service.OfficialDataUnavailable):
         service.districts()
     session.reset_engine_cache(); cache.clear_all()
+
+
+def test_registered_hash_is_the_hash_of_the_raw_file(built_db):
+    """Provenance: each registry row identifies the exact official file it was built from."""
+    from app.datasets.base import sha256_file
+    by_name = {d.name: d for d in DATASETS}
+    for p in service.provenance():
+        assert p["sha256"] == sha256_file(by_name[p["name"]].path(RAW_DIR)), p["name"]
+        assert p["filename"] == by_name[p["name"]].filename
+        assert p["report_year"] == "2024-25"
