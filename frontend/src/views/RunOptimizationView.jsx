@@ -194,7 +194,11 @@ export default function RunOptimizationView({ userLocation, userSeason, landSize
               {!topPlan && (
                 <p className="mb-4 font-body-md text-body-md bg-error-container/40 text-on-error-container px-4 py-3 rounded-lg">
                   {result.meta?.budget_rs
-                    ? `No crop plan for ${result.meta.total_land_ha ?? landArea} ha fits within the budget of ₹${Math.round(result.meta.budget_rs).toLocaleString('en-IN')}. Raise the budget or reduce the land area and run again.`
+                    ? `No crop plan for ${result.meta.total_land_ha ?? landArea} ha fits within the budget of ₹${Math.round(result.meta.budget_rs).toLocaleString('en-IN')}.`
+                      + (result.meta.no_feasible_plan
+                        ? ` The cheapest possible plan (all land in ${result.meta.no_feasible_plan.cheapest_crop} at the lowest fertiliser level) costs ₹${Math.round(result.meta.no_feasible_plan.cheapest_cost_rs).toLocaleString('en-IN')}.`
+                        : '')
+                      + ' Raise the budget or reduce the land area and run again.'
                     : 'The optimiser found no feasible plan for these inputs. Change the inputs and run again.'}
                 </p>
               )}
