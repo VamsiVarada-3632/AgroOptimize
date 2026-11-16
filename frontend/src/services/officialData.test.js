@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ApiError } from './api';
 import {
-  OFFICIAL_DATA_NA, catalogCrops, describeRun, isCatalogDistrict, isMissing, isOfficialDataUnavailable, showValue,
+  OFFICIAL_DATA_NA, catalogCrops, describeHistoryEntry, describeRun, isCatalogDistrict, isMissing, isOfficialDataUnavailable, showValue,
 } from './officialData';
 
 describe('missing values', () => {
@@ -49,5 +49,13 @@ describe('describeRun', () => {
     const legacy = { meta: {}, region_profile: { candidate_crops: [{ name: 'Paddy', sources: {} }] } };
     expect(describeRun(legacy)).toMatchObject({ model: 'original', modelLabel: 'Original Model', official: false });
     expect(describeRun({ meta: { fuzzy_model: 'improved' } }).modelLabel).toBe('Improved Model');
+  });
+});
+
+describe('describeHistoryEntry', () => {
+  it('reads the badges from a history entry and defers when the fields are absent', () => {
+    expect(describeHistoryEntry({ fuzzy_model: 'official', official_data: true })).toMatchObject({ modelLabel: 'Official-Data Model', official: true });
+    expect(describeHistoryEntry({ official_data: false })).toMatchObject({ model: 'original', official: false });
+    expect(describeHistoryEntry({ id: 'old-backend-entry' })).toBeNull();
   });
 });

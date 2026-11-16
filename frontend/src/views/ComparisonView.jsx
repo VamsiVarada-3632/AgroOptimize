@@ -47,7 +47,7 @@ function adaptComparisonPlans(apiPlans) {
   return Object.keys(out).length === 3 ? out : null;
 }
 
-export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userLocation, onNavigate }) {
+export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userLocation, landSizeHa = 5, onNavigate }) {
   const [selectedPlanId, setSelectedPlanId] = useState(activePlanId);
   const [adjustWeightsOpen, setAdjustWeightsOpen] = useState(false);
   // Explanation modal: a plan key ('A' | 'B' | 'C'), 'compare' for the side-by-side view, or null.
@@ -63,7 +63,7 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    api.getComparison(userLocation)
+    api.getComparison(userLocation, { totalLandHa: landSizeHa })
       .then((data) => {
         if (cancelled) return;
         setApiComparison(data);
@@ -76,7 +76,7 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [userLocation]);
+  }, [userLocation, landSizeHa]);
 
   const plans = useMemo(() => adaptComparisonPlans(apiComparison?.plans), [apiComparison]);
   const hasData = plans !== null;
@@ -422,14 +422,14 @@ export default function ComparisonView({ activePlanId = 'A', onSelectPlan, userL
         <ExplanationModal
           key={explainTarget}
           title={`Why ${plans?.[explainTarget]?.name || `Plan ${explainTarget}`}?`}
-          load={() => api.getComparisonExplanation(userLocation, explainTarget)}
+          load={() => api.getComparisonExplanation(userLocation, explainTarget, { totalLandHa: landSizeHa })}
           onClose={() => setExplainTarget(null)}
         />
       )}
       {explainTarget === 'compare' && (
         <ExplanationModal
           title="Comparing the explanations for Plans A, B and C"
-          load={() => Promise.all(['A', 'B', 'C'].map((k) => api.getComparisonExplanation(userLocation, k)))
+          load={() => Promise.all(['A', 'B', 'C'].map((k) => api.getComparisonExplanation(userLocation, k, { totalLandHa: landSizeHa })))
             .then(([A, B, C]) => ({ A, B, C }))}
           render={(data) => <ExplanationComparison explanations={data} />}
           onClose={() => setExplainTarget(null)}

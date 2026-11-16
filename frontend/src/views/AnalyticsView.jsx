@@ -11,7 +11,7 @@ function padRange(lo, hi, frac = 0.1) {
 
 const DEFAULT_BOUNDS = { minCostVal: 0, maxCostVal: 1, minYieldVal: 0, maxYieldVal: 1, minWaterVal: 0, maxWaterVal: 1 };
 
-export default function AnalyticsView({ onNavigate, userLocation }) {
+export default function AnalyticsView({ onNavigate, userLocation, userSeason, landSizeHa = 5 }) {
   const [plansData, setPlansData] = useState(null);
   const [plansLoading, setPlansLoading] = useState(true);
   // '' when the plans loaded; otherwise the message to show
@@ -29,7 +29,7 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
   useEffect(() => {
     let cancelled = false;
     setPlansLoading(true);
-    api.getPlans(userLocation)
+    api.getPlans(userLocation, { totalLandHa: landSizeHa })
       .then((data) => {
         if (cancelled) return;
         setPlansData(data);
@@ -47,7 +47,7 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
       .catch(() => { if (!cancelled) setSoilProfile(null); });
 
     setFuzzyLoading(true);
-    api.getFuzzyComparison(userLocation)
+    api.getFuzzyComparison(userLocation, { season: userSeason || undefined, totalLandHa: landSizeHa })
       .then((data) => {
         if (cancelled) return;
         setFuzzyComparison(data);
@@ -61,7 +61,7 @@ export default function AnalyticsView({ onNavigate, userLocation }) {
       .finally(() => { if (!cancelled) setFuzzyLoading(false); });
 
     return () => { cancelled = true; };
-  }, [userLocation]);
+  }, [userLocation, userSeason, landSizeHa]);
 
   // Convergence / hypervolume history rides along on GET /api/plans, so it
   // shares plansData's loading state rather than a separate fetch.

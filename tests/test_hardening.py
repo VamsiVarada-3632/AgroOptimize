@@ -269,3 +269,43 @@ def test_same_second_saves_get_distinct_run_ids(tmp_path, monkeypatch):
     assert second.run_id == "salem_kharif_2024_20260101T000000Z-2"
     assert results_store.load_run(first.run_id, out_dir=tmp_path)["run_id"] == first.run_id
     assert results_store.load_run(second.run_id, out_dir=tmp_path)["run_id"] == second.run_id
+
+
+def test_farm_plan_land_has_the_same_upper_limit_as_the_other_endpoints():
+    from fastapi.testclient import TestClient
+    from app.main import app
+    client = TestClient(app)
+    body = {"location": "Salem", "season": "Rabi", "save_results": False, "pop_size": 8, "n_gen": 5}
+    assert client.post("/api/farm-plans", json={**body, "total_land_ha": 100_000}).status_code == 200
+    r = client.post("/api/farm-plans", json={**body, "total_land_ha": 100_001})
+    assert r.status_code == 422 and r.json()["detail"][0]["loc"] == ["body", "total_land_ha"]
+
+
+def test_history_entries_carry_the_fuzzy_model_and_data_source(monkeypatch):
+    summaries = [{"run_id": r, "location": "Salem", "season": "Rabi", "year": 2024, "preference": "balanced",
+                  "saved_at": f"2026-11-0{i}T00:00:00+00:00", "n_plans": 1, "client_id": "me"}
+                 for i, r in enumerate(["v1run", "officialrun"], start=1)]
+    records = {
+        "v1run": {"plans": [], "fuzzy_assessment": {}, "meta": {},
+                  "region_profile": {"candidate_crops": [{"name": "Paddy", "sources": {}}]}},
+        "officialrun": {"plans": [], "fuzzy_assessment": {}, "meta": {"fuzzy_model": "official"},
+                        "region_profile": {"candidate_crops": [{"name": "ragi", "sources": {"crop_statistics": "TN Season & Crop Report 2024-25"}}]}},
+    }
+    monkeypatch.setattr(results_store, "list_saved_runs", lambda **k: summaries)
+    monkeypatch.setattr(results_store, "load_run", lambda run_id, **k: records[run_id])
+    by_id = {h["id"]: h for h in ds.get_history("salem", client_id="me")["history"]}
+    assert by_id["officialrun"]["fuzzy_model"] == "official" and by_id["officialrun"]["official_data"] is True
+    assert by_id["v1run"]["fuzzy_model"] == "original" and by_id["v1run"]["official_data"] is False
+
+
+def test_budget_below_the_cheapest_plan_is_explained_in_meta():
+    from fastapi.testclient import TestClient
+    from app.main import app
+    body = {"location": "Salem", "season": "Rabi", "total_land_ha": 5, "save_results": False, "pop_size": 8, "n_gen": 5}
+    r = TestClient(app).post("/api/farm-plans", json={**body, "budget_rs": 1000}).json()
+    assert r["plans"] == []
+    info = r["meta"]["no_feasible_plan"]
+    assert info["cheapest_cost_rs"] > 1000 and info["cheapest_crop"]
+    full_search = {k: v for k, v in body.items() if k not in ("pop_size", "n_gen")}
+    ok = TestClient(app).post("/api/farm-plans", json={**full_search, "budget_rs": info["cheapest_cost_rs"] * 1.5}).json()
+    assert ok["plans"] and ok["meta"].get("no_feasible_plan") is None

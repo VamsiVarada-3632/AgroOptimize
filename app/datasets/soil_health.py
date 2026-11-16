@@ -20,6 +20,7 @@ MAX_SPREAD = 0.03    # tested-sample totals of different parameters may differ b
 
 class SoilHealthTN(OfficialDataset):
     name, filename, table = "soil_health_tn", "soil_health_tn.csv", "soil_health"
+    source = "Soil Health Card portal (soilhealth.dac.gov.in), Government of India, 2024-25 cycle"
     required_columns = ("district", "district_code", "cycle", *VALUE_COLS, "last_processed")
 
     def _clean(self, df: pd.DataFrame, res: CleanResult) -> pd.DataFrame:

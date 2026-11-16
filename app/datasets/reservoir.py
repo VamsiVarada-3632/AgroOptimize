@@ -4,6 +4,7 @@ from app.datasets.base import OfficialDataset
 
 class ReservoirDaily(OfficialDataset):
     name, filename, table = "reservoir_daily", "reservoir_daily.csv", "reservoir_reading"
+    source = "Water Resources Department, Government of Tamil Nadu: daily reservoir levels"
     required_columns = ("date", "reservoir_slug", "reservoir", "group", "full_depth_ft", "capacity_mcft", "level_ft",
                         "storage_mcft", "inflow_cusecs", "outflow_cusecs", "last_year_level_ft", "last_year_storage_mcft")
 

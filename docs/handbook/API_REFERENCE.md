@@ -27,7 +27,7 @@ All data comes from the official database (`data/official/official_v1.db`, built
 | GET | `/api/results/{run_id}/explanation?rank=` | Explanation of one plan in a saved run | Run Optimization, History, Reports | tens of ms |
 | GET | `/api/comparison/{district}/explanation?plan=` | Explanation of Plan A/B/C | Comparison | ~1 s cold, fast when the front is cached |
 | GET | `/api/district-intelligence/{district}` | Aggregated district profile | District Intelligence | 1.4 ms † cached |
-| GET | `/api/fuzzy/explain?rainfall_dev=&water_storage=&soil_fert=&model=` | Rule-level explanation of one fuzzy inference | – | ≈5 ms |
+| GET | `/api/fuzzy/explain?rainfall_dev=&water_storage=&soil_fert=&model=` (or `?location=&season=`) | Rule-level explanation of one fuzzy inference | – | ≈5 ms |
 | GET | `/api/fuzzy/audit?model=` | Rule-base and membership-function audit + firing on the dataset | – | ≈0.7 s cold, cached per model |
 | GET | `/api/fuzzy/models` | Fuzzy models (official default, published, each improvement, improved), their switches, rules and membership functions | Run Optimization, Settings | < 5 ms |
 | POST | `/api/simulations/run` | Run a scenario simulation (baseline + scenario, 5 seeds each) | Scenario Simulation | ~4 s, never cached |
@@ -43,10 +43,10 @@ All data comes from the official database (`data/official/official_v1.db`, built
 | Status | When | Body |
 |---|---|---|
 | 400 | `ValueError` in the pipeline for core endpoints (unknown location/season, a taluk such as Pollachi, <2 crops with complete official data, e.g. Chennai and The Nilgiris) | `{"detail": "Unknown season 'Summer'. Choose one of ['Kharif', 'Rabi']."}` |
-| 404 | Unknown district on dashboard endpoints; unknown/invalid `run_id`; `ValueError` in comparison/compare-fuzzy | `{"detail": "..."}` |
+| 404 | Unknown district on dashboard endpoints; unknown/invalid `run_id`; `ValueError` in plans/comparison/compare-fuzzy, including a district with fewer than two complete crops (Chennai, The Nilgiris) | `{"detail": "..."}` |
 | 422 | Pydantic/Query validation | `{"detail": [{"loc": [...], "msg": "...", "type": "..."}]}` |
 | 501 | Feature disabled because its official dataset is missing (`FeatureUnavailable`) | `{"detail": "Live weather widget is unavailable: official dataset missing - ...", "feature": "Live weather widget", "missing_dataset": "...", "available": false}` |
-| 503 | `/api/plans` optimisation failure | `{"detail": {"error": "Optimization failed", "message": "...", "location": "..."}}` |
+| 503 | `/api/plans` optimisation run failed (not a data gap: those are 404) | `{"detail": {"error": "Optimization failed", "message": "...", "location": "..."}}` |
 | 500 | Unhandled exception | FastAPI default |
 
 The frontend's `describeApiError` (src/services/api.js) turns any of these into user text; 400, 404 and 501 are shown as "Official Data Not Available" with the detail ([FRONTEND_API_INTEGRATION.md](FRONTEND_API_INTEGRATION.md)).
@@ -94,7 +94,7 @@ Request (`FarmPlanRequest`):
 | location | str | one of catalog locations (case-insensitive) | required | |
 | season | str | Kharif/Rabi (case-insensitive) | required | |
 | year | int | must exist for location | latest (2024) | |
-| total_land_ha | float | > 0 | required | farm size |
+| total_land_ha | float | > 0 and ≤ 100 000 | required | farm size (same limit as plans, comparison and simulation) |
 | budget_rs | float | > 0 | none | hard constraint cost ≤ budget |
 | preference | enum | balanced, max_yield, min_cost, min_water, min_env_impact | balanced | TOPSIS weights (classic preferences) |
 | profile | enum | balanced, profit, water, sustainability, low_cost, custom | none | ranking profile ([TOPSIS_PROFILE_GUIDE.md](TOPSIS_PROFILE_GUIDE.md)); cannot be combined with a preference other than balanced |
@@ -132,6 +132,8 @@ Crops are named as in the official reports (lower case). `water_req_mm`, sowing/
 
 `meta.topsis` (optional; absent in runs saved before it existed) records the weights that ranked the run: `profile` (null for a classic preference other than balanced, or for simulation priorities), `label`, `preference`, `weights` (all ten criteria), `criteria` (those with a positive weight, with label and direction), `method`, `budget_active`. With `compare_profiles: true`, `meta.profile_comparison` holds the front ranked under every standard profile ([TOPSIS_COMPARISON.md](TOPSIS_COMPARISON.md)). Saved runs also store the ranked front (`ranked_front`, not returned by the API) so they can be re-ranked exactly.
 
+`meta.no_feasible_plan` (only when a budget leaves no feasible plan, `plans` empty): `{"reason": "budget below the cheapest possible plan", "cheapest_crop": "green gram", "cheapest_cost_rs": 71771.0}` – the lowest cost any plan can have (all land in one crop at the lowest fertiliser level; cost is linear in the allocation).
+
 `meta.quality_metrics` (optional; absent in runs saved before it existed) describes the quality of the run's Pareto front: hypervolume and its ratio to a reference front, generational distance (GD), inverted generational distance (IGD), IGD+, generalised spread and spacing, on objectives normalised to the reference front's ideal and nadir, where the reference is the front plus each plan's copy with irrigation and fertiliser multipliers at 0.7 (never worse in this model). Lower is better for GD, IGD, IGD+, spread and spacing. Values that cannot be computed (no feasible plan, fewer than two plans) are `null`. See [NSGAII_IMPROVEMENTS.md](NSGAII_IMPROVEMENTS.md) §2.3.
 
 (`convergence_history` values above are placeholders showing the shape; it has one entry per generation when `save_results` is true and is `[]` otherwise. `run_id`/`saved_files` are `null` when not saved.) Units: `yield_tonnes`, `cost_rs`, `irrigated_ha`, `env_impact_score` are **totals over `total_land_ha`**, not per hectare. `saved_files` exposes absolute server paths (minor information disclosure – see [SECURITY_REVIEW.md](SECURITY_REVIEW.md)).
@@ -165,9 +167,10 @@ Abbreviated real response (Salem):
 ```json
 {"history":[{"id":"salem_rabi_2024_20261112T184810Z","season":"Rabi 2024","date":"2026-11-12","location":"Salem",
              "target_yield":"3.15 t/ha","est_cost":"₹176,098/ha","status":"Completed","num_plans":50,
-             "preference":"balanced","ranking":"Balanced","fuzzy_weights":{"yield_confidence":0.532,"irrigation_risk":0.12,"...":"labels, applied, reason"},"is_estimated":false}]}
+             "preference":"balanced","ranking":"Balanced","fuzzy_weights":{"yield_confidence":0.532,"irrigation_risk":0.12,"...":"labels, applied, reason"},"is_estimated":false,
+             "fuzzy_model":"official","official_data":true}]}
 ```
-Only runs whose stored `client_id` equals the query parameter; none without it. Ordered newest save first. Details: [HISTORY_PIPELINE.md](HISTORY_PIPELINE.md).
+`fuzzy_model` is the model the run used (`original` for runs saved before models existed); `official_data` is true when the run's candidate crops cite official sources (false for runs on the v1 data). Only runs whose stored `client_id` equals the query parameter; none without it. Ordered newest save first. Details: [HISTORY_PIPELINE.md](HISTORY_PIPELINE.md).
 
 ## GET /api/soil-profile/{district}
 Abbreviated real response (Salem):
@@ -185,7 +188,7 @@ The N/P/K status is the dominant Soil Health Card class; numeric pH and organic 
 `GET /api/soil-master/{district}` → the Soil Health Card record: `district, available, cycle, samples_tested, soil_type` (always "Official data unavailable"), and per parameter (`ph, organic_carbon, nitrogen, phosphorus, potassium, electrical_conductivity`, micronutrients) `{label, unit, samples, counts, share_pct, dominant_class}`. A district without a record returns `{"available": false, "message": "Official data unavailable", "reason": "..."}`; an unknown district → 404. See [SOIL_MASTER.md](../data_architecture/SOIL_MASTER.md).
 
 ## GET /api/datasets
-`{"datasets": [{id, name, filename, sha256, report_year, rows_clean, imported_at}, ...10], "disabled_features": [...]}` – the provenance of every table in the official database and the features switched off because their dataset is missing.
+`{"datasets": [{id, name, filename, source, sha256, report_year, rows_raw, rows_clean, imported_at}, ...10], "disabled_features": [...]}` – the provenance of every table in the official database and the features switched off because their dataset is missing.
 
 ## GET /api/plans/{district}?total_land_ha=5&budget_rs=
 `total_land_ha` > 0 and ≤ 100 000 (default 5); `budget_rs` > 0. Abbreviated real response (Salem):
@@ -269,6 +272,6 @@ One aggregated district profile (`DistrictIntelligenceOut`, ≈55 KB): `district
 
 ## Fuzzy system transparency
 
-`GET /api/fuzzy/explain` returns `fuzzy.engine.explain_inference` for one input triple (clipped like the engine; non-finite → 422): `inputs`, `outputs` (value, term and its membership, term cuts with setting rules, term area shares, `matches_engine`), `rules` (strength, status decisive/masked/not fired, `masked_by`, `tied_with`, limiting condition, `contribution_pct`, `leave_one_out_change`, `importance`), `ranking`, `summary`, `method`. Plan explanations carry the same object as `fuzzy_reasoning.inference`. `GET /api/fuzzy/audit` returns `model`, `dominance`, `coverage`, `output_bounds`, `dataset_firing`. See [FUZZY_EXPLAINABILITY.md](FUZZY_EXPLAINABILITY.md) and [FUZZY_SYSTEM_ANALYSIS.md](FUZZY_SYSTEM_ANALYSIS.md).
+`GET /api/fuzzy/explain` returns `fuzzy.engine.explain_inference` for one input triple (clipped like the engine; non-finite → 422): `inputs`, `outputs` (value, term and its membership, term cuts with setting rules, term area shares, `matches_engine`), `rules` (strength, status decisive/masked/not fired, `masked_by`, `tied_with`, limiting condition, `contribution_pct`, `leave_one_out_change`, `importance`), `ranking`, `summary`, `method`. Plan explanations carry the same object as `fuzzy_reasoning.inference`. `GET /api/fuzzy/audit` returns `model`, `dominance`, `coverage`, `output_bounds`, `dataset_firing`. See [FUZZY_EXPLAINABILITY.md](FUZZY_EXPLAINABILITY.md) and [FUZZY_SYSTEM_ANALYSIS.md](FUZZY_SYSTEM_ANALYSIS.md). It can also take `location` and `season` (and optional `year`) instead of the three inputs: it then explains the inference on that district's official rainfall deviation, reservoir storage and Soil Health Card fertility and adds `inputs_from` (`{location, season, year}`); a district-season without an official reservoir reading answers 400 "Official Data Not Available: …".
 
 **Fuzzy models.** `GET /api/fuzzy/models` returns `{default, models: [{name, description, switches: {strong_partition, imd_rainfall, prune_inert}, rules, membership_functions}]}`. Models: `official` (the default: calibrated on the official data, [FUZZY_SYSTEM_ANALYSIS.md](FUZZY_SYSTEM_ANALYSIS.md)), `original` (published), `strong_partition`, `imd_rainfall`, `pruned_rules` (one improvement each) and `improved` (all three); see [FUZZY_MODEL_IMPROVEMENTS.md](FUZZY_MODEL_IMPROVEMENTS.md). `/api/fuzzy/explain` and `/api/fuzzy/audit` take `model` (unknown name → 400) and report it as `model`. `POST /api/farm-plans` and the simulation `base` take an optional `fuzzy_model` (unknown name → 422); the run records it as `meta.fuzzy_model` (simulations: `meta.fuzzy_model`), and saved-run explanations recompute the fuzzy reasoning with it (runs saved earlier → `original`). Omitting it uses the server default (`AGROOPTIMIZE_FUZZY_MODEL`, `official` unless set).

@@ -66,7 +66,7 @@ class FarmPlanRequest(RankingProfileIn):
     location: str = Field(..., examples=["Coimbatore"])
     season: str = Field(..., examples=["Kharif"])
     year: Optional[int] = Field(None, description="Defaults to the latest year in the dataset.")
-    total_land_ha: float = Field(..., gt=0, examples=[5.0])
+    total_land_ha: float = Field(..., gt=0, le=100_000, examples=[5.0])
     budget_rs: Optional[float] = Field(None, gt=0, description="Optional hard budget cap (Rs).")
     preference: Preference = "balanced"
     max_candidate_crops: Optional[int] = Field(None, ge=2, le=12)
@@ -240,6 +240,9 @@ class RunMeta(BaseModel):
     profile_comparison: Optional[Dict[str, Any]] = None
     # Fuzzy model that produced the run; absent on runs saved before models existed (= "original").
     fuzzy_model: Optional[str] = None
+    # Set only when a budget leaves no feasible plan: the cheapest possible plan
+    # (all land in one crop at the lowest fertiliser level) and its cost.
+    no_feasible_plan: Optional[Dict[str, Any]] = None
 
 
 class MeanObjectivesOut(BaseModel):

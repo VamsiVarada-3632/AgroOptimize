@@ -5,6 +5,7 @@ from app.datasets.normalize import district_key
 
 class Groundwater(OfficialDataset):
     name, filename, table = "ground_water_level", "ground_water_level.csv", "groundwater"
+    source = "Tamil Nadu groundwater level records"
     required_columns = ("report_year", "district", "period", "level_m", "printed_page")
 
     def _clean(self, df, res):

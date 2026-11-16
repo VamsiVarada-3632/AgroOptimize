@@ -158,6 +158,17 @@ export function describeRun(run) {
   return { model, modelLabel: MODEL_BADGES[model] ?? fuzzyModelLabel(model), official };
 }
 
+/**
+ * The same badges from a GET /api/history entry, which carries fuzzy_model and
+ * official_data itself; null for an entry from a backend that does not send
+ * them (the caller then reads the saved run).
+ */
+export function describeHistoryEntry(entry) {
+  if (!entry || typeof entry.official_data !== 'boolean') return null;
+  const model = entry.fuzzy_model || 'original';
+  return { model, modelLabel: MODEL_BADGES[model] ?? fuzzyModelLabel(model), official: entry.official_data };
+}
+
 const MODEL_BADGES = {
   original: 'Original Model',
   improved: 'Improved Model',

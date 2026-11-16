@@ -5,6 +5,7 @@ from app.datasets.normalize import district_key
 
 class Irrigation(OfficialDataset):
     name, filename, table = "irrigation", "irrigation.csv", "irrigation"
+    source = "Dept. of Economics & Statistics, Government of Tamil Nadu: Season & Crop Report 2024-25 (irrigated and unirrigated area)"
     required_columns = ("report_year", "district", "table", "group", "item", "measure", "unit", "value", "printed_page")
 
     def _clean(self, df, res):

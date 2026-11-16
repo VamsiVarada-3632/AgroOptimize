@@ -75,6 +75,7 @@ from app.datasets.base import OfficialDataset  # noqa: E402
 class MspExtracted(OfficialDataset):
     """data/official/raw/msp_extracted.csv, written by scripts/extract_msp.py from the official PDFs."""
     name, filename, table = "msp_extracted", "msp_extracted.csv", "msp"
+    source = "PIB Minimum Support Price notifications with CACP cost of production (A2+FL)"
     required_columns = tuple(COLUMNS)
 
     def clean(self, df):

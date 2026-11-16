@@ -203,6 +203,7 @@ export default function App() {
                     <button
                       key={link.id}
                       onClick={() => navigateTo(link.id)}
+                      aria-current={isActive ? 'page' : undefined}
                       className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-label-md text-label-md transition-colors cursor-pointer text-left ${
                         isActive 
                           ? 'text-primary font-bold border-r-4 border-primary bg-primary-container/10' 
@@ -285,6 +286,7 @@ export default function App() {
                       <button
                         key={link.id}
                         onClick={() => navigateTo(link.id)}
+                        aria-current={isActive ? 'page' : undefined}
                         className={`px-3 py-1.5 rounded-md font-label-md text-label-md cursor-pointer transition-all ${
                           isActive 
                             ? 'bg-primary-container/10 text-primary font-bold' 
@@ -304,12 +306,13 @@ export default function App() {
                 >
                   Logout
                 </button>
-                <img 
-                  onClick={() => navigateTo('settings')}
-                  alt="User profile" 
-                  className="w-10 h-10 rounded-full object-cover border border-outline-variant hover:border-primary transition-colors cursor-pointer" 
-                  src={user.avatar || defaultAvatar}
-                />
+                <button type="button" onClick={() => navigateTo('settings')} aria-label="Open settings" className="rounded-full cursor-pointer">
+                  <img
+                    alt=""
+                    className="w-10 h-10 rounded-full object-cover border border-outline-variant hover:border-primary transition-colors"
+                    src={user.avatar || defaultAvatar}
+                  />
+                </button>
               </div>
             </nav>
           )}
@@ -319,9 +322,11 @@ export default function App() {
             <div className="flex items-center">
               <button 
                 onClick={() => setMobileMenuOpen(true)}
+                aria-label="Open menu"
+                aria-expanded={mobileMenuOpen}
                 className="mr-3 text-on-surface-variant hover:bg-surface-container-high rounded-full p-2 transition-all cursor-pointer flex items-center"
               >
-                <span className="material-symbols-outlined">menu</span>
+                <span className="material-symbols-outlined" aria-hidden="true">menu</span>
               </button>
               <h2 className="font-headline-md text-headline-md font-bold text-primary flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-primary text-2xl font-bold" style={{ fontVariationSettings: "'FILL' 1" }}>spa</span>
@@ -330,12 +335,13 @@ export default function App() {
             </div>
             
             <div className="flex items-center gap-3">
-              <img 
-                onClick={() => navigateTo('settings')}
-                alt="User avatar" 
-                className="w-9 h-9 rounded-full object-cover border border-outline-variant cursor-pointer" 
-                src={user.avatar || defaultAvatar}
-              />
+              <button type="button" onClick={() => navigateTo('settings')} aria-label="Open settings" className="rounded-full cursor-pointer">
+                <img
+                  alt=""
+                  className="w-9 h-9 rounded-full object-cover border border-outline-variant"
+                  src={user.avatar || defaultAvatar}
+                />
+              </button>
             </div>
           </header>
 
@@ -350,9 +356,10 @@ export default function App() {
                   </span>
                   <button 
                     onClick={() => setMobileMenuOpen(false)}
+                    aria-label="Close menu"
                     className="text-on-surface-variant hover:text-primary cursor-pointer p-1"
                   >
-                    <span className="material-symbols-outlined">close</span>
+                    <span className="material-symbols-outlined" aria-hidden="true">close</span>
                   </button>
                 </div>
 
@@ -363,6 +370,7 @@ export default function App() {
                       <button
                         key={link.id}
                         onClick={() => navigateTo(link.id)}
+                        aria-current={isActive ? 'page' : undefined}
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-label-md text-label-md cursor-pointer text-left ${
                           isActive 
                             ? 'text-primary font-bold bg-primary-container/10' 
@@ -417,6 +425,8 @@ export default function App() {
                   <AnalyticsView
                     onNavigate={navigateTo}
                     userLocation={user.location}
+                    userSeason={user.season}
+                    landSizeHa={Number(user.landSize) || 5}
                   />
                 )}
 
@@ -425,6 +435,7 @@ export default function App() {
                     activePlanId={activePlanId}
                     onSelectPlan={setActivePlanId}
                     userLocation={user.location}
+                    landSizeHa={Number(user.landSize) || 5}
                     onNavigate={navigateTo}
                   />
                 )}

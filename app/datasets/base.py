@@ -51,6 +51,7 @@ class OfficialDataset:
     name: str = ""
     filename: str = ""
     table: str = ""
+    source: str = ""          # publisher and publication the raw file comes from
     required_columns: tuple = ()
 
     def path(self, raw_dir: Path | None = None) -> Path:

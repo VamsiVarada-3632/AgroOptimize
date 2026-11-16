@@ -76,7 +76,7 @@ export default function DatasetsView({ userLocation }) {
       </div>
 
       <Card icon="database" title="Loaded datasets"
-        subtitle="The registry the backend keeps for each file: when it was imported, how many rows passed validation, and its checksum.">
+        subtitle="The registry the backend keeps for each file: who publishes it, when it was imported, how many rows passed validation, and its checksum.">
         {datasets.loading ? (
           <div className="h-40 bg-surface-container-high rounded-lg animate-pulse" aria-busy="true"></div>
         ) : list.length ? (
@@ -99,7 +99,14 @@ export default function DatasetsView({ userLocation }) {
                     <td className={`${cell} text-on-surface-variant`}>{showValue(d.source)}</td>
                     <td className={cell}>{showValue(d.report_year, (v) => `Report year ${v}`)}</td>
                     <td className={`${cell} whitespace-nowrap`}>{showValue(d.imported_at, (v) => new Date(v).toLocaleString())}</td>
-                    <td className={cell}>{showValue(d.rows_clean, (v) => v.toLocaleString('en-IN'))}</td>
+                    <td className={cell}>
+                      {showValue(d.rows_clean, (v) => v.toLocaleString('en-IN'))}
+                      {d.rows_raw != null && d.rows_clean != null && (
+                        <span className="block text-xs text-on-surface-variant">
+                          {d.rows_raw === d.rows_clean ? 'none dropped in cleaning' : `${(d.rows_raw - d.rows_clean).toLocaleString('en-IN')} of ${d.rows_raw.toLocaleString('en-IN')} dropped`}
+                        </span>
+                      )}
+                    </td>
                     <td className={cell}>
                       <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-primary-fixed/40 text-on-primary-fixed">Loaded</span>
                     </td>

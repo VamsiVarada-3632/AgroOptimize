@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { api, BACKEND_UNREACHABLE_MSG } from '../services/api';
 import { ExplanationModal } from '../components/ExplanationPanel';
-import { OFFICIAL_DATA_NA, describeRun, isMissing } from '../services/officialData';
+import { OFFICIAL_DATA_NA, describeHistoryEntry, describeRun, isMissing } from '../services/officialData';
 
 const BADGE = 'px-2.5 py-0.5 rounded-full font-label-sm text-label-sm font-semibold';
 
@@ -63,11 +63,19 @@ export default function HistoryView({ userLocation, onNavigate }) {
         const items = adaptHistory(data.history);
         setHistoryData(items);
         setFetchFailed(false);
-        Promise.allSettled(items.map((h) => api.getResult(h.id).then((run) => [h.id, describeRun(run)])))
-          .then((results) => {
-            if (cancelled) return;
-            setRunInfo(Object.fromEntries(results.filter((r) => r.status === 'fulfilled').map((r) => r.value)));
-          });
+        // The history entries carry the model and data source; only entries
+        // from an older backend need their saved run loaded to tell.
+        const known = Object.fromEntries((data.history || [])
+          .map((h) => [h.id, describeHistoryEntry(h)]).filter(([, info]) => info));
+        setRunInfo(known);
+        const missing = items.filter((h) => !known[h.id]);
+        if (missing.length) {
+          Promise.allSettled(missing.map((h) => api.getResult(h.id).then((run) => [h.id, describeRun(run)])))
+            .then((results) => {
+              if (cancelled) return;
+              setRunInfo((prev) => ({ ...prev, ...Object.fromEntries(results.filter((r) => r.status === 'fulfilled').map((r) => r.value)) }));
+            });
+        }
       })
       .catch(() => {
         if (cancelled) return;

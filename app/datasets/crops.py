@@ -17,6 +17,7 @@ def _std_columns(df: pd.DataFrame, res: CleanResult) -> pd.DataFrame:
 
 class CropsByDistrict(OfficialDataset):
     name = "crops_by_district"
+    source = "Dept. of Economics & Statistics, Government of Tamil Nadu: Season & Crop Report 2024-25 (district crop area, production, yield)"
     filename = "crops_by_district.csv"
     table = "crop_stat"
     required_columns = ("report_year", "crop", "group", "measure", "season_or_split", "unit", "district", "value", "printed_page")
@@ -68,6 +69,7 @@ class CropsByDistrict(OfficialDataset):
 
 class CropsStateSeries(OfficialDataset):
     name = "crops_state_series"
+    source = "Dept. of Economics & Statistics, Government of Tamil Nadu: Season & Crop Report 2024-25 (state yield series)"
     filename = "crops_state_series.csv"
     table = "state_crop_series"
     required_columns = ("report_year", "crop", "year", "measure", "unit", "value", "printed_page")
