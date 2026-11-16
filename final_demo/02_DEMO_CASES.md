@@ -18,7 +18,7 @@ Recorded with `qa_scripts/demo_cases.py`.
 - Top plan: **maize 37 %, ragi 45 %, red gram 8 %, green gram 10 %**, TOPSIS **0.6485**.
 - Totals: 15.89 t yield, ₹6.95 lakh cost, 1.96 ha irrigated, 562 kg NPK.
 - Next two plans: maize 90 % / green gram 10 % (0.6453), maize 40 / ragi 49 / green gram 10 (0.6451) – close scores, different trade-offs.
-- 80 Pareto plans; hypervolume ratio 0.914, IGD+ 0.075, spread 0.435; 100 % constraint satisfaction.
+- 80 Pareto plans (the top 50 by TOPSIS are listed); hypervolume ratio 0.914, IGD+ 0.075, spread 0.435; 100 % constraint satisfaction.
 
 **Explainability highlights**
 - Data: rainfall 545 mm vs 342 mm normal (**+59.5 %**, surplus), Mettur storage 87.4 %, Soil Health Card fertility 30.6 (N Low, P Medium, K High).

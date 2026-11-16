@@ -18,7 +18,7 @@ Site: https://agrooptimize.onrender.com. Inputs and expected values: `02_DEMO_CA
 
 ### 1:10 – Run Optimization, Demo 1 (1 min 20 s)
 **Click:** Run Optimization → District **Salem**, Season **Rabi**, Year 2024, Land **5**, Budget empty, profile **Balanced**, fuzzy model **Official (default)** → **Run Optimization**.
-**Say while it runs (≈10 s):** "The pipeline: official data → Mamdani fuzzy assessment of rainfall, reservoir and soil → NSGA-II with four objectives – yield, cost, irrigated area, nutrient load – 80 plans × 200 generations → TOPSIS ranks the Pareto plans."
+**Say while it runs (≈10 s):** "The pipeline: official data → Mamdani fuzzy assessment of rainfall, reservoir and soil → NSGA-II with four objectives – yield, cost, irrigated area, nutrient load – a population of 80 over 200 generations, giving 80 Pareto plans → TOPSIS ranks all 80 and the page lists the top 50."
 **Point at:** top plan **maize 37 %, ragi 45 %, red gram 8 %, green gram 10 %**, TOPSIS **0.6485**; "Top plans by TOPSIS score" – plans 2 and 3 have nearly the same score with different mixes.
 **Click:** profile **Sustainability** → **Re-rank plans**.
 **Say:** "Re-ranking is instant – TOPSIS runs on the same 80 plans; NSGA-II is not repeated."
@@ -60,4 +60,5 @@ Site: https://agrooptimize.onrender.com. Inputs and expected values: `02_DEMO_CA
 | First request takes 30–60 s | Say "the free server is waking up" and talk through Official Data while it loads |
 | A different crop mix than above | Fine – results depend on the machine; explain that NSGA-II is stochastic and the seed is fixed per platform |
 | Simulation spinner > 2 min | Use the prepared tab; mention the free server is slow (≈70 s vs 3 s locally) |
+| Kharif with Profit, Sustainability or Low cost returns HTTP 500 | Fixed in PR #24; until it is deployed, demo Kharif with Balanced or Water saving |
 | Examiner asks for Chennai | Show it: "fewer than two crops have complete official data, so the system refuses to plan instead of guessing" |
