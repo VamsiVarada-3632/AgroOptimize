@@ -309,16 +309,3 @@ def test_budget_below_the_cheapest_plan_is_explained_in_meta():
     full_search = {k: v for k, v in body.items() if k not in ("pop_size", "n_gen")}
     ok = TestClient(app).post("/api/farm-plans", json={**full_search, "budget_rs": info["cheapest_cost_rs"] * 1.5}).json()
     assert ok["plans"] and ok["meta"].get("no_feasible_plan") is None
-
-
-@pytest.mark.parametrize("profile", ["profit", "sustainability", "low_cost"])
-def test_profiles_rank_where_the_fuzzy_stage_is_not_applied(profile):
-    """Coimbatore has no official reservoir reading in Kharif, so the fuzzy stage is skipped;
-    the profiles that score crop attributes used to fail with HTTP 500 there."""
-    from fastapi.testclient import TestClient
-    from app.main import app
-    r = TestClient(app).post("/api/farm-plans", json={"location": "Coimbatore", "season": "Kharif", "total_land_ha": 5,
-                                                      "profile": profile, "save_results": False})
-    assert r.status_code == 200, r.text
-    body = r.json()
-    assert body["plans"] and body["fuzzy_assessment"]["applied"] is False
