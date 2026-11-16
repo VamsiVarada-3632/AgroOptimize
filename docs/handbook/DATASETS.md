@@ -21,6 +21,16 @@ Supporting masters in the same folder: `agronomy_master.csv` ([AGRONOMY_MASTER.m
 
 `app/data/official_view.py` turns these tables into the four frames the pipeline has always consumed (crop, land, rainfall, water: 985 / 76 / 456 / 456 rows). Coverage: 38 districts with crop statistics (36 produce plans; Chennai and The Nilgiris have fewer than 2 crops with complete official data), seasons Kharif and Rabi, report year 2024-25. Pollachi is a taluk and has no data of its own. The fuzzy stage runs only where an official reservoir reading exists for the district and season. Which source feeds which stage, the features still disabled and the TODOs: [MIGRATION_REPORT.md](../data_architecture/MIGRATION_REPORT.md); field mapping: [OFFICIAL_DATASET_MAPPING.md](../data_architecture/OFFICIAL_DATASET_MAPPING.md); runtime cost: [OFFICIAL_DATA_PERFORMANCE.md](OFFICIAL_DATA_PERFORMANCE.md).
 
+
+### How provenance and completeness are checked
+
+| Check | Test |
+|---|---|
+| Each registry row's SHA-256 is the hash of the raw file it was built from, with the same file name and report year 2024-25 | `tests/datasets/test_official_datasets.py::test_registered_hash_is_the_hash_of_the_raw_file` |
+| Registered row counts equal the rows in each table; `GET /api/datasets` returns exactly the registry; every disabled feature names its missing dataset, source and scope | `tests/test_dataset_registry_api.py` |
+| Every crop offered to NSGA-II, in all 38 districts and both seasons, has a positive official yield, MSP, CACP cost and TNAU dose, and irrigated + rainfed shares that sum to one; excluded crops give a reason; only Chennai and The Nilgiris refuse | `tests/test_official_candidates.py` |
+| The four objectives equal hand calculations from these records | `tests/test_objectives.py` |
+
 ---
 
 ## Archived v1 data (synthetic, `legacy/data/raw/`)
