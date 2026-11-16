@@ -160,7 +160,7 @@ def run_pipeline(
             if request.profile is not None and adj.topsis_weights is None else None)
     attrs = None
     if filtered_plans and ((spec is not None and spec.needs_crop_attributes) or request.compare_profiles):
-        attrs = crop_attributes(region_payload, vars(assessment))
+        attrs = crop_attributes(region_payload, fz.assessment_payload(assessment, profile))
     if spec is not None:
         ranked = topsis_service.rank_front(filtered_plans, crop_confidence_map, spec, attrs, request.budget_rs)
     else:
